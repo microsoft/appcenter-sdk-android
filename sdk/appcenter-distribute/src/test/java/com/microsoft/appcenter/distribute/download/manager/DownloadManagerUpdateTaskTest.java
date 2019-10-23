@@ -11,10 +11,13 @@ import android.database.Cursor;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.ignoreStubs;
@@ -46,6 +49,7 @@ public class DownloadManagerUpdateTaskTest {
         /* Mock Cursor. */
         when(mCursor.moveToFirst()).thenReturn(true);
         when(mCursor.getColumnIndexOrThrow(eq(DownloadManager.COLUMN_STATUS))).thenReturn(DownloadManager.COLUMN_STATUS.hashCode());
+        when(mCursor.getColumnIndexOrThrow(eq(DownloadManager.COLUMN_REASON))).thenReturn(DownloadManager.COLUMN_REASON.hashCode());
 
         /* Mock DownloadManager. */
         when(mDownloadManager.enqueue(any(DownloadManager.Request.class))).thenReturn(DOWNLOAD_ID);
@@ -108,12 +112,17 @@ public class DownloadManagerUpdateTaskTest {
     @Test
     public void errorOnFailedStatus() {
         when(mCursor.getInt(eq(DownloadManager.COLUMN_STATUS.hashCode()))).thenReturn(DownloadManager.STATUS_FAILED);
+        when(mCursor.getInt(eq(DownloadManager.COLUMN_REASON.hashCode()))).thenReturn(42);
+        ArgumentCaptor<RuntimeException> argumentCaptor = ArgumentCaptor.forClass(RuntimeException.class);
 
         /* Perform background task. */
         mUpdateTask.doInBackground();
 
         /* Verify. */
-        verify(mDownloader).onDownloadError(any(RuntimeException.class));
+        verify(mDownloader).onDownloadError(argumentCaptor.capture());
+        String capturedExceptionMessage = argumentCaptor.getValue().getMessage();
+        assertNotNull(capturedExceptionMessage);
+        assertTrue(capturedExceptionMessage.endsWith("42"));
         verify(mCursor).close();
     }
 

@@ -232,7 +232,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void onStartTest() throws Exception {
+    public void onStart() throws Exception {
         ReleaseDetails releaseDetails = mockReleaseDetails(true);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, releaseDetails);
         long mockTime = 1000 * 1000 * 1000;
@@ -245,7 +245,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void dontShowDialogOnZeroProgressTest() throws Exception {
+    public void doNotShowDialogOnZeroProgress() throws Exception {
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(true));
 
         /* Setup progressDialog. */
@@ -265,7 +265,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void dontShowNullDialogOnProgressTest() throws Exception {
+    public void doNotShowNullDialogOnProgress() throws Exception {
 
         /* If release is mandatory, the progressDialog is not set and equals to null. */
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(false));
@@ -285,7 +285,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void dontHideNullDialogTest() throws Exception {
+    public void doNotHideNullDialog() throws Exception {
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(false));
 
         /* We don't setup progressDialog here by calling showDownloadProgress(). */
@@ -297,7 +297,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void hideDialogTest() throws Exception {
+    public void hideDialog() throws Exception {
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(true));
 
         /* Setup progressDialog. */
@@ -310,7 +310,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void showDialogOnProgressTest() throws Exception {
+    public void showDialogOnProgress() throws Exception {
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(true));
         when(mProgressDialog.isIndeterminate()).thenReturn(true);
 
@@ -329,7 +329,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void showIndeterminateDialogOnProgressTest() throws Exception {
+    public void showIndeterminateDialogOnProgress() throws Exception {
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails(true));
         when(mProgressDialog.isIndeterminate()).thenReturn(false);
 
@@ -350,17 +350,27 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void onErrorTest() throws Exception {
+    public void onError() throws Exception {
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        releaseDownloadListener.onError("");
+        releaseDownloadListener.onError("test error");
 
         /* Verify that completeWorkflow() is called on error. */
         verify(mDistribute).completeWorkflow(mockReleaseDetails);
     }
 
     @Test
-    public void onCompleteTest() throws Exception {
+    public void onErrorNullMessage() throws Exception {
+        ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
+        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
+        releaseDownloadListener.onError(null);
+
+        /* Verify that completeWorkflow() is called on error. */
+        verify(mDistribute).completeWorkflow(mockReleaseDetails);
+    }
+
+    @Test
+    public void onComplete() throws Exception {
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
 
         /* Do not notify the download. */
@@ -374,7 +384,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void onCompleteNotifyTest() throws Exception {
+    public void onCompleteNotify() throws Exception {
         boolean mandatoryUpdate = false;
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(mandatoryUpdate);
 
@@ -389,7 +399,7 @@ public class ReleaseDownloadListenerTest {
     }
 
     @Test
-    public void onCompleteActivityNotResolvedTest() throws Exception {
+    public void onCompleteActivityNotResolved() throws Exception {
         boolean mandatoryUpdate = false;
 
         /* Mock resolving to null activity. */

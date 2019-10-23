@@ -1,6 +1,14 @@
 # App Center SDK for Android Change Log
 
-## Version 2.4.1 (Under development)
+## Version 2.4.2 (Under development)
+
+___
+
+## Version 2.4.1
+
+### App Center Distribute
+
+* **[Fix]** Fix a crash and improve logging when downloading an update fails on Android 5+.
 
 ### App Center Crashes
 

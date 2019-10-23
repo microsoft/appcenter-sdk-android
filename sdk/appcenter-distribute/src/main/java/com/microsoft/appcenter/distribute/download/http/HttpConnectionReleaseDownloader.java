@@ -234,7 +234,7 @@ public class HttpConnectionReleaseDownloader extends AbstractReleaseDownloader {
     }
 
     @WorkerThread
-    synchronized void onDownloadError(String errorMessage) {
+    synchronized void onDownloadError(@Nullable String errorMessage) {
         if (isCancelled()) {
             return;
         }

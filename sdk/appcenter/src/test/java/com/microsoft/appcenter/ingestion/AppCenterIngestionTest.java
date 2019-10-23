@@ -74,8 +74,7 @@ public class AppCenterIngestionTest {
         doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
     }
 
-    @Test
-    public void sendAsync() throws Exception {
+    private void sendAuthToken(String authToken) throws Exception {
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
@@ -102,7 +101,6 @@ public class AppCenterIngestionTest {
         AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), serializer);
         ingestion.setLogUrl("http://mock");
         String appSecret = UUID.randomUUID().toString();
-        String authToken = UUID.randomUUID().toString();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         assertEquals(call, ingestion.sendAsync(authToken, appSecret, installId, container, serviceCallback));
@@ -110,13 +108,14 @@ public class AppCenterIngestionTest {
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
-        expectedHeaders.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
+        if (authToken != null) {
+            expectedHeaders.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
+        }
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
-        assertEquals(authToken, authToken);
-        
+
         /* Verify close. */
         ingestion.close();
         verify(mHttpClient).close();
@@ -124,6 +123,16 @@ public class AppCenterIngestionTest {
         /* Verify reopen. */
         ingestion.reopen();
         verify(mHttpClient).reopen();
+    }
+
+    @Test
+    public void sendAsyncWithoutAuthToken() throws Exception {
+        sendAuthToken(null);
+    }
+
+    @Test
+    public void sendAsyncWithAuthToken() throws Exception {
+        sendAuthToken(UUID.randomUUID().toString());
     }
 
     @Test

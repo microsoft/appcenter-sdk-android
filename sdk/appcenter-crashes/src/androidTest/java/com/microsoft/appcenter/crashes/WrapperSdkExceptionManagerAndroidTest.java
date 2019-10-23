@@ -23,7 +23,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.test.TestUtils.TAG;
@@ -58,7 +57,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
         }
     }
 
-    private void startFresh() throws java.lang.Exception {
+    private void startFresh() {
 
         /* Configure new instance. */
         AppCenterPrivateHelper.unsetInstance();
@@ -66,25 +65,12 @@ public class WrapperSdkExceptionManagerAndroidTest {
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
         AppCenter.configure(sApplication, "a");
 
-        /* Replace channel. */
-        Method method = AppCenter.class.getDeclaredMethod("getInstance");
-        method.setAccessible(true);
-        AppCenter appCenter = (AppCenter) method.invoke(null);
-        method = AppCenter.class.getDeclaredMethod("setChannel", Channel.class);
-        method.setAccessible(true);
-        method.invoke(appCenter, mock(Channel.class));
+        /* Clean state. */
+        AppCenter.setEnabled(false);
+        AppCenter.setEnabled(true).get();
 
-        /*
-         * Since this is a real Android test, it might actually try to send crash logs
-         * and will delete files on sending completion. Avoid that by requesting user confirmation.
-         */
-        Crashes.setListener(new AbstractCrashesListener() {
-
-            @Override
-            public boolean shouldAwaitUserConfirmation() {
-                return false;
-            }
-        });
+        /* Replace channel to avoid trying to send logs. */
+        AppCenter.getInstance().setChannel(mock(Channel.class));
 
         /* Start crashes. */
         AppCenter.start(Crashes.class);
@@ -94,7 +80,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
     }
 
     @Test
-    public void saveWrapperException() throws java.lang.Exception {
+    public void saveWrapperException() {
 
         class ErrorData {
             private String data;
