@@ -1,10 +1,18 @@
 # App Center SDK for Android Change Log
 
-## Version 2.4.1 (Under development)
+## Version 2.5.0 (Under development)
 
 ### App Center Crashes
 
-* **[Feature]** Support handled errors.
+* **[Feature]** Add the `Crash.trackException` method to send handled errors.
+
+___
+
+## Version 2.4.1
+
+### App Center Distribute
+
+* **[Fix]** Fix a crash and improve logging when downloading an update fails on Android 5+.
 
 ___
 

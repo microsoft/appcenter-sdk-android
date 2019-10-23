@@ -106,10 +106,16 @@ public class CrashesAndroidTest {
     public void setUp() {
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
         SharedPreferencesManager.clear();
-        for (File logFile : ErrorLogHelper.getErrorStorageDirectory().listFiles()) {
+        File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles();
+        assertNotNull(files);
+        for (File logFile : files) {
             if (logFile.isDirectory()) {
-                for (File dumpDir : logFile.listFiles()) {
-                    for (File dumpFile : dumpDir.listFiles()) {
+                File[] childFiles = logFile.listFiles();
+                assertNotNull(childFiles);
+                for (File dumpDir : childFiles) {
+                    File[] dumpFiles = dumpDir.listFiles();
+                    assertNotNull(dumpFiles);
+                    for (File dumpFile : dumpFiles) {
                         assertTrue(dumpFile.delete());
                     }
                 }
@@ -141,7 +147,7 @@ public class CrashesAndroidTest {
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
         AppCenter.configure(sApplication, "a");
 
-        /* Clean logs. */
+        /* Clean state. */
         AppCenter.setEnabled(false);
         AppCenter.setEnabled(true).get();
 
@@ -343,7 +349,9 @@ public class CrashesAndroidTest {
         thread.start();
         thread.join();
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(2, files.length);
         verifyZeroInteractions(crashesListener);
 
         /* Second process: enqueue log but network is down... */
@@ -374,7 +382,9 @@ public class CrashesAndroidTest {
 
         /* Waiting user confirmation so no log sent yet. */
         verify(mChannel, never()).enqueue(isA(ManagedErrorLog.class), anyString(), anyInt());
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(2, files.length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
         verifyNoMoreInteractions(crashesListener);
@@ -386,7 +396,9 @@ public class CrashesAndroidTest {
         verify(mChannel).enqueue(log.capture(), anyString(), eq(CRITICAL));
         assertNotNull(log.getValue());
         assertEquals(mUserId, log.getValue().getUserId());
-        assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(1, files.length);
 
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
@@ -420,7 +432,9 @@ public class CrashesAndroidTest {
         });
         semaphore.acquire();
 
-        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(0, files.length);
         verify(mChannel, never()).enqueue(isA(ManagedErrorLog.class), anyString(), anyInt());
         verify(crashesListener).onBeforeSending(any(ErrorReport.class));
         verify(crashesListener).onSendingSucceeded(any(ErrorReport.class));
@@ -459,7 +473,9 @@ public class CrashesAndroidTest {
 
         /* Waiting user confirmation so no log sent yet. */
         verify(mChannel, never()).enqueue(isA(ManagedErrorLog.class), anyString(), anyInt());
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(2, files.length);
         verify(crashesListener).shouldProcess(any(ErrorReport.class));
         verify(crashesListener).shouldAwaitUserConfirmation();
         verifyNoMoreInteractions(crashesListener);
@@ -473,7 +489,9 @@ public class CrashesAndroidTest {
         assertEquals(mUserId, managedErrorLog.getValue().getUserId());
         assertNotNull(managedErrorLog.getValue().getException());
         assertNull(managedErrorLog.getValue().getException().getMinidumpFilePath());
-        assertEquals(1, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(1, files.length);
         verify(crashesListener).getErrorAttachments(any(ErrorReport.class));
         verifyNoMoreInteractions(crashesListener);
 
@@ -514,12 +532,16 @@ public class CrashesAndroidTest {
         thread.start();
         thread.join();
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(2, files.length);
 
         /* Disable, test waiting for disable to finish. */
         Crashes.setEnabled(false).get();
         assertFalse(Crashes.isEnabled().get());
-        assertEquals(0, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(0, files.length);
     }
 
     @Test
@@ -545,6 +567,8 @@ public class CrashesAndroidTest {
         verify(uncaughtExceptionHandler).uncaughtException(thread, exception);
 
         /* Check there are only 2 files: the throwable and the json one. */
-        assertEquals(2, ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter).length);
+        File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(2, files.length);
     }
 }
