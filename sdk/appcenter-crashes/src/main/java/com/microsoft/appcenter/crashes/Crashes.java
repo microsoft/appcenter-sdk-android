@@ -575,7 +575,6 @@ public class Crashes extends AbstractAppCenterService {
         };
     }
 
-
     synchronized Device getDeviceInfo(Context context) throws DeviceInfoHelper.DeviceInfoException {
         if (mDevice == null) {
             mDevice = DeviceInfoHelper.getDeviceInfo(context);

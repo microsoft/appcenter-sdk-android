@@ -26,7 +26,6 @@ import java.util.UUID;
 
 import static com.microsoft.appcenter.crashes.Crashes.LOG_TAG;
 
-
 @SuppressWarnings("WeakerAccess")
 public class WrapperSdkExceptionManager {
 
