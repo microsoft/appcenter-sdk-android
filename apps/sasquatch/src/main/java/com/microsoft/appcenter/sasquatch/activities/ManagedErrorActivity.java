@@ -8,90 +8,81 @@ package com.microsoft.appcenter.sasquatch.activities;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
+import com.microsoft.appcenter.crashes.Crashes;
+import com.microsoft.appcenter.sasquatch.CrashTestHelper;
 import com.microsoft.appcenter.sasquatch.R;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
-public class ManagedErrorActivity extends AppCompatActivity {
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
-    private static final List<Class<? extends Throwable>> sSupportedThrowables = Arrays.asList(
-            ArithmeticException.class,
-            ArrayIndexOutOfBoundsException.class,
-            ArrayStoreException.class,
-            ClassCastException.class,
-            ClassNotFoundException.class,
-            CloneNotSupportedException.class,
-            IllegalAccessException.class,
-            IllegalArgumentException.class,
-            IllegalMonitorStateException.class,
-            IllegalStateException.class,
-            IllegalThreadStateException.class,
-            IndexOutOfBoundsException.class,
-            InstantiationException.class,
-            InterruptedException.class,
-            NegativeArraySizeException.class,
-            NoSuchFieldException.class,
-            NoSuchMethodException.class,
-            NullPointerException.class,
-            NumberFormatException.class,
-            SecurityException.class,
-            UnsupportedOperationException.class,
-            AssertionError.class,
-            LinkageError.class,
-            ThreadDeath.class,
-            InternalError.class,
-            OutOfMemoryError.class);
+public class ManagedErrorActivity extends PropertyActivity {
+
+    private Spinner mHandledErrorsSpinner;
+
+    private List<CrashTestHelper.Crash> mCrashes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_list);
+        getLayoutInflater().inflate(R.layout.layout_handled_error, ((LinearLayout) findViewById(R.id.top_layout)));
+        mCrashes = new CrashTestHelper(this).getCrashes();
 
-        ListView listView = findViewById(R.id.list);
-        listView.setAdapter(new ArrayAdapter<Class<? extends Throwable>>(this, android.R.layout.simple_list_item_1, sSupportedThrowables) {
-            @SuppressWarnings("ConstantConditions")
+        /* Handled Errors Spinner. */
+        mHandledErrorsSpinner = findViewById(R.id.handled_errors_spinner);
+        mHandledErrorsSpinner.setAdapter(new ArrayAdapter<CrashTestHelper.Crash>(this, android.R.layout.simple_list_item_1, android.R.id.text1, mCrashes) {
+
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                ((TextView) view.findViewById(android.R.id.text1)).setText(getItem(position).getSimpleName());
+                return setTextView(position, super.getView(position, convertView, parent));
+            }
+
+            @Override
+            public View getDropDownView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                return setTextView(position, super.getDropDownView(position, convertView, parent));
+            }
+
+            @NonNull
+            @SuppressWarnings("ConstantConditions")
+            private View setTextView(int position, View view) {
+                ((TextView) view.findViewById(android.R.id.text1)).setText(getItem(position).title);
                 return view;
             }
         });
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                try {
-                    @SuppressWarnings("unchecked")
-                    Class<? extends Throwable> clazz = (Class<? extends Throwable>) parent.getItemAtPosition(position);
-                    Throwable e;
-                    try {
-                        e = clazz.getConstructor(String.class).newInstance("Test Exception");
-                    } catch (NoSuchMethodException ignored) {
-                        e = clazz.getConstructor().newInstance();
-                    }
-                    CrashesPrivateHelper.trackException(e,
-                            new HashMap<String, String>() {{
-                                put("prop1", "value1");
-                                put("prop2", "value2");
-                            }});
-                } catch (Exception e) {
+    }
 
-                    /* This is not expected behavior so let the application crashes. */
-                    throw new RuntimeException(e);
-                }
+    @Override
+    protected void send(View view) {
+        try {
+            mCrashes.get(mHandledErrorsSpinner.getSelectedItemPosition()).crashTask.run();
+        } catch (Throwable t) {
+            try {
+                Map<String, String> properties = readStringProperties();
+                Method method = Crashes.class.getDeclaredMethod("trackException", Throwable.class, Map.class);
+                method.setAccessible(true);
+                method.invoke(null, t, properties);
+
+                /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
+                /* Crashes.trackException(throwable, properties); */
+            } catch (Exception e) {
+                Log.d(LOG_TAG, "Could not call Crashes.trackException", e);
             }
-        });
+        }
+    }
+
+    @Override
+    protected boolean isStringTypeOnly() {
+        return true;
     }
 }
