@@ -221,7 +221,7 @@ public class CrashesTest extends AbstractCrashesTest {
         assertFalse(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
         assertFalse(verify(file1).delete());
         assertFalse(verify(file2).delete());
-        Crashes.trackException(EXCEPTION);
+        Crashes.trackError(EXCEPTION);
         verifyNoMoreInteractions(mockChannel);
 
         /* Enable back, testing double calls. */
@@ -232,7 +232,7 @@ public class CrashesTest extends AbstractCrashesTest {
         Crashes.setEnabled(true);
         assertTrue(Crashes.isEnabled().get());
         verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
-        Crashes.trackException(EXCEPTION);
+        Crashes.trackError(EXCEPTION);
         verify(mockChannel, times(1)).enqueue(isA(HandledErrorLog.class), eq(crashes.getGroupName()), eq(DEFAULTS));
     }
 
