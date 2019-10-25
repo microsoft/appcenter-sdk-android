@@ -11,10 +11,12 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
+import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -40,6 +42,8 @@ import java.util.UUID;
 
 import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -368,5 +372,25 @@ public class WrapperSdkExceptionManagerTest {
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
         verify(logSerializer, never()).serializeLog(any(Log.class));
         verifyNoMoreInteractions(ErrorLogHelper.class);
+    }
+
+    @Test
+    @PrepareForTest(DeviceInfoHelper.class)
+    public void handledErrorReportFailedToGetDeviceInfo() throws DeviceInfoHelper.DeviceInfoException {
+
+        /* If device info fails. */
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new java.lang.Exception()));
+
+        /* When we build an handled error report. */
+        String errorReportId = UUID.randomUUID().toString();
+
+        /* Then error report is returned but without device info. */
+        ErrorReport errorReport = WrapperSdkExceptionManager.buildHandledErrorReport(mock(Context.class), errorReportId);
+        assertNotNull(errorReport);
+        assertEquals(errorReportId, errorReport.getId());
+        assertNotNull(errorReport.getAppErrorTime());
+        assertNotNull(errorReport.getAppStartTime());
+        assertNull(errorReport.getDevice());
     }
 }
