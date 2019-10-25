@@ -64,15 +64,15 @@ public class HandledErrorTest extends AbstractCrashesTest {
 
     @Test
     public void notInit() {
-        Crashes.trackException(EXCEPTION, null, null);
+        Crashes.trackError(EXCEPTION, null, null);
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
-    public void trackException() {
+    public void trackError() {
         startCrashes();
-        Crashes.trackException(EXCEPTION);
+        Crashes.trackError(EXCEPTION);
         verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
@@ -82,7 +82,7 @@ public class HandledErrorTest extends AbstractCrashesTest {
             }
         }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
         reset(mChannel);
-        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
+        Crashes.trackError(EXCEPTION, new HashMap<String, String>() {{
             put(null, null);
             put("", null);
             put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
@@ -98,7 +98,7 @@ public class HandledErrorTest extends AbstractCrashesTest {
             }
         }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
         reset(mChannel);
-        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
+        Crashes.trackError(EXCEPTION, new HashMap<String, String>() {{
             for (int i = 0; i < 30; i++) {
                 put("valid" + i, "valid");
             }
@@ -114,7 +114,7 @@ public class HandledErrorTest extends AbstractCrashesTest {
         }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
         reset(mChannel);
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
-        Crashes.trackException(EXCEPTION, new HashMap<String, String>() {{
+        Crashes.trackError(EXCEPTION, new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
         }}, null);
         verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
@@ -138,7 +138,7 @@ public class HandledErrorTest extends AbstractCrashesTest {
         CrashesListener mockListener = mock(CrashesListener.class);
         mCrashes.setInstanceListener(mockListener);
 
-        /* mCrashes callback test for trackException. */
+        /* mCrashes callback test for trackError. */
         mCrashes.getChannelListener().onBeforeSending(mockLog);
         verify(mockListener, never()).onBeforeSending(any(ErrorReport.class));
         mCrashes.getChannelListener().onSuccess(mockLog);
@@ -235,10 +235,10 @@ public class HandledErrorTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void trackExceptionWithUserId() {
+    public void trackErrorWithUserId() {
         startCrashes();
         UserIdContext.getInstance().setUserId("charlie");
-        Crashes.trackException(EXCEPTION);
+        Crashes.trackError(EXCEPTION);
         ArgumentCaptor<HandledErrorLog> log = ArgumentCaptor.forClass(HandledErrorLog.class);
         verify(mChannel).enqueue(log.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
         assertNotNull(log.getValue());
@@ -247,14 +247,14 @@ public class HandledErrorTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void trackExceptionWithOneAttachment() {
+    public void trackErrorWithOneAttachment() {
 
         /* If we start crashes. */
         startCrashes();
 
         /* When we track error with an attachment. */
         ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("text", null);
-        Crashes.trackException(EXCEPTION, null, Collections.singleton(textAttachment));
+        Crashes.trackError(EXCEPTION, null, Collections.singleton(textAttachment));
 
         /* Then we send the handled error. */
         ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);
@@ -296,7 +296,7 @@ public class HandledErrorTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void trackExceptionWithEverything() {
+    public void trackErrorWithEverything() {
 
         /* If we start crashes. */
         startCrashes();
@@ -312,7 +312,7 @@ public class HandledErrorTest extends AbstractCrashesTest {
                 put("a", "b");
             }
         };
-        Crashes.trackException(EXCEPTION, properties, Arrays.asList(textAttachment, binaryAttachment));
+        Crashes.trackError(EXCEPTION, properties, Arrays.asList(textAttachment, binaryAttachment));
 
         /* Then we send the handled error. */
         ArgumentCaptor<Log> logs = ArgumentCaptor.forClass(Log.class);

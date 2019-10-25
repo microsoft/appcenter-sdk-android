@@ -251,27 +251,28 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
-     * Track an exception.
+     * Track a handled error.
      *
-     * @param throwable An exception.
+     * @param throwable The throwable describing the handled error.
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
-    public static void trackException(Throwable throwable) {
-        trackException(throwable, null, null);
+    public static void trackError(Throwable throwable) {
+        trackError(throwable, null, null);
     }
 
     /**
-     * Track a custom exception with name and optional properties.
+     * Track a handled error with name and optional properties and attachments.
      * The name parameter can not be null or empty. Maximum allowed length = 256.
      * The properties parameter maximum item count = 5.
      * The properties keys can not be null or empty, maximum allowed key length = 64.
      * The properties values can not be null, maximum allowed value length = 64.
      * Any length of name/keys/values that are longer than each limit will be truncated.
      *
-     * @param throwable  An exception.
-     * @param properties Optional properties.
+     * @param throwable   The throwable describing the handled error.
+     * @param properties  Optional properties.
+     * @param attachments Optional attachments.
      */
-    public static void trackException(Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
+    public static void trackError(Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
         getInstance().queueException(throwable, properties, attachments);
     }
 

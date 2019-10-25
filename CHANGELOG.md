@@ -4,7 +4,7 @@
 
 ### App Center Crashes
 
-* **[Feature]** Add the `Crash.trackException` method to send handled errors.
+* **[Feature]** Add the `Crash.trackError` method to send handled errors (with optional properties and attachments).
 
 ___
 
