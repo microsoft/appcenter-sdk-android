@@ -14,6 +14,7 @@ import com.microsoft.appcenter.AppCenterPrivateHelper;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
+import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -29,6 +30,7 @@ import static com.microsoft.appcenter.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -137,5 +139,41 @@ public class WrapperSdkExceptionManagerAndroidTest {
 
         /* Save another crash without reset: will be ignored as only 1 crash per process. */
         assertNull(WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), "e"));
+    }
+
+    @Test
+    public void buildHandledErrorReport() {
+
+        /* If we start the Crashes sdk. */
+        long beforeStartTime = System.currentTimeMillis();
+        startFresh();
+        long afterStartTime = System.currentTimeMillis();
+
+        /* When we build an error report for an handled error. */
+        long beforeBuildTime = System.currentTimeMillis();
+        String errorReportId = UUID.randomUUID().toString();
+        ErrorReport errorReport = WrapperSdkExceptionManager.buildHandledErrorReport(sApplication, errorReportId);
+        long afterBuildTime = System.currentTimeMillis();
+
+        /* Then it contains the following properties. */
+        assertNotNull(errorReport);
+        assertEquals(errorReportId, errorReport.getId());
+        assertNotNull(errorReport.getDevice());
+        assertNotNull(errorReport.getAppErrorTime());
+        assertNotNull(errorReport.getAppStartTime());
+        assertNull(errorReport.getStackTrace());
+        assertNull(errorReport.getThreadName());
+
+        /* Check start time is consistent. */
+        assertTrue(errorReport.getAppStartTime().getTime() >= beforeStartTime);
+        assertTrue(errorReport.getAppStartTime().getTime() <= afterStartTime);
+
+        /* Check error time is consistent. */
+        assertTrue(errorReport.getAppErrorTime().getTime() >= beforeBuildTime);
+        assertTrue(errorReport.getAppErrorTime().getTime() <= afterBuildTime);
+
+        /* Check device info is cached. */
+        ErrorReport errorReport2 = WrapperSdkExceptionManager.buildHandledErrorReport(sApplication, UUID.randomUUID().toString());
+        assertSame(errorReport.getDevice(), errorReport2.getDevice());
     }
 }

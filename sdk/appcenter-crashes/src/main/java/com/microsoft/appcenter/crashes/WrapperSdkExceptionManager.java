@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.crashes;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
@@ -12,15 +13,18 @@ import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.crashes.Crashes.LOG_TAG;
 
 @SuppressWarnings("WeakerAccess")
 public class WrapperSdkExceptionManager {
@@ -56,11 +60,11 @@ public class WrapperSdkExceptionManager {
                 sWrapperExceptionDataContainer.put(errorId.toString(), rawSerializedException);
                 File dataFile = getFile(errorId);
                 FileManager.write(dataFile, rawSerializedException);
-                AppCenterLog.debug(Crashes.LOG_TAG, "Saved raw wrapper exception data into " + dataFile);
+                AppCenterLog.debug(LOG_TAG, "Saved raw wrapper exception data into " + dataFile);
             }
             return errorId;
         } catch (Exception e) {
-            AppCenterLog.error(Crashes.LOG_TAG, "Failed to save wrapper exception data to file", e);
+            AppCenterLog.error(LOG_TAG, "Failed to save wrapper exception data to file", e);
             return null;
         }
     }
@@ -72,14 +76,14 @@ public class WrapperSdkExceptionManager {
      */
     public static void deleteWrapperExceptionData(UUID errorId) {
         if (errorId == null) {
-            AppCenterLog.error(Crashes.LOG_TAG, "Failed to delete wrapper exception data: null errorId");
+            AppCenterLog.error(LOG_TAG, "Failed to delete wrapper exception data: null errorId");
             return;
         }
         File dataFile = getFile(errorId);
         if (dataFile.exists()) {
             String loadResult = loadWrapperExceptionData(errorId);
             if (loadResult == null) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Failed to load wrapper exception data.");
+                AppCenterLog.error(LOG_TAG, "Failed to load wrapper exception data.");
             }
             FileManager.delete(dataFile);
         }
@@ -93,7 +97,7 @@ public class WrapperSdkExceptionManager {
      */
     public static String loadWrapperExceptionData(UUID errorId) {
         if (errorId == null) {
-            AppCenterLog.error(Crashes.LOG_TAG, "Failed to load wrapper exception data: null errorId");
+            AppCenterLog.error(LOG_TAG, "Failed to load wrapper exception data: null errorId");
             return null;
         }
         String data = sWrapperExceptionDataContainer.get(errorId.toString());
@@ -129,9 +133,10 @@ public class WrapperSdkExceptionManager {
      * @param modelException An handled exception already in JSON model form.
      * @param properties     optional properties.
      * @param attachments    optional attachments.
+     * @return error report ID.
      */
-    public static void trackException(com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
-        Crashes.getInstance().queueException(modelException, properties, attachments);
+    public static String trackException(com.microsoft.appcenter.crashes.ingestion.models.Exception modelException, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
+        return Crashes.getInstance().queueException(modelException, properties, attachments).toString();
     }
 
     /**
@@ -165,9 +170,32 @@ public class WrapperSdkExceptionManager {
     }
 
     /**
+     * Get a generic error report representation for an handled exception.
+     * Since this is used by wrapper SDKs, stack trace and thread name are not known at Java level.
+     *
+     * @param context       context.
+     * @param errorReportId The error report identifier.
+     * @return an error report.
+     */
+    public static ErrorReport buildHandledErrorReport(Context context, String errorReportId) {
+        ErrorReport report = new ErrorReport();
+        report.setId(errorReportId);
+        report.setAppErrorTime(new Date());
+        report.setAppStartTime(new Date(Crashes.getInstance().getInitializeTimestamp()));
+        try {
+            report.setDevice(Crashes.getInstance().getDeviceInfo(context));
+        } catch (DeviceInfoHelper.DeviceInfoException e) {
+
+            /* The exception is already logged, just adding this log for context and avoid empty catch. */
+            AppCenterLog.warn(LOG_TAG, "Handled error report cannot get device info, errorReportId=" + errorReportId);
+        }
+        return report;
+    }
+
+    /**
      * Send error attachments when automatic processing is disabled.
      *
-     * @param errorReportId The crash report identifier for additional information.
+     * @param errorReportId The error report identifier to send attachments for.
      * @param attachments   instances of {@link ErrorAttachmentLog} to be sent for the specified error report.
      */
     public static void sendErrorAttachments(String errorReportId, Iterable<ErrorAttachmentLog> attachments) {

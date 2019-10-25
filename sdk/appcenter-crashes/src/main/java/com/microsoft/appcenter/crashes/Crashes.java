@@ -29,6 +29,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.model.NativeException;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
+import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -159,6 +160,11 @@ public class Crashes extends AbstractAppCenterService {
     private long mInitializeTimestamp;
 
     /**
+     * Cached device info.
+     */
+    private Device mDevice;
+
+    /**
      * Crash handler.
      */
     private UncaughtExceptionHandler mUncaughtExceptionHandler;
@@ -250,7 +256,6 @@ public class Crashes extends AbstractAppCenterService {
      * @param throwable An exception.
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
-    // TODO remove the suppress when releasing to jCenter
     public static void trackException(Throwable throwable) {
         trackException(throwable, null, null);
     }
@@ -266,8 +271,6 @@ public class Crashes extends AbstractAppCenterService {
      * @param throwable  An exception.
      * @param properties Optional properties.
      */
-    // TODO remove the suppress when releasing to jCenter
-    @SuppressWarnings("WeakerAccess")
     public static void trackException(Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
         getInstance().queueException(throwable, properties, attachments);
     }
@@ -572,12 +575,18 @@ public class Crashes extends AbstractAppCenterService {
         };
     }
 
+    synchronized Device getDeviceInfo(Context context) throws DeviceInfoHelper.DeviceInfoException {
+        if (mDevice == null) {
+            mDevice = DeviceInfoHelper.getDeviceInfo(context);
+        }
+        return mDevice;
+    }
+
     /**
      * Get initialization timestamp.
      *
      * @return initialization timestamp expressed using {@link System#currentTimeMillis()}.
      */
-    @VisibleForTesting
     synchronized long getInitializeTimestamp() {
         return mInitializeTimestamp;
     }
@@ -605,9 +614,10 @@ public class Crashes extends AbstractAppCenterService {
      * @param modelException An handled exception already in JSON model form.
      * @param properties     optional properties.
      * @param attachments    optional attachments.
+     * @return handled error ID.
      */
-    synchronized void queueException(@NonNull final Exception modelException, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
-        queueException(new ExceptionModelBuilder() {
+    synchronized UUID queueException(@NonNull final Exception modelException, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
+        return queueException(new ExceptionModelBuilder() {
 
             @Override
             public Exception buildExceptionModel() {
@@ -616,7 +626,11 @@ public class Crashes extends AbstractAppCenterService {
         }, properties, attachments);
     }
 
-    private synchronized void queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder, Map<String, String> properties, final Iterable<ErrorAttachmentLog> attachments) {
+    private synchronized UUID queueException(@NonNull final ExceptionModelBuilder exceptionModelBuilder, Map<String, String> properties, final Iterable<ErrorAttachmentLog> attachments) {
+
+        /* Snapshot userId as early as possible. */
+        final String userId = UserIdContext.getInstance().getUserId();
+        final UUID errorId = UUID.randomUUID();
         final Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
         post(new Runnable() {
 
@@ -625,16 +639,17 @@ public class Crashes extends AbstractAppCenterService {
 
                 /* First send the handled error. */
                 HandledErrorLog errorLog = new HandledErrorLog();
-                errorLog.setId(UUID.randomUUID());
-                errorLog.setUserId(UserIdContext.getInstance().getUserId());
+                errorLog.setId(errorId);
+                errorLog.setUserId(userId);
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(validatedProperties);
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
 
                 /* Then attachments if any. */
-                sendErrorAttachment(errorLog.getId(), attachments);
+                sendErrorAttachment(errorId, attachments);
             }
         });
+        return errorId;
     }
 
     private void initialize() {
@@ -706,7 +721,7 @@ public class Crashes extends AbstractAppCenterService {
              */
             errorLog.setUserId(UserIdContext.getInstance().getUserId());
             try {
-                errorLog.setDevice(DeviceInfoHelper.getDeviceInfo(mContext));
+                errorLog.setDevice(getDeviceInfo(mContext));
                 errorLog.getDevice().setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
                 saveErrorLogFiles(new NativeException(), errorLog);
                 if (!logFile.renameTo(dest)) {

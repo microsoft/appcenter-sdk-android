@@ -278,7 +278,8 @@ public class HandledErrorTest extends AbstractCrashesTest {
         /* When we track error with an attachment. */
         ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("text", null);
         Exception exception = new Exception();
-        WrapperSdkExceptionManager.trackException(exception, null, Collections.singleton(textAttachment));
+        String errorId = WrapperSdkExceptionManager.trackException(exception, null, Collections.singleton(textAttachment));
+        assertNotNull(errorId);
 
         /* Then we send the handled error. */
         ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);
@@ -288,6 +289,7 @@ public class HandledErrorTest extends AbstractCrashesTest {
         assertTrue(log.getAllValues().get(0) instanceof HandledErrorLog);
         HandledErrorLog handledErrorLog = (HandledErrorLog) log.getAllValues().get(0);
         assertEquals(exception, handledErrorLog.getException());
+        assertEquals(errorId, String.valueOf(handledErrorLog.getId()));
 
         /* Then the attachment. */
         assertSame(textAttachment, log.getAllValues().get(1));
@@ -350,7 +352,8 @@ public class HandledErrorTest extends AbstractCrashesTest {
             }
         };
         Exception modelException = new Exception();
-        WrapperSdkExceptionManager.trackException(modelException, properties, Arrays.asList(textAttachment, binaryAttachment));
+        String errorId = WrapperSdkExceptionManager.trackException(modelException, properties, Arrays.asList(textAttachment, binaryAttachment));
+        assertNotNull(errorId);
 
         /* Then we send the handled error. */
         ArgumentCaptor<Log> logs = ArgumentCaptor.forClass(Log.class);
@@ -361,6 +364,7 @@ public class HandledErrorTest extends AbstractCrashesTest {
         HandledErrorLog handledErrorLog = (HandledErrorLog) logs.getAllValues().get(0);
         assertEquals(modelException, handledErrorLog.getException());
         assertEquals(properties, handledErrorLog.getProperties());
+        assertEquals(errorId, String.valueOf(handledErrorLog.getId()));
 
         /* Then the attachments. */
         assertSame(textAttachment, logs.getAllValues().get(1));
