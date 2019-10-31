@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Suggest an idea for the Android SDK for App Center
 title: ''
 labels: feature request
 assignees: ''
