@@ -1,15 +1,20 @@
+---
+name: Problem report
+about: Report a problem using the SDK
+title: ''
+labels: support
+assignees: ''
+
+---
+
 <!--
     Thanks for your interest in using the App Center SDK for Android.
-    If your issue is not related to using our Android SDK but rather about the product experience like the portal or CI,
-    please create a ticket using the blue chat button on any page of the https://appcenter.ms portal instead.
-    If you are using Xamarin, please report the issue on https://github.com/microsoft/appcenter-sdk-dotnet instead. 
+    If your issue is not related to using our Android SDK but rather about the product experience like the portal or CI, please create an issue on https://github.com/Microsoft/appcenter instead.
 -->
 
 ### **Description**
 
 Please describe the issue you are facing or a feature you would like to be added to the SDK.
-
-<!-- If making a feature request, remove the below information -->
 
 ### **Repro Steps**
 
@@ -29,4 +34,3 @@ Please list the steps used to reproduce your issue.
 4. What third party libraries are you using?
     - example
 5. Please enable verbose logging for your app using `AppCenter.setLogLevel(Log.VERBOSE)` before your call to `AppCenter.start(...)` and include the logs here:
-
