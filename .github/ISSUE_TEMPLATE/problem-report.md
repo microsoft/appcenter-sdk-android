@@ -14,7 +14,7 @@ assignees: ''
 
 ### **Description**
 
-Please describe the issue you are facing or a feature you would like to be added to the SDK.
+Please describe the issue you are facing using the SDK.
 
 ### **Repro Steps**
 
