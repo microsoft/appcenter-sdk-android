@@ -247,7 +247,7 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().setInstalling(mReleaseDetails);
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(never());
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
         verifyStatic();
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_STATE));

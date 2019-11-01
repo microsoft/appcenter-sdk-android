@@ -896,7 +896,6 @@ public class Distribute extends AbstractAppCenterService {
      */
     synchronized void completeWorkflow() {
         cancelNotification();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;

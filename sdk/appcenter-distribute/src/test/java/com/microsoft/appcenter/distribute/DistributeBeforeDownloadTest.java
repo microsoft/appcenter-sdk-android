@@ -344,7 +344,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Verify. */
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verifyStatic();
+        verifyStatic(never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         verifyStatic();
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), eq(now));
