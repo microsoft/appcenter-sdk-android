@@ -679,7 +679,7 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Load cached release details if process restarted and we have such a cache. */
             int downloadState = getStoredDownloadState();
-            if (mReleaseDetails == null && downloadState != DOWNLOAD_STATE_COMPLETED) {
+            if (mReleaseDetails == null) {
                 updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
 
                 /* If cached release is optional and we have network, we should not reuse it. */
