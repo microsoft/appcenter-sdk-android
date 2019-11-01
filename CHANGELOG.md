@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 2.4.2
+
+### App Center Distribute
+
+* **[Fix]** Fix an in-app update caching issue, where the same version was installed constantly after the 1st successful update.
+
+___
+
 ## Version 2.4.1
 
 ### App Center Distribute
