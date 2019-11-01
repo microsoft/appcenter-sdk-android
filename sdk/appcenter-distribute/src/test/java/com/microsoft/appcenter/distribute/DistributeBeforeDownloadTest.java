@@ -984,6 +984,67 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(cachedReleaseDownloader).cancel();
     }
 
+    @Test
+    public void disableThenEnableBeforeUpdatingSecondTime() throws Exception {
+
+        /* Mock first update completed but we disable in this test so mock we don't have release details. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
+
+        /* Mock next release. */
+        final ReleaseDetails nextReleaseDetails = mock(ReleaseDetails.class);
+        when(nextReleaseDetails.getId()).thenReturn(2);
+        when(nextReleaseDetails.getVersion()).thenReturn(7);
+        when(ReleaseDetails.parse(anyString())).thenReturn(nextReleaseDetails);
+        ReleaseDownloader nextReleaseDownloader = mock(ReleaseDownloader.class);
+        when(ReleaseDownloaderFactory.create(any(Context.class), same(nextReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(nextReleaseDownloader);
+        when(nextReleaseDownloader.getReleaseDetails()).thenReturn(nextReleaseDetails);
+
+        /* Simulate cache update. */
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(nextReleaseDetails);
+                return null;
+            }
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_RELEASE_DETAILS), anyString());
+
+        /* Mock we receive a second update. */
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                return mock(ServiceCall.class);
+            }
+        });
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+
+        /* Start SDK. */
+        start();
+
+        /* Disable SDK. */
+        ReleaseDownloader cleanupReleaseDownloader = mock(ReleaseDownloader.class);
+        when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
+        Distribute.setEnabled(false).get();
+        Distribute.setEnabled(true).get();
+
+        /* Verify previous download canceled. */
+        verify(cleanupReleaseDownloader).cancel();
+
+        /* Resume workflow. */
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Verify prompt is shown. */
+        verify(mDialog).show();
+    }
+
     @After
     public void tearDown() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);

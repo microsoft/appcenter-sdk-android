@@ -1161,6 +1161,10 @@ public class Distribute extends AbstractAppCenterService {
                 mReleaseDownloader.cancel();
             }
             mReleaseDownloader = null;
+        } else if (releaseDetails == null) {
+
+            /* When we disable the SDK or cancel every state, we need to clean download cache. */
+            ReleaseDownloaderFactory.create(mContext, null, null).cancel();
         }
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
