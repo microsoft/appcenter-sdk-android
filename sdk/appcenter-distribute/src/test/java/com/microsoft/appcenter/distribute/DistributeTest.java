@@ -579,6 +579,27 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void loadCacheReleaseDetailsIfProcessRestarted() {
+
+        /* Mock mReleaseDownloader is downloading. */
+        when(mReleaseDownloader.isDownloading()).thenReturn(true);
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
+
+        /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
+
+        /* mReleaseDetails is not null and it's a mandatory update. */
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+        resumeWorkflow(mock(Activity.class));
+
+        /* Verify that load cache release details was called. */
+        verifyStatic(times(1));
+        DistributeUtils.loadCachedReleaseDetails();
+    }
+
+    @Test
     public void showMandatoryDownloadReadyDialogTest() {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1).thenReturn(DOWNLOAD_STATE_INSTALLING);
