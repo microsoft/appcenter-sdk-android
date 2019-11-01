@@ -16,6 +16,8 @@ import android.net.Uri;
 import android.os.Build;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -57,6 +59,7 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -931,6 +934,29 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(mReleaseDetails.getVersion()).thenReturn(6);
         when(mReleaseDetails.getId()).thenReturn(1);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        ReleaseDownloader cachedReleaseDownloader = mock(ReleaseDownloader.class);
+        when(ReleaseDownloaderFactory.create(any(Context.class), same(mReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(cachedReleaseDownloader);
+        when(cachedReleaseDownloader.getReleaseDetails()).thenReturn(mReleaseDetails);
+
+        /* Mock next release. */
+        final ReleaseDetails nextReleaseDetails = mock(ReleaseDetails.class);
+        when(nextReleaseDetails.getId()).thenReturn(2);
+        when(nextReleaseDetails.getVersion()).thenReturn(7);
+        when(ReleaseDetails.parse(anyString())).thenReturn(nextReleaseDetails);
+        ReleaseDownloader nextReleaseDownloader = mock(ReleaseDownloader.class);
+        when(ReleaseDownloaderFactory.create(any(Context.class), same(nextReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(nextReleaseDownloader);
+        when(nextReleaseDownloader.getReleaseDetails()).thenReturn(nextReleaseDetails);
+
+        /* Simulate cache update. */
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(nextReleaseDetails);
+                return null;
+            }
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_RELEASE_DETAILS), anyString());
 
         /* Mock we receive a second update. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
@@ -945,10 +971,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         });
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
-        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
-        when(releaseDetails.getId()).thenReturn(2);
-        when(releaseDetails.getVersion()).thenReturn(7);
-        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
         start();
@@ -959,7 +981,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialog).show();
 
         /* Verify previous download canceled. */
-        verify(mReleaseDownloader).cancel();
+        verify(cachedReleaseDownloader).cancel();
     }
 
     @After

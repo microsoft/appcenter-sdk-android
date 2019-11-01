@@ -1115,6 +1115,11 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
                 if (isMoreRecent(releaseDetails) && canUpdateNow(releaseDetails)) {
 
+                    /* Load last known release to see if we need to prepare a cleanup. */
+                    if (mReleaseDetails == null) {
+                        updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
+                    }
+
                     /* Update cache. */
                     SharedPreferencesManager.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
 
@@ -1127,11 +1132,6 @@ public class Distribute extends AbstractAppCenterService {
                             AppCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
                         }
                         return;
-                    }
-
-                    /* Load last known release to see if we need to prepare a cleanup. */
-                    if (mReleaseDetails == null) {
-                        updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
                     }
 
                     /* Prepare download and cleanup older files if needed. */
