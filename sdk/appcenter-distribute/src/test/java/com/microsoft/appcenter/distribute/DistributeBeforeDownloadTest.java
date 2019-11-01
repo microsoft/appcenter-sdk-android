@@ -921,6 +921,47 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
     }
 
+
+    @Test
+    public void updateASecondTimeClearsPreviousReleaseCache() throws Exception {
+
+        /* Mock first update completed. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
+        when(mReleaseDetails.getVersion()).thenReturn(6);
+        when(mReleaseDetails.getId()).thenReturn(1);
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+
+        /* Mock we receive a second update. */
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                return mock(ServiceCall.class);
+            }
+        });
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(2);
+        when(releaseDetails.getVersion()).thenReturn(7);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Verify prompt is shown. */
+        verify(mDialog).show();
+
+        /* Verify previous download canceled. */
+        verify(mReleaseDownloader).cancel();
+    }
+
     @After
     public void tearDown() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);

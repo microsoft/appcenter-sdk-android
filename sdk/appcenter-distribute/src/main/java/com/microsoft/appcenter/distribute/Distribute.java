@@ -679,7 +679,7 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Load cached release details if process restarted and we have such a cache. */
             int downloadState = getStoredDownloadState();
-            if (mReleaseDetails == null) {
+            if (mReleaseDetails == null && downloadState != DOWNLOAD_STATE_COMPLETED) {
                 updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
 
                 /* If cached release is optional and we have network, we should not reuse it. */
@@ -1129,8 +1129,15 @@ public class Distribute extends AbstractAppCenterService {
                         return;
                     }
 
-                    /* Show update dialog. */
+                    /* Load last known release to see if we need to prepare a cleanup. */
+                    if (mReleaseDetails == null) {
+                        updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
+                    }
+
+                    /* Prepare download and cleanup older files if needed. */
                     updateReleaseDetails(releaseDetails);
+
+                    /* Show update dialog. */
                     AppCenterLog.debug(LOG_TAG, "Latest release is more recent.");
                     SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                     if (mForegroundActivity != null) {
