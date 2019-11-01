@@ -595,7 +595,7 @@ public class DistributeTest extends AbstractDistributeTest {
         resumeWorkflow(mock(Activity.class));
 
         /* Verify that load cache release details was called. */
-        verifyStatic(times(1));
+        verifyStatic();
         DistributeUtils.loadCachedReleaseDetails();
     }
 
