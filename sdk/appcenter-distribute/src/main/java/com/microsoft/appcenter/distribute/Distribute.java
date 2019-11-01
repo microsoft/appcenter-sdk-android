@@ -896,7 +896,6 @@ public class Distribute extends AbstractAppCenterService {
      */
     synchronized void completeWorkflow() {
         cancelNotification();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
@@ -1115,6 +1114,11 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
                 if (isMoreRecent(releaseDetails) && canUpdateNow(releaseDetails)) {
 
+                    /* Load last known release to see if we need to prepare a cleanup. */
+                    if (mReleaseDetails == null) {
+                        updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
+                    }
+
                     /* Update cache. */
                     SharedPreferencesManager.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
 
@@ -1129,8 +1133,10 @@ public class Distribute extends AbstractAppCenterService {
                         return;
                     }
 
-                    /* Show update dialog. */
+                    /* Prepare download and cleanup older files if needed. */
                     updateReleaseDetails(releaseDetails);
+
+                    /* Show update dialog. */
                     AppCenterLog.debug(LOG_TAG, "Latest release is more recent.");
                     SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                     if (mForegroundActivity != null) {
@@ -1155,6 +1161,10 @@ public class Distribute extends AbstractAppCenterService {
                 mReleaseDownloader.cancel();
             }
             mReleaseDownloader = null;
+        } else if (releaseDetails == null) {
+
+            /* When we disable the SDK or cancel every state, we need to clean download cache. */
+            ReleaseDownloaderFactory.create(mContext, null, null).cancel();
         }
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
