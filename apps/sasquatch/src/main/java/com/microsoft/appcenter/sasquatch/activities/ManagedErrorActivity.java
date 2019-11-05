@@ -69,17 +69,9 @@ public class ManagedErrorActivity extends PropertyActivity {
         try {
             mCrashes.get(mHandledErrorsSpinner.getSelectedItemPosition()).crashTask.run();
         } catch (Throwable t) {
-            try {
-                Map<String, String> properties = readStringProperties();
-                Method method = Crashes.class.getMethod("trackError", Throwable.class, Map.class, Iterable.class);
-                Iterable<ErrorAttachmentLog> attachmentLogs = AttachmentsUtil.getInstance().getErrorAttachments(getApplicationContext());
-                method.invoke(null, t, properties, attachmentLogs);
-
-                /* TODO uncomment the next line, remove reflection and catch block after API available to jCenter. */
-                /* Crashes.trackError(throwable, properties, attachments); */
-            } catch (Exception e) {
-                Log.d(LOG_TAG, "Could not call Crashes.trackError", e);
-            }
+            Map<String, String> properties = readStringProperties();
+            Iterable<ErrorAttachmentLog> attachmentLogs = AttachmentsUtil.getInstance().getErrorAttachments(getApplicationContext());
+            Crashes.trackError(t, properties, attachmentLogs);
         }
     }
 
