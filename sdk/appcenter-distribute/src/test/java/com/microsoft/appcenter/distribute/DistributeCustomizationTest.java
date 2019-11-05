@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -35,6 +36,7 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -133,6 +135,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
+        ReleaseDownloader cleanupReleaseDownloader = mock(ReleaseDownloader.class);
+        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
         distribute.setInstanceEnabled(true);
 
         /* Verify the method is called by resumeDistributeWorkflow. */
