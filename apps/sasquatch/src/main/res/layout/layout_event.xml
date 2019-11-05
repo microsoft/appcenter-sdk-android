@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/transmission_target" />
+
+    <Spinner
+        android:id="@+id/transmission_target"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown" />
+
+    <Button
+        android:id="@+id/configure_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/configure_target_properties" />
+
+    <Button
+        android:id="@+id/override_cs_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/override_cs_properties"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/pause_transmission_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="@string/pause_target"
+            android:visibility="gone"
+            tools:ignore="ButtonStyle" />
+
+        <Button
+            android:id="@+id/resume_transmission_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:text="@string/resume_target"
+            android:visibility="gone"
+            tools:ignore="ButtonStyle" />
+
+    </LinearLayout>
+
+    <CheckBox
+        android:id="@+id/transmission_enabled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="toggleTransmissionEnabled"
+        android:visibility="gone" />
+
+    <CheckBox
+        android:id="@+id/device_id_enabled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="toggleDeviceIdEnabled"
+        android:visibility="gone" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/event_priority" />
+
+    <Spinner
+        android:id="@+id/event_priority_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown" />
+
+    <TextView
+        android:id="@+id/number_of_logs_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/number_of_logs" />
+
+    <SeekBar
+        android:id="@+id/number_of_logs"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:max="1000" />
+
+</LinearLayout>

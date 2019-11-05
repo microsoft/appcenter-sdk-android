@@ -1,10 +1,14 @@
 # App Center SDK for Android Change Log
 
-## Version 2.4.2
+## Version 2.5.0
+
+### App Center Crashes
+
+* **[Feature]** Add the `Crash.trackError` method to send handled errors (with optional properties and attachments).
 
 ### App Center Distribute
 
-* **[Fix]** Fix an in-app update caching issue, where the same version was installed constantly after the 1st successful update.
+* **[Fix]** Fix an in-app update caching issue, where the same version was installed constantly after the 1st successful update (or also if the download was canceled).
 
 ___
 

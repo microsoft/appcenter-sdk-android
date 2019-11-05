@@ -116,4 +116,5 @@
     <string name="number_of_logs" tools:ignore="MissingTranslation">Number of logs: %d</string>
     <string name="jwt_parse_error" tools:ignore="MissingTranslation">Could not parse the JWT token</string>
     <string name="jwt_parse_json_error" tools:ignore="MissingTranslation">An error occurred during parsing JWT claims.</string>
+    <string name="handled_errors" tools:ignore="MissingTranslation">Handled Errors</string>
 </resources>

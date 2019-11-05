@@ -11,6 +11,8 @@
     <string name="description_crash_divide_by_0" tools:ignore="MissingTranslation">Divide by 0</string>
     <string name="title_test_ui_crash" tools:ignore="MissingTranslation">Test some UI crash</string>
     <string name="description_test_ui_crash" tools:ignore="MissingTranslation">A UI coding mistake, has inner exception</string>
+    <string name="title_nested_exception_crash" tools:ignore="MissingTranslation">Crash with an inner exception</string>
+    <string name="description_nested_exception_crash" tools:ignore="MissingTranslation">An exception with a single cause</string>
     <string name="title_deeply_nested_exception_crash" tools:ignore="MissingTranslation">A exception with plenty of causes</string>
     <string name="description_deeply_nested_exception_crash" tools:ignore="MissingTranslation">The exception that caused the exception that caused the exception that caused the exception…</string>
     <string name="title_stack_overflow_crash" tools:ignore="MissingTranslation">Stack overflow crash</string>
