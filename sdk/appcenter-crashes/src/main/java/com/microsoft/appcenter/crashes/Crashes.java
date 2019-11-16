@@ -1016,11 +1016,13 @@ public class Crashes extends AbstractAppCenterService {
                 if (attachment != null) {
                     attachment.setId(UUID.randomUUID());
                     attachment.setErrorId(errorId);
-                    if (attachment.isValid()) {
+                    if (!attachment.isValid()) {
+                        AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
+                    } else if (attachment.getData().length > ErrorAttachmentLog.MAX_SIZE) {
+                        AppCenterLog.error(LOG_TAG, "Discarding attachment with size above " + ErrorAttachmentLog.MAX_SIZE + " bytes.");
+                    } else {
                         ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);
-                    } else {
-                        AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
                     }
                 } else {
                     AppCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog.");

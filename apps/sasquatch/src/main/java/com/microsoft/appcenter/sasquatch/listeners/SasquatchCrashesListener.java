@@ -22,7 +22,6 @@ import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 import com.microsoft.appcenter.utils.HandlerUtils;
 
-@SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class SasquatchCrashesListener extends AbstractCrashesListener {
 
     @VisibleForTesting

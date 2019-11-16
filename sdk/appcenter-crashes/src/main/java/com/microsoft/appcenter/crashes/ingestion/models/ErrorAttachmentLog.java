@@ -32,6 +32,11 @@ public class ErrorAttachmentLog extends AbstractLog {
     @SuppressWarnings("WeakerAccess")
     public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
 
+    /**
+     * Maximum size for attachment data in bytes.
+     */
+    public static final int MAX_SIZE = 7 * 1024 * 1024;
+
     public static final String TYPE = "errorAttachment";
 
     private static final String ERROR_ID = "errorId";
@@ -204,6 +209,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         return getId() != null && getErrorId() != null && getContentType() != null && getData() != null;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
@@ -228,7 +234,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         JSONUtils.write(writer, DATA, Base64.encodeToString(getData(), Base64.NO_WRAP));
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
+    @SuppressWarnings({"SimplifiableIfStatement", "EqualsReplaceableByObjectsCall"})
     @Override
     public boolean equals(Object o) {
         if (this == o) {
