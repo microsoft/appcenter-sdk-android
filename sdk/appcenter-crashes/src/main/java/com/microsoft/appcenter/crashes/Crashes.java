@@ -55,6 +55,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -1019,7 +1020,9 @@ public class Crashes extends AbstractAppCenterService {
                     if (!attachment.isValid()) {
                         AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
                     } else if (attachment.getData().length > ErrorAttachmentLog.MAX_SIZE) {
-                        AppCenterLog.error(LOG_TAG, "Discarding attachment with size above " + ErrorAttachmentLog.MAX_SIZE + " bytes.");
+                        AppCenterLog.error(LOG_TAG, String.format(Locale.ENGLISH,
+                                "Discarding attachment with size above %d bytes: size=%d, fileName=%s.",
+                                ErrorAttachmentLog.MAX_SIZE, attachment.getData().length, attachment.getFileName()));
                     } else {
                         ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);
