@@ -925,6 +925,7 @@ public class CrashesTest extends AbstractCrashesTest {
         for (int i = 0; i < numOfAttachments; ++i) {
             ErrorAttachmentLog log = mock(ErrorAttachmentLog.class);
             when(log.isValid()).thenReturn(true);
+            when(log.getData()).thenReturn(new byte[1]);
             errorAttachmentLogs.add(log);
         }
 
