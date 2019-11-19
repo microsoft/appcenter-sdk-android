@@ -120,6 +120,11 @@ public class Crashes extends AbstractAppCenterService {
     private static final int MAX_ATTACHMENT_PER_CRASH = 2;
 
     /**
+     * Maximum size for attachment data in bytes.
+     */
+    private static final int MAX_ATTACHMENT_SIZE = 7 * 1024 * 1024;
+
+    /**
      * Default crashes listener.
      */
     private static final CrashesListener DEFAULT_ERROR_REPORTING_LISTENER = new DefaultCrashesListener();
@@ -1019,10 +1024,10 @@ public class Crashes extends AbstractAppCenterService {
                     attachment.setErrorId(errorId);
                     if (!attachment.isValid()) {
                         AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
-                    } else if (attachment.getData().length > ErrorAttachmentLog.MAX_SIZE) {
+                    } else if (attachment.getData().length > MAX_ATTACHMENT_SIZE) {
                         AppCenterLog.error(LOG_TAG, String.format(Locale.ENGLISH,
                                 "Discarding attachment with size above %d bytes: size=%d, fileName=%s.",
-                                ErrorAttachmentLog.MAX_SIZE, attachment.getData().length, attachment.getFileName()));
+                                MAX_ATTACHMENT_SIZE, attachment.getData().length, attachment.getFileName()));
                     } else {
                         ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);

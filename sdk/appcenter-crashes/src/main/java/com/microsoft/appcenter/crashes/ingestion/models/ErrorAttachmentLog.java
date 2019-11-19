@@ -32,11 +32,6 @@ public class ErrorAttachmentLog extends AbstractLog {
     @SuppressWarnings("WeakerAccess")
     public static final String CONTENT_TYPE_TEXT_PLAIN = "text/plain";
 
-    /**
-     * Maximum size for attachment data in bytes.
-     */
-    public static final int MAX_SIZE = 7 * 1024 * 1024;
-
     public static final String TYPE = "errorAttachment";
 
     private static final String ERROR_ID = "errorId";
