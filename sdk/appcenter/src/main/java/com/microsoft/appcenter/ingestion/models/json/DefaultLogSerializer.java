@@ -7,6 +7,7 @@ package com.microsoft.appcenter.ingestion.models.json;
 
 import android.support.annotation.NonNull;
 
+import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
@@ -39,6 +40,14 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
+    private JSONStringer writeDevice(JSONStringer writer, Device device) throws JSONException {
+        writer.object();
+        device.write(writer);
+        writer.endObject();
+        return writer;
+    }
+
+    @NonNull
     private Log readLog(JSONObject object, String type) throws JSONException {
         if (type == null) {
             type = object.getString(TYPE);
@@ -53,6 +62,13 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
+    private Device readDevice(JSONObject object) throws JSONException {
+        Device log = new Device();
+        log.read(object);
+        return log;
+    }
+
+    @NonNull
     @Override
     public String serializeLog(@NonNull Log log) throws JSONException {
         return writeLog(new JSONStringer(), log).toString();
@@ -62,6 +78,18 @@ public class DefaultLogSerializer implements LogSerializer {
     @Override
     public Log deserializeLog(@NonNull String json, String type) throws JSONException {
         return readLog(new JSONObject(json), type);
+    }
+
+    @NonNull
+    @Override
+    public String serializeDevice(@NonNull Device device) throws JSONException {
+        return writeDevice(new JSONStringer(), device).toString();
+    }
+
+    @NonNull
+    @Override
+    public Device deserializeDevice(@NonNull String json) throws JSONException {
+        return readDevice(new JSONObject(json));
     }
 
     @Override

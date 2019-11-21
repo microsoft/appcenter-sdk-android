@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
@@ -97,6 +98,12 @@ public class Crashes extends AbstractAppCenterService {
      */
     @VisibleForTesting
     static final String PREF_KEY_MEMORY_RUNNING_LEVEL = "com.microsoft.appcenter.crashes.memory";
+
+    /**
+     * Preference storage key for last device info.
+     */
+    @VisibleForTesting
+    static final String PREF_KEY_LAST_DEVICE_INFO = "com.microsoft.appcenter.crashes.deviceinfo";
 
     /**
      * Group for sending logs.
@@ -590,6 +597,20 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
+     * Return device information from the last session.
+     *
+     * @return Device information.
+     */
+    private synchronized Device getLastDeviceInfo() throws JSONException {
+        String json = SharedPreferencesManager.getString(PREF_KEY_LAST_DEVICE_INFO);
+        Device lastDevice = null;
+        if (!TextUtils.isEmpty(json)) {
+            lastDevice = mLogSerializer.deserializeDevice(json);
+        }
+        return lastDevice;
+    }
+
+    /**
      * Get initialization timestamp.
      *
      * @return initialization timestamp expressed using {@link System#currentTimeMillis()}.
@@ -675,6 +696,13 @@ public class Crashes extends AbstractAppCenterService {
 
             /* Process minidump files. */
             processMinidumpFiles();
+
+            /* Save current device info. */
+            try {
+                SharedPreferencesManager.putString(PREF_KEY_LAST_DEVICE_INFO, mLogSerializer.serializeDevice(getDeviceInfo(mContext)));
+            } catch (java.lang.Exception e) {
+                AppCenterLog.error(LOG_TAG, "Failed to save current device information: " + e);
+            }
         }
     }
 
@@ -728,7 +756,7 @@ public class Crashes extends AbstractAppCenterService {
              */
             errorLog.setUserId(UserIdContext.getInstance().getUserId());
             try {
-                errorLog.setDevice(getDeviceInfo(mContext));
+                errorLog.setDevice(getLastDeviceInfo());
                 errorLog.getDevice().setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
                 saveErrorLogFiles(new NativeException(), errorLog);
                 if (!logFile.renameTo(dest)) {
