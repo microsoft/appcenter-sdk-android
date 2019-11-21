@@ -11,6 +11,7 @@ import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
+import com.microsoft.appcenter.utils.DeviceHistory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,8 +21,12 @@ import org.json.JSONStringer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
 
@@ -40,9 +45,12 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    private JSONStringer writeDevice(JSONStringer writer, Device device) throws JSONException {
+    private JSONStringer writeDevice(JSONStringer writer, DeviceHistory deviceHistory) throws JSONException {
         writer.object();
+        writer.key(DeviceHistory.KEY_TIMESTAMP).value(deviceHistory.getTimestamp());
+        Device device = deviceHistory.getGetDevice();
         device.write(writer);
+        writer.key(DeviceHistory.KEY_DEVICE).value(device);
         writer.endObject();
         return writer;
     }
@@ -62,10 +70,16 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    private Device readDevice(JSONObject object) throws JSONException {
-        Device log = new Device();
-        log.read(object);
-        return log;
+    private SortedSet<DeviceHistory> readDevice(JSONArray arrayObject) throws JSONException {
+        SortedSet<DeviceHistory> devicesHistory = new TreeSet<>();
+        for (int i = 0; i < arrayObject.length(); i++) {
+            JSONObject deviceHelperObj = new JSONObject(arrayObject.get(i).toString());
+            long timestamp = deviceHelperObj.getLong(DeviceHistory.KEY_TIMESTAMP);
+            Device device = new Device();
+            device.read(deviceHelperObj.getJSONObject(DeviceHistory.KEY_DEVICE));
+            devicesHistory.add(new DeviceHistory(timestamp, device));
+        }
+        return devicesHistory;
     }
 
     @NonNull
@@ -82,14 +96,18 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     @Override
-    public String serializeDevice(@NonNull Device device) throws JSONException {
-        return writeDevice(new JSONStringer(), device).toString();
+    public Set<String> serializeDevice(@NonNull SortedSet<DeviceHistory> device) throws JSONException {
+        Set<String> deviceHistories = new HashSet<>();
+        for (DeviceHistory deviceHistory : device) {
+            deviceHistories.add(writeDevice(new JSONStringer(), deviceHistory).toString());
+        }
+        return deviceHistories;
     }
 
     @NonNull
     @Override
-    public Device deserializeDevice(@NonNull String json) throws JSONException {
-        return readDevice(new JSONObject(json));
+    public SortedSet<DeviceHistory> deserializeDevice(@NonNull Set<String> json) throws JSONException {
+        return readDevice(new JSONArray(json));
     }
 
     @Override
