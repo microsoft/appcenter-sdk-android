@@ -21,7 +21,7 @@ import java.util.TreeSet;
 /**
  * Model class that correlates Device to a crash at app relaunch.
  */
-public class DeviceHistory implements Comparator<DeviceHistory>, Comparable<DeviceHistory> {
+public class DeviceHistory implements Comparable<DeviceHistory> {
 
     public static String KEY_TIMESTAMP = "mTimestamp";
     public static String KEY_DEVICE = "mDevice";
@@ -83,10 +83,5 @@ public class DeviceHistory implements Comparator<DeviceHistory>, Comparable<Devi
     @Override
     public int compareTo(@NonNull DeviceHistory o) {
         return (int)(getTimestamp() - o.getTimestamp());
-    }
-
-    @Override
-    public int compare(DeviceHistory o1, DeviceHistory o2) {
-        return (int)(o1.getTimestamp() - o2.getTimestamp());
     }
 }

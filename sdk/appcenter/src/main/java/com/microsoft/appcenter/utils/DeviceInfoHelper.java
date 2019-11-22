@@ -221,22 +221,15 @@ public class DeviceInfoHelper {
     /**
      * Add current device history only to preference.
      */
-    private static synchronized void refreshHistoryDevice(Context context) {
-        // if current device is not already stored in storage.
+    private static synchronized void refreshHistoryDevice(Context context) throws DeviceInfoException {
+
+        /* if current device is not already stored in storage. */
         if (needRefresh) {
-            LogSerializer logSerializer = new DefaultLogSerializer();
-            try {
-                mSetDevices = logSerializer.deserializeDevices(SharedPreferencesManager.getStringSet(PREF_KEY_LAST_DEVICE_INFO));
-                DeviceHistory currentDeviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(context));
-                mSetDevices.add(currentDeviceHistory);
-
-                saveDevices();
-
-                mSetDevices.remove(currentDeviceHistory);
-                needRefresh = false;
-            } catch (java.lang.Exception e) {
-                AppCenterLog.error(LOG_TAG, "Failed to deserialize devices' information: " + e);
-            }
+            DeviceHistory currentDeviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(context));
+            mSetDevices.add(currentDeviceHistory);
+            saveDevices();
+            mSetDevices.remove(currentDeviceHistory);
+            needRefresh = false;
         }
     }
 
@@ -247,10 +240,8 @@ public class DeviceInfoHelper {
      */
     public static synchronized Device getDeviceInfoByTimestamp(Long timestamp) {
         List<DeviceHistory> devices = new ArrayList(mSetDevices);
-        Collections.sort(devices);
         /**may be fixme*/
-        int index = Collections.binarySearch(devices, new DeviceHistory(timestamp, null));
-
+        int index = Collections.binarySearch(devices, timestamp, Collections.reverseOrder());
         if (index == 0) {
             return devices.get(0).getGetDevice();
         } else if (index == devices.size()) {
