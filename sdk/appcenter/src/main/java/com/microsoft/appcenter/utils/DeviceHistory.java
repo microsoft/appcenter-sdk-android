@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.utils;
 
-import android.support.annotation.NonNull;
-
 import com.microsoft.appcenter.ingestion.models.Device;
 
 import org.json.JSONArray;
@@ -14,13 +12,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 /**
  * Model class that correlates Device to a crash at app relaunch.
  */
-public class DeviceHistory implements Comparable<DeviceHistory> {
+public class DeviceHistory {
 
     private static String KEY_TIMESTAMP = "timestamp";
     private static String KEY_DEVICE = "device";
@@ -40,14 +38,14 @@ public class DeviceHistory implements Comparable<DeviceHistory> {
         return mDevice;
     }
 
-    public static SortedSet<DeviceHistory> readDevicesHistory(JSONArray arrayObject) throws JSONException {
-        SortedSet<DeviceHistory> devicesHistory = new TreeSet<>();
+    public static NavigableMap<Long, DeviceHistory> readDevicesHistory(JSONArray arrayObject) throws JSONException {
+        NavigableMap<Long, DeviceHistory> devicesHistory = new TreeMap<>();
         for (int i = 0; i < arrayObject.length(); i++) {
             JSONObject deviceHelperObj = new JSONObject(arrayObject.get(i).toString());
             long timestamp = deviceHelperObj.getLong(DeviceHistory.KEY_TIMESTAMP);
             Device device = new Device();
             device.read(new JSONObject(deviceHelperObj.get(DeviceHistory.KEY_DEVICE).toString()));
-            devicesHistory.add(new DeviceHistory(timestamp, device));
+            devicesHistory.put(timestamp, new DeviceHistory(timestamp, device));
         }
         return  devicesHistory;
     }
@@ -63,15 +61,5 @@ public class DeviceHistory implements Comparable<DeviceHistory> {
         writer.key(DeviceHistory.KEY_DEVICE).value(deviceWriter);
         writer.endObject();
         return writer;
-    }
-
-    @Override
-    public int compareTo(@NonNull DeviceHistory deviceHistory) {
-        if (mTimestamp > deviceHistory.mTimestamp){
-            return 1;
-        } else if (mTimestamp == deviceHistory.mTimestamp) {
-            return 0;
-        }
-        return -1;
     }
 }

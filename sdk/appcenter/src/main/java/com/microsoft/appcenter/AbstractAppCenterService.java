@@ -13,6 +13,7 @@ import android.support.annotation.NonNull;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -203,6 +204,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
             }
         }
         mChannel = channel;
+        DeviceInfoHelper.loadHistoryDevices(context);
         applyEnabledState(enabled);
     }
 

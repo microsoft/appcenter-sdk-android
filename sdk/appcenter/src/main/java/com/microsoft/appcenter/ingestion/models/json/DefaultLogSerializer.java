@@ -23,9 +23,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import static com.microsoft.appcenter.ingestion.models.CommonProperties.TYPE;
 
@@ -63,7 +62,7 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    private SortedSet<DeviceHistory> readDevices(JSONArray arrayObject) throws JSONException {
+    private NavigableMap<Long, DeviceHistory> readDevices(JSONArray arrayObject) throws JSONException {
         return DeviceHistory.readDevicesHistory(arrayObject);
     }
 
@@ -81,9 +80,9 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     @Override
-    public Set<String> serializeDevices(@NonNull SortedSet<DeviceHistory> device) throws JSONException {
+    public Set<String> serializeDevices(@NonNull NavigableMap<Long, DeviceHistory> devices) throws JSONException {
         Set<String> deviceHistories = new HashSet<>();
-        for (DeviceHistory deviceHistory : device) {
+        for (DeviceHistory deviceHistory : devices.values()) {
             deviceHistories.add(writeDevices(new JSONStringer(), deviceHistory).toString());
         }
         return deviceHistories;
@@ -91,7 +90,7 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     @Override
-    public SortedSet<DeviceHistory> deserializeDevices(@NonNull Set<String> json) throws JSONException {
+    public NavigableMap<Long, DeviceHistory> deserializeDevices(@NonNull Set<String> json) throws JSONException {
         return readDevices(new JSONArray(json));
     }
 

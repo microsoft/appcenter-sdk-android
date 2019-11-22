@@ -56,12 +56,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.UUID;
 
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
@@ -673,7 +669,6 @@ public class Crashes extends AbstractAppCenterService {
                 mUncaughtExceptionHandler = null;
             }
         } else {
-            DeviceInfoHelper.loadHistoryDevices(mContext);
 
             /* Register Java crash handler. */
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
