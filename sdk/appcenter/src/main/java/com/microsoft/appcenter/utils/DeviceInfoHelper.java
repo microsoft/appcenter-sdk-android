@@ -34,6 +34,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TimeZone;
+import java.util.TreeSet;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -45,7 +46,7 @@ public class DeviceInfoHelper {
     /**
      * todo
      */
-    private static SortedSet<DeviceHistory> mSetDevices;
+    private static SortedSet<DeviceHistory> mSetDevices = new TreeSet<>();
 
     /**
      * OS name.
@@ -230,10 +231,10 @@ public class DeviceInfoHelper {
     /**
      * todo
      */
-    public static synchronized void clearHistoryDevices(LogSerializer logSerializer) {
-        DeviceHistory firstDevice = mSetDevices.first();
-        mSetDevices.clear();
-        mSetDevices.add(firstDevice);
+    public static synchronized void clearHistoryDevices() {
+//        DeviceHistory firstDevice = mSetDevices.first();
+//        mSetDevices.clear();
+//        mSetDevices.add(firstDevice);
         saveDevices();
     }
 

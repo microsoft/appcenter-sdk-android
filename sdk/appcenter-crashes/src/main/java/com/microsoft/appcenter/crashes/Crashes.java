@@ -673,8 +673,8 @@ public class Crashes extends AbstractAppCenterService {
                 mUncaughtExceptionHandler = null;
             }
         } else {
+            DeviceInfoHelper.loadHistoryDevices(mContext);
 
-            DeviceInfoHelper.loadHistoryDevices();
             /* Register Java crash handler. */
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();

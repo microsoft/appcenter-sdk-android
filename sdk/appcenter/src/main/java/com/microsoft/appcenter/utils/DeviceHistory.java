@@ -74,10 +74,12 @@ public class DeviceHistory implements Comparable<Long> {
     public static JSONStringer writeDevicesHistory(JSONStringer writer, DeviceHistory deviceHistory) throws JSONException {
         writer.object();
         writer.key(DeviceHistory.KEY_TIMESTAMP).value(deviceHistory.getTimestamp());
-        // todo
+        JSONStringer deviceWriter = new JSONStringer();
         Device device = deviceHistory.getGetDevice();
-        device.write(writer);
-        writer.key(DeviceHistory.KEY_DEVICE).value(device);
+        deviceWriter.object();
+        device.write(deviceWriter);
+        deviceWriter.endObject();
+        writer.key(DeviceHistory.KEY_DEVICE).value(deviceWriter);
         writer.endObject();
         return writer;
     }
