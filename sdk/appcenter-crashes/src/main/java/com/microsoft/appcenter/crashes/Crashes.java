@@ -97,13 +97,6 @@ public class Crashes extends AbstractAppCenterService {
     @VisibleForTesting
     public static final String PREF_KEY_ALWAYS_SEND = "com.microsoft.appcenter.crashes.always.send";
 
-
-    /**
-     * Preference storage key for last device info.
-     */
-    @VisibleForTesting
-    static final String PREF_KEY_LAST_DEVICE_INFO = "com.microsoft.appcenter.crashes.deviceinfo";
-
     /**
      * Preference storage key for memory running level.
      */
@@ -217,8 +210,6 @@ public class Crashes extends AbstractAppCenterService {
      */
     private boolean mHasReceivedMemoryWarningInLastSession;
 
-    private SortedSet<DeviceHistory> mSetDevices;
-
     /**
      * Init.
      */
@@ -233,7 +224,6 @@ public class Crashes extends AbstractAppCenterService {
         mCrashesListener = DEFAULT_ERROR_REPORTING_LISTENER;
         mUnprocessedErrorReports = new LinkedHashMap<>();
         mErrorReportCache = new LinkedHashMap<>();
-        mSetDevices = new TreeSet<>();
     }
 
     @NonNull
@@ -605,18 +595,6 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     /**
-     * Return device information from the last session.
-     *
-     * @return Device information.
-     */
-    private synchronized Device getDeviceInfoByTimestamp(Long timestamp) throws JSONException, DeviceInfoHelper.DeviceInfoException {
-        Device device = null;
-        List<DeviceHistory> result = new ArrayList(mSetDevices);
-        int index = Collections.binarySearch(result, timestamp,  Collections.reverseOrder());
-        return result.get(index).getGetDevice();
-    }
-
-    /**
      * Get initialization timestamp.
      *
      * @return initialization timestamp expressed using {@link System#currentTimeMillis()}.
@@ -696,44 +674,15 @@ public class Crashes extends AbstractAppCenterService {
             }
         } else {
 
-            loadHistoryDevices();
+            DeviceInfoHelper.loadHistoryDevices();
             /* Register Java crash handler. */
             mUncaughtExceptionHandler = new UncaughtExceptionHandler();
             mUncaughtExceptionHandler.register();
 
             /* Process minidump files. */
             processMinidumpFiles();
-            clearHistoryDevices();
+            DeviceInfoHelper.clearHistoryDevices();
         }
-    }
-
-    private synchronized void saveCurrentDevice() {
-
-        /* Save current device info. */
-        try {
-            DeviceHistory deviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(mContext));
-            mSetDevices.add(deviceHistory);
-            Set<String> serializeDevices = mLogSerializer.serializeDevice(mSetDevices);
-            SharedPreferencesManager.putStringSet(PREF_KEY_LAST_DEVICE_INFO, serializeDevices);
-        } catch (java.lang.Exception e) {
-            AppCenterLog.error(LOG_TAG, "Failed to save current device information: " + e);
-        }
-    }
-
-    private synchronized void loadHistoryDevices() {
-        try {
-            mSetDevices = mLogSerializer.deserializeDevice(SharedPreferencesManager.getStringSet(PREF_KEY_LAST_DEVICE_INFO));
-        } catch (java.lang.Exception e) {
-            AppCenterLog.error(LOG_TAG, "Failed to deserialize devices' information: " + e);
-        }
-    }
-
-    /**
-     *
-     */
-    private synchronized void clearHistoryDevices() {
-        mSetDevices.clear();
-        saveCurrentDevice();
     }
 
     private void processMinidumpFiles() {
@@ -786,7 +735,7 @@ public class Crashes extends AbstractAppCenterService {
              */
             errorLog.setUserId(UserIdContext.getInstance().getUserId());
             try {
-                errorLog.setDevice(getDeviceInfoByTimestamp(minidumpDate));
+                errorLog.setDevice(DeviceInfoHelper.getDeviceInfoByTimestamp(minidumpDate));
                 errorLog.getDevice().setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
                 saveErrorLogFiles(new NativeException(), errorLog);
                 if (!logFile.renameTo(dest)) {

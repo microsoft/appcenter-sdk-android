@@ -27,10 +27,10 @@ public interface LogSerializer {
     Log deserializeLog(@NonNull String json, String type) throws JSONException;
 
     @NonNull
-    Set<String> serializeDevice(@NonNull SortedSet<DeviceHistory> device) throws JSONException;
+    Set<String> serializeDevices(@NonNull SortedSet<DeviceHistory> device) throws JSONException;
 
     @NonNull
-    SortedSet<DeviceHistory> deserializeDevice(@NonNull Set<String> json) throws JSONException;
+    SortedSet<DeviceHistory> deserializeDevices(@NonNull Set<String> json) throws JSONException;
 
     Collection<CommonSchemaLog> toCommonSchemaLog(@NonNull Log log);
 

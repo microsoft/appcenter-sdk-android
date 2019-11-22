@@ -11,6 +11,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Build;
+import android.support.annotation.VisibleForTesting;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.view.Display;
@@ -20,14 +21,31 @@ import android.view.WindowManager;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
+import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
+import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.TimeZone;
+
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
 /**
  * DeviceInfoHelper class to retrieve device information.
  */
 public class DeviceInfoHelper {
+
+    /**
+     * todo
+     */
+    private static SortedSet<DeviceHistory> mSetDevices;
 
     /**
      * OS name.
@@ -38,6 +56,12 @@ public class DeviceInfoHelper {
      * Wrapper SDK information to use when building device properties.
      */
     private static WrapperSdk sWrapperSdk;
+
+    /**
+     * Preference storage key for last device info.
+     */
+    @VisibleForTesting
+    static final String PREF_KEY_LAST_DEVICE_INFO = "com.microsoft.appcenter.crashes.deviceinfo";
 
     /**
      * Gets device information.
@@ -57,7 +81,7 @@ public class DeviceInfoHelper {
             device.setAppVersion(packageInfo.versionName);
             device.setAppBuild(String.valueOf(getVersionCode(packageInfo)));
         } catch (Exception e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve package info", e);
+            AppCenterLog.error(LOG_TAG, "Cannot retrieve package info", e);
             throw new DeviceInfoException("Cannot retrieve package info", e);
         }
 
@@ -78,7 +102,7 @@ public class DeviceInfoHelper {
                 device.setCarrierName(networkOperatorName);
             }
         } catch (Exception e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve carrier info", e);
+            AppCenterLog.error(LOG_TAG, "Cannot retrieve carrier info", e);
         }
 
         /* Locale. */
@@ -98,7 +122,7 @@ public class DeviceInfoHelper {
         try {
             device.setScreenSize(getScreenSize(context));
         } catch (Exception e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve screen size", e);
+            AppCenterLog.error(LOG_TAG, "Cannot retrieve screen size", e);
         }
 
         /* Set SDK name and version. Don't add the BuildConfig import or it will trigger a Javadoc warning... */
@@ -175,6 +199,57 @@ public class DeviceInfoHelper {
      */
     public static synchronized void setWrapperSdk(WrapperSdk wrapperSdk) {
         sWrapperSdk = wrapperSdk;
+    }
+
+    /**
+     * todo
+     */
+    public static synchronized void loadHistoryDevices(Context context) {
+        LogSerializer logSerializer = new DefaultLogSerializer();
+        try {
+            mSetDevices = logSerializer.deserializeDevices(SharedPreferencesManager.getStringSet(PREF_KEY_LAST_DEVICE_INFO));
+            DeviceHistory deviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(context));
+            mSetDevices.add(deviceHistory);
+            saveDevices();
+        } catch (java.lang.Exception e) {
+            AppCenterLog.error(LOG_TAG, "Failed to deserialize devices' information: " + e);
+        }
+    }
+
+    /**
+     * Return device information from the last session.
+     *
+     * @return Device information.
+     */
+    public static synchronized Device getDeviceInfoByTimestamp(Long timestamp) {
+        List<DeviceHistory> result = new ArrayList(mSetDevices);
+        int index = Collections.binarySearch(result, timestamp,  Collections.reverseOrder());
+        return result.get(index).getGetDevice();
+    }
+
+    /**
+     * todo
+     */
+    public static synchronized void clearHistoryDevices(LogSerializer logSerializer) {
+        DeviceHistory firstDevice = mSetDevices.first();
+        mSetDevices.clear();
+        mSetDevices.add(firstDevice);
+        saveDevices();
+    }
+
+    /**
+     * todo
+     */
+    private static synchronized void saveDevices() {
+        LogSerializer logSerializer = new DefaultLogSerializer();
+
+        /* Save current device info. */
+        try {
+            Set<String> serializeDevices = logSerializer.serializeDevices(mSetDevices);
+            SharedPreferencesManager.putStringSet(PREF_KEY_LAST_DEVICE_INFO, serializeDevices);
+        } catch (java.lang.Exception e) {
+            AppCenterLog.error(LOG_TAG, "Failed to save current device information: " + e);
+        }
     }
 
     /**

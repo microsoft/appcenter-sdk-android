@@ -45,14 +45,8 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    private JSONStringer writeDevice(JSONStringer writer, DeviceHistory deviceHistory) throws JSONException {
-        writer.object();
-        writer.key(DeviceHistory.KEY_TIMESTAMP).value(deviceHistory.getTimestamp());
-        Device device = deviceHistory.getGetDevice();
-        device.write(writer);
-        writer.key(DeviceHistory.KEY_DEVICE).value(device);
-        writer.endObject();
-        return writer;
+    private JSONStringer writeDevices(JSONStringer writer, DeviceHistory deviceHistory) throws JSONException {
+        return DeviceHistory.writeDevicesHistory(writer, deviceHistory);
     }
 
     @NonNull
@@ -70,16 +64,8 @@ public class DefaultLogSerializer implements LogSerializer {
     }
 
     @NonNull
-    private SortedSet<DeviceHistory> readDevice(JSONArray arrayObject) throws JSONException {
-        SortedSet<DeviceHistory> devicesHistory = new TreeSet<>();
-        for (int i = 0; i < arrayObject.length(); i++) {
-            JSONObject deviceHelperObj = new JSONObject(arrayObject.get(i).toString());
-            long timestamp = deviceHelperObj.getLong(DeviceHistory.KEY_TIMESTAMP);
-            Device device = new Device();
-            device.read(deviceHelperObj.getJSONObject(DeviceHistory.KEY_DEVICE));
-            devicesHistory.add(new DeviceHistory(timestamp, device));
-        }
-        return devicesHistory;
+    private SortedSet<DeviceHistory> readDevices(JSONArray arrayObject) throws JSONException {
+        return DeviceHistory.readDevicesHistory(arrayObject);
     }
 
     @NonNull
@@ -96,18 +82,18 @@ public class DefaultLogSerializer implements LogSerializer {
 
     @NonNull
     @Override
-    public Set<String> serializeDevice(@NonNull SortedSet<DeviceHistory> device) throws JSONException {
+    public Set<String> serializeDevices(@NonNull SortedSet<DeviceHistory> device) throws JSONException {
         Set<String> deviceHistories = new HashSet<>();
         for (DeviceHistory deviceHistory : device) {
-            deviceHistories.add(writeDevice(new JSONStringer(), deviceHistory).toString());
+            deviceHistories.add(writeDevices(new JSONStringer(), deviceHistory).toString());
         }
         return deviceHistories;
     }
 
     @NonNull
     @Override
-    public SortedSet<DeviceHistory> deserializeDevice(@NonNull Set<String> json) throws JSONException {
-        return readDevice(new JSONArray(json));
+    public SortedSet<DeviceHistory> deserializeDevices(@NonNull Set<String> json) throws JSONException {
+        return readDevices(new JSONArray(json));
     }
 
     @Override
