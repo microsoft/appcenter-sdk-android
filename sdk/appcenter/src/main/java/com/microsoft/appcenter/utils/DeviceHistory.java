@@ -20,7 +20,7 @@ import java.util.TreeSet;
 /**
  * Model class that correlates Device to a crash at app relaunch.
  */
-public class DeviceHistory implements Comparable<Long> {
+public class DeviceHistory implements Comparable<DeviceHistory> {
 
     public static String KEY_TIMESTAMP = "mTimestamp";
     public static String KEY_DEVICE = "mDevice";
@@ -42,8 +42,8 @@ public class DeviceHistory implements Comparable<Long> {
     }
 
     @Override
-    public int compareTo(@NonNull Long timestamp) {
-        return mTimestamp > timestamp ? 1 : 0;
+    public int compareTo(@NonNull DeviceHistory deviceHistory) {
+        return mTimestamp > deviceHistory.mTimestamp ? 1 : 0;
     }
 
     /**
@@ -58,7 +58,7 @@ public class DeviceHistory implements Comparable<Long> {
             JSONObject deviceHelperObj = new JSONObject(arrayObject.get(i).toString());
             long timestamp = deviceHelperObj.getLong(DeviceHistory.KEY_TIMESTAMP);
             Device device = new Device();
-            device.read(deviceHelperObj.getJSONObject(DeviceHistory.KEY_DEVICE));
+            device.read(new JSONObject(deviceHelperObj.get(DeviceHistory.KEY_DEVICE).toString()));
             devicesHistory.add(new DeviceHistory(timestamp, device));
         }
         return  devicesHistory;
