@@ -248,8 +248,8 @@ public class DeviceInfoHelper {
 
         /* If search return negative number we should select value the smaller target number and convert to the positive value. */
         if (index < 0) {
-            index -= 1;
             index *= -1;
+            index -= 1;
         }
         if (index == 0) {
             return devices.get(0).getGetDevice();
