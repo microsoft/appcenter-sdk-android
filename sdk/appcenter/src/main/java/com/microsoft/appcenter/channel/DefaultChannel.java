@@ -685,15 +685,9 @@ public class DefaultChannel implements Channel {
 
         /* Attach device properties to every log if its not already attached by a service. */
         if (log.getDevice() == null) {
-
             /* Generate device properties only once per process life time. */
             if (mDevice == null) {
-                try {
-                    mDevice = DeviceInfoHelper.getDeviceInfo(mContext);
-                } catch (DeviceInfoHelper.DeviceInfoException e) {
-                    AppCenterLog.error(LOG_TAG, "Device log cannot be generated", e);
-                    return;
-                }
+                mDevice = DeviceInfoHelper.getDeviceInfoByTimestamp(log.getTimestamp().getTime());
             }
 
             /* Attach device properties. */
