@@ -11,25 +11,20 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.os.Build;
-import android.support.annotation.VisibleForTesting;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.json.JSONException;
-
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -62,7 +57,7 @@ public class DeviceInfoHelper {
     /**
      * Flag to remember whether we already refresh devices' history or not.
      */
-    private static boolean needRefresh = true;
+    private static boolean mNeedRefresh = true;
 
     /**
      * Preference storage key for last device info.
@@ -228,12 +223,12 @@ public class DeviceInfoHelper {
     private static synchronized void refreshHistoryDevice(Context context) throws DeviceInfoException {
 
         /* If current device is not already stored in storage. */
-        if (needRefresh) {
+        if (mNeedRefresh) {
             DeviceHistory currentDeviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(context));
             mSetDevices.add(currentDeviceHistory);
             saveDevices();
             mSetDevices.remove(currentDeviceHistory);
-            needRefresh = false;
+            mNeedRefresh = false;
         }
     }
 
@@ -252,11 +247,11 @@ public class DeviceInfoHelper {
             index -= 1;
         }
         if (index == 0) {
-            return devices.get(0).getGetDevice();
+            return devices.get(0).getDevice();
         } else if (index == devices.size()) {
-            return devices.get(devices.size() - 1).getGetDevice();
+            return devices.get(devices.size() - 1).getDevice();
         } else {
-            return devices.get(index - 1).getGetDevice();
+            return devices.get(index - 1).getDevice();
         }
     }
 

@@ -22,22 +22,21 @@ import java.util.TreeSet;
  */
 public class DeviceHistory implements Comparable<DeviceHistory> {
 
-    private static String KEY_TIMESTAMP = "mTimestamp";
-    private static String KEY_DEVICE = "mDevice";
-
+    private static String KEY_TIMESTAMP = "timestamp";
+    private static String KEY_DEVICE = "device";
     private long mTimestamp;
     private Device mDevice;
 
-    DeviceHistory(long getTimestamp, Device getDevice) {
-        mTimestamp = getTimestamp;
-        mDevice = getDevice;
+    DeviceHistory(long timestamp, Device device) {
+        mTimestamp = timestamp;
+        mDevice = device;
     }
 
     public long getTimestamp() {
         return mTimestamp;
     }
 
-    public Device getGetDevice() {
+    public Device getDevice() {
         return mDevice;
     }
 
@@ -57,7 +56,7 @@ public class DeviceHistory implements Comparable<DeviceHistory> {
         writer.object();
         writer.key(DeviceHistory.KEY_TIMESTAMP).value(deviceHistory.getTimestamp());
         JSONStringer deviceWriter = new JSONStringer();
-        Device device = deviceHistory.getGetDevice();
+        Device device = deviceHistory.getDevice();
         deviceWriter.object();
         device.write(deviceWriter);
         deviceWriter.endObject();
