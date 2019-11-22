@@ -14,13 +14,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 
+import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
  * Model class that correlates Device to a crash at app relaunch.
  */
-public class DeviceHistory implements Comparable<Long> {
+public class DeviceHistory implements Comparator<DeviceHistory>, Comparable<DeviceHistory> {
 
     public static String KEY_TIMESTAMP = "mTimestamp";
     public static String KEY_DEVICE = "mDevice";
@@ -39,11 +40,6 @@ public class DeviceHistory implements Comparable<Long> {
 
     public Device getGetDevice() {
         return mDevice;
-    }
-
-    @Override
-    public int compareTo(@NonNull Long timestamp) {
-        return mTimestamp > timestamp ? 1 : 0;
     }
 
     /**
@@ -82,5 +78,15 @@ public class DeviceHistory implements Comparable<Long> {
         writer.key(DeviceHistory.KEY_DEVICE).value(deviceWriter);
         writer.endObject();
         return writer;
+    }
+
+    @Override
+    public int compareTo(@NonNull DeviceHistory o) {
+        return (int)(getTimestamp() - o.getTimestamp());
+    }
+
+    @Override
+    public int compare(DeviceHistory o1, DeviceHistory o2) {
+        return (int)(o1.getTimestamp() - o2.getTimestamp());
     }
 }

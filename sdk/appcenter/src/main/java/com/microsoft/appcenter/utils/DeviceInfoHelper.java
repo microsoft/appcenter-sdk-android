@@ -29,6 +29,7 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -46,7 +47,7 @@ public class DeviceInfoHelper {
     /**
      * todo
      */
-    private static SortedSet<DeviceHistory> mSetDevices = new TreeSet<>();
+    public static SortedSet<DeviceHistory> mSetDevices = new TreeSet<>();
 
     /**
      * OS name.
@@ -57,6 +58,8 @@ public class DeviceInfoHelper {
      * Wrapper SDK information to use when building device properties.
      */
     private static WrapperSdk sWrapperSdk;
+
+    private static boolean needRefresh = true;
 
     /**
      * Preference storage key for last device info.
@@ -209,11 +212,31 @@ public class DeviceInfoHelper {
         LogSerializer logSerializer = new DefaultLogSerializer();
         try {
             mSetDevices = logSerializer.deserializeDevices(SharedPreferencesManager.getStringSet(PREF_KEY_LAST_DEVICE_INFO));
-            DeviceHistory deviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(context));
-            mSetDevices.add(deviceHistory);
-            saveDevices();
+            refreshHistoryDevice(context);
         } catch (java.lang.Exception e) {
             AppCenterLog.error(LOG_TAG, "Failed to deserialize devices' information: " + e);
+        }
+    }
+
+    /**
+     * Add current device history only to preference.
+     */
+    private static synchronized void refreshHistoryDevice(Context context) {
+        // if current device is not already stored in storage.
+        if (needRefresh) {
+            LogSerializer logSerializer = new DefaultLogSerializer();
+            try {
+                mSetDevices = logSerializer.deserializeDevices(SharedPreferencesManager.getStringSet(PREF_KEY_LAST_DEVICE_INFO));
+                DeviceHistory currentDeviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(context));
+                mSetDevices.add(currentDeviceHistory);
+
+                saveDevices();
+
+                mSetDevices.remove(currentDeviceHistory);
+                needRefresh = false;
+            } catch (java.lang.Exception e) {
+                AppCenterLog.error(LOG_TAG, "Failed to deserialize devices' information: " + e);
+            }
         }
     }
 
@@ -223,19 +246,28 @@ public class DeviceInfoHelper {
      * @return Device information.
      */
     public static synchronized Device getDeviceInfoByTimestamp(Long timestamp) {
-        List<DeviceHistory> result = new ArrayList(mSetDevices);
-        int index = Collections.binarySearch(result, timestamp,  Collections.reverseOrder());
-        return result.get(index).getGetDevice();
+        List<DeviceHistory> devices = new ArrayList(mSetDevices);
+        Collections.sort(devices);
+        /**may be fixme*/
+        int index = Collections.binarySearch(devices, new DeviceHistory(timestamp, null));
+
+        if (index == 0) {
+            return devices.get(0).getGetDevice();
+        } else if (index == devices.size()) {
+            return devices.get(devices.size() - 1).getGetDevice();
+        } else {
+            return devices.get(index - 1).getGetDevice();
+        }
     }
 
     /**
      * todo
      */
     public static synchronized void clearHistoryDevices() {
-//        DeviceHistory firstDevice = mSetDevices.first();
-//        mSetDevices.clear();
-//        mSetDevices.add(firstDevice);
-        saveDevices();
+       DeviceHistory currentDevice = mSetDevices.last();
+       mSetDevices.clear();
+       mSetDevices.add(currentDevice);
+       saveDevices();
     }
 
     /**
