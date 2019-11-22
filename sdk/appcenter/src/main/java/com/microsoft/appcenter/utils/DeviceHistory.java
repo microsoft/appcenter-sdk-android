@@ -22,13 +22,13 @@ import java.util.TreeSet;
  */
 public class DeviceHistory implements Comparable<DeviceHistory> {
 
-    public static String KEY_TIMESTAMP = "mTimestamp";
-    public static String KEY_DEVICE = "mDevice";
+    private static String KEY_TIMESTAMP = "mTimestamp";
+    private static String KEY_DEVICE = "mDevice";
 
     private long mTimestamp;
     private Device mDevice;
 
-    public DeviceHistory(long getTimestamp, Device getDevice) {
+    DeviceHistory(long getTimestamp, Device getDevice) {
         mTimestamp = getTimestamp;
         mDevice = getDevice;
     }
@@ -41,17 +41,6 @@ public class DeviceHistory implements Comparable<DeviceHistory> {
         return mDevice;
     }
 
-    @Override
-    public int compareTo(@NonNull DeviceHistory deviceHistory) {
-        return mTimestamp > deviceHistory.mTimestamp ? 1 : 0;
-    }
-
-    /**
-     * todo
-     * @param arrayObject
-     * @return
-     * @throws JSONException
-     */
     public static SortedSet<DeviceHistory> readDevicesHistory(JSONArray arrayObject) throws JSONException {
         SortedSet<DeviceHistory> devicesHistory = new TreeSet<>();
         for (int i = 0; i < arrayObject.length(); i++) {
@@ -64,13 +53,6 @@ public class DeviceHistory implements Comparable<DeviceHistory> {
         return  devicesHistory;
     }
 
-    /**
-     * todo
-     * @param writer
-     * @param deviceHistory
-     * @return
-     * @throws JSONException
-     */
     public static JSONStringer writeDevicesHistory(JSONStringer writer, DeviceHistory deviceHistory) throws JSONException {
         writer.object();
         writer.key(DeviceHistory.KEY_TIMESTAMP).value(deviceHistory.getTimestamp());
@@ -82,5 +64,15 @@ public class DeviceHistory implements Comparable<DeviceHistory> {
         writer.key(DeviceHistory.KEY_DEVICE).value(deviceWriter);
         writer.endObject();
         return writer;
+    }
+
+    @Override
+    public int compareTo(@NonNull DeviceHistory deviceHistory) {
+        if (mTimestamp > deviceHistory.mTimestamp){
+            return 1;
+        } else if (mTimestamp == deviceHistory.mTimestamp) {
+            return 0;
+        }
+        return -1;
     }
 }

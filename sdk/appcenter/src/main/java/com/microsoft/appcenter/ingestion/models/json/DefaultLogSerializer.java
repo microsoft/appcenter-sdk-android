@@ -7,7 +7,6 @@ package com.microsoft.appcenter.ingestion.models.json;
 
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;

@@ -29,6 +29,7 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -44,7 +45,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 public class DeviceInfoHelper {
 
     /**
-     * todo
+     * Devices' history.
      */
     private static SortedSet<DeviceHistory> mSetDevices = new TreeSet<>();
 
@@ -59,10 +60,14 @@ public class DeviceInfoHelper {
     private static WrapperSdk sWrapperSdk;
 
     /**
+     * Flag to remember whether we already refresh devices' history or not.
+     */
+    private static boolean needRefresh = true;
+
+    /**
      * Preference storage key for last device info.
      */
-    @VisibleForTesting
-    static final String PREF_KEY_LAST_DEVICE_INFO = "com.microsoft.appcenter.crashes.deviceinfo";
+    private static final String PREF_KEY_LAST_DEVICE_INFO = "com.microsoft.appcenter.crashes.deviceinfo";
 
     /**
      * Gets device information.
@@ -203,48 +208,73 @@ public class DeviceInfoHelper {
     }
 
     /**
-     * todo
+     * Load devices' history.
+     *
+     * @param context The context of the application.
      */
     public static synchronized void loadHistoryDevices(Context context) {
         LogSerializer logSerializer = new DefaultLogSerializer();
         try {
             mSetDevices = logSerializer.deserializeDevices(SharedPreferencesManager.getStringSet(PREF_KEY_LAST_DEVICE_INFO));
-            DeviceHistory deviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(context));
-            mSetDevices.add(deviceHistory);
-            saveDevices();
+            refreshHistoryDevice(context);
         } catch (java.lang.Exception e) {
             AppCenterLog.error(LOG_TAG, "Failed to deserialize devices' information: " + e);
         }
     }
 
     /**
-     * Return device information from the last session.
+     * Add current device history only to preference.
+     */
+    private static synchronized void refreshHistoryDevice(Context context) throws DeviceInfoException {
+
+        /* If current device is not already stored in storage. */
+        if (needRefresh) {
+            DeviceHistory currentDeviceHistory = new DeviceHistory(System.currentTimeMillis(), getDeviceInfo(context));
+            mSetDevices.add(currentDeviceHistory);
+            saveDevices();
+            mSetDevices.remove(currentDeviceHistory);
+            needRefresh = false;
+        }
+    }
+
+    /**
+     * Return device information by timestamp.
      *
      * @return Device information.
      */
     public static synchronized Device getDeviceInfoByTimestamp(Long timestamp) {
-        List<DeviceHistory> result = new ArrayList(mSetDevices);
-        int index = Collections.binarySearch(result, timestamp,  Collections.reverseOrder());
-        return result.get(index).getGetDevice();
+        List<DeviceHistory> devices = new ArrayList(mSetDevices);
+        int index = Collections.binarySearch(devices, new DeviceHistory(timestamp, null));
+
+        /* If search return negative number we should select value the smaller target number and convert to the positive value. */
+        if (index < 0) {
+            index -= 1;
+            index *= -1;
+        }
+        if (index == 0) {
+            return devices.get(0).getGetDevice();
+        } else if (index == devices.size()) {
+            return devices.get(devices.size() - 1).getGetDevice();
+        } else {
+            return devices.get(index - 1).getGetDevice();
+        }
     }
 
     /**
-     * todo
+     * Clear the last devices' history and save current device information.
      */
     public static synchronized void clearHistoryDevices() {
-//        DeviceHistory firstDevice = mSetDevices.first();
-//        mSetDevices.clear();
-//        mSetDevices.add(firstDevice);
-        saveDevices();
+       DeviceHistory currentDevice = mSetDevices.last();
+       mSetDevices.clear();
+       mSetDevices.add(currentDevice);
+       saveDevices();
     }
 
     /**
-     * todo
+     * Save devices' history.
      */
     private static synchronized void saveDevices() {
         LogSerializer logSerializer = new DefaultLogSerializer();
-
-        /* Save current device info. */
         try {
             Set<String> serializeDevices = logSerializer.serializeDevices(mSetDevices);
             SharedPreferencesManager.putStringSet(PREF_KEY_LAST_DEVICE_INFO, serializeDevices);
