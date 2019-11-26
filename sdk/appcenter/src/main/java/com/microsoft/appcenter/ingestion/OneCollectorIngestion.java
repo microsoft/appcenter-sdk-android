@@ -102,10 +102,10 @@ public class OneCollectorIngestion implements Ingestion {
     /**
      * Init.
      *
-     * @param logSerializer log serializer.
      * @param httpClient    the HTTP client.
+     * @param logSerializer log serializer.
      */
-    public OneCollectorIngestion(@NonNull LogSerializer logSerializer, @NonNull HttpClient httpClient) {
+    public OneCollectorIngestion(@NonNull HttpClient httpClient, @NonNull LogSerializer logSerializer) {
         mLogSerializer = logSerializer;
         mHttpClient = httpClient;
         mLogUrl = DEFAULT_LOG_URL;

@@ -65,10 +65,10 @@ public class AppCenterIngestion implements Ingestion {
     /**
      * Init.
      *
-     * @param logSerializer log serializer.
      * @param httpClient    the HTTP client instance.
+     * @param logSerializer log serializer.
      */
-    public AppCenterIngestion(@NonNull LogSerializer logSerializer, @NonNull HttpClient httpClient) {
+    public AppCenterIngestion(@NonNull HttpClient httpClient, @NonNull LogSerializer logSerializer) {
         mLogSerializer = logSerializer;
         mHttpClient = httpClient;
         mLogUrl = DEFAULT_LOG_URL;

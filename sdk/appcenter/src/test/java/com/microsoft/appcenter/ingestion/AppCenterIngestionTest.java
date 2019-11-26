@@ -86,7 +86,7 @@ public class AppCenterIngestionTest {
         });
 
         /* Test calling code. */
-        AppCenterIngestion ingestion = new AppCenterIngestion(serializer, mHttpClient);
+        AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         String appSecret = UUID.randomUUID().toString();
         UUID installId = UUID.randomUUID();
@@ -149,7 +149,7 @@ public class AppCenterIngestionTest {
         });
 
         /* Test calling code. */
-        AppCenterIngestion ingestion = new AppCenterIngestion(serializer, mHttpClient);
+        AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         String appSecret = UUID.randomUUID().toString();
         String authToken = UUID.randomUUID().toString();
@@ -248,7 +248,7 @@ public class AppCenterIngestionTest {
                 return call;
             }
         });
-        AppCenterIngestion ingestion = new AppCenterIngestion(mock(LogSerializer.class), mHttpClient);
+        AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
         assertEquals(call, ingestion.sendAsync(authToken, appSecret, UUID.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
         return callTemplate.get();

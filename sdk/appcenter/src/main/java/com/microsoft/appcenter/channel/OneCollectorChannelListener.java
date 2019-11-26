@@ -81,7 +81,7 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
      * @param installId     installId.
      */
     public OneCollectorChannelListener(@NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull HttpClient httpClient, @NonNull UUID installId) {
-        this(new OneCollectorIngestion(logSerializer, httpClient), channel, logSerializer, installId);
+        this(new OneCollectorIngestion(httpClient, logSerializer), channel, logSerializer, installId);
     }
 
     @VisibleForTesting
