@@ -18,8 +18,8 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 
 public class DependencyManagerTest extends AbstractAppCenterTest {
@@ -29,7 +29,7 @@ public class DependencyManagerTest extends AbstractAppCenterTest {
         AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>) null);
 
         /* Verify that the channel was instantiated with default HTTP client. */
-        verifyNew(DefaultChannel.class).withArguments(any(Context.class), eq(DUMMY_APP_SECRET), any(LogSerializer.class), any(MockHttpClient.class), any(Handler.class));
+        verifyNew(DefaultChannel.class).withArguments(isA(Context.class), eq(DUMMY_APP_SECRET), isA(LogSerializer.class), isA(MockHttpClient.class), isA(Handler.class));
     }
 
     @Test
@@ -39,10 +39,10 @@ public class DependencyManagerTest extends AbstractAppCenterTest {
         AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>) null);
 
         /* Verify that the channel was instantiated with the given HTTP client. */
-        verifyNew(DefaultChannel.class).withArguments(any(Context.class), eq(DUMMY_APP_SECRET), any(LogSerializer.class), eq(mockHttpClient), any(Handler.class));
+        verifyNew(DefaultChannel.class).withArguments(isA(Context.class), eq(DUMMY_APP_SECRET), isA(LogSerializer.class), eq(mockHttpClient), isA(Handler.class));
     }
 
-    public static class MockHttpClient implements HttpClient {
+    private static class MockHttpClient implements HttpClient {
 
         @Override
         public ServiceCall callAsync(String url, String method, Map<String, String> headers, CallTemplate callTemplate, ServiceCallback serviceCallback) {
