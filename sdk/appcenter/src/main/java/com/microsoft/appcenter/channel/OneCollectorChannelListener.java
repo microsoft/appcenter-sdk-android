@@ -5,10 +5,10 @@
 
 package com.microsoft.appcenter.channel;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -75,13 +75,13 @@ public class OneCollectorChannelListener extends AbstractChannelListener {
     /**
      * Init with channel.
      *
-     * @param context       context.
      * @param channel       channel.
      * @param logSerializer log serializer.
+     * @param httpClient    the HTTP client.
      * @param installId     installId.
      */
-    public OneCollectorChannelListener(@NonNull Context context, @NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull UUID installId) {
-        this(new OneCollectorIngestion(context, logSerializer), channel, logSerializer, installId);
+    public OneCollectorChannelListener(@NonNull Channel channel, @NonNull LogSerializer logSerializer, @NonNull HttpClient httpClient, @NonNull UUID installId) {
+        this(new OneCollectorIngestion(logSerializer, httpClient), channel, logSerializer, installId);
     }
 
     @VisibleForTesting

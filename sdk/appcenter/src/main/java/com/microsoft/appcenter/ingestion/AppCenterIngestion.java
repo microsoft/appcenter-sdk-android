@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.ingestion;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
@@ -27,7 +26,6 @@ import java.util.UUID;
 import static com.microsoft.appcenter.Constants.APP_SECRET;
 import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 public class AppCenterIngestion implements Ingestion {
 
@@ -67,12 +65,12 @@ public class AppCenterIngestion implements Ingestion {
     /**
      * Init.
      *
-     * @param context       any context.
      * @param logSerializer log serializer.
+     * @param httpClient    the HTTP client instance.
      */
-    public AppCenterIngestion(@NonNull Context context, @NonNull LogSerializer logSerializer) {
+    public AppCenterIngestion(@NonNull LogSerializer logSerializer, @NonNull HttpClient httpClient) {
         mLogSerializer = logSerializer;
-        mHttpClient = createHttpClient(context);
+        mHttpClient = httpClient;
         mLogUrl = DEFAULT_LOG_URL;
     }
 
