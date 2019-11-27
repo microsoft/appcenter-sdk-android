@@ -10,6 +10,7 @@ import android.os.Handler;
 
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
@@ -18,6 +19,7 @@ import org.junit.Test;
 
 import java.util.Map;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isA;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
@@ -25,11 +27,16 @@ import static org.powermock.api.mockito.PowerMockito.verifyNew;
 public class DependencyManagerTest extends AbstractAppCenterTest {
 
     @Test
+    public void ConstructorCoverage() {
+        new DependencyManager();
+    }
+
+    @Test
     public void noSetDependencyCallUsesDefaultHttpClient() throws Exception {
         AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>) null);
 
         /* Verify that the channel was instantiated with default HTTP client. */
-        verifyNew(DefaultChannel.class).withArguments(isA(Context.class), eq(DUMMY_APP_SECRET), isA(LogSerializer.class), isA(MockHttpClient.class), isA(Handler.class));
+        verifyNew(DefaultChannel.class).withArguments(any(Context.class), eq(DUMMY_APP_SECRET), any(LogSerializer.class), isA(HttpClientRetryer.class), any(Handler.class));
     }
 
     @Test
@@ -39,7 +46,7 @@ public class DependencyManagerTest extends AbstractAppCenterTest {
         AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>) null);
 
         /* Verify that the channel was instantiated with the given HTTP client. */
-        verifyNew(DefaultChannel.class).withArguments(isA(Context.class), eq(DUMMY_APP_SECRET), isA(LogSerializer.class), eq(mockHttpClient), isA(Handler.class));
+        verifyNew(DefaultChannel.class).withArguments(any(Context.class), eq(DUMMY_APP_SECRET), any(LogSerializer.class), eq(mockHttpClient), any(Handler.class));
     }
 
     private static class MockHttpClient implements HttpClient {
