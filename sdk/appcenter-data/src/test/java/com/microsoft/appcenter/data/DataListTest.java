@@ -282,7 +282,7 @@ public class DataListTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
                 return mock(ServiceCall.class);
             }
         });
@@ -367,7 +367,7 @@ public class DataListTest extends AbstractDataTest {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
                 };
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
                 return mock(ServiceCall.class);
             }
         });
@@ -430,7 +430,7 @@ public class DataListTest extends AbstractDataTest {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
                 };
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
                 return mock(ServiceCall.class);
             }
         });
@@ -514,7 +514,7 @@ public class DataListTest extends AbstractDataTest {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
                 };
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
                 return mock(ServiceCall.class);
             }
         });
@@ -633,7 +633,7 @@ public class DataListTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
                         return mock(ServiceCall.class);
                     }
                 });
@@ -697,7 +697,7 @@ public class DataListTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
                         return mock(ServiceCall.class);
                     }
                 });
@@ -732,7 +732,7 @@ public class DataListTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
                 return mock(ServiceCall.class);
             }
         });

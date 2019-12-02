@@ -249,7 +249,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
-        callbacks.get(0).onCallSucceeded("", null);
+        callbacks.get(0).onCallSucceeded("");
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
@@ -257,7 +257,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++) {
-            callbacks.get(i).onCallSucceeded("", null);
+            callbacks.get(i).onCallSucceeded("");
         }
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
@@ -300,7 +300,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
 
         /* Make 1 of the call succeed. Verify log deleted. */
-        callbacks.get(0).onCallSucceeded("", null);
+        callbacks.get(0).onCallSucceeded("");
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* The request N+1 is now unlocked. */
@@ -308,7 +308,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Unlock all requests and check logs deleted. */
         for (int i = 1; i < 4; i++)
-            callbacks.get(i).onCallSucceeded("", null);
+            callbacks.get(i).onCallSucceeded("");
         verify(mockPersistence, times(4)).deleteLogs(any(String.class), any(String.class));
 
         /* The counter should be 0 now as we sent data. */
@@ -716,7 +716,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 /* Simulate a service disabled in the middle of network transaction. */
                 ServiceCallback callback = (ServiceCallback) invocation.getArguments()[4];
                 channel.removeGroup(TEST_GROUP);
-                callback.onCallSucceeded("", null);
+                callback.onCallSucceeded("");
                 return null;
             }
         });
@@ -1225,7 +1225,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         verify(mockIngestion, times(3)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Successful finish one of sending the log. */
-        callbacks.get(0).onCallSucceeded("", null);
+        callbacks.get(0).onCallSucceeded("");
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
 
         /* Check rest logs sending. */

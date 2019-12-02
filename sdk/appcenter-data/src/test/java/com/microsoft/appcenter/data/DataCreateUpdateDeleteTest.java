@@ -317,7 +317,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[6]).onCallSucceeded("", new HashMap<String, String>());
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallSucceeded("");
                         return mock(ServiceCall.class);
                     }
                 });

@@ -28,7 +28,6 @@ import org.mockito.stubbing.Answer;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.TimeZone;
 
@@ -206,7 +205,7 @@ public class DataReadTest extends AbstractDataTest {
                 "        }\n" +
                 "    ]\n" +
                 "}";
-        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeFailedResponsePayload, new HashMap<String, String>());
+        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeFailedResponsePayload);
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -290,7 +289,7 @@ public class DataReadTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
                 return mock(ServiceCall.class);
             }
         });

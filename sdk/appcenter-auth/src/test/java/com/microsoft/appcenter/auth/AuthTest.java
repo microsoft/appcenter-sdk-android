@@ -168,7 +168,7 @@ public class AuthTest extends AbstractAuthTest {
     private static void mockHttpCallSuccess(JSONObject jsonConfig, ServiceCallback serviceCallback) {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(jsonConfig.toString(), headers);
+        serviceCallback.onCallSucceeded(jsonConfig.toString());
     }
 
     @Test
@@ -287,7 +287,7 @@ public class AuthTest extends AbstractAuthTest {
         verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
-        serviceCallback.onCallSucceeded("invalid", new HashMap<String, String>());
+        serviceCallback.onCallSucceeded("invalid");
 
         /* We saved after we downloaded the file. */
         verifyStatic();

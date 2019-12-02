@@ -29,6 +29,7 @@ import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -318,9 +319,9 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
+                    public void onCallSucceeded(HttpResponse httpResponse) {
                         try {
-                            JSONObject response = new JSONObject(payload);
+                            JSONObject response = new JSONObject(httpResponse.getPayload());
                             String userId = response.getString(USER_ID);
                             mRefreshToken = response.getString(REFRESH_TOKEN);
                             mRefreshTokenScope = response.getString(SCOPE);
@@ -362,9 +363,9 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
+                    public void onCallSucceeded(HttpResponse httpResponse) {
                         try {
-                            JSONObject response = new JSONObject(payload);
+                            JSONObject response = new JSONObject(httpResponse.getPayload());
                             String accessToken = response.getString("access_token");
                             long expiresIn = response.getLong("expires_in") * 1000L;
                             Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);

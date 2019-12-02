@@ -16,13 +16,13 @@ import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.TokensResponse;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.context.AuthTokenContext;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import static com.microsoft.appcenter.Constants.APP_SECRET;
 import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
@@ -103,7 +103,7 @@ public class TokenExchange {
         }
 
         @Override
-        public void onCallSucceeded(String payload, Map<String, String> headers) {
+        public void onCallSucceeded(HttpResponse httpResponse) {
             try {
                 TokenResult tokenResult = parseTokenResult(payload);
                 if (tokenResult == null) {

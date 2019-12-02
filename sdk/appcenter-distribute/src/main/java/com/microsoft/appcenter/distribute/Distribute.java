@@ -44,6 +44,7 @@ import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSess
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -982,7 +983,7 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
-        HttpClient httpClient = createHttpClient(mContext);
+        final HttpClient httpClient = createHttpClient(mContext);
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
@@ -1024,7 +1025,7 @@ public class Distribute extends AbstractAppCenterService {
         }, new ServiceCallback() {
 
             @Override
-            public void onCallSucceeded(final String payload, Map<String, String> headers) {
+            public void onCallSucceeded(final HttpResponse httpResponse) {
 
                 /* onPostExecute is not always called on UI thread due to an old Android bug. */
                 HandlerUtils.runOnUiThread(new Runnable() {
@@ -1032,6 +1033,7 @@ public class Distribute extends AbstractAppCenterService {
                     @Override
                     public void run() {
                         try {
+                            String payload = httpResponse.getPayload();
                             handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
                         } catch (JSONException e) {
                             onCallFailed(e);
@@ -1071,7 +1073,7 @@ public class Distribute extends AbstractAppCenterService {
                     try {
 
                         /* We actually don't care of the http code if JSON code is specified. */
-                        ErrorDetails errorDetails = ErrorDetails.parse(httpException.getPayload());
+                        ErrorDetails errorDetails = ErrorDetails.parse(httpException.getHttpResponse().getPayload());
                         code = errorDetails.getCode();
                     } catch (JSONException je) {
                         AppCenterLog.verbose(LOG_TAG, "Cannot read the error as JSON", je);

@@ -317,7 +317,7 @@ abstract public class AbstractDataTest {
         callTemplate.onBeforeCalling(null, new HashMap<String, String>());
         assertNotNull(cosmosDbServiceCallback);
         if (cosmosSuccessPayload != null) {
-            cosmosDbServiceCallback.onCallSucceeded(cosmosSuccessPayload, new HashMap<String, String>());
+            cosmosDbServiceCallback.onCallSucceeded(cosmosSuccessPayload);
         }
         if (cosmosFailureException != null) {
             cosmosDbServiceCallback.onCallFailed(cosmosFailureException);
@@ -349,7 +349,7 @@ abstract public class AbstractDataTest {
         String body = tokenExchangeTemplateCallbackArgumentCaptor.getValue().buildRequestBody();
         assertFalse(body.contains(ACCOUNT_ID));
         if (tokenExchangeSuccessResponsePayload != null) {
-            tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeSuccessResponsePayload, new HashMap<String, String>());
+            tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeSuccessResponsePayload);
         }
         if (tokenExchangeFailureResponse != null) {
             tokenExchangeServiceCallback.onCallFailed(tokenExchangeFailureResponse);

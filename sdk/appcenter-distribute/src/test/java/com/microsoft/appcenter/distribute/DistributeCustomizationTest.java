@@ -478,7 +478,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
                 return mock(ServiceCall.class);
             }
         });

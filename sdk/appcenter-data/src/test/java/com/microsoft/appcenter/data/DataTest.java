@@ -549,7 +549,7 @@ public class DataTest extends AbstractDataTest {
         verify(mHttpClientNoRetryer).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), captor.capture());
 
         /* If we also get corrupted json online for token. */
-        captor.getValue().onCallSucceeded("garbage", new HashMap<String, String>());
+        captor.getValue().onCallSucceeded("garbage");
 
         /* Then the call fails. */
         future.get();

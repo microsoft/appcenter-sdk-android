@@ -13,7 +13,6 @@ import java.util.Map;
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 import static com.microsoft.appcenter.test.TestUtils.compareSelfNullClass;
-import static org.junit.Assert.assertEquals;
 
 @SuppressWarnings("unused")
 public class HttpExceptionTest {
@@ -30,19 +29,19 @@ public class HttpExceptionTest {
             put("x-ms-retry-after-ms", "1234");
         }};
 
-        checkEquals(new HttpException(401, "Unauthorized", responseHeaders1), new HttpException(401, "Unauthorized", responseHeaders1));
-        checkNotEquals(new HttpException(401, "Unauthorized"), new HttpException(401, "Unauthorized", responseHeaders1));
+        checkEquals(new HttpException(401), new HttpException(401));
+        checkNotEquals(new HttpException(401, "Unauthorized"), new HttpException(401));
         Map<String, String> responseHeaders2 = new HashMap<String, String>() {{
             put("Content-Type", "application/json");
             put("x-ms-retry-after-ms", "9090");
         }};
 
-        checkNotEquals(new HttpException(401, "Unauthorized", responseHeaders1), new HttpException(401, "Unauthorized", responseHeaders2));
+        checkNotEquals(new HttpException(401), new HttpException(401));
 
         assertEquals(403, new HttpException(403).getStatusCode());
         assertEquals("", new HttpException(403).getPayload());
         assertEquals("Busy", new HttpException(503, "Busy").getPayload());
-        assertEquals(2, new HttpException(401, "Unauthorized", responseHeaders1).getHeaders().size());
-        assertEquals("1234", new HttpException(401, "Unauthorized", responseHeaders1).getHeaders().get("x-ms-retry-after-ms"));
+        assertEquals(2, new HttpException(401).getHeaders().size());
+        assertEquals("1234", new HttpException(401).getHeaders().get("x-ms-retry-after-ms"));
     }
 }

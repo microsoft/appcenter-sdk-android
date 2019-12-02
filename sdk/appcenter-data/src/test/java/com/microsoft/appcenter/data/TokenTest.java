@@ -90,7 +90,7 @@ public class TokenTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(TOKEN_EXCHANGE_USER_PAYLOAD, null);
+                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(TOKEN_EXCHANGE_USER_PAYLOAD);
                 return mock(ServiceCall.class);
             }
         });
@@ -122,7 +122,7 @@ public class TokenTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(TOKEN_EXCHANGE_USER_PAYLOAD, null);
+                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(TOKEN_EXCHANGE_USER_PAYLOAD);
                 return mock(ServiceCall.class);
             }
         });
@@ -231,20 +231,20 @@ public class TokenTest extends AbstractDataTest {
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         final ArgumentCaptor<String> url = ArgumentCaptor.forClass(String.class);
         final ArgumentCaptor<Exception> exception = ArgumentCaptor.forClass(Exception.class);
-        doCallRealMethod().when(callBack).onCallSucceeded(anyString(), anyMapOf(String.class, String.class));
+        doCallRealMethod().when(callBack).onCallSucceeded(anyString());
         doNothing().when(callBack).onCallFailed(exception.capture());
         when(mHttpClient.callAsync(url.capture(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 if (url.getValue().contains(nullResponseAppUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(null, null);
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(null);
                 } else if (url.getValue().contains(emptyTokensAppUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\": null}", null);
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\": null}");
                 } else if (url.getValue().contains(multipleTokensAppUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{}, {}]}", null);
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{}, {}]}");
                 } else if (url.getValue().contains(malFormedTokenUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{\"status\": \"succeed\"}]}", null);
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{\"status\": \"succeed\"}]}");
                 }
                 return mock(ServiceCall.class);
             }
