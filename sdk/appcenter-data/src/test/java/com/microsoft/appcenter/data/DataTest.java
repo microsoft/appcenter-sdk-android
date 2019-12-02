@@ -20,6 +20,7 @@ import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -176,7 +177,7 @@ public class DataTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(403, "The operation is forbidden."));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(new HttpResponse(403, "The operation is forbidden.")));
                 return mock(ServiceCall.class);
             }
         });
@@ -549,7 +550,7 @@ public class DataTest extends AbstractDataTest {
         verify(mHttpClientNoRetryer).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), captor.capture());
 
         /* If we also get corrupted json online for token. */
-        captor.getValue().onCallSucceeded("garbage");
+        captor.getValue().onCallSucceeded(new HttpResponse(200, "garbage"));
 
         /* Then the call fails. */
         future.get();

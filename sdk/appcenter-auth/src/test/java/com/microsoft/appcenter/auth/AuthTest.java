@@ -15,6 +15,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.Ingestion;
@@ -168,7 +169,7 @@ public class AuthTest extends AbstractAuthTest {
     private static void mockHttpCallSuccess(JSONObject jsonConfig, ServiceCallback serviceCallback) {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(jsonConfig.toString());
+        serviceCallback.onCallSucceeded(new HttpResponse(200, jsonConfig.toString()));
     }
 
     @Test
@@ -287,7 +288,7 @@ public class AuthTest extends AbstractAuthTest {
         verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), callbackArgumentCaptor.capture());
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
-        serviceCallback.onCallSucceeded("invalid");
+        serviceCallback.onCallSucceeded(new HttpResponse(200, "invalid"));
 
         /* We saved after we downloaded the file. */
         verifyStatic();
@@ -1018,7 +1019,7 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void downloadConfigurationFailedHttp() {
-        testDownloadFailed(new HttpException(404));
+        testDownloadFailed(new HttpException(new HttpResponse(404)));
     }
 
     @Test
@@ -1180,7 +1181,7 @@ public class AuthTest extends AbstractAuthTest {
         /* Simulate response 304 not modified. */
         ServiceCallback serviceCallback = callbackArgumentCaptor.getValue();
         assertNotNull(serviceCallback);
-        serviceCallback.onCallFailed(new HttpException(304));
+        serviceCallback.onCallFailed(new HttpException(new HttpResponse(304)));
 
         /* Configuration not refreshed. */
         verifyNew(PublicClientApplication.class, times(1));
@@ -2029,7 +2030,7 @@ public class AuthTest extends AbstractAuthTest {
 
     @Test
     public void signInFailedAfterConfigDownloadingHttpFailed() throws Exception {
-        signInFailedAfterConfigDownloadingFailed(new HttpException(304));
+        signInFailedAfterConfigDownloadingFailed(new HttpException(new HttpResponse(304)));
     }
 
     private void signInFailedAfterConfigDownloadingFailed(Exception e) throws Exception {

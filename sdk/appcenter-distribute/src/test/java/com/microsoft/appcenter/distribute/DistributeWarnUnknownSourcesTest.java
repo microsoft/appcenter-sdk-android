@@ -15,6 +15,7 @@ import android.os.Build;
 import android.provider.Settings;
 
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.test.TestUtils;
@@ -83,7 +84,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock");
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
                 return mock(ServiceCall.class);
             }
         });

@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 import com.microsoft.appcenter.data.client.TokenExchange;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -90,7 +91,7 @@ public class TokenTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(TOKEN_EXCHANGE_USER_PAYLOAD);
+                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, TOKEN_EXCHANGE_USER_PAYLOAD));
                 return mock(ServiceCall.class);
             }
         });
@@ -122,7 +123,7 @@ public class TokenTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(TOKEN_EXCHANGE_USER_PAYLOAD);
+                ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, TOKEN_EXCHANGE_USER_PAYLOAD));
                 return mock(ServiceCall.class);
             }
         });
@@ -238,13 +239,13 @@ public class TokenTest extends AbstractDataTest {
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 if (url.getValue().contains(nullResponseAppUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(null);
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, null));
                 } else if (url.getValue().contains(emptyTokensAppUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\": null}");
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "{\"tokens\": null}"));
                 } else if (url.getValue().contains(multipleTokensAppUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{}, {}]}");
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "{\"tokens\":[{}, {}]}"));
                 } else if (url.getValue().contains(malFormedTokenUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded("{\"tokens\":[{\"status\": \"succeed\"}]}");
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "{\"tokens\":[{\"status\": \"succeed\"}]}"));
                 }
                 return mock(ServiceCall.class);
             }

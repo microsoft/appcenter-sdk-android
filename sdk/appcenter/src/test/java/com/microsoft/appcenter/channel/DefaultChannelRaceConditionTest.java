@@ -8,6 +8,7 @@ package com.microsoft.appcenter.channel;
 import android.content.Context;
 
 import com.microsoft.appcenter.CancellationException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
@@ -106,7 +107,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("");
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
                         afterCallSemaphore.release();
                     }
                 }.start();

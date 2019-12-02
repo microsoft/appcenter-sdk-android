@@ -105,6 +105,7 @@ public class TokenExchange {
         @Override
         public void onCallSucceeded(HttpResponse httpResponse) {
             try {
+                String payload = httpResponse.getPayload();
                 TokenResult tokenResult = parseTokenResult(payload);
                 if (tokenResult == null) {
                     String message = "Call to App Center Token Exchange Service succeeded but the resulting payload indicates a failed state: " + payload;
