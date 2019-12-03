@@ -30,14 +30,14 @@ public class HttpResponseTest {
             put("x-ms-retry-after-ms", "1234");
         }};
 
-        checkEquals(new HttpResponse(401), new HttpResponse(401));
-        checkNotEquals(new HttpResponse(401, "Unauthorized"), new HttpResponse(401));
+        checkEquals(new HttpResponse(401, "Unauthorized", responseHeaders1), new HttpResponse(401, "Unauthorized", responseHeaders1));
+        checkNotEquals(new HttpResponse(401, "Unauthorized"), new HttpResponse(401, "Unauthorized", responseHeaders1));
         Map<String, String> responseHeaders2 = new HashMap<String, String>() {{
             put("Content-Type", "application/json");
             put("x-ms-retry-after-ms", "9090");
         }};
 
-        checkNotEquals(new HttpResponse(401), new HttpResponse(401));
+        checkNotEquals(new HttpResponse(401, "Unauthorized", responseHeaders1), new HttpResponse(401, "Unauthorized", responseHeaders2));
 
         assertEquals(403, new HttpResponse(403).getStatusCode());
         assertEquals("", new HttpResponse(403).getPayload());

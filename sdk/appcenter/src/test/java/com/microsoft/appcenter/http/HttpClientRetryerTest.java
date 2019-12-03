@@ -77,13 +77,13 @@ public class HttpClientRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
                 return call;
             }
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         HttpClientRetryer retryer = new HttpClientRetryer(httpClient);
         retryer.callAsync(null, null, null, null, callback);
-        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
+        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
     }
@@ -103,7 +103,7 @@ public class HttpClientRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
                 return mock(ServiceCall.class);
             }
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -113,7 +113,7 @@ public class HttpClientRetryerTest {
         retryer.callAsync(null, null, null, null, callback);
         verifyDelay(handler, 0);
         verifyNoMoreInteractions(handler);
-        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
+        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
         verifyNoMoreInteractions(callback);
     }
 
@@ -169,7 +169,7 @@ public class HttpClientRetryerTest {
         verifyDelay(handler, 1);
         verifyDelay(handler, 2);
         verifyNoMoreInteractions(handler);
-        verify(callback).onCallFailed(new HttpException(408));
+        verify(callback).onCallFailed(new HttpException(new HttpResponse(408)));
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
     }
@@ -182,7 +182,7 @@ public class HttpClientRetryerTest {
         Map<String, String> responseHeader = new HashMap<>();
         responseHeader.put(CONTENT_TYPE_KEY, CONTENT_TYPE_VALUE);
         responseHeader.put(X_MS_RETRY_AFTER_MS_HEADER, Long.toString(retryAfterMS));
-        final HttpException expectedException = new HttpException(new HttpResponse(429));
+        final HttpException expectedException = new HttpException(new HttpResponse(429, "call hit the retry limit", responseHeader));
 
         final ServiceCallback callback = mock(ServiceCallback.class);
         HttpClient httpClient = mock(HttpClient.class);
@@ -197,7 +197,7 @@ public class HttpClientRetryerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
                 return mock(ServiceCall.class);
             }
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -211,7 +211,7 @@ public class HttpClientRetryerTest {
         /* Verify that onCallFailed we actually check for the response header and use that value to set the delay on the retry call. */
         verifyDelayFromHeader(handler, retryAfterMS);
         verifyNoMoreInteractions(handler);
-        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
+        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
         verifyNoMoreInteractions(callback);
     }
 

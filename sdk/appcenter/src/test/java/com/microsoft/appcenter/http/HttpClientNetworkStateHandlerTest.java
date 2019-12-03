@@ -53,7 +53,7 @@ public class HttpClientNetworkStateHandlerTest {
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
                 ServiceCallback serviceCallback = (ServiceCallback) invocationOnMock.getArguments()[4];
-                serviceCallback.onCallSucceeded(new HttpResponse(200, "mockPayload"));
+                serviceCallback.onCallSucceeded(new HttpResponse(200, "mockPayload", null));
                 return call;
             }
         }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
@@ -67,7 +67,7 @@ public class HttpClientNetworkStateHandlerTest {
         verify(networkStateHelper).addListener(any(NetworkStateHelper.Listener.class));
         decorator.callAsync(url, METHOD_GET, headers, callTemplate, callback);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(callback).onCallSucceeded(new HttpResponse(200, "mockPayload"));
+        verify(callback).onCallSucceeded(new HttpResponse(200, "mockPayload", null));
         verifyNoMoreInteractions(callback);
 
         /* Close. */
@@ -135,7 +135,7 @@ public class HttpClientNetworkStateHandlerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded("");
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "", null));
                 return call;
             }
         }).when(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
@@ -150,12 +150,12 @@ public class HttpClientNetworkStateHandlerTest {
 
         /* Network is down: no call to target API must be done. */
         verify(httpClient, times(0)).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(callback, times(0)).onCallSucceeded(new HttpResponse(200, ""));
+        verify(callback, times(0)).onCallSucceeded(new HttpResponse(200, "", null));
 
         /* Network now up: call must be done and succeed. */
         decorator.onNetworkStateUpdated(true);
         verify(httpClient).callAsync(eq(url), eq(METHOD_GET), eq(headers), eq(callTemplate), any(ServiceCallback.class));
-        verify(callback).onCallSucceeded(new HttpResponse(200, ""));
+        verify(callback).onCallSucceeded(new HttpResponse(200, "", null));
 
         /* Close. */
         decorator.close();
@@ -176,7 +176,7 @@ public class HttpClientNetworkStateHandlerTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocationOnMock) {
-                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
+                ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "", null));
                 return call;
             }
         });
