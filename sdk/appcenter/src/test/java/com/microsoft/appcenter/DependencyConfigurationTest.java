@@ -30,7 +30,7 @@ public class DependencyConfigurationTest extends AbstractAppCenterTest {
 
     @Test
     public void noSetDependencyCallUsesDefaultHttpClient() throws Exception {
-        AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>) null);
+        AppCenter.start(mApplication, DUMMY_APP_SECRET);
 
         /* Verify that the channel was instantiated with default HTTP client. */
         verifyNew(DefaultChannel.class).withArguments(any(Context.class), eq(DUMMY_APP_SECRET), any(LogSerializer.class), isA(HttpClientRetryer.class), any(Handler.class));
@@ -40,7 +40,7 @@ public class DependencyConfigurationTest extends AbstractAppCenterTest {
     public void setDependencyCallUsesInjectedHttpClient() throws Exception {
         HttpClient mockHttpClient = mock(HttpClient.class);
         DependencyConfiguration.setHttpClient(mockHttpClient);
-        AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>) null);
+        AppCenter.start(mApplication, DUMMY_APP_SECRET);
 
         /* Verify that the channel was instantiated with the given HTTP client. */
         verifyNew(DefaultChannel.class).withArguments(any(Context.class), eq(DUMMY_APP_SECRET), any(LogSerializer.class), eq(mockHttpClient), any(Handler.class));
