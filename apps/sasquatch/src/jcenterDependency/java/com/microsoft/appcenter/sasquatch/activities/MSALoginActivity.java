@@ -29,7 +29,6 @@ import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
-import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -48,6 +47,9 @@ import java.util.Map;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
+/**
+ * TODO during release, delete this version of this file and move projectDependency one to main source folder.
+ */
 public class MSALoginActivity extends AppCompatActivity {
 
     private static final String URL_PREFIX = "https://login.live.com/oauth20_";
@@ -319,9 +321,9 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(HttpResponse httpResponse) {
+                    public void onCallSucceeded(String payload, Map<String, String> responseHeaders) {
                         try {
-                            JSONObject response = new JSONObject(httpResponse.getPayload());
+                            JSONObject response = new JSONObject(payload);
                             String userId = response.getString(USER_ID);
                             mRefreshToken = response.getString(REFRESH_TOKEN);
                             mRefreshTokenScope = response.getString(SCOPE);
@@ -363,9 +365,9 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(HttpResponse httpResponse) {
+                    public void onCallSucceeded(String payload, Map<String, String> responseHeaders) {
                         try {
-                            JSONObject response = new JSONObject(httpResponse.getPayload());
+                            JSONObject response = new JSONObject(payload);
                             String accessToken = response.getString("access_token");
                             long expiresIn = response.getLong("expires_in") * 1000L;
                             Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);
