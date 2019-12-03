@@ -359,12 +359,7 @@ public class DefaultHttpClientTest {
             /* Test calling code. */
             ServiceCallback serviceCallback = mock(ServiceCallback.class);
             httpClient.callAsync(urlString, METHOD_GET, headers, null, serviceCallback);
-            verify(serviceCallback).onCallSucceeded(mHttpResponseCaptor.capture());
-            HttpResponse actualHttpResponse = mHttpResponseCaptor.getValue();
-            assertNotNull(actualHttpResponse);
-            assertEquals(statusCode, actualHttpResponse.getStatusCode());
-            assertEquals("OK", actualHttpResponse.getPayload());
-            assertEquals(0, actualHttpResponse.getHeaders().size());
+            verify(serviceCallback).onCallSucceeded(eq(new HttpResponse(statusCode, "OK", Collections.<String, String>emptyMap())));
             verifyNoMoreInteractions(serviceCallback);
 
             /* Reset response stream. */
