@@ -169,7 +169,7 @@ public class AuthTest extends AbstractAuthTest {
     private static void mockHttpCallSuccess(JSONObject jsonConfig, ServiceCallback serviceCallback) {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("ETag", "mockETag");
-        serviceCallback.onCallSucceeded(new HttpResponse(200, jsonConfig.toString()));
+        serviceCallback.onCallSucceeded(new HttpResponse(200, jsonConfig.toString(), headers));
     }
 
     @Test
