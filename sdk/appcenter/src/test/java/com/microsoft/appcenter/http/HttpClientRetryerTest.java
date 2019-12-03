@@ -7,10 +7,14 @@ package com.microsoft.appcenter.http;
 
 import android.os.Handler;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Captor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -20,6 +24,9 @@ import java.util.Map;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
 import static com.microsoft.appcenter.http.DefaultHttpClient.X_MS_RETRY_AFTER_MS_HEADER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
@@ -32,6 +39,12 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @SuppressWarnings("unused")
 public class HttpClientRetryerTest {
+
+    @Rule
+    public PowerMockRule mRule = new PowerMockRule();
+
+    @Captor
+    private ArgumentCaptor<HttpResponse> mHttpResponseCaptor;
 
     private static void simulateRetryAfterDelay(Handler handler) {
         doAnswer(new Answer() {
@@ -83,7 +96,12 @@ public class HttpClientRetryerTest {
         }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         HttpClientRetryer retryer = new HttpClientRetryer(httpClient);
         retryer.callAsync(null, null, null, null, callback);
-        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
+        verify(callback).onCallSucceeded(mHttpResponseCaptor.capture());
+        HttpResponse actualHttpResponse = mHttpResponseCaptor.getValue();
+        assertNotNull(actualHttpResponse);
+        assertEquals(200, actualHttpResponse.getStatusCode());
+        assertEquals("mockSuccessPayload", actualHttpResponse.getPayload());
+        assertNull(actualHttpResponse.getHeaders());
         verifyNoMoreInteractions(callback);
         verifyNoMoreInteractions(call);
     }
@@ -113,7 +131,12 @@ public class HttpClientRetryerTest {
         retryer.callAsync(null, null, null, null, callback);
         verifyDelay(handler, 0);
         verifyNoMoreInteractions(handler);
-        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
+        verify(callback).onCallSucceeded(mHttpResponseCaptor.capture());
+        HttpResponse actualHttpResponse = mHttpResponseCaptor.getValue();
+        assertNotNull(actualHttpResponse);
+        assertEquals(200, actualHttpResponse.getStatusCode());
+        assertEquals("mockSuccessPayload", actualHttpResponse.getPayload());
+        assertNull(actualHttpResponse.getHeaders());
         verifyNoMoreInteractions(callback);
     }
 
@@ -211,7 +234,12 @@ public class HttpClientRetryerTest {
         /* Verify that onCallFailed we actually check for the response header and use that value to set the delay on the retry call. */
         verifyDelayFromHeader(handler, retryAfterMS);
         verifyNoMoreInteractions(handler);
-        verify(callback).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
+        verify(callback).onCallSucceeded(mHttpResponseCaptor.capture());
+        HttpResponse actualHttpResponse = mHttpResponseCaptor.getValue();
+        assertNotNull(actualHttpResponse);
+        assertEquals(200, actualHttpResponse.getStatusCode());
+        assertEquals("mockSuccessPayload", actualHttpResponse.getPayload());
+        assertNull(actualHttpResponse.getHeaders());
         verifyNoMoreInteractions(callback);
     }
 

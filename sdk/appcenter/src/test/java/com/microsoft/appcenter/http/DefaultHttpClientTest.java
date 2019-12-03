@@ -63,7 +63,6 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -360,7 +359,12 @@ public class DefaultHttpClientTest {
             /* Test calling code. */
             ServiceCallback serviceCallback = mock(ServiceCallback.class);
             httpClient.callAsync(urlString, METHOD_GET, headers, null, serviceCallback);
-            verify(serviceCallback).onCallSucceeded(new HttpResponse(200, "OK", Collections.<String, String>emptyMap()));
+            verify(serviceCallback).onCallSucceeded(mHttpResponseCaptor.capture());
+            HttpResponse actualHttpResponse = mHttpResponseCaptor.getValue();
+            assertNotNull(actualHttpResponse);
+            assertEquals(statusCode, actualHttpResponse.getStatusCode());
+            assertEquals("OK", actualHttpResponse.getPayload());
+            assertEquals(0, actualHttpResponse.getHeaders().size());
             verifyNoMoreInteractions(serviceCallback);
 
             /* Reset response stream. */
