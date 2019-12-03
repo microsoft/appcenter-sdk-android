@@ -21,11 +21,11 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 
-public class DependencyManagerTest extends AbstractAppCenterTest {
+public class DependencyConfigurationTest extends AbstractAppCenterTest {
 
     @Test
     public void ConstructorCoverage() {
-        new DependencyManager();
+        new DependencyConfiguration();
     }
 
     @Test
@@ -39,7 +39,7 @@ public class DependencyManagerTest extends AbstractAppCenterTest {
     @Test
     public void setDependencyCallUsesInjectedHttpClient() throws Exception {
         HttpClient mockHttpClient = mock(HttpClient.class);
-        DependencyManager.setDependencies(mockHttpClient);
+        DependencyConfiguration.setHttpClient(mockHttpClient);
         AppCenter.start(mApplication, DUMMY_APP_SECRET, (Class<? extends AppCenterService>) null);
 
         /* Verify that the channel was instantiated with the given HTTP client. */

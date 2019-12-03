@@ -188,11 +188,6 @@ public class AppCenter {
     private Channel mChannel;
 
     /**
-     * HTTP client.
-     */
-    private HttpClient mHttpClient;
-
-    /**
      * Background handler thread.
      */
     private HandlerThread mHandlerThread;
@@ -791,16 +786,17 @@ public class AppCenter {
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
-        /* Instantiate HTTP client if it doesn't exist. */
-        if (mHttpClient == null) {
-            mHttpClient = createHttpClient(mApplication);
+        /* Instantiate HTTP client if it doesn't exist as a dependency. */
+        HttpClient httpClient = DependencyConfiguration.getHttpClient();
+        if (httpClient == null) {
+            httpClient = createHttpClient(mApplication);
         }
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHttpClient, mHandler);
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, httpClient, mHandler);
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {
@@ -812,7 +808,7 @@ public class AppCenter {
         }
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
-        mOneCollectorChannelListener = new OneCollectorChannelListener(mChannel, mLogSerializer, mHttpClient, IdHelper.getInstallId());
+        mOneCollectorChannelListener = new OneCollectorChannelListener(mChannel, mLogSerializer, httpClient, IdHelper.getInstallId());
         if (mLogUrl != null) {
             if (mAppSecret != null) {
                 AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint has been changed to " + mLogUrl);
@@ -1177,10 +1173,6 @@ public class AppCenter {
      */
     public static void setUserId(String userId) {
         getInstance().setInstanceUserId(userId);
-    }
-
-    void setHttpClient(HttpClient httpClient) {
-        mHttpClient = httpClient;
     }
 
     @VisibleForTesting
