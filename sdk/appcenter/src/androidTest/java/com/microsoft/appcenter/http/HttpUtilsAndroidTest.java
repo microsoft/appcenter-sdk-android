@@ -47,12 +47,12 @@ public class HttpUtilsAndroidTest {
         assertTrue(isRecoverableError(new IOException(new EOFException())));
         assertFalse(isRecoverableError(new IOException(new Exception())));
         for (int i = 0; i <= 4; i++)
-            assertTrue(isRecoverableError(new HttpException(500 + i)));
+            assertTrue(isRecoverableError(new HttpException(new HttpResponse(500 + i))));
         for (int i = 0; i <= 6; i++)
-            assertFalse(isRecoverableError(new HttpException(400 + i)));
-        assertTrue(isRecoverableError(new HttpException(408)));
-        assertFalse(isRecoverableError(new HttpException(413)));
-        assertTrue(isRecoverableError(new HttpException(429)));
+            assertFalse(isRecoverableError(new HttpException(new HttpResponse(400 + i))));
+        assertTrue(isRecoverableError(new HttpException(new HttpResponse(408))));
+        assertFalse(isRecoverableError(new HttpException(new HttpResponse(413))));
+        assertTrue(isRecoverableError(new HttpException(new HttpResponse(429))));
         assertTrue(isRecoverableError(new SSLException("Write error: ssl=0x59c28f90: I/O error during system call, Connection timed out")));
         assertFalse(isRecoverableError(new SSLException(null, new CertPathValidatorException("Trust anchor for certification path not found."))));
         assertFalse(isRecoverableError(new SSLException("java.lang.RuntimeException: Unexpected error: java.security.InvalidAlgorithmParameterException: the trustAnchors parameter must be non-empty")));
