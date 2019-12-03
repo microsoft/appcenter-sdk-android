@@ -239,7 +239,7 @@ public class TokenTest extends AbstractDataTest {
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 if (url.getValue().contains(nullResponseAppUrl)) {
-                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, null));
+                    ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "null"));
                 } else if (url.getValue().contains(emptyTokensAppUrl)) {
                     ((TokenExchange.TokenExchangeServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "{\"tokens\": null}"));
                 } else if (url.getValue().contains(multipleTokensAppUrl)) {
