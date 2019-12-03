@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * HTTP exception.
+ * HTTP response.
  */
 public class HttpResponse {
 

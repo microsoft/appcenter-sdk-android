@@ -72,7 +72,6 @@ public class MSALoginActivity extends AppCompatActivity {
             "AsimovRome.Telemetry",
     };
 
-
     private static final String USER_ID = "user_id";
 
     private static final String SCOPE = "scope";
