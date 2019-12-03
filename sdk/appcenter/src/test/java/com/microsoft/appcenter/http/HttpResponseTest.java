@@ -42,7 +42,7 @@ public class HttpResponseTest {
         assertEquals(403, new HttpResponse(403).getStatusCode());
         assertEquals("", new HttpResponse(403).getPayload());
         assertEquals("Busy", new HttpResponse(503, "Busy").getPayload());
-        assertEquals(2, new HttpResponse(401).getHeaders().size());
-        assertEquals("1234", new HttpResponse(401).getHeaders().get("x-ms-retry-after-ms"));
+        assertEquals(2, new HttpResponse(401, "Unauthorized", responseHeaders1).getHeaders().size());
+        assertEquals("1234", new HttpResponse(401, "Unauthorized", responseHeaders1).getHeaders().get("x-ms-retry-after-ms"));
     }
 }
