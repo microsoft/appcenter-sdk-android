@@ -1266,7 +1266,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
                 /* Do the call so that id had changed. */
                 Distribute.getInstance().getLatestReleaseDetails("mockGroup", "token");
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock"));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
@@ -1300,7 +1300,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
                 /* Do the call so that id had changed. */
                 Distribute.getInstance().onActivityPaused(mActivity);
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock"));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
@@ -1330,7 +1330,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock"));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
                 return mock(ServiceCall.class);
             }
         });

@@ -84,7 +84,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload", null));
                 return mock(ServiceCall.class);
             }
         });
