@@ -14,6 +14,7 @@ import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -172,7 +173,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(409, "Conflict happened."));
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(new HttpResponse(409, "Conflict happened.")));
                         return mock(ServiceCall.class);
                     }
                 });
@@ -230,7 +231,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(409, "Conflict happened."));
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(new HttpResponse(409, "Conflict happened.")));
                         return mock(ServiceCall.class);
                     }
                 });
@@ -276,7 +277,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(409, "Conflict happened."));
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallFailed(new HttpException(new HttpResponse(409, "Conflict happened.")));
                         return mock(ServiceCall.class);
                     }
                 });
@@ -317,7 +318,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[6]).onCallSucceeded("");
+                        ((ServiceCallback) invocation.getArguments()[6]).onCallSucceeded(new HttpResponse(200, "", new HashMap<String, String>()));
                         return mock(ServiceCall.class);
                     }
                 });
@@ -350,7 +351,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
     public void createTokenExchangeCallFails() throws JSONException {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.create(DOCUMENT_ID, new TestDocument("test"), TestDocument.class, USER_DOCUMENTS);
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeFlow(false, null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeFlow(false, null, new HttpException(new HttpResponse(503, exceptionMessage)));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -422,7 +423,7 @@ public class DataCreateUpdateDeleteTest extends AbstractDataTest {
     public void deleteCosmosDbCallFails() throws JSONException {
         AppCenterFuture<DocumentWrapper<Void>> doc = Data.delete(DOCUMENT_ID, USER_DOCUMENTS);
         String exceptionMessage = "Call to Cosmos DB failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, new HttpException(400, exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, new HttpException(new HttpResponse(400, exceptionMessage)));
 
         /*
          *  No retries and Cosmos DB does not get called.
