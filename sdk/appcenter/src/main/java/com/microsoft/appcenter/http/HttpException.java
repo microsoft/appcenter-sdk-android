@@ -25,7 +25,7 @@ public class HttpException extends IOException {
      *
      * @param httpResponse The HTTP response.
      */
-    public HttpException(HttpResponse httpResponse) {
+    public HttpException(@NonNull HttpResponse httpResponse) {
         super(getDetailMessage(httpResponse.getStatusCode(), httpResponse.getPayload()));
         mHttpResponse = httpResponse;
     }
@@ -54,11 +54,11 @@ public class HttpException extends IOException {
 
         HttpException that = (HttpException) o;
 
-        return mHttpResponse != null ? mHttpResponse.equals(that.mHttpResponse) : that.mHttpResponse == null;
+        return mHttpResponse.equals(that.mHttpResponse);
     }
 
     @Override
     public int hashCode() {
-        return mHttpResponse != null ? mHttpResponse.hashCode() : 0;
+        return mHttpResponse.hashCode();
     }
 }
