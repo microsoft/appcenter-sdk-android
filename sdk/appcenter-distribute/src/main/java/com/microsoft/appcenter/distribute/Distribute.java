@@ -983,7 +983,7 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
-        final HttpClient httpClient = createHttpClient(mContext);
+        HttpClient httpClient = createHttpClient(mContext);
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {

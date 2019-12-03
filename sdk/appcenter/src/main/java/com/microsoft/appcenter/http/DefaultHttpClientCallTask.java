@@ -254,7 +254,6 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
             for (Map.Entry<String, List<String>> header : httpsURLConnection.getHeaderFields().entrySet()) {
                 responseHeaders.put(header.getKey(), header.getValue().iterator().next());
             }
-
             HttpResponse httpResponse = new HttpResponse(status, response, responseHeaders);
 
             /* Accept all 2xx codes. */
@@ -296,8 +295,6 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         if (result instanceof Exception) {
             mServiceCallback.onCallFailed((Exception) result);
         } else {
-
-            @SuppressWarnings("unchecked")
             HttpResponse response = (HttpResponse) result;
             mServiceCallback.onCallSucceeded(response);
         }

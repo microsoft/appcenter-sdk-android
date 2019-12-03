@@ -107,7 +107,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "", null));
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
                         afterCallSemaphore.release();
                     }
                 }.start();
