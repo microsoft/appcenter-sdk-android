@@ -12,6 +12,7 @@ import com.microsoft.appcenter.data.models.ReadOptions;
 import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -205,7 +206,7 @@ public class DataReadTest extends AbstractDataTest {
                 "        }\n" +
                 "    ]\n" +
                 "}";
-        tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeFailedResponsePayload);
+        tokenExchangeServiceCallback.onCallSucceeded(new HttpResponse(200, tokenExchangeFailedResponsePayload));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -226,7 +227,7 @@ public class DataReadTest extends AbstractDataTest {
         AppCenterFuture<DocumentWrapper<TestDocument>> doc = Data.read(DOCUMENT_ID, TestDocument.class, USER_DOCUMENTS);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeToCosmosDbFlow(false, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_GET, null, new HttpException(new HttpResponse(503, exceptionMessage)));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -289,7 +290,7 @@ public class DataReadTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, expectedResponse));
                 return mock(ServiceCall.class);
             }
         });

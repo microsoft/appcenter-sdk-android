@@ -232,7 +232,7 @@ public class TokenTest extends AbstractDataTest {
         TokenExchange.TokenExchangeServiceCallback callBack = mock(TokenExchange.TokenExchangeServiceCallback.class);
         final ArgumentCaptor<String> url = ArgumentCaptor.forClass(String.class);
         final ArgumentCaptor<Exception> exception = ArgumentCaptor.forClass(Exception.class);
-        doCallRealMethod().when(callBack).onCallSucceeded(anyString());
+        doCallRealMethod().when(callBack).onCallSucceeded(any(HttpResponse.class));
         doNothing().when(callBack).onCallFailed(exception.capture());
         when(mHttpClient.callAsync(url.capture(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), eq(callBack))).then(new Answer<ServiceCall>() {
 
