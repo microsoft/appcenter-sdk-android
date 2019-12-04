@@ -10,6 +10,7 @@ import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -282,7 +283,7 @@ public class DataListTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, expectedResponse));
                 return mock(ServiceCall.class);
             }
         });
@@ -367,7 +368,7 @@ public class DataListTest extends AbstractDataTest {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
                 };
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, expectedResponse, newHeader));
                 return mock(ServiceCall.class);
             }
         });
@@ -430,7 +431,7 @@ public class DataListTest extends AbstractDataTest {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
                 };
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, expectedResponse, newHeader));
                 return mock(ServiceCall.class);
             }
         });
@@ -514,7 +515,7 @@ public class DataListTest extends AbstractDataTest {
                         put(Constants.CONTINUATION_TOKEN_HEADER, "continuation token");
                     }
                 };
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, newHeader);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, expectedResponse, newHeader));
                 return mock(ServiceCall.class);
             }
         });
@@ -582,7 +583,7 @@ public class DataListTest extends AbstractDataTest {
         AppCenterFuture<PaginatedDocuments<TestDocument>> documents = Data.list(TestDocument.class, USER_DOCUMENTS);
 
         String exceptionMessage = "Call to token exchange failed for whatever reason";
-        verifyTokenExchangeFlow(false, null, new HttpException(503, exceptionMessage));
+        verifyTokenExchangeFlow(false, null, new HttpException(new HttpResponse(503, exceptionMessage)));
 
         /*
          *  No retries and Cosmos DB does not get called.
@@ -633,7 +634,7 @@ public class DataListTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, expectedResponse));
                         return mock(ServiceCall.class);
                     }
                 });
@@ -697,7 +698,7 @@ public class DataListTest extends AbstractDataTest {
 
                     @Override
                     public ServiceCall answer(InvocationOnMock invocation) {
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, expectedResponse));
                         return mock(ServiceCall.class);
                     }
                 });
@@ -732,7 +733,7 @@ public class DataListTest extends AbstractDataTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(expectedResponse, new HashMap<String, String>());
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, expectedResponse));
                 return mock(ServiceCall.class);
             }
         });

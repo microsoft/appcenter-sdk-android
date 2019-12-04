@@ -14,6 +14,7 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
@@ -572,7 +573,7 @@ public class DefaultChannel implements Channel {
             groupState.mIngestion.sendAsync(authToken, mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
-                public void onCallSucceeded(String payload, Map<String, String> headers) {
+                public void onCallSucceeded(HttpResponse httpResponse) {
                     mAppCenterHandler.post(new Runnable() {
 
                         @Override

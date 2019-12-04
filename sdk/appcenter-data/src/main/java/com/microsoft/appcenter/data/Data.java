@@ -32,6 +32,7 @@ import com.microsoft.appcenter.data.models.TokenResult;
 import com.microsoft.appcenter.data.models.WriteOptions;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -581,12 +582,12 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                     @MainThread
                     @Override
-                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(final HttpResponse httpResponse) {
                         post(new Runnable() {
 
                             @Override
                             public void run() {
-                                DocumentWrapper<T> document = Utils.parseDocument(payload, documentType);
+                                DocumentWrapper<T> document = Utils.parseDocument(httpResponse.getPayload(), documentType);
                                 if (document.getError() != null) {
                                     completeFutureOnDocumentError(document, result);
                                 } else {
@@ -625,8 +626,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        Page<T> page = Utils.parseDocuments(payload, documentType);
+                    public void onCallSucceeded(HttpResponse httpResponse) {
+                        Page<T> page = Utils.parseDocuments(httpResponse.getPayload(), documentType);
                         String tableName = Utils.getTableName(tokenResult);
                         List<DocumentWrapper<T>> items = page.getItems();
                         if (items != null) {
@@ -638,7 +639,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                         }
                         PaginatedDocuments<T> paginatedDocuments = new PaginatedDocuments<T>()
                                 .setCurrentPage(page).setTokenResult(tokenResult)
-                                .setContinuationToken(headers.get(Constants.CONTINUATION_TOKEN_HEADER))
+                                .setContinuationToken(httpResponse.getHeaders().get(Constants.CONTINUATION_TOKEN_HEADER))
                                 .setReadOptions(readOptions)
                                 .setDocumentType(documentType)
                                 .setNextPageDelegate(new NextPageDelegate() {
@@ -778,12 +779,12 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                     @MainThread
                     @Override
-                    public void onCallSucceeded(final String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(final HttpResponse httpResponse) {
                         post(new Runnable() {
 
                             @Override
                             public void run() {
-                                DocumentWrapper<T> cosmosDbDocument = Utils.parseDocument(payload, documentType);
+                                DocumentWrapper<T> cosmosDbDocument = Utils.parseDocument(httpResponse.getPayload(), documentType);
                                 if (cosmosDbDocument.hasFailed()) {
                                     completeFutureOnDocumentError(cosmosDbDocument, result);
                                 } else {
@@ -821,8 +822,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                     @MainThread
                     @Override
-                    public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        notifyListenerAndUpdateOperationOnSuccess(payload, pendingOperation);
+                    public void onCallSucceeded(HttpResponse httpResponse) {
+                        notifyListenerAndUpdateOperationOnSuccess(httpResponse.getPayload(), pendingOperation);
                     }
 
                     @MainThread
@@ -921,7 +922,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                     @MainThread
                     @Override
-                    public void onCallSucceeded(String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(HttpResponse httpResponse) {
                         post(new Runnable() {
 
                             @Override
@@ -953,8 +954,8 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
 
                     @MainThread
                     @Override
-                    public void onCallSucceeded(String payload, Map<String, String> headers) {
-                        notifyListenerAndUpdateOperationOnSuccess(payload, operation);
+                    public void onCallSucceeded(HttpResponse httpResponse) {
+                        notifyListenerAndUpdateOperationOnSuccess(httpResponse.getPayload(), operation);
                     }
 
                     @MainThread
@@ -1060,7 +1061,7 @@ public class Data extends AbstractAppCenterService implements NetworkStateHelper
                 AppCenterLog.error(LOG_TAG, "Remote operation failed", e);
                 boolean deleteLocalCopy = false;
                 if (e.getCause() instanceof HttpException) {
-                    switch (((HttpException) e.getCause()).getStatusCode()) {
+                    switch (((HttpException) e.getCause()).getHttpResponse().getStatusCode()) {
 
                         /* The document was removed on the server. */
                         case 404:

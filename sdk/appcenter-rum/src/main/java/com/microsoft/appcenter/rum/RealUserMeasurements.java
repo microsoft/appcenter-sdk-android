@@ -16,6 +16,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
@@ -260,10 +261,10 @@ public class RealUserMeasurements extends AbstractAppCenterService {
         httpClient.callAsync(url, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
             @Override
-            public void onCallSucceeded(String payload, Map<String, String> headers) {
+            public void onCallSucceeded(HttpResponse httpResponse) {
 
                 /* Read JSON configuration and start testing. */
-                handleRemoteConfiguration(httpClient, rumKey, payload);
+                handleRemoteConfiguration(httpClient, rumKey, httpResponse.getPayload());
             }
 
             @Override
@@ -392,7 +393,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
             mHttpClient.callAsync(testUrl.url, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                 @Override
-                public void onCallSucceeded(String payload, Map<String, String> headers) {
+                public void onCallSucceeded(HttpResponse httpResponse) {
                     testUrl.result = System.currentTimeMillis() - startTime;
                     testUrl(httpClient, rumKey, iterator);
                 }
@@ -460,7 +461,7 @@ public class RealUserMeasurements extends AbstractAppCenterService {
                 mHttpClient.callAsync(finalReportUrl, METHOD_GET, HEADERS, null, new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, Map<String, String> headers) {
+                    public void onCallSucceeded(HttpResponse httpResponse) {
                         AppCenterLog.info(LOG_TAG, "Measurements reported successfully.");
                     }
 

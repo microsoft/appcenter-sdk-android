@@ -20,6 +20,7 @@ import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientNetworkStateHandler;
 import com.microsoft.appcenter.http.HttpClientRetryer;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
@@ -317,7 +318,7 @@ abstract public class AbstractDataTest {
         callTemplate.onBeforeCalling(null, new HashMap<String, String>());
         assertNotNull(cosmosDbServiceCallback);
         if (cosmosSuccessPayload != null) {
-            cosmosDbServiceCallback.onCallSucceeded(cosmosSuccessPayload, new HashMap<String, String>());
+            cosmosDbServiceCallback.onCallSucceeded(new HttpResponse(200, cosmosSuccessPayload));
         }
         if (cosmosFailureException != null) {
             cosmosDbServiceCallback.onCallFailed(cosmosFailureException);
@@ -349,7 +350,7 @@ abstract public class AbstractDataTest {
         String body = tokenExchangeTemplateCallbackArgumentCaptor.getValue().buildRequestBody();
         assertFalse(body.contains(ACCOUNT_ID));
         if (tokenExchangeSuccessResponsePayload != null) {
-            tokenExchangeServiceCallback.onCallSucceeded(tokenExchangeSuccessResponsePayload, new HashMap<String, String>());
+            tokenExchangeServiceCallback.onCallSucceeded(new HttpResponse(200, tokenExchangeSuccessResponsePayload));
         }
         if (tokenExchangeFailureResponse != null) {
             tokenExchangeServiceCallback.onCallFailed(tokenExchangeFailureResponse);

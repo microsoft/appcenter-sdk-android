@@ -19,6 +19,7 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -385,12 +386,12 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
         }, new ServiceCallback() {
 
             @Override
-            public void onCallSucceeded(final String payload, final Map<String, String> headers) {
+            public void onCallSucceeded(final HttpResponse httpResponse) {
                 post(new Runnable() {
 
                     @Override
                     public void run() {
-                        processDownloadedConfig(payload, headers.get(HEADER_E_TAG));
+                        processDownloadedConfig(httpResponse.getPayload(), httpResponse.getHeaders().get(HEADER_E_TAG));
                     }
                 });
             }
@@ -401,7 +402,7 @@ public class Auth extends AbstractAppCenterService implements NetworkStateHelper
 
                     @Override
                     public void run() {
-                        if (e instanceof HttpException && ((HttpException) e).getStatusCode() == 304) {
+                        if (e instanceof HttpException && ((HttpException) e).getHttpResponse().getStatusCode() == 304) {
                             processDownloadNotModified();
                         } else {
                             processDownloadError(e);
