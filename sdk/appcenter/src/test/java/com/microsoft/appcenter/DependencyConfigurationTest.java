@@ -13,6 +13,7 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpClientRetryer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 
+import org.junit.After;
 import org.junit.Test;
 
 import static org.mockito.Matchers.any;
@@ -44,5 +45,10 @@ public class DependencyConfigurationTest extends AbstractAppCenterTest {
 
         /* Verify that the channel was instantiated with the given HTTP client. */
         verifyNew(DefaultChannel.class).withArguments(any(Context.class), eq(DUMMY_APP_SECRET), any(LogSerializer.class), eq(mockHttpClient), any(Handler.class));
+    }
+
+    @After
+    public void resetDependencies() {
+        DependencyConfiguration.setHttpClient(null);
     }
 }
