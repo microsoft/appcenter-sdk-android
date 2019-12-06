@@ -73,6 +73,7 @@ import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.crashes.Crashes.PREF_KEY_MEMORY_RUNNING_LEVEL;
 import static com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog.attachmentWithBinary;
 import static org.junit.Assert.assertEquals;
@@ -924,6 +925,7 @@ public class CrashesTest extends AbstractCrashesTest {
         for (int i = 0; i < numOfAttachments; ++i) {
             ErrorAttachmentLog log = mock(ErrorAttachmentLog.class);
             when(log.isValid()).thenReturn(true);
+            when(log.getData()).thenReturn(new byte[1]);
             errorAttachmentLogs.add(log);
         }
 
@@ -955,6 +957,46 @@ public class CrashesTest extends AbstractCrashesTest {
         String expectedMessage = "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.";
         PowerMockito.verifyStatic();
         AppCenterLog.warn(Crashes.LOG_TAG, expectedMessage);
+    }
+
+    @Test
+    public void discardHugeErrorAttachments() throws JSONException {
+
+        /* Prepare a big (too big) attachment and a small one. */
+        ArrayList<ErrorAttachmentLog> errorAttachmentLogs = new ArrayList<>(2);
+        ErrorAttachmentLog binaryAttachment = attachmentWithBinary(new byte[7 * 1024 * 1024 + 1], "earth.png", "image/png");
+        errorAttachmentLogs.add(binaryAttachment);
+        ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("hello", "log.txt");
+        errorAttachmentLogs.add(textAttachment);
+
+        /* Set up callbacks. */
+        CrashesListener listener = mock(CrashesListener.class);
+        when(listener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+        when(listener.getErrorAttachments(any(ErrorReport.class))).thenReturn(errorAttachmentLogs);
+
+        /* Mock a crash log to process. */
+        ManagedErrorLog log = mock(ManagedErrorLog.class);
+        when(log.getId()).thenReturn(UUID.randomUUID());
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(log);
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(new ErrorReport());
+        when(FileManager.read(any(File.class))).thenReturn("");
+
+        /* Mock starting crashes so that attachments are processed. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.setInstanceListener(listener);
+        crashes.setLogSerializer(logSerializer);
+        crashes.onStarting(mAppCenterHandler);
+        Channel channel = mock(Channel.class);
+        crashes.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Check we send only the text attachment as the binary is too big. */
+        verify(channel).enqueue(textAttachment, crashes.getGroupName(), NORMAL);
+        verify(channel, never()).enqueue(eq(binaryAttachment), anyString(), anyInt());
     }
 
     @Test

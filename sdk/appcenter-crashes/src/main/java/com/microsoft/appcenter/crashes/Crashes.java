@@ -55,6 +55,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -117,6 +118,11 @@ public class Crashes extends AbstractAppCenterService {
      * Max allowed attachments per crash.
      */
     private static final int MAX_ATTACHMENT_PER_CRASH = 2;
+
+    /**
+     * Maximum size for attachment data in bytes.
+     */
+    private static final int MAX_ATTACHMENT_SIZE = 7 * 1024 * 1024;
 
     /**
      * Default crashes listener.
@@ -1016,11 +1022,15 @@ public class Crashes extends AbstractAppCenterService {
                 if (attachment != null) {
                     attachment.setId(UUID.randomUUID());
                     attachment.setErrorId(errorId);
-                    if (attachment.isValid()) {
+                    if (!attachment.isValid()) {
+                        AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
+                    } else if (attachment.getData().length > MAX_ATTACHMENT_SIZE) {
+                        AppCenterLog.error(LOG_TAG, String.format(Locale.ENGLISH,
+                                "Discarding attachment with size above %d bytes: size=%d, fileName=%s.",
+                                MAX_ATTACHMENT_SIZE, attachment.getData().length, attachment.getFileName()));
+                    } else {
                         ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);
-                    } else {
-                        AppCenterLog.error(LOG_TAG, "Not all required fields are present in ErrorAttachmentLog.");
                     }
                 } else {
                     AppCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog.");

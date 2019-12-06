@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 2.5.1
+
+### App Center Crashes
+
+* **[Fix]** Validate error attachment size to avoid server error or out of memory issues (using the documented limit which is 7MB).
+
+___
+
 ## Version 2.5.0
 
 ### App Center Crashes

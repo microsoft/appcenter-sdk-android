@@ -204,6 +204,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         return getId() != null && getErrorId() != null && getContentType() != null && getData() != null;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
@@ -228,7 +229,7 @@ public class ErrorAttachmentLog extends AbstractLog {
         JSONUtils.write(writer, DATA, Base64.encodeToString(getData(), Base64.NO_WRAP));
     }
 
-    @SuppressWarnings("SimplifiableIfStatement")
+    @SuppressWarnings({"SimplifiableIfStatement", "EqualsReplaceableByObjectsCall"})
     @Override
     public boolean equals(Object o) {
         if (this == o) {
