@@ -1058,16 +1058,16 @@ public class Distribute extends AbstractAppCenterService {
             /* Complete workflow in error. */
             completeWorkflow();
 
-            /* Delete token on unrecoverable error. */
+            /* Delete token on unrecoverable HTTP error. */
             if (!HttpUtils.isRecoverableError(e)) {
 
                 /*
                  * Unless its a special case: 404 with json code that no release is found.
                  * Could happen by cleaning releases with remove button.
                  */
-                String code = null;
                 if (e instanceof HttpException) {
                     HttpException httpException = (HttpException) e;
+                    String code = null;
                     try {
 
                         /* We actually don't care of the http code if JSON code is specified. */
@@ -1076,14 +1076,23 @@ public class Distribute extends AbstractAppCenterService {
                     } catch (JSONException je) {
                         AppCenterLog.verbose(LOG_TAG, "Cannot read the error as JSON", je);
                     }
+                    if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code)) {
+                        AppCenterLog.info(LOG_TAG, "No release available to the current user.");
+                    } else {
+                        AppCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
+                        mDistributeInfoTracker.removeDistributionGroupId();
+                    }
                 }
-                if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code)) {
-                    AppCenterLog.info(LOG_TAG, "No release available to the current user.");
-                } else {
+
+                /*
+                 * Non HTTP errors: just no retry but keep token for next launch,
+                 * it could be SSL error due to WIFI sign-in for example.
+                 */
+                else {
                     AppCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
-                    SharedPreferencesManager.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-                    mDistributeInfoTracker.removeDistributionGroupId();
                 }
             }
         }
