@@ -1079,7 +1079,7 @@ public class Distribute extends AbstractAppCenterService {
                     if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code)) {
                         AppCenterLog.info(LOG_TAG, "No release available to the current user.");
                     } else {
-                        AppCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+                        AppCenterLog.error(LOG_TAG, "Failed to check latest release (delete setup state)", e);
                         SharedPreferencesManager.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
                         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
                         SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
@@ -1092,7 +1092,7 @@ public class Distribute extends AbstractAppCenterService {
                  * it could be SSL error due to WIFI sign-in for example.
                  */
                 else {
-                    AppCenterLog.error(LOG_TAG, "Failed to check latest release:", e);
+                    AppCenterLog.error(LOG_TAG, "Failed to check latest release", e);
                 }
             }
         }
