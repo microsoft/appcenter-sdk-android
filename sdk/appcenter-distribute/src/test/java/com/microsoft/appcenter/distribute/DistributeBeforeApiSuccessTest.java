@@ -66,6 +66,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
@@ -1213,6 +1214,10 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         verifyStatic(deleteTokenVerificationMode);
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
 
+        /* Check postpone time kept or not depending on the test. */
+        verifyStatic(deleteTokenVerificationMode);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
+
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -1231,7 +1236,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void checkReleaseFailsWithSomeSSL() {
-        checkReleaseFailure(new SSLPeerUnverifiedException("unsecured connection"), times(1));
+        checkReleaseFailure(new SSLPeerUnverifiedException("unsecured connection"), never());
     }
 
     @Test
