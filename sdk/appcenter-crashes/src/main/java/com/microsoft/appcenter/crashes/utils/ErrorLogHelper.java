@@ -21,10 +21,13 @@ import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
+
+import org.json.JSONStringer;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -41,6 +44,11 @@ import java.util.UUID;
  * ErrorLogHelper to help constructing, serializing, and de-serializing locally stored error logs.
  */
 public class ErrorLogHelper {
+
+    /**
+     * Device info extension.
+     */
+    public static final String DEVICE_INFO_FILE = "deviceInfo";
 
     /**
      * Error log file extension for the JSON schema.
@@ -220,10 +228,34 @@ public class ErrorLogHelper {
         if (sNewMinidumpDirectory == null) {
             File errorStorageDirectory = getErrorStorageDirectory();
             File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
-            sNewMinidumpDirectory = new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
+            sNewMinidumpDirectory = new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY + File.separator + UUID.randomUUID().toString());
             FileManager.mkdir(sNewMinidumpDirectory.getPath());
         }
         return sNewMinidumpDirectory;
+    }
+
+    @NonNull
+    public static synchronized File getNewMinidumpDirectoryWithDeviceInfo(Context context) {
+        File newMinidumpDirectory = getNewMinidumpDirectory();
+        File deviceInfoFile = new File(newMinidumpDirectory, ErrorLogHelper.DEVICE_INFO_FILE);
+        try {
+            Device deviceInfo = DeviceInfoHelper.getDeviceInfo(context);
+
+            /* To JSON. */
+            JSONStringer writer = new JSONStringer();
+            writer.object();
+            deviceInfo.write(writer);
+            writer.endObject();
+            String deviceInfoString = writer.toString();
+
+            /* Write file. */
+            FileManager.write(deviceInfoFile, deviceInfoString);
+        } catch (Throwable e) {
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to store device info in a minidump folder.", e);
+            //noinspection ResultOfMethodCallIgnored
+            deviceInfoFile.delete();
+        }
+        return newMinidumpDirectory;
     }
 
     @NonNull

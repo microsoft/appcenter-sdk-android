@@ -363,7 +363,7 @@ public class Crashes extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                future.complete(ErrorLogHelper.getNewMinidumpDirectory().getAbsolutePath());
+                future.complete(ErrorLogHelper.getNewMinidumpDirectoryWithDeviceInfo(mContext).getAbsolutePath());
             }
         }, future, null);
         return future;
