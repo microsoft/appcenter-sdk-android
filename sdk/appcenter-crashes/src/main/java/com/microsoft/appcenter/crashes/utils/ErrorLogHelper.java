@@ -27,6 +27,8 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.json.JSONStringer;
 
 import java.io.File;
@@ -223,17 +225,40 @@ public class ErrorLogHelper {
         return sErrorLogDirectory;
     }
 
+    /**
+     * A general folder where NDK crashes are saved.
+     *
+     * @return a file name e.g. /lib/files/error/minidump/new
+     */
+    @NonNull
+    private static synchronized File getNewMinidumDirectoryPath() {
+        File errorStorageDirectory = getErrorStorageDirectory();
+        File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
+        return new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
+    }
+
+    /**
+     * A session-specific folder where NDK crashes are saved.
+     *
+     * @return a file name e.g. /lib/files/error/minidump/new/aae16c29-42a9-baee-0777e6ba8fe3
+     */
     @NonNull
     public static synchronized File getNewMinidumpDirectory() {
         if (sNewMinidumpDirectory == null) {
-            File errorStorageDirectory = getErrorStorageDirectory();
-            File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
-            sNewMinidumpDirectory = new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY + File.separator + UUID.randomUUID().toString());
+            File minidumpDirectory = getNewMinidumDirectoryPath();
+            sNewMinidumpDirectory = new File(minidumpDirectory, UUID.randomUUID().toString());
             FileManager.mkdir(sNewMinidumpDirectory.getPath());
         }
         return sNewMinidumpDirectory;
     }
 
+    /**
+     * A session-specific folder where NDK crashes are saved.
+     * Each application session creates it's own sub-folder with a random name
+     * to store current device info (e.g. an app version) that is used in error report.
+     *
+     * @return a file name e.g. /lib/files/error/minidump/new/aae16c29-f9e7-42a9-baee-0777e6ba8fe3
+     */
     @NonNull
     public static synchronized File getNewMinidumpDirectoryWithDeviceInfo(Context context) {
         File newMinidumpDirectory = getNewMinidumpDirectory();
@@ -284,6 +309,46 @@ public class ErrorLogHelper {
     public static File[] getNewMinidumpFiles() {
         File[] files = getNewMinidumpDirectory().listFiles();
         return files != null ? files : new File[0];
+    }
+
+    @Nullable
+    public static Device getStoredDeviceInfo(File logFolder) {
+        File[] files = logFolder.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.equals(DEVICE_INFO_FILE);
+            }
+        });
+        if (files != null) {
+            File deviceInfoFile = files[0];
+            String deviceInfoString = FileManager.read(deviceInfoFile);
+            Device device = new Device();
+            try {
+                JSONObject jsonObject = new JSONObject(deviceInfoString);
+                device.read(jsonObject);
+            } catch (JSONException e) {
+                AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize device info.", e);
+                return null;
+            }
+            return device;
+        }
+        return null;
+    }
+
+    @Nullable
+    public static void removeStaleMinidumpDirectories() {
+        final File newMinidumpDirectory = getNewMinidumpDirectory();
+        File[] previousSubFolders = getNewMinidumDirectoryPath().listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return !name.equals(newMinidumpDirectory.getName());
+            }
+        });
+        if (previousSubFolders != null && previousSubFolders.length > 0) {
+            for (File file : previousSubFolders) {
+                FileManager.deleteDir(file);
+            }
+        }
     }
 
     @Nullable

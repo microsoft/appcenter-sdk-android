@@ -226,6 +226,16 @@ public class FileManager {
         return file.delete();
     }
 
+    public static boolean deleteDir(File file) {
+        File[] contents = file.listFiles();
+        if (contents != null) {
+            for (File f : contents) {
+                deleteDir(f);
+            }
+        }
+        return file.delete();
+    }
+
     /**
      * Create a directory if it does not already exist.
      * Will create the whole directory tree if necessary.
