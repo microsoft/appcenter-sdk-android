@@ -1165,6 +1165,13 @@ public class CrashesTest extends AbstractCrashesTest {
         File minidumpFile = mock(File.class);
         when(minidumpFile.getName()).thenReturn("mockFile");
         when(minidumpFile.lastModified()).thenReturn(crashTime);
+
+        /* Mock sub-folder. */
+        File minidumpSubfolder = mock(File.class);
+        when(minidumpSubfolder.getName()).thenReturn("mockFolder");
+        when(minidumpSubfolder.listFiles()).thenReturn(new File[]{minidumpFile});
+
+        /* Mock session context. */
         mockStatic(SessionContext.class);
         SessionContext sessionContext = mock(SessionContext.class);
         when(SessionContext.getInstance()).thenReturn(sessionContext);
@@ -1173,15 +1180,19 @@ public class CrashesTest extends AbstractCrashesTest {
             when(sessionContext.getSessionAt(crashTime)).thenReturn(sessionInfo);
             when(sessionInfo.getAppLaunchTimestamp()).thenReturn(appStartTime);
         }
-        mockStatic(DeviceInfoHelper.class);
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
-        ErrorReport report = new ErrorReport();
+
+        /* Mock device info and ErrorLogHelper. */
         mockStatic(ErrorLogHelper.class);
+        mockStatic(DeviceInfoHelper.class);
+        Device device = mock(Device.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(device);
+        when(ErrorLogHelper.getStoredDeviceInfo(any(File.class))).thenReturn(device);
+        ErrorReport report = new ErrorReport();
         File errorLogFile = mock(File.class);
         when(errorLogFile.length()).thenReturn(1L);
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorLogFile);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
-        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{minidumpFile});
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{minidumpSubfolder});
         File pendingDir = mock(File.class);
         Whitebox.setInternalState(pendingDir, "path", "");
         when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingDir);
