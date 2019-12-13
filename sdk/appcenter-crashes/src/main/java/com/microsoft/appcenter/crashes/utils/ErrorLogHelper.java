@@ -231,7 +231,7 @@ public class ErrorLogHelper {
      * @return a file name e.g. /lib/files/error/minidump/new
      */
     @NonNull
-    private static synchronized File getNewMinidumDirectoryPath() {
+    public static synchronized File getNewMinidumDirectoryPath() {
         File errorStorageDirectory = getErrorStorageDirectory();
         File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
         return new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
@@ -307,7 +307,7 @@ public class ErrorLogHelper {
 
     @NonNull
     public static File[] getNewMinidumpFiles() {
-        File[] files = getNewMinidumpDirectory().listFiles();
+        File[] files = getNewMinidumDirectoryPath().listFiles();
         return files != null ? files : new File[0];
     }
 
@@ -335,7 +335,6 @@ public class ErrorLogHelper {
         return null;
     }
 
-    @Nullable
     public static void removeStaleMinidumpDirectories() {
         final File newMinidumpDirectory = getNewMinidumpDirectory();
         File[] previousSubFolders = getNewMinidumDirectoryPath().listFiles(new FilenameFilter() {
