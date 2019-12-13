@@ -737,8 +737,10 @@ public class Crashes extends AbstractAppCenterService {
                  */
                 errorLog.setUserId(UserIdContext.getInstance().getUserId());
                 try {
-                    errorLog.setDevice(savedDeviceInfo);
-                    errorLog.getDevice().setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
+                    if (savedDeviceInfo != null) {
+                        errorLog.setDevice(savedDeviceInfo);
+                        errorLog.getDevice().setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
+                    }
                     saveErrorLogFiles(new NativeException(), errorLog);
                     if (!logFile.renameTo(dest)) {
                         throw new IOException("Failed to move file");
