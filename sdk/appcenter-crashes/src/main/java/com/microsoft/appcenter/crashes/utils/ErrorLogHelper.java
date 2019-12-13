@@ -48,7 +48,7 @@ import java.util.UUID;
 public class ErrorLogHelper {
 
     /**
-     * Device info extension.
+     * Device info filename.
      */
     public static final String DEVICE_INFO_FILE = "deviceInfo";
 
@@ -226,26 +226,26 @@ public class ErrorLogHelper {
     }
 
     /**
-     * A general folder where NDK crashes are saved.
+     * A general folder where unprocessed NDK crashes are saved.
      *
-     * @return a file name e.g. /lib/files/error/minidump/new
+     * @return a folder name e.g. /lib/files/error/minidump/new
      */
     @NonNull
-    public static synchronized File getNewMinidumpDirectoryPath() {
+    private static synchronized File getNewMinidumpDirectory() {
         File errorStorageDirectory = getErrorStorageDirectory();
         File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
         return new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
     }
 
     /**
-     * A session-specific folder where NDK crashes are saved.
+     * A session-specific folder where unprocessed NDK crashes are saved.
      *
-     * @return a file name e.g. /lib/files/error/minidump/new/aae16c29-42a9-baee-0777e6ba8fe3
+     * @return a folder name e.g. /lib/files/error/minidump/new/aae16c29-42a9-baee-0777e6ba8fe3
      */
     @NonNull
-    public static synchronized File getNewMinidumpDirectory() {
+    public static synchronized File getNewMinidumpSubfolder() {
         if (sNewMinidumpDirectory == null) {
-            File minidumpDirectory = getNewMinidumpDirectoryPath();
+            File minidumpDirectory = getNewMinidumpDirectory();
             sNewMinidumpDirectory = new File(minidumpDirectory, UUID.randomUUID().toString());
             FileManager.mkdir(sNewMinidumpDirectory.getPath());
         }
@@ -253,16 +253,17 @@ public class ErrorLogHelper {
     }
 
     /**
-     * A session-specific folder where NDK crashes are saved.
-     * Each application session creates it's own sub-folder with a random name
-     * to store current device info (e.g. an app version) that is used in error report.
+     * A session-specific folder where unprocessed NDK crashes are saved.
+     * Each application session creates its own sub-folder with a random name
+     * to store information about the current device (including the application version),
+     * which is used in the error report.
      *
-     * @return a file name e.g. /lib/files/error/minidump/new/aae16c29-f9e7-42a9-baee-0777e6ba8fe3
+     * @return a folder name e.g. /lib/files/error/minidump/new/aae16c29-f9e7-42a9-baee-0777e6ba8fe3
      */
     @NonNull
-    public static synchronized File getNewMinidumpDirectoryWithDeviceInfo(Context context) {
-        File newMinidumpDirectory = getNewMinidumpDirectory();
-        File deviceInfoFile = new File(newMinidumpDirectory, ErrorLogHelper.DEVICE_INFO_FILE);
+    public static synchronized File getNewMinidumpSubfolderWithDeviceInfo(Context context) {
+        File directorySubfolder = getNewMinidumpSubfolder();
+        File deviceInfoFile = new File(directorySubfolder, ErrorLogHelper.DEVICE_INFO_FILE);
         try {
             Device deviceInfo = DeviceInfoHelper.getDeviceInfo(context);
 
@@ -280,9 +281,14 @@ public class ErrorLogHelper {
             //noinspection ResultOfMethodCallIgnored
             deviceInfoFile.delete();
         }
-        return newMinidumpDirectory;
+        return directorySubfolder;
     }
 
+    /**
+     * A folder where minidumps of processed NDK crashes are saved.
+     *
+     * @return a folder name e.g. /lib/files/error/minidump/pending
+     */
     @NonNull
     public static synchronized File getPendingMinidumpDirectory() {
         if (sPendingMinidumpDirectory == null) {
@@ -307,10 +313,16 @@ public class ErrorLogHelper {
 
     @NonNull
     public static File[] getNewMinidumpFiles() {
-        File[] files = getNewMinidumpDirectoryPath().listFiles();
+        File[] files = getNewMinidumpDirectory().listFiles();
         return files != null ? files : new File[0];
     }
 
+    /**
+     * Look for 'deviceinfo' file inside the minidump folder and parse it.
+     *
+     * @param logFolder - folder where to look for stored device information.
+     * @return a device information or null.
+     */
     @Nullable
     public static Device getStoredDeviceInfo(File logFolder) {
         File[] files = logFolder.listFiles(new FilenameFilter() {
@@ -319,34 +331,46 @@ public class ErrorLogHelper {
                 return filename.equals(DEVICE_INFO_FILE);
             }
         });
-        if (files != null) {
-            File deviceInfoFile = files[0];
-            String deviceInfoString = FileManager.read(deviceInfoFile);
+        if (files == null || files.length == 0) {
+            AppCenterLog.error(Crashes.LOG_TAG, "No stored deviceinfo file in a minidump folder.");
+            return null;
+        }
+        File deviceInfoFile = files[0];
+        String deviceInfoString = FileManager.read(deviceInfoFile);
+        if (deviceInfoString == null) {
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to read stored device info.");
+            return null;
+        }
+        try {
             Device device = new Device();
-            try {
-                JSONObject jsonObject = new JSONObject(deviceInfoString);
-                device.read(jsonObject);
-            } catch (JSONException e) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize device info.", e);
-                return null;
-            }
+            JSONObject jsonObject = new JSONObject(deviceInfoString);
+            device.read(jsonObject);
             return device;
+        } catch (JSONException e) {
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize device info.", e);
         }
         return null;
     }
 
-    public static void removeStaleMinidumpDirectories() {
-        final File newMinidumpDirectory = getNewMinidumpDirectory();
-        File[] previousSubFolders = getNewMinidumpDirectoryPath().listFiles(new FilenameFilter() {
+    /**
+     * Remove the minidump subfolders from previous sessions in the 'minidump/new' folder.
+     * Minidumps from these folders should already be moved to the 'minidump/pending' folder,
+     * so that they can be safely deleted.
+     */
+    public static void removeStaleMinidumpSubfolders() {
+        final File minidumpSubfolder = getNewMinidumpSubfolder();
+        File[] previousSubFolders = getNewMinidumpDirectory().listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return !name.equals(newMinidumpDirectory.getName());
+                return !name.equals(minidumpSubfolder.getName());
             }
         });
-        if (previousSubFolders != null && previousSubFolders.length > 0) {
-            for (File file : previousSubFolders) {
-                FileManager.deleteDir(file);
-            }
+        if (previousSubFolders == null || previousSubFolders.length == 0) {
+            AppCenterLog.debug(Crashes.LOG_TAG, "No previous minidump sub-folders.");
+            return;
+        }
+        for (File file : previousSubFolders) {
+            FileManager.deleteDir(file);
         }
     }
 

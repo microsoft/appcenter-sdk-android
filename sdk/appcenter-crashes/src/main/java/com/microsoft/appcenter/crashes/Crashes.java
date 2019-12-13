@@ -363,7 +363,7 @@ public class Crashes extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                future.complete(ErrorLogHelper.getNewMinidumpDirectoryWithDeviceInfo(mContext).getAbsolutePath());
+                future.complete(ErrorLogHelper.getNewMinidumpSubfolderWithDeviceInfo(mContext).getAbsolutePath());
             }
         }, future, null);
         return future;
@@ -731,9 +731,9 @@ public class Crashes extends AbstractAppCenterService {
                 errorLog.setProcessName("");
 
                 /*
-                 * TODO user id and device properties are read after restart contrary to Java crashes.
-                 * We should have a user/device property history like we did for session to fix that issue.
-                 * The main issue with the current code is that app version or userId can change between crash and reporting.
+                 * TODO user id is read after restart contrary to Java crashes.
+                 * We should have a user history like we did for session to fix that issue.
+                 * The main issue with the current code is that userId can change between crash and reporting.
                  */
                 errorLog.setUserId(UserIdContext.getInstance().getUserId());
                 try {
@@ -779,8 +779,8 @@ public class Crashes extends AbstractAppCenterService {
             }
         }
 
-        /* Delete new minidumps folders except for the current one. */
-        ErrorLogHelper.removeStaleMinidumpDirectories();
+        /* Remove the minidump subfolders from previous sessions. */
+        ErrorLogHelper.removeStaleMinidumpSubfolders();
     }
 
     private void processPendingErrors() {

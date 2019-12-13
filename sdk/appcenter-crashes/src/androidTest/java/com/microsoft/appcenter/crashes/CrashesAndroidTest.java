@@ -254,7 +254,7 @@ public class CrashesAndroidTest {
         assertNull(Crashes.getMinidumpDirectory().get());
 
         /* Simulate we have a minidump. */
-        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
         FileManager.write(minidumpFile, "mock minidump");
 
@@ -282,7 +282,7 @@ public class CrashesAndroidTest {
     public void failedToMoveMinidump() throws Exception {
 
         /* Simulate we have a minidump. */
-        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
         FileManager.write(minidumpFile, "mock minidump");
 
@@ -445,7 +445,7 @@ public class CrashesAndroidTest {
     public void processingWithMinidump() throws Exception {
 
         /* Simulate we have a minidump. */
-        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpDirectory();
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
         FileManager.write(minidumpFile, "mock minidump");
 
