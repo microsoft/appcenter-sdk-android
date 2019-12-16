@@ -341,6 +341,11 @@ public class ErrorLogHelper {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to read stored device info.");
             return null;
         }
+        return parseDevice(deviceInfoString);
+    }
+
+    @VisibleForTesting
+    static Device parseDevice(String deviceInfoString) {
         try {
             Device device = new Device();
             JSONObject jsonObject = new JSONObject(deviceInfoString);

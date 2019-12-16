@@ -21,6 +21,7 @@ import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.After;
 import org.junit.Before;
@@ -48,13 +49,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class})
 public class ErrorLogHelperTest {
 
     @Rule
@@ -362,5 +364,42 @@ public class ErrorLogHelperTest {
             depth++;
         }
         assertEquals(ErrorLogHelper.CAUSE_LIMIT, depth);
+    }
+
+    @Test
+    public void getStoredDeviceInfo() {
+        String deviceInfoString = "{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}";
+        File deviceInfoFile = mock(File.class);
+        File minidumpFolder = mock(File.class);
+        when(minidumpFolder.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{deviceInfoFile});
+        mockStatic(FileManager.class);
+        when(FileManager.read(eq(deviceInfoFile))).thenReturn(deviceInfoString);
+        Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNotNull(storedDeviceInfo);
+    }
+
+    @Test
+    public void getStoredDeviceInfoNull() {
+
+        /* Test null directory. */
+        File minidumpFolder = mock(File.class);
+        when(minidumpFolder.listFiles(any(FilenameFilter.class))).thenReturn(null);
+        Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNull(storedDeviceInfo);
+
+        /* Test empty directory. */
+        File minidumpFolder2 = mock(File.class);
+        when(minidumpFolder2.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{});
+        Device storedDeviceInfo2 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder2);
+        assertNull(storedDeviceInfo2);
+
+        /* Cannot read device info. */
+        File deviceInfoFile = mock(File.class);
+        File minidumpFolder3 = mock(File.class);
+        when(minidumpFolder3.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{deviceInfoFile});
+        mockStatic(FileManager.class);
+        when(FileManager.read(eq(deviceInfoFile))).thenReturn(null);
+        Device storedDeviceInfo3 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder3);
+        assertNull(storedDeviceInfo3);
     }
 }
