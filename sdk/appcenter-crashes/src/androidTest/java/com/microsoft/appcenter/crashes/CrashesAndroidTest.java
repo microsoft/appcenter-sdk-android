@@ -109,25 +109,14 @@ public class CrashesAndroidTest {
         File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles();
         assertNotNull(files);
         for (File logFile : files) {
-            if (logFile.isDirectory()) {
-                File[] childFiles = logFile.listFiles();
-                assertNotNull(childFiles);
-                for (File dumpDir : childFiles) {
-                    File[] dumpFiles = dumpDir.listFiles();
-                    assertNotNull(dumpFiles);
-                    for (File dumpFile : dumpFiles) {
-                        assertTrue(dumpFile.delete());
-                    }
-                }
-            } else {
-                assertTrue(logFile.delete());
-            }
+            assertTrue(FileManager.deleteDir(logFile));
         }
         mChannel = mock(Channel.class);
     }
 
     @After
     public void tearDown() {
+        ErrorLogHelper.clearInstance();
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
     }
 
@@ -165,6 +154,9 @@ public class CrashesAndroidTest {
 
         /* Wait for start. */
         assertTrue(Crashes.isEnabled().get());
+
+        /* Clear sub-folders from previous runs. */
+        ErrorLogHelper.removeStaleMinidumpSubfolders();
     }
 
     @Test
@@ -570,5 +562,11 @@ public class CrashesAndroidTest {
         File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
         assertNotNull(files);
         assertEquals(2, files.length);
+    }
+
+    @Test
+    public void getMinidumpSubfolder() {
+        File newMinidumpSubfolder = ErrorLogHelper.getNewMinidumpSubfolder();
+        assertTrue(newMinidumpSubfolder.exists());
     }
 }

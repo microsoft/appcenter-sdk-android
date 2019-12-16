@@ -551,4 +551,11 @@ public class ErrorLogHelper {
         }
         return result;
     }
+
+    @VisibleForTesting
+    public static void clearInstance() {
+        sNewMinidumpDirectory = null;
+        sErrorLogDirectory = null;
+        sPendingMinidumpDirectory = null;
+    }
 }
