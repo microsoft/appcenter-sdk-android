@@ -140,7 +140,7 @@ public class MSALoginActivity extends AppCompatActivity {
         String cookie = CookieManager.getInstance().getCookie(AUTHORIZE_URL);
         boolean compact = mAuthType == AuthenticationProvider.Type.MSA_COMPACT;
         if (compact && cookie != null && cookie.contains("MSPPre")) {
-            mWebView.loadData(getString(R.string.signed_in_cookie), "text/plain", "UFT-8");
+            mWebView.loadData(getString(R.string.signed_in_cookie), "text/plain", "UTF-8");
         } else {
             signIn(null);
         }
