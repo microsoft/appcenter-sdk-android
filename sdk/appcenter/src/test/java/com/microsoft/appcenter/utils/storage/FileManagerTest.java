@@ -12,6 +12,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.internal.stubbing.answers.ThrowsException;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -32,6 +33,7 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -153,5 +155,44 @@ public class FileManagerTest {
         verify(fileInputStream).close();
         verifyStatic();
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
+    }
+
+    @Test
+    public void deleteFilesWhenFileListIsNull() {
+
+        /* Prepare data. */
+        File mockFile = mock(File.class);
+        when(mockFile.listFiles())
+                .thenReturn(null)
+                .thenReturn(new File[]{ });
+        PowerMockito.spy(FileManager.class);
+        FileManager.deleteDir(mockFile);
+
+        /* Verify. */
+        verifyStatic();
+        FileManager.deleteDir(any(File.class));
+
+        /* Remove again. */
+        FileManager.deleteDir(mockFile);
+
+        /* Verify. */
+        verifyStatic(times(2));
+        FileManager.deleteDir(any(File.class));
+    }
+
+    @Test
+    public void deleteFiles() {
+
+        /* Prepare data. */
+        File mockFile = mock(File.class);
+        File mockFileOne = mock(File.class);
+        File mockFileTwo = mock(File.class);
+        when(mockFile.listFiles()).thenReturn(new File[] { mockFileOne, mockFileTwo});
+        PowerMockito.spy(FileManager.class);
+        FileManager.deleteDir(mockFile);
+
+        /* Verify. */
+        verifyStatic(times(3));
+        FileManager.deleteDir(any(File.class));
     }
 }
