@@ -436,6 +436,9 @@ public class CrashesAndroidTest {
     @Test
     public void processingWithMinidump() throws Exception {
 
+        /* Save device info on disk. */
+        ErrorLogHelper.getNewMinidumpSubfolderWithDeviceInfo(sApplication);
+
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
