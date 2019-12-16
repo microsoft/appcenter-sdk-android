@@ -22,6 +22,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -1163,7 +1164,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
                 /* Do the call so that ids do not match. */
                 Distribute.getInstance().getLatestReleaseDetails("mockGroup", "token");
-                ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(503));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(new HttpResponse(503)));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
@@ -1174,8 +1175,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
         start();
@@ -1226,12 +1225,12 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void checkReleaseFailsRecoverable503() {
-        checkReleaseFailure(new HttpException(503), never());
+        checkReleaseFailure(new HttpException(new HttpResponse(503)), never());
     }
 
     @Test
     public void checkReleaseFailsWith403() {
-        checkReleaseFailure(new HttpException(403), times(1));
+        checkReleaseFailure(new HttpException(new HttpResponse(403)), times(1));
     }
 
     @Test
@@ -1246,7 +1245,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         mockStatic(ErrorDetails.class);
         final String errorPayload = "<html>Not Found</html>";
         when(ErrorDetails.parse(errorPayload)).thenThrow(new JSONException("Expected {"));
-        final Exception exception = new HttpException(404, errorPayload);
+        final Exception exception = new HttpException(new HttpResponse(404, errorPayload));
         checkReleaseFailure(exception, times(1));
     }
 
@@ -1259,7 +1258,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         mockStatic(ErrorDetails.class);
         String errorPayload = "{code: 'no_releases_for_user'}";
         when(ErrorDetails.parse(errorPayload)).thenReturn(errorDetails);
-        checkReleaseFailure(new HttpException(404, errorPayload), never());
+        checkReleaseFailure(new HttpException(new HttpResponse(404, errorPayload)), never());
     }
 
     @Test
@@ -1272,7 +1271,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
                 /* Do the call so that id had changed. */
                 Distribute.getInstance().getLatestReleaseDetails("mockGroup", "token");
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
@@ -1283,8 +1282,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
         start();
@@ -1308,7 +1305,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
                 /* Do the call so that id had changed. */
                 Distribute.getInstance().onActivityPaused(mActivity);
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
@@ -1319,8 +1316,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
         start();
@@ -1340,7 +1335,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
                 return mock(ServiceCall.class);
             }
         });

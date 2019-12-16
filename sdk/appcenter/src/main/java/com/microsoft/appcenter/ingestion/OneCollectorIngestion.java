@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.ingestion;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
@@ -37,7 +36,6 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
-import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 public class OneCollectorIngestion implements Ingestion {
 
@@ -104,12 +102,12 @@ public class OneCollectorIngestion implements Ingestion {
     /**
      * Init.
      *
-     * @param context       any context.
+     * @param httpClient    the HTTP client.
      * @param logSerializer log serializer.
      */
-    public OneCollectorIngestion(@NonNull Context context, @NonNull LogSerializer logSerializer) {
+    public OneCollectorIngestion(@NonNull HttpClient httpClient, @NonNull LogSerializer logSerializer) {
         mLogSerializer = logSerializer;
-        mHttpClient = createHttpClient(context);
+        mHttpClient = httpClient;
         mLogUrl = DEFAULT_LOG_URL;
     }
 

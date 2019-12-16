@@ -8,6 +8,7 @@ package com.microsoft.appcenter.channel;
 import android.content.Context;
 import android.os.Handler;
 
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -103,7 +104,7 @@ public class AbstractDefaultChannelTest {
                 Object[] args = invocation.getArguments();
                 if (args[4] instanceof ServiceCallback) {
                     if (e == null)
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("", null);
+                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
                     else
                         ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(e);
                 }

@@ -47,6 +47,9 @@ import java.util.Map;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
+/**
+ * TODO during release, delete this version of this file and move projectDependency one to main source folder.
+ */
 public class MSALoginActivity extends AppCompatActivity {
 
     private static final String URL_PREFIX = "https://login.live.com/oauth20_";
@@ -318,7 +321,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
+                    public void onCallSucceeded(String payload, Map<String, String> responseHeaders) {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String userId = response.getString(USER_ID);
@@ -362,7 +365,7 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, @SuppressWarnings("unused") Map<String, String> headers) {
+                    public void onCallSucceeded(String payload, Map<String, String> responseHeaders) {
                         try {
                             JSONObject response = new JSONObject(payload);
                             String accessToken = response.getString("access_token");

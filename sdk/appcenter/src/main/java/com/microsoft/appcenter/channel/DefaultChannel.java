@@ -13,6 +13,8 @@ import android.support.annotation.VisibleForTesting;
 import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.CancellationException;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
@@ -142,10 +144,11 @@ public class DefaultChannel implements Channel {
      * @param context          The context.
      * @param appSecret        The application secret.
      * @param logSerializer    The log serializer.
+     * @param httpClient       The HTTP client instance.
      * @param appCenterHandler App Center looper thread handler.
      */
-    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull Handler appCenterHandler) {
-        this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(context, logSerializer), appCenterHandler);
+    public DefaultChannel(@NonNull Context context, String appSecret, @NonNull LogSerializer logSerializer, @NonNull HttpClient httpClient, @NonNull Handler appCenterHandler) {
+        this(context, appSecret, buildDefaultPersistence(context, logSerializer), new AppCenterIngestion(httpClient, logSerializer), appCenterHandler);
     }
 
     /**
@@ -570,7 +573,7 @@ public class DefaultChannel implements Channel {
             groupState.mIngestion.sendAsync(authToken, mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
-                public void onCallSucceeded(String payload, Map<String, String> headers) {
+                public void onCallSucceeded(HttpResponse httpResponse) {
                     mAppCenterHandler.post(new Runnable() {
 
                         @Override

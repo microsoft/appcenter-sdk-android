@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.ingestion;
 
-import android.content.Context;
-
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
@@ -64,10 +62,8 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -75,8 +71,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({
         AppCenterLog.class,
         JSONObject.class,
-        OneCollectorIngestion.class,
-        HttpUtils.class
+        OneCollectorIngestion.class
 })
 public class OneCollectorIngestionTest {
 
@@ -92,8 +87,6 @@ public class OneCollectorIngestionTest {
     @Before
     public void setUp() throws Exception {
         TicketCache.clear();
-        spy(HttpUtils.class);
-        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
 
         /* Test JSONObject implementation. */
         JSONObject json = mock(JSONObject.class);
@@ -160,7 +153,7 @@ public class OneCollectorIngestionTest {
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
 
         /* Test calling code. */
-        OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
+        OneCollectorIngestion ingestion = new OneCollectorIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         String authToken = "fake-token";
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
@@ -232,7 +225,7 @@ public class OneCollectorIngestionTest {
 
         /* Verify call to http client. */
         LogSerializer serializer = mock(LogSerializer.class);
-        OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
+        OneCollectorIngestion ingestion = new OneCollectorIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         String authToken = "fake-token";
@@ -276,7 +269,7 @@ public class OneCollectorIngestionTest {
 
         /* Verify call to http client. */
         LogSerializer serializer = mock(LogSerializer.class);
-        OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
+        OneCollectorIngestion ingestion = new OneCollectorIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         String authToken = "fake-token";
@@ -310,7 +303,7 @@ public class OneCollectorIngestionTest {
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
 
         /* Test calling code. */
-        OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), serializer);
+        OneCollectorIngestion ingestion = new OneCollectorIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         String authToken = "fake-token";
@@ -397,7 +390,7 @@ public class OneCollectorIngestionTest {
         ServiceCall call = mock(ServiceCall.class);
         ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
-        OneCollectorIngestion ingestion = new OneCollectorIngestion(mock(Context.class), mock(LogSerializer.class));
+        OneCollectorIngestion ingestion = new OneCollectorIngestion(mHttpClient, mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
         String authToken = "fake-token";
         assertEquals(call, ingestion.sendAsync(authToken, null, null, mock(LogContainer.class), mock(ServiceCallback.class)));

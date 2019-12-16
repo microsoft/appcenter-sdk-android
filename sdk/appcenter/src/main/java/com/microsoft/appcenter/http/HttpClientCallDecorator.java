@@ -55,8 +55,8 @@ abstract class HttpClientCallDecorator implements Runnable, ServiceCall, Service
     }
 
     @Override
-    public void onCallSucceeded(String payload, Map<String, String> headers) {
-        mServiceCallback.onCallSucceeded(payload, headers);
+    public void onCallSucceeded(HttpResponse httpResponse) {
+        mServiceCallback.onCallSucceeded(httpResponse);
     }
 
     @Override

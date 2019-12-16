@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.ingestion;
 
-import android.content.Context;
-
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
@@ -19,7 +17,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONException;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -48,17 +45,14 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 @PrepareForTest({
         AppCenterIngestion.class,
-        AppCenterLog.class,
-        HttpUtils.class
+        AppCenterLog.class
 })
 public class AppCenterIngestionTest {
 
@@ -67,12 +61,6 @@ public class AppCenterIngestionTest {
 
     @Mock
     private HttpClient mHttpClient;
-
-    @Before
-    public void setUp() throws Exception {
-        spy(HttpUtils.class);
-        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
-    }
 
     private void sendAuthToken(String authToken) throws Exception {
 
@@ -98,7 +86,7 @@ public class AppCenterIngestionTest {
         });
 
         /* Test calling code. */
-        AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), serializer);
+        AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         String appSecret = UUID.randomUUID().toString();
         UUID installId = UUID.randomUUID();
@@ -161,7 +149,7 @@ public class AppCenterIngestionTest {
         });
 
         /* Test calling code. */
-        AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), serializer);
+        AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         String appSecret = UUID.randomUUID().toString();
         String authToken = UUID.randomUUID().toString();
@@ -260,7 +248,7 @@ public class AppCenterIngestionTest {
                 return call;
             }
         });
-        AppCenterIngestion ingestion = new AppCenterIngestion(mock(Context.class), mock(LogSerializer.class));
+        AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
         assertEquals(call, ingestion.sendAsync(authToken, appSecret, UUID.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
         return callTemplate.get();

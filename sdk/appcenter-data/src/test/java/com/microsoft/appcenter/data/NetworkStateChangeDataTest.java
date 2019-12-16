@@ -11,6 +11,7 @@ import com.microsoft.appcenter.data.models.DocumentWrapper;
 import com.microsoft.appcenter.data.models.LocalDocument;
 import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 
 import org.json.JSONException;
 import org.junit.After;
@@ -192,7 +193,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
-        HttpException cosmosFailureException = new HttpException(500, "You failed!");
+        HttpException cosmosFailureException = new HttpException(new HttpResponse(500, "You failed!"));
         verifyTokenExchangeToCosmosDbFlow(true, documentId, TOKEN_EXCHANGE_USER_PAYLOAD, cosmosDbMethod, null, cosmosFailureException);
 
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
@@ -344,7 +345,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
         Data.setRemoteOperationListener(mRemoteOperationListener);
         mData.onNetworkStateUpdated(true);
 
-        HttpException cosmosFailureException = new HttpException(httpStatusCode, "cosmos error");
+        HttpException cosmosFailureException = new HttpException(new HttpResponse(httpStatusCode, "cosmos error"));
         verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
 
         verify(mRemoteOperationListener).onRemoteOperationCompleted(
@@ -378,7 +379,7 @@ public class NetworkStateChangeDataTest extends AbstractDataTest {
 
         mData.onNetworkStateUpdated(true);
 
-        HttpException cosmosFailureException = new HttpException(409, "Conflict");
+        HttpException cosmosFailureException = new HttpException(new HttpResponse(409, "Conflict"));
         verifyTokenExchangeToCosmosDbFlow(true, DOCUMENT_ID, TOKEN_EXCHANGE_USER_PAYLOAD, METHOD_DELETE, null, cosmosFailureException);
         verify(mLocalDocumentStorage).deleteOnline(eq(pendingOperation.getTable()), eq(pendingOperation.getPartition()), eq(pendingOperation.getDocumentId()));
     }

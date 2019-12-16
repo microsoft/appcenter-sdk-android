@@ -100,7 +100,7 @@ public class HttpClientRetryer extends HttpClientDecorator {
                 long delay = 0;
                 if (e instanceof HttpException) {
                     HttpException httpException = (HttpException) e;
-                    String retryAfterMs = httpException.getHeaders().get(X_MS_RETRY_AFTER_MS_HEADER);
+                    String retryAfterMs = httpException.getHttpResponse().getHeaders().get(X_MS_RETRY_AFTER_MS_HEADER);
                     if (retryAfterMs != null) {
                         delay = Long.parseLong(retryAfterMs);
                     }
