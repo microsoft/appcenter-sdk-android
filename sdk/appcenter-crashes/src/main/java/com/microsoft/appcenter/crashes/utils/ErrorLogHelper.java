@@ -278,6 +278,7 @@ public class ErrorLogHelper {
             FileManager.write(deviceInfoFile, deviceInfoString);
         } catch (Throwable e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to store device info in a minidump folder.", e);
+
             //noinspection ResultOfMethodCallIgnored
             deviceInfoFile.delete();
         }
@@ -326,13 +327,14 @@ public class ErrorLogHelper {
     @Nullable
     public static Device getStoredDeviceInfo(File logFolder) {
         File[] files = logFolder.listFiles(new FilenameFilter() {
+
             @Override
             public boolean accept(File dir, String filename) {
                 return filename.equals(DEVICE_INFO_FILE);
             }
         });
         if (files == null || files.length == 0) {
-            AppCenterLog.error(Crashes.LOG_TAG, "No stored deviceinfo file in a minidump folder.");
+            AppCenterLog.warn(Crashes.LOG_TAG, "No stored deviceinfo file in a minidump folder.");
             return null;
         }
         File deviceInfoFile = files[0];
@@ -365,6 +367,7 @@ public class ErrorLogHelper {
     public static void removeStaleMinidumpSubfolders() {
         final File minidumpSubfolder = getNewMinidumpSubfolder();
         File[] previousSubFolders = getNewMinidumpDirectory().listFiles(new FilenameFilter() {
+
             @Override
             public boolean accept(File dir, String name) {
                 return !name.equals(minidumpSubfolder.getName());
