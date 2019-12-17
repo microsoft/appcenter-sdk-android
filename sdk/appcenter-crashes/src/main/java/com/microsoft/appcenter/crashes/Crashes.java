@@ -753,7 +753,6 @@ public class Crashes extends AbstractAppCenterService {
                     AppCenterLog.error(LOG_TAG, "Failed to process new minidump file: " + logFile, e);
                 }
             }
-
         }
 
         /* Check last session crash. */
