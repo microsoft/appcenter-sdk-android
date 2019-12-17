@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
@@ -23,6 +24,7 @@ import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
+import org.json.JSONException;
 import org.json.JSONStringer;
 import org.junit.After;
 import org.junit.Before;
@@ -33,7 +35,9 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -52,6 +56,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -59,7 +64,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class, TextUtils.class})
 public class ErrorLogHelperTest {
 
     @Rule
@@ -407,16 +412,59 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    public void throwExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
+    public void throwIOExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
 
         /* Prepare data. */
+        BufferedWriter mockBufferedWriter = mock(BufferedWriter.class);
+        FileWriter mockFileWriter = mock(FileWriter.class);
+        whenNew(BufferedWriter.class).withAnyArguments().thenReturn(mockBufferedWriter);
+        whenNew(FileWriter.class).withAnyArguments().thenReturn(mockFileWriter);
+        doThrow(new IOException()).when(mockBufferedWriter).write(anyString());
+        mockStatic(TextUtils.class);
+        when(TextUtils.isEmpty(anyString())).thenReturn(false);
+        when(TextUtils.getTrimmedLength(anyString())).thenReturn(1);
+        Device mockDevice = mock(Device.class);
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mockDevice);
         Context mockContext = mock(Context.class);
         File mockFile = mock(File.class);
-        whenNew(JSONStringer.class).withAnyArguments().thenThrow(new java.lang.Exception());
         whenNew(File.class).withAnyArguments().thenReturn(mockFile);
 
         /* Verify. */
-        ErrorLogHelper.getNewMinidumpSubfolderWithDeviceInfo(mockContext);
+        ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mockContext);
+        verify(mockFile).delete();
+    }
+
+    @Test
+    public void throwDeviceInfoExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
+
+        /* Prepare data. */
+        Device mockDevice = mock(Device.class);
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("crash", new java.lang.Exception()));
+        Context mockContext = mock(Context.class);
+        File mockFile = mock(File.class);
+        whenNew(File.class).withAnyArguments().thenReturn(mockFile);
+
+        /* Verify. */
+        ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mockContext);
+        verify(mockFile).delete();
+    }
+
+    @Test
+    public void throwJSONExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
+
+        /* Prepare data. */
+        Device mockDevice = mock(Device.class);
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mockDevice);
+        Context mockContext = mock(Context.class);
+        File mockFile = mock(File.class);
+        whenNew(File.class).withAnyArguments().thenReturn(mockFile);
+        doThrow(new JSONException("crash", new java.lang.Exception())).when(mockDevice).write(any(JSONStringer.class));
+
+        /* Verify. */
+        ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mockContext);
         verify(mockFile).delete();
     }
 }
