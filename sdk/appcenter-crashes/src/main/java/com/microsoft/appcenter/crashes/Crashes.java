@@ -363,7 +363,7 @@ public class Crashes extends AbstractAppCenterService {
 
             @Override
             public void run() {
-                future.complete(ErrorLogHelper.getNewMinidumpSubfolderWithDeviceInfo(mContext).getAbsolutePath());
+                future.complete(ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mContext).getAbsolutePath());
             }
         }, future, null);
         return future;
@@ -739,7 +739,6 @@ public class Crashes extends AbstractAppCenterService {
                 try {
                     if (savedDeviceInfo != null) {
                         errorLog.setDevice(savedDeviceInfo);
-                        errorLog.getDevice().setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
                     }
                     saveErrorLogFiles(new NativeException(), errorLog);
                     if (!logFile.renameTo(dest)) {

@@ -33,6 +33,7 @@ import org.json.JSONStringer;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -41,6 +42,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
 
 /**
  * ErrorLogHelper to help constructing, serializing, and de-serializing locally stored error logs.
@@ -238,7 +241,7 @@ public class ErrorLogHelper {
     }
 
     /**
-     * A session-specific folder where unprocessed NDK crashes are saved.
+     * A one-time run-specific folder where unprocessed NDK crashes are saved.
      *
      * @return a folder name e.g. /lib/files/error/minidump/new/aae16c29-42a9-baee-0777e6ba8fe3
      */
@@ -253,19 +256,20 @@ public class ErrorLogHelper {
     }
 
     /**
-     * A session-specific folder where unprocessed NDK crashes are saved.
-     * Each application session creates its own sub-folder with a random name
+     * A one-time run-specific folder where unprocessed NDK crashes are saved.
+     * Each launch of the application creates its own sub-folder with a random name
      * to store information about the current device (including the application version),
      * which is used in the error report.
      *
      * @return a folder name e.g. /lib/files/error/minidump/new/aae16c29-f9e7-42a9-baee-0777e6ba8fe3
      */
     @NonNull
-    public static synchronized File getNewMinidumpSubfolderWithDeviceInfo(Context context) {
+    public static synchronized File getNewMinidumpSubfolderWithContextData(Context context) {
         File directorySubfolder = getNewMinidumpSubfolder();
         File deviceInfoFile = new File(directorySubfolder, ErrorLogHelper.DEVICE_INFO_FILE);
         try {
             Device deviceInfo = DeviceInfoHelper.getDeviceInfo(context);
+            deviceInfo.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
 
             /* To JSON. */
             JSONStringer writer = new JSONStringer();
@@ -276,7 +280,7 @@ public class ErrorLogHelper {
 
             /* Write file. */
             FileManager.write(deviceInfoFile, deviceInfoString);
-        } catch (Throwable e) {
+        } catch (DeviceInfoHelper.DeviceInfoException | IOException | JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to store device info in a minidump folder.", e);
 
             //noinspection ResultOfMethodCallIgnored
@@ -360,7 +364,7 @@ public class ErrorLogHelper {
     }
 
     /**
-     * Remove the minidump subfolders from previous sessions in the 'minidump/new' folder.
+     * Remove the minidump sub-folders from previous sessions in the 'minidump/new' folder.
      * Minidumps from these folders should already be moved to the 'minidump/pending' folder,
      * so that they can be safely deleted.
      */
@@ -556,7 +560,7 @@ public class ErrorLogHelper {
     }
 
     @VisibleForTesting
-    public static void clearInstance() {
+    public static void clearStaticState() {
         sNewMinidumpDirectory = null;
         sErrorLogDirectory = null;
         sPendingMinidumpDirectory = null;

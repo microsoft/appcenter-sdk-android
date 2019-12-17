@@ -116,7 +116,7 @@ public class CrashesAndroidTest {
 
     @After
     public void tearDown() {
-        ErrorLogHelper.clearInstance();
+        ErrorLogHelper.clearStaticState();
         Thread.setDefaultUncaughtExceptionHandler(sDefaultCrashHandler);
     }
 
@@ -437,7 +437,7 @@ public class CrashesAndroidTest {
     public void processingWithMinidump() throws Exception {
 
         /* Save device info on disk. */
-        ErrorLogHelper.getNewMinidumpSubfolderWithDeviceInfo(sApplication);
+        ErrorLogHelper.getNewMinidumpSubfolderWithContextData(sApplication);
 
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
