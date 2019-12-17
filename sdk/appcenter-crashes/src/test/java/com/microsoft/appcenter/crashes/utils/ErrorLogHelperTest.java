@@ -23,6 +23,7 @@ import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
+import org.json.JSONStringer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -49,8 +50,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -401,5 +404,19 @@ public class ErrorLogHelperTest {
         when(FileManager.read(eq(deviceInfoFile))).thenReturn(null);
         Device storedDeviceInfo3 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder3);
         assertNull(storedDeviceInfo3);
+    }
+
+    @Test
+    public void throwExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
+
+        /* Prepare data. */
+        Context mockContext = mock(Context.class);
+        File mockFile = mock(File.class);
+        whenNew(JSONStringer.class).withAnyArguments().thenThrow(new java.lang.Exception());
+        whenNew(File.class).withAnyArguments().thenReturn(mockFile);
+
+        /* Verify. */
+        ErrorLogHelper.getNewMinidumpSubfolderWithDeviceInfo(mockContext);
+        verify(mockFile).delete();
     }
 }

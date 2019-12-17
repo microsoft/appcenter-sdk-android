@@ -241,6 +241,8 @@ public class CrashesTest extends AbstractCrashesTest {
     public void failToListErrorStorageDirectoryOnDisable() {
 
         /* Setup mock. */
+        File mockErrorFile = mock(File.class);
+        when(mockErrorFile.listFiles()).thenReturn(null);
         Crashes crashes = Crashes.getInstance();
         mockStatic(ErrorLogHelper.class);
         Context context = mock(Context.class);
@@ -248,6 +250,34 @@ public class CrashesTest extends AbstractCrashesTest {
         File dir = mock(File.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
         when(dir.listFiles()).thenReturn(null);
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{ mockErrorFile });
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
+
+        /* Start. */
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(context, mockChannel, "", null, true);
+        verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
+        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+
+        /* When we disable. */
+        Crashes.setEnabled(false);
+        assertFalse(Crashes.isEnabled().get());
+
+        /* Verify we recovered file listing error. */
+        verify(context).unregisterComponentCallbacks(notNull(ComponentCallbacks.class));
+    }
+
+    @Test
+    public void directoryOnDisableWhenListFileEmpty() {
+
+        /* Setup mock. */
+        Crashes crashes = Crashes.getInstance();
+        mockStatic(ErrorLogHelper.class);
+        Context context = mock(Context.class);
+        Channel mockChannel = mock(Channel.class);
+        File dir = mock(File.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
+        when(dir.listFiles()).thenReturn(new File[] { });
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{});
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
 
