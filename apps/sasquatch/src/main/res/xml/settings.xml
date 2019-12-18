@@ -78,33 +78,6 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:key="@string/auth_key"
-        android:title="@string/auth_title">
-        <CheckBoxPreference
-            android:dependency="@string/appcenter_state_key"
-            android:key="@string/appcenter_auth_state_key"
-            android:title="@string/appcenter_auth_state_title" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="@string/data_key"
-        android:title="@string/data_title">
-        <CheckBoxPreference
-            android:dependency="@string/appcenter_state_key"
-            android:key="@string/appcenter_data_state_key"
-            android:title="@string/appcenter_data_state_title" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:key="@string/real_user_measurements_key"
-        android:title="@string/real_user_measurements_title">
-        <CheckBoxPreference
-            android:dependency="@string/appcenter_state_key"
-            android:key="@string/appcenter_rum_state_key"
-            android:title="@string/appcenter_rum_state_title" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
         android:key="@string/event_filter"
         android:title="@string/event_filter_title">
         <CheckBoxPreference

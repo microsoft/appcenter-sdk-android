@@ -29,14 +29,9 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
-import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
-import com.microsoft.appcenter.data.Data;
-import com.microsoft.appcenter.data.exception.DataException;
-import com.microsoft.appcenter.data.models.DocumentMetadata;
-import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
@@ -144,10 +139,10 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
             case NO_SECRET:
-                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class, Auth.class, Data.class);
+                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
                 return;
         }
-        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class, Auth.class, Data.class);
+        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
     }
 
     public static void setUserId(String userId) {
@@ -236,16 +231,6 @@ public class MainActivity extends AppCompatActivity {
         return sPushListener;
     }
 
-    private RemoteOperationListener getDataRemoteOperationListener() {
-        return new RemoteOperationListener() {
-
-            @Override
-            public void onRemoteOperationCompleted(String operation, DocumentMetadata documentMetadata, DataException error) {
-                Log.i(LOG_TAG, String.format("Remote operation completed operation=%s partition=%s documentId=%s eTag=%s", operation, documentMetadata.getPartition(), documentMetadata.getId(), documentMetadata.getETag()), error);
-            }
-        };
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -267,7 +252,6 @@ public class MainActivity extends AppCompatActivity {
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
-        Data.setRemoteOperationListener(getDataRemoteOperationListener());
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
@@ -277,18 +261,6 @@ public class MainActivity extends AppCompatActivity {
         String apiUrl = getString(R.string.api_url);
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
-        }
-
-        /* Set auth config url. */
-        String configUrl = getString(R.string.auth_config_url);
-        if (!TextUtils.isEmpty(configUrl)) {
-            Auth.setConfigUrl(configUrl);
-        }
-
-        /* Set token exchange url. */
-        String tokenExchangeUrl = getString(R.string.token_exchange_url);
-        if (!TextUtils.isEmpty(tokenExchangeUrl)) {
-            Data.setTokenExchangeUrl(tokenExchangeUrl);
         }
 
         /* Set push sender ID the old way for testing without firebase lib. */

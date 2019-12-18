@@ -168,24 +168,13 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Delete the database and then create a new, empty one.
-     */
-    public void resetDatabase() {
-        close();
-        mContext.deleteDatabase(mDatabase);
-
-        /* Call getDatabase to recreate database. */
-        getDatabase();
-    }
-
-    /**
      * Creates a new table in the database.
      *
      * @param table                   name.
      * @param schema                  of the table.
      * @param uniqueColumnsConstraint The name of the columns where the combination of the columns is unique.
      */
-    public void createTable(@NonNull String table, @NonNull ContentValues schema, String[] uniqueColumnsConstraint) {
+    void createTable(@NonNull String table, @NonNull ContentValues schema, String[] uniqueColumnsConstraint) {
         createTable(getDatabase(), table, schema, uniqueColumnsConstraint);
     }
 
@@ -432,7 +421,7 @@ public class DatabaseManager implements Closeable {
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    public Cursor getCursor(@NonNull String table, @Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
+    Cursor getCursor(@NonNull String table, @Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
         if (queryBuilder == null) {
             queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }
