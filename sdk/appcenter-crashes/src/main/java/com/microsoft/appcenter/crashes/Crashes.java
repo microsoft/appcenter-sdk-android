@@ -704,7 +704,7 @@ public class Crashes extends AbstractAppCenterService {
                 errorLog.setException(modelException);
                 errorLog.setTimestamp(new Date(minidumpDate));
                 errorLog.setFatal(true);
-                errorLog.setId(UUID.randomUUID());
+                errorLog.setId(ErrorLogHelper.parseLogFolderUuid(logFolder));
 
                 /* Lookup app launch timestamp in session history. */
                 SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(minidumpDate);
@@ -737,9 +737,8 @@ public class Crashes extends AbstractAppCenterService {
                  */
                 errorLog.setUserId(UserIdContext.getInstance().getUserId());
                 try {
-                    if (savedDeviceInfo != null) {
-                        errorLog.setDevice(savedDeviceInfo);
-                    }
+                    Device deviceInfo = savedDeviceInfo != null ? savedDeviceInfo : getDeviceInfo(mContext);
+                    errorLog.setDevice(deviceInfo);
                     saveErrorLogFiles(new NativeException(), errorLog);
                     if (!logFile.renameTo(dest)) {
                         throw new IOException("Failed to move file");

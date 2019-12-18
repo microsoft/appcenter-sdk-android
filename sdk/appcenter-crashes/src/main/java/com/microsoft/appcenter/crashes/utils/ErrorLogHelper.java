@@ -559,6 +559,24 @@ public class ErrorLogHelper {
         return result;
     }
 
+    /**
+     * Parse log folder name UUID. Fallback to random UUID.
+     *
+     * @param logFolder a folder, e.g. lib/files/error/minidump/new/a80da2ae-8c85-43b0-a25b-d52319fb6d56
+     * @return parsed UUID or random UUID.
+     */
+    public static UUID parseLogFolderUuid(File logFolder) {
+        UUID uuid = null;
+        if (logFolder.isDirectory()) {
+            try {
+                uuid = UUID.fromString(logFolder.getName());
+            } catch (IllegalArgumentException e) {
+                AppCenterLog.warn(Crashes.LOG_TAG, "Cannot parse minidump folder name to UUID.", e);
+            }
+        }
+        return uuid == null ? UUID.randomUUID() : uuid;
+    }
+
     @VisibleForTesting
     public static void clearStaticState() {
         sNewMinidumpDirectory = null;

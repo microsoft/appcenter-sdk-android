@@ -1199,6 +1199,7 @@ public class CrashesTest extends AbstractCrashesTest {
         when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingDir);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report);
+        when(ErrorLogHelper.parseLogFolderUuid(any(File.class))).thenReturn(UUID.randomUUID());
         when(FileManager.read(any(File.class))).thenReturn("");
         LogSerializer logSerializer = mock(LogSerializer.class);
         ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);

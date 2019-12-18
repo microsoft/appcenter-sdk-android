@@ -49,6 +49,7 @@ import java.util.UUID;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -58,6 +59,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -466,5 +468,36 @@ public class ErrorLogHelperTest {
         /* Verify. */
         ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mockContext);
         verify(mockFile).delete();
+    }
+
+    @Test
+    public void parseLogFolderUuid() {
+        String originalFolderName = "a80da2ae-8c85-43b0-a25b-d52319fb6d56";
+        File logFolder = new File("lib/files/error/minidump/new/" + originalFolderName);
+        File spy = spy(logFolder);
+        when(spy.isDirectory()).thenReturn(true);
+        UUID uuid = ErrorLogHelper.parseLogFolderUuid(spy);
+        assertEquals(uuid.toString(), originalFolderName);
+    }
+
+    @Test
+    public void parseLogFolderUuidFallback() {
+        String originalFolderName = "a80da2ae-8c85-43b0-a25b-d52319fb6d56";
+        File logFolder = new File("lib/files/error/minidump/new/" + originalFolderName);
+        File spy = spy(logFolder);
+        when(spy.isDirectory()).thenReturn(false);
+        UUID uuid = ErrorLogHelper.parseLogFolderUuid(spy);
+        assertNotEquals(uuid.toString(), "a80da2ae-8c85-43b0-a25b-d52319fb6d56");
+    }
+
+    @Test
+    public void parseLogFolderUuidIllegalArgument() {
+        String originalFolderName = "a80da2ae-8c85-43b0-a25b-d52319fb6d56";
+        File logFolder = new File("lib/files/error/minidump/new/" + originalFolderName + ".dmp");
+        File spy = spy(logFolder);
+        when(spy.isDirectory()).thenReturn(true);
+        UUID uuid = ErrorLogHelper.parseLogFolderUuid(spy);
+        System.out.println(uuid.toString());
+        assertNotEquals(uuid.toString(), originalFolderName);
     }
 }
