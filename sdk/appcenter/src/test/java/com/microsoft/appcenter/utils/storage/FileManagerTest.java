@@ -12,7 +12,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.internal.stubbing.answers.ThrowsException;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -38,6 +37,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -165,7 +165,7 @@ public class FileManagerTest {
         when(mockFile.listFiles())
                 .thenReturn(null)
                 .thenReturn(new File[]{ });
-        PowerMockito.spy(FileManager.class);
+        spy(FileManager.class);
         FileManager.deleteDir(mockFile);
 
         /* Verify. */
@@ -188,7 +188,7 @@ public class FileManagerTest {
         File mockFileOne = mock(File.class);
         File mockFileTwo = mock(File.class);
         when(mockFile.listFiles()).thenReturn(new File[] { mockFileOne, mockFileTwo});
-        PowerMockito.spy(FileManager.class);
+        spy(FileManager.class);
         FileManager.deleteDir(mockFile);
 
         /* Verify. */
