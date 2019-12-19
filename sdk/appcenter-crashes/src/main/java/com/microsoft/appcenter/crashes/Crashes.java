@@ -681,75 +681,21 @@ public class Crashes extends AbstractAppCenterService {
     private void processMinidumpFiles() {
 
         /* Convert minidump files to App Center crash files. */
-        for (File logFolder : ErrorLogHelper.getNewMinidumpFiles()) {
-            File[] files = logFolder.listFiles();
+        for (File minidumpSubfolder : ErrorLogHelper.getNewMinidumpFiles()) {
+
+            /* Handle a minidump saved with a previous sdk version. */
+            if (!minidumpSubfolder.isDirectory()) {
+                AppCenterLog.debug(LOG_TAG, "Found a minidump from a previous SDK version.");
+                processSingleMinidump(minidumpSubfolder, minidumpSubfolder, null);
+                continue;
+            }
+            File[] files = minidumpSubfolder.listFiles();
             if (files == null || files.length == 0) {
                 continue;
             }
-            Device savedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(logFolder);
-            for (File logFile : files) {
-                if (logFile.getName().endsWith(ErrorLogHelper.DEVICE_INFO_FILE)) {
-                    continue;
-                }
-
-                /* Create missing files from the native crash that we detected. */
-                AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + logFile);
-                long minidumpDate = logFile.lastModified();
-                File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), logFile.getName());
-                Exception modelException = new Exception();
-                modelException.setType("minidump");
-                modelException.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
-                modelException.setMinidumpFilePath(dest.getPath());
-                ManagedErrorLog errorLog = new ManagedErrorLog();
-                errorLog.setException(modelException);
-                errorLog.setTimestamp(new Date(minidumpDate));
-                errorLog.setFatal(true);
-                errorLog.setId(ErrorLogHelper.parseLogFolderUuid(logFolder));
-
-                /* Lookup app launch timestamp in session history. */
-                SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(minidumpDate);
-                if (session != null && session.getAppLaunchTimestamp() <= minidumpDate) {
-                    errorLog.setAppLaunchTimestamp(new Date(session.getAppLaunchTimestamp()));
-                } else {
-
-                    /*
-                     * Fall back to log date if app launch timestamp information lost
-                     * or in the future compared to crash time.
-                     * This also covers the case where app launches then crashes within 1s:
-                     * app launch timestamp would have ms accuracy while minidump file is without
-                     * ms, in that case we also falls back to log timestamp
-                     * (this would be same result as truncating ms).
-                     */
-                    errorLog.setAppLaunchTimestamp(errorLog.getTimestamp());
-                }
-
-                /*
-                 * TODO The following properties are placeholders because fields are required.
-                 * They should be removed from schema as not used by server.
-                 */
-                errorLog.setProcessId(0);
-                errorLog.setProcessName("");
-
-                /*
-                 * TODO user id is read after restart contrary to Java crashes.
-                 * We should have a user history like we did for session to fix that issue.
-                 * The main issue with the current code is that userId can change between crash and reporting.
-                 */
-                errorLog.setUserId(UserIdContext.getInstance().getUserId());
-                try {
-                    Device deviceInfo = savedDeviceInfo != null ? savedDeviceInfo : getDeviceInfo(mContext);
-                    errorLog.setDevice(deviceInfo);
-                    saveErrorLogFiles(new NativeException(), errorLog);
-                    if (!logFile.renameTo(dest)) {
-                        throw new IOException("Failed to move file");
-                    }
-                } catch (java.lang.Exception e) {
-
-                    //noinspection ResultOfMethodCallIgnored
-                    logFile.delete();
-                    removeAllStoredErrorLogFiles(errorLog.getId());
-                    AppCenterLog.error(LOG_TAG, "Failed to process new minidump file: " + logFile, e);
-                }
+            Device savedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpSubfolder);
+            for (File minidumpFile : files) {
+                processSingleMinidump(minidumpFile, minidumpSubfolder, savedDeviceInfo);
             }
         }
 
@@ -780,6 +726,81 @@ public class Crashes extends AbstractAppCenterService {
 
         /* Remove the minidump subfolders from previous sessions. */
         ErrorLogHelper.removeStaleMinidumpSubfolders();
+    }
+
+    /**
+     * Process the minidump, save an error log with a reference to the minidump, move the minidump file to the 'pending' folder.
+     *
+     * @param minidumpFile    a file with .dmp extension.
+     * @param minidumFolder   a folder that contains device info and a minidump file.
+     * @param savedDeviceInfo a saved device information.
+     */
+    private void processSingleMinidump(File minidumpFile, File minidumFolder, @Nullable Device savedDeviceInfo) {
+        if (minidumpFile.getName().endsWith(ErrorLogHelper.DEVICE_INFO_FILE)) {
+            return;
+        }
+
+        /* Create missing files from the native crash that we detected. */
+        AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + minidumpFile);
+        long minidumpDate = minidumpFile.lastModified();
+        File dest = new File(ErrorLogHelper.getPendingMinidumpDirectory(), minidumpFile.getName());
+        Exception modelException = new Exception();
+        modelException.setType("minidump");
+        modelException.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
+        modelException.setMinidumpFilePath(dest.getPath());
+        ManagedErrorLog errorLog = new ManagedErrorLog();
+        errorLog.setException(modelException);
+        errorLog.setTimestamp(new Date(minidumpDate));
+        errorLog.setFatal(true);
+        errorLog.setId(ErrorLogHelper.parseLogFolderUuid(minidumFolder));
+
+        /* Lookup app launch timestamp in session history. */
+        SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(minidumpDate);
+        if (session != null && session.getAppLaunchTimestamp() <= minidumpDate) {
+            errorLog.setAppLaunchTimestamp(new Date(session.getAppLaunchTimestamp()));
+        } else {
+
+            /*
+             * Fall back to log date if app launch timestamp information lost
+             * or in the future compared to crash time.
+             * This also covers the case where app launches then crashes within 1s:
+             * app launch timestamp would have ms accuracy while minidump file is without
+             * ms, in that case we also falls back to log timestamp
+             * (this would be same result as truncating ms).
+             */
+            errorLog.setAppLaunchTimestamp(errorLog.getTimestamp());
+        }
+
+        /*
+         * TODO The following properties are placeholders because fields are required.
+         * They should be removed from schema as not used by server.
+         */
+        errorLog.setProcessId(0);
+        errorLog.setProcessName("");
+
+        /*
+         * TODO user id is read after restart contrary to Java crashes.
+         * We should have a user history like we did for session to fix that issue.
+         * The main issue with the current code is that userId can change between crash and reporting.
+         */
+        errorLog.setUserId(UserIdContext.getInstance().getUserId());
+        try {
+            if (savedDeviceInfo == null) {
+                savedDeviceInfo = getDeviceInfo(mContext);
+                savedDeviceInfo.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
+            }
+            errorLog.setDevice(savedDeviceInfo);
+            saveErrorLogFiles(new NativeException(), errorLog);
+            if (!minidumpFile.renameTo(dest)) {
+                throw new IOException("Failed to move file");
+            }
+        } catch (java.lang.Exception e) {
+
+            //noinspection ResultOfMethodCallIgnored
+            minidumpFile.delete();
+            removeAllStoredErrorLogFiles(errorLog.getId());
+            AppCenterLog.error(LOG_TAG, "Failed to process new minidump file: " + minidumpFile, e);
+        }
     }
 
     private void processPendingErrors() {
@@ -966,14 +987,17 @@ public class Crashes extends AbstractAppCenterService {
                         ErrorAttachmentLog dumpAttachment = null;
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
+                        android.util.Log.d("DBUG", "1234 loop1 " + errorLogReport.report.getDevice().getWrapperSdkName());
                         if (errorLogReport.report.getDevice() != null && WRAPPER_SDK_NAME_NDK.equals(errorLogReport.report.getDevice().getWrapperSdkName())) {
 
+                            android.util.Log.d("DBUG", "1234 loop2");
                             /* Get minidump file path. */
                             Exception exception = errorLogReport.log.getException();
                             String minidumpFilePath = exception.getMinidumpFilePath();
 
                             /* Erase temporary field so that it's not sent to server. */
                             exception.setMinidumpFilePath(null);
+                            android.util.Log.d("DBUG", "1234 loop3");
 
                             /*
                              * Before SDK 2.1.0, the JSON was using the stacktrace field to hold file path on file storage.

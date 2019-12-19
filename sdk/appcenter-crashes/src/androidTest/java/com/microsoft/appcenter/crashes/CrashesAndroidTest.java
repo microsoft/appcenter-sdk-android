@@ -61,6 +61,7 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
@@ -154,9 +155,6 @@ public class CrashesAndroidTest {
 
         /* Wait for start. */
         assertTrue(Crashes.isEnabled().get());
-
-        /* Clear sub-folders from previous runs. */
-        ErrorLogHelper.removeStaleMinidumpSubfolders();
     }
 
     @Test
@@ -571,5 +569,82 @@ public class CrashesAndroidTest {
     public void getMinidumpSubfolder() {
         File newMinidumpSubfolder = ErrorLogHelper.getNewMinidumpSubfolder();
         assertTrue(newMinidumpSubfolder.exists());
+    }
+
+    @Test
+    public void processingWithMinidumpMigration() throws Exception {
+        ErrorLogHelper.getNewMinidumpSubfolderWithContextData(sApplication);
+
+        /* Simulate we have a minidump saved with a previous sdk version. */
+        File directory = ErrorLogHelper.getNewMinidumpDirectory();
+        File file = new File(directory, "oldMinidump.dmp");
+        FileManager.write(file, "mock old minidump");
+
+        /* Simulate we have a minidump. */
+        File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
+        File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
+        FileManager.write(minidumpFile, "mock minidump");
+
+        /* Set up crash listener. */
+        CrashesListener crashesListener = mock(CrashesListener.class);
+        when(crashesListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
+        when(crashesListener.shouldAwaitUserConfirmation()).thenReturn(true);
+        ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("Hello", "hello.txt");
+        when(crashesListener.getErrorAttachments(any(ErrorReport.class))).thenReturn(Collections.singletonList(textAttachment));
+        startFresh(crashesListener);
+
+        /* Check last session error report. */
+        assertTrue(Crashes.hasCrashedInLastSession().get());
+
+        /* Wait U.I. thread callback (shouldAwaitUserConfirmation). */
+        final Semaphore semaphore = new Semaphore(0);
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                semaphore.release();
+            }
+        });
+        semaphore.acquire();
+
+        /* Waiting user confirmation so no log sent yet. */
+        verify(mChannel, never()).enqueue(isA(ManagedErrorLog.class), anyString(), anyInt());
+        File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(4, files.length);
+        verify(crashesListener, times(2)).shouldProcess(any(ErrorReport.class));
+        verify(crashesListener).shouldAwaitUserConfirmation();
+        verifyNoMoreInteractions(crashesListener);
+
+        /* Confirm to resume processing. */
+        Crashes.notifyUserConfirmation(Crashes.SEND);
+        assertTrue(Crashes.isEnabled().get());
+        ArgumentCaptor<ManagedErrorLog> managedErrorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
+        verify(mChannel, times(2)).enqueue(managedErrorLog.capture(), anyString(), eq(CRITICAL));
+        assertNotNull(managedErrorLog.getValue());
+        assertEquals(mUserId, managedErrorLog.getValue().getUserId());
+        assertNotNull(managedErrorLog.getValue().getException());
+        assertNull(managedErrorLog.getValue().getException().getMinidumpFilePath());
+        files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
+        assertNotNull(files);
+        assertEquals(2, files.length);
+        verify(crashesListener, times(2)).getErrorAttachments(any(ErrorReport.class));
+        verifyNoMoreInteractions(crashesListener);
+
+        /* Verify automatic minidump attachment. */
+        verify(mChannel, times(2)).enqueue(argThat(new ArgumentMatcher<Log>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (argument instanceof ErrorAttachmentLog) {
+                    ErrorAttachmentLog log = (ErrorAttachmentLog) argument;
+                    return "application/octet-stream".equals(log.getContentType()) && "minidump.dmp".equals(log.getFileName());
+                }
+                return false;
+            }
+        }), anyString(), eq(DEFAULTS));
+
+        /* Verify custom text attachment. */
+        verify(mChannel, times(2)).enqueue(eq(textAttachment), anyString(), eq(DEFAULTS));
     }
 }

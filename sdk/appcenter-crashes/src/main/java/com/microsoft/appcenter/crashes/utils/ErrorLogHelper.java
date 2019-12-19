@@ -234,7 +234,7 @@ public class ErrorLogHelper {
      * @return a folder name e.g. /lib/files/error/minidump/new
      */
     @NonNull
-    private static synchronized File getNewMinidumpDirectory() {
+    public static synchronized File getNewMinidumpDirectory() {
         File errorStorageDirectory = getErrorStorageDirectory();
         File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
         return new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
