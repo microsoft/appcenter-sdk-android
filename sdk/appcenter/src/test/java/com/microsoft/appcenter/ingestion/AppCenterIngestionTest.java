@@ -62,6 +62,52 @@ public class AppCenterIngestionTest {
     @Mock
     private HttpClient mHttpClient;
 
+    private void send() throws Exception {
+        /* Build some payload. */
+        LogContainer container = new LogContainer();
+        Log log = mock(Log.class);
+        List<Log> logs = new ArrayList<>();
+        logs.add(log);
+        container.setLogs(logs);
+        LogSerializer serializer = mock(LogSerializer.class);
+        when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
+        /* Configure mock HTTP. */
+        final ServiceCall call = mock(ServiceCall.class);
+        final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
+                return call;
+            }
+        });
+        /* Test calling code. */
+        AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, serializer);
+        ingestion.setLogUrl("http://mock");
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
+        /* Verify call to http client. */
+        HashMap<String, String> expectedHeaders = new HashMap<>();
+        expectedHeaders.put(Constants.APP_SECRET, appSecret);
+        expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
+        verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        assertNotNull(callTemplate.get());
+        assertEquals("mockPayload", callTemplate.get().buildRequestBody());
+        /* Verify close. */
+        ingestion.close();
+        verify(mHttpClient).close();
+        /* Verify reopen. */
+        ingestion.reopen();
+        verify(mHttpClient).reopen();
+    }
+
+    @Test
+    public void sendAsync() throws Exception {
+        send();
+    }
+
     @Test
     public void failedSerialization() throws Exception {
 
