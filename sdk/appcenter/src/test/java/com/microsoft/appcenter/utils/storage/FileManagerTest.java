@@ -11,6 +11,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -28,7 +29,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -47,6 +50,9 @@ public class FileManagerTest {
 
     @Rule
     public PowerMockRule rule = new PowerMockRule();
+
+    @Rule
+    public TemporaryFolder mTemporaryFolder = new TemporaryFolder();
 
     @Test
     public void readFileNotFound() throws Exception {
@@ -158,41 +164,48 @@ public class FileManagerTest {
     }
 
     @Test
-    public void deleteFilesWhenFileListIsNull() {
+    public void deleteFilesWhenFileListIsNull() throws IOException {
+        spy(FileManager.class);
 
         /* Prepare data. */
-        File mockFile = mock(File.class);
-        when(mockFile.listFiles())
-                .thenReturn(null)
-                .thenReturn(new File[]{ });
-        spy(FileManager.class);
-        FileManager.deleteDir(mockFile);
+        File folder = mTemporaryFolder.newFolder();
+        assertTrue(folder.exists());
+
+        /* Remove directory. */
+        FileManager.deleteDir(folder);
 
         /* Verify. */
+        assertFalse(folder.exists());
         verifyStatic();
-        FileManager.deleteDir(any(File.class));
-
-        /* Remove again. */
-        FileManager.deleteDir(mockFile);
-
-        /* Verify. */
-        verifyStatic(times(2));
         FileManager.deleteDir(any(File.class));
     }
 
     @Test
-    public void deleteFiles() {
+    public void deleteFiles() throws IOException {
+        spy(FileManager.class);
 
         /* Prepare data. */
-        File mockFile = mock(File.class);
-        File mockFileOne = mock(File.class);
-        File mockFileTwo = mock(File.class);
-        when(mockFile.listFiles()).thenReturn(new File[] { mockFileOne, mockFileTwo});
-        spy(FileManager.class);
-        FileManager.deleteDir(mockFile);
+        File folder = mTemporaryFolder.newFolder();
+        File subfolder = new File(folder, "subfolder");
+        assertTrue(subfolder.mkdir());
+        assertTrue(subfolder.exists());
+        File file1 = new File(subfolder, "file1");
+        assertTrue(file1.createNewFile());
+        assertTrue(file1.exists());
+        File file2 = new File(subfolder, "file2");
+        assertTrue(file2.createNewFile());
+        assertTrue(file2.exists());
+
+        /* Remove directory. */
+        FileManager.deleteDir(folder);
+
+        assertFalse(file2.exists());
+        assertFalse(file1.exists());
+        assertFalse(subfolder.exists());
+        assertFalse(folder.exists());
 
         /* Verify. */
-        verifyStatic(times(3));
+        verifyStatic(times(4));
         FileManager.deleteDir(any(File.class));
     }
 }
