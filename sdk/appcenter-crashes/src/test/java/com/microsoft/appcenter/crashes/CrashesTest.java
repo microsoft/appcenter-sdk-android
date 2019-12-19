@@ -40,7 +40,9 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
@@ -111,6 +113,9 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 public class CrashesTest extends AbstractCrashesTest {
 
     private static final String STACK_TRACE = "Sample stacktrace";
+
+    @Rule
+    public TemporaryFolder mTemporaryFolder = new TemporaryFolder();
 
     private ManagedErrorLog mErrorLog;
 
@@ -238,20 +243,17 @@ public class CrashesTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void failToListErrorStorageDirectoryOnDisable() {
+    public void failToListErrorStorageDirectoryOnDisable() throws IOException {
+        File minidumpSubFolder = mTemporaryFolder.newFolder("minidumpSubFolder");
 
-        /* Setup mock. */
-        File mockErrorFile = mock(File.class);
-        when(mockErrorFile.listFiles()).thenReturn(null);
-        when(mockErrorFile.isDirectory()).thenReturn(true);
+        /* Fake directory will return null when called listFiles(). */
+        File dir = mTemporaryFolder.newFile("dir");
         Crashes crashes = Crashes.getInstance();
         mockStatic(ErrorLogHelper.class);
         Context context = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
-        File dir = mock(File.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
-        when(dir.listFiles()).thenReturn(null);
-        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{ mockErrorFile });
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{minidumpSubFolder});
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
 
         /* Start. */
