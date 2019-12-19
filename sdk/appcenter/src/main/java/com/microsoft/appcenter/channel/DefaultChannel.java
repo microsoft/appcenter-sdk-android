@@ -30,9 +30,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
-import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.IOException;
@@ -45,7 +42,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -232,9 +228,6 @@ public class DefaultChannel implements Channel {
         /* Count pending logs. */
         groupState.mPendingLogCount = mPersistence.countLogs(groupName);
 
-        /* Listen for token refreshed to unblock sending logs after waiting for the token update. */
-        AuthTokenContext.getInstance().addListener(groupState);
-
         /*
          * If no app secret, don't resume sending App Center logs from storage.
          * If the ingestion is alternate implementation we assume One Collector
@@ -258,7 +251,6 @@ public class DefaultChannel implements Channel {
         GroupState groupState = mGroupStates.remove(groupName);
         if (groupState != null) {
             cancelTimer(groupState);
-            AuthTokenContext.getInstance().removeListener(groupState);
         }
 
         /* Call listeners so that they can react on group removed. */
@@ -478,44 +470,16 @@ public class DefaultChannel implements Channel {
             return;
         }
 
-        /* Get auth token. */
-        AuthTokenContext authTokenContext = AuthTokenContext.getInstance();
-        List<AuthTokenInfo> authTokenHistory = authTokenContext.getAuthTokenValidityList();
-        ListIterator<AuthTokenInfo> iterator = authTokenHistory.listIterator();
-        while (iterator.hasNext()) {
-            AuthTokenInfo authTokenInfo = iterator.next();
-            final String authToken;
-            Date startTime = null;
-            Date endTime = null;
-            if (authTokenInfo != null) {
-                authToken = authTokenInfo.getAuthToken();
-                startTime = authTokenInfo.getStartTime();
-                endTime = authTokenInfo.getEndTime();
+        /* Get a batch from Persistence. */
+        final List<Log> batch = new ArrayList<>(maxFetch);
+        final int stateSnapshot = mCurrentState;
+        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, null, null);
 
-                /* Check if token is about to expired or about to expire, and refresh it if necessary. */
-                authTokenContext.checkIfTokenNeedsToBeRefreshed(authTokenInfo);
-            } else {
-                authToken = null;
-            }
+        /* Decrement counter. */
+        groupState.mPendingLogCount -= batch.size();
 
-            /* Get a batch from Persistence. */
-            final List<Log> batch = new ArrayList<>(maxFetch);
-            final int stateSnapshot = mCurrentState;
-            final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, startTime, endTime);
-
-            /* Decrement counter. */
-            groupState.mPendingLogCount -= batch.size();
-
-            /* If there are no logs to send. */
-            if (batchId == null) {
-
-                /* Remove oldest token if there are no more logs. */
-                if (iterator.previousIndex() == 0 && endTime != null &&
-                        mPersistence.countLogs(endTime) == 0) {
-                    authTokenContext.removeOldestTokenIfMatching(authToken);
-                }
-                continue;
-            }
+        /* If there are no logs to send. */
+        if (batchId != null) {
             AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
             /* Call group listener before sending logs to ingestion service. */
@@ -545,7 +509,7 @@ public class DefaultChannel implements Channel {
 
                 @Override
                 public void run() {
-                    sendLogs(groupState, stateSnapshot, batch, batchId, authToken);
+                    sendLogs(groupState, stateSnapshot, batch, batchId);
                 }
             });
             return;
@@ -564,13 +528,13 @@ public class DefaultChannel implements Channel {
      * @param batchId      The batch ID.
      */
     @MainThread
-    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId, String authToken) {
+    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
 
             /* Send logs. */
             LogContainer logContainer = new LogContainer();
             logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(authToken, mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+            groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
                 @Override
                 public void onCallSucceeded(HttpResponse httpResponse) {
@@ -863,7 +827,7 @@ public class DefaultChannel implements Channel {
      * State for a specific log group.
      */
     @VisibleForTesting
-    class GroupState extends AbstractTokenContextListener {
+    class GroupState {
 
         /**
          * Group name.
@@ -950,11 +914,6 @@ public class DefaultChannel implements Channel {
             mMaxParallelBatches = maxParallelBatches;
             mIngestion = ingestion;
             mListener = listener;
-        }
-
-        @Override
-        public void onNewAuthToken(String authToken) {
-            checkPendingLogs(this);
         }
     }
 }
