@@ -380,11 +380,11 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    public void getStoredDeviceInfo() {
+    public void getStoredDeviceInfo() throws IOException {
         String deviceInfoString = "{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}";
-        File deviceInfoFile = mock(File.class);
-        File minidumpFolder = mock(File.class);
-        when(minidumpFolder.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{deviceInfoFile});
+        File minidumpFolder = mTemporaryFolder.newFolder("minidump");
+        File deviceInfoFile = new File(minidumpFolder, ErrorLogHelper.DEVICE_INFO_FILE);
+        assertTrue(deviceInfoFile.createNewFile());
         mockStatic(FileManager.class);
         when(FileManager.read(eq(deviceInfoFile))).thenReturn(deviceInfoString);
         Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
@@ -393,26 +393,27 @@ public class ErrorLogHelperTest {
 
     @Test
     public void getStoredDeviceInfoNull() {
-
-        /* Test null directory. */
         File minidumpFolder = mock(File.class);
         when(minidumpFolder.listFiles(any(FilenameFilter.class))).thenReturn(null);
         Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
         assertNull(storedDeviceInfo);
+    }
 
-        /* Test empty directory. */
-        File minidumpFolder2 = mock(File.class);
-        when(minidumpFolder2.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{});
-        Device storedDeviceInfo2 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder2);
-        assertNull(storedDeviceInfo2);
+    @Test
+    public void getStoredDeviceInfoEmpty() throws IOException {
+        File minidumpFolder = mTemporaryFolder.newFolder("minidump");
+        Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNull(storedDeviceInfo);
+    }
 
-        /* Cannot read device info. */
-        File deviceInfoFile = mock(File.class);
-        File minidumpFolder3 = mock(File.class);
-        when(minidumpFolder3.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{deviceInfoFile});
+    @Test
+    public void getStoredDeviceInfoCannotRead() throws IOException {
+        File minidumpFolder = mTemporaryFolder.newFolder("minidump");
+        File deviceInfoFile = new File(minidumpFolder, ErrorLogHelper.DEVICE_INFO_FILE);
+        assertTrue(deviceInfoFile.createNewFile());
         mockStatic(FileManager.class);
         when(FileManager.read(eq(deviceInfoFile))).thenReturn(null);
-        Device storedDeviceInfo3 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder3);
+        Device storedDeviceInfo3 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
         assertNull(storedDeviceInfo3);
     }
 
