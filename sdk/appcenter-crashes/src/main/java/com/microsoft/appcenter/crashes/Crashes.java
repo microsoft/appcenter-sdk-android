@@ -987,17 +987,14 @@ public class Crashes extends AbstractAppCenterService {
                         ErrorAttachmentLog dumpAttachment = null;
                         Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
                         ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-                        android.util.Log.d("DBUG", "1234 loop1 " + errorLogReport.report.getDevice().getWrapperSdkName());
                         if (errorLogReport.report.getDevice() != null && WRAPPER_SDK_NAME_NDK.equals(errorLogReport.report.getDevice().getWrapperSdkName())) {
 
-                            android.util.Log.d("DBUG", "1234 loop2");
                             /* Get minidump file path. */
                             Exception exception = errorLogReport.log.getException();
                             String minidumpFilePath = exception.getMinidumpFilePath();
 
                             /* Erase temporary field so that it's not sent to server. */
                             exception.setMinidumpFilePath(null);
-                            android.util.Log.d("DBUG", "1234 loop3");
 
                             /*
                              * Before SDK 2.1.0, the JSON was using the stacktrace field to hold file path on file storage.

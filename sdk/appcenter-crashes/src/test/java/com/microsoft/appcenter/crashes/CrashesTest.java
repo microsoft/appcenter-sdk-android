@@ -243,6 +243,7 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Setup mock. */
         File mockErrorFile = mock(File.class);
         when(mockErrorFile.listFiles()).thenReturn(null);
+        when(mockErrorFile.isDirectory()).thenReturn(true);
         Crashes crashes = Crashes.getInstance();
         mockStatic(ErrorLogHelper.class);
         Context context = mock(Context.class);
@@ -1166,11 +1167,13 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Setup mock for a crash in disk. */
         File minidumpFile = mock(File.class);
         when(minidumpFile.getName()).thenReturn("mockFile");
+        when(minidumpFile.isDirectory()).thenReturn(false);
         when(minidumpFile.lastModified()).thenReturn(crashTime);
 
         /* Mock sub-folder. */
         File minidumpSubfolder = mock(File.class);
         when(minidumpSubfolder.getName()).thenReturn("mockFolder");
+        when(minidumpSubfolder.isDirectory()).thenReturn(true);
         when(minidumpSubfolder.listFiles()).thenReturn(new File[]{minidumpFile});
 
         /* Mock session context. */
@@ -1187,6 +1190,7 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         mockStatic(DeviceInfoHelper.class);
         Device device = mock(Device.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
         when(ErrorLogHelper.getStoredDeviceInfo(any(File.class))).thenReturn(hasDeviceInfo ? device : null);
         ErrorReport report = new ErrorReport();
         File errorLogFile = mock(File.class);
