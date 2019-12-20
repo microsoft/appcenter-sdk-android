@@ -17,7 +17,6 @@ import com.microsoft.appcenter.persistence.Persistence;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -77,7 +76,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, defaultIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
 
@@ -114,7 +113,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
 
         /* Simulate we have 1 pending log in storage. */
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
 
         /* Create channel and groups. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler);
@@ -158,7 +157,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
 
         /* Simulate we have 1 pending log in storage. */
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
@@ -185,7 +184,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
 
         /* Simulate we have 1 pending log in storage for App Center. */
         when(mockPersistence.countLogs(appCenterGroup)).thenReturn(1);

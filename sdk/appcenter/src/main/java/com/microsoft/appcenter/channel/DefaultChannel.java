@@ -51,7 +51,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 public class DefaultChannel implements Channel {
 
     /**
-     * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List, Date, Date)} when clearing.
+     * Persistence batch size for {@link Persistence#getLogs(String, Collection, int, List)} when clearing.
      */
     @VisibleForTesting
     static final int CLEAR_BATCH_SIZE = 100;
@@ -424,7 +424,7 @@ public class DefaultChannel implements Channel {
 
     private void deleteLogsOnSuspended(final GroupState groupState) {
         final List<Log> logs = new ArrayList<>();
-        mPersistence.getLogs(groupState.mName, Collections.<String>emptyList(), CLEAR_BATCH_SIZE, logs, null, null);
+        mPersistence.getLogs(groupState.mName, Collections.<String>emptyList(), CLEAR_BATCH_SIZE, logs);
         if (logs.size() > 0 && groupState.mListener != null) {
             for (Log log : logs) {
                 groupState.mListener.onBeforeSending(log);
@@ -473,7 +473,7 @@ public class DefaultChannel implements Channel {
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
         final int stateSnapshot = mCurrentState;
-        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, null, null);
+        final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
         groupState.mPendingLogCount -= maxFetch;

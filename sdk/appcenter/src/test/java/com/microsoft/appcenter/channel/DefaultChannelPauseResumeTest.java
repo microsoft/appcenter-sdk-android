@@ -19,7 +19,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
@@ -51,7 +50,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(50));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(50));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
@@ -146,7 +145,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.pauseGroup(TEST_GROUP, targetToken);
 
         /* Mock the database to return logs now. */
-        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
 
         /* Enqueue a log. */
@@ -210,7 +209,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.pauseGroup(TEST_GROUP, targetToken);
 
         /* Mock the database to return logs now. */
-        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
 
         /* Enqueue a log. */
@@ -276,7 +275,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* When we enqueue a log while being paused. */
         channel.pauseGroup(TEST_GROUP, null);
-        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
 
@@ -319,7 +318,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* When we enqueue a log while being paused. */
         channel.pauseGroup(TEST_GROUP, null);
-        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
 
