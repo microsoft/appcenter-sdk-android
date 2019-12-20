@@ -78,15 +78,13 @@ public abstract class Persistence implements Closeable {
      * @param pausedTargetKeys List of target token keys to exclude from the log query.
      * @param limit            The max number of logs to be returned.
      * @param outLogs          A list to receive {@link Log} objects.
-     * @param from             A time to select only logs with time after specified.
-     * @param to               A time to select only logs with time before specified.
      * @return An ID for {@code outLogs}. {@code null} if no logs exist.
      */
     @Nullable
-    public abstract String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date from, @Nullable Date to);
+    public abstract String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs);
 
     /**
-     * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, Collection, int, List, Date, Date)}}.
+     * Clears all associations between logs of the {@code group} and ids returned by {@link #getLogs(String, Collection, int, List)}}.
      */
     public abstract void clearPendingLogState();
 

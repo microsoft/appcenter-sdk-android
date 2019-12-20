@@ -8,7 +8,6 @@ package com.microsoft.appcenter.ingestion;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.AbstractAppCallTemplate;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -24,7 +23,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.Constants.APP_SECRET;
-import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
 public class AppCenterIngestion implements Ingestion {
@@ -86,13 +84,10 @@ public class AppCenterIngestion implements Ingestion {
     }
 
     @Override
-    public ServiceCall sendAsync(String authToken, String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+    public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
-        if (authToken != null) {
-            headers.put(AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
-        }
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
         return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
     }

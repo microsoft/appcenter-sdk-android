@@ -438,7 +438,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date from, @Nullable Date to) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
@@ -457,18 +457,6 @@ public class DatabasePersistence extends Persistence {
             builder.appendWhere(" AND ");
             builder.appendWhere(COLUMN_TARGET_KEY + " NOT IN (" + filter.toString() + ")");
             selectionArgs.addAll(pausedTargetKeys);
-        }
-
-        /* Filter by time. */
-        if (from != null) {
-            builder.appendWhere(" AND ");
-            builder.appendWhere(COLUMN_TIMESTAMP + " >= ?");
-            selectionArgs.add(String.valueOf(from.getTime()));
-        }
-        if (to != null) {
-            builder.appendWhere(" AND ");
-            builder.appendWhere(COLUMN_TIMESTAMP + " < ?");
-            selectionArgs.add(String.valueOf(to.getTime()));
         }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */

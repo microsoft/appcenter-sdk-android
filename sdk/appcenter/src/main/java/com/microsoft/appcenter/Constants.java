@@ -43,11 +43,6 @@ public class Constants {
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     /**
-     * Auth token format for Authorization header.
-     */
-    public static final String AUTH_TOKEN_FORMAT = "Bearer %s";
-
-    /**
      * Database name.
      */
     public static final String DATABASE = "com.microsoft.appcenter.documents";
