@@ -62,7 +62,9 @@ public class AppCenterIngestionTest {
     @Mock
     private HttpClient mHttpClient;
 
-    private void send() throws Exception {
+    @Test
+    public void sendAsync() throws Exception {
+
         /* Build some payload. */
         LogContainer container = new LogContainer();
         Log log = mock(Log.class);
@@ -71,6 +73,7 @@ public class AppCenterIngestionTest {
         container.setLogs(logs);
         LogSerializer serializer = mock(LogSerializer.class);
         when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
+
         /* Configure mock HTTP. */
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
@@ -81,6 +84,7 @@ public class AppCenterIngestionTest {
                 return call;
             }
         });
+
         /* Test calling code. */
         AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
@@ -88,6 +92,7 @@ public class AppCenterIngestionTest {
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
         assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
+
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
@@ -95,17 +100,14 @@ public class AppCenterIngestionTest {
         verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
+
         /* Verify close. */
         ingestion.close();
         verify(mHttpClient).close();
+
         /* Verify reopen. */
         ingestion.reopen();
         verify(mHttpClient).reopen();
-    }
-
-    @Test
-    public void sendAsync() throws Exception {
-        send();
     }
 
     @Test
