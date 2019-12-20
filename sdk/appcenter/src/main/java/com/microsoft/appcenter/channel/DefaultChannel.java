@@ -476,47 +476,44 @@ public class DefaultChannel implements Channel {
         final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch, null, null);
 
         /* Decrement counter. */
-        groupState.mPendingLogCount -= batch.size();
+        groupState.mPendingLogCount -= maxFetch;
 
-        /* If there are no logs to send. */
-        if (batchId != null) {
-            AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
-
-            /* Call group listener before sending logs to ingestion service. */
-            if (groupState.mListener != null) {
-                for (Log log : batch) {
-                    groupState.mListener.onBeforeSending(log);
-                }
-            }
-
-            /* Remember this batch. */
-            groupState.mSendingBatches.put(batchId, batch);
-
-            /*
-             * Due to bug on old Android versions (verified on 4.0.4),
-             * if we start an async task from here, i.e. the async handler thread,
-             * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
-             * instead of using main thread as advertised in Javadoc (and its a static field there).
-             *
-             * Our SDK guards against an application that would make a first async task in non UI
-             * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
-             * with our wrong handler to avoid creating bugs in the application code since we are
-             * a library.
-             *
-             * So make sure we execute the async task from UI thread to avoid any issue.
-             */
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    sendLogs(groupState, stateSnapshot, batch, batchId);
-                }
-            });
+        /* Nothing more to do if no logs. */
+        if (batchId == null) {
             return;
         }
+        AppCenterLog.debug(LOG_TAG, "ingestLogs(" + groupState.mName + "," + batchId + ") pendingLogCount=" + groupState.mPendingLogCount);
 
-        /* Some corrupted entries may be deleted, reset the counter to actual amount of logs pending to be sent. */
-        groupState.mPendingLogCount = mPersistence.countLogs(groupState.mName);
+        /* Call group listener before sending logs to ingestion service. */
+        if (groupState.mListener != null) {
+            for (Log log : batch) {
+                groupState.mListener.onBeforeSending(log);
+            }
+        }
+
+        /* Remember this batch. */
+        groupState.mSendingBatches.put(batchId, batch);
+
+        /*
+         * Due to bug on old Android versions (verified on 4.0.4),
+         * if we start an async task from here, i.e. the async handler thread,
+         * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
+         * instead of using main thread as advertised in Javadoc (and its a static field there).
+         *
+         * Our SDK guards against an application that would make a first async task in non UI
+         * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
+         * with our wrong handler to avoid creating bugs in the application code since we are
+         * a library.
+         *
+         * So make sure we execute the async task from UI thread to avoid any issue.
+         */
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                sendLogs(groupState, stateSnapshot, batch, batchId);
+            }
+        });
     }
 
     /**
