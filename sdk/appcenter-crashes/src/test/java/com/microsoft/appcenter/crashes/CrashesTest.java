@@ -53,6 +53,7 @@ import org.powermock.reflect.Whitebox;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1174,7 +1175,7 @@ public class CrashesTest extends AbstractCrashesTest {
         File minidumpSubfolder = mock(File.class);
         when(minidumpSubfolder.getName()).thenReturn("mockFolder");
         when(minidumpSubfolder.isDirectory()).thenReturn(true);
-        when(minidumpSubfolder.listFiles()).thenReturn(new File[]{minidumpFile});
+        when(minidumpSubfolder.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{minidumpFile});
 
         /* Mock session context. */
         mockStatic(SessionContext.class);

@@ -47,6 +47,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.json.JSONException;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,6 +66,7 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
+import static com.microsoft.appcenter.crashes.utils.ErrorLogHelper.DEVICE_INFO_FILE;
 
 /**
  * Crashes service.
@@ -686,16 +688,20 @@ public class Crashes extends AbstractAppCenterService {
             /* Handle a minidump saved with a previous sdk version. */
             if (!minidumpSubfolder.isDirectory()) {
                 AppCenterLog.debug(LOG_TAG, "Found a minidump from a previous SDK version.");
-                processSingleMinidump(minidumpSubfolder, minidumpSubfolder, null);
+                processSingleMinidump(minidumpSubfolder, minidumpSubfolder);
                 continue;
             }
-            File[] files = minidumpSubfolder.listFiles();
-            if (files == null || files.length == 0) {
+            File[] minidumpSubfolderFiles = minidumpSubfolder.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File dir, String filename) {
+                    return !filename.equals(DEVICE_INFO_FILE);
+                }
+            });
+            if (minidumpSubfolderFiles == null || minidumpSubfolderFiles.length == 0) {
                 continue;
             }
-            Device savedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpSubfolder);
-            for (File minidumpFile : files) {
-                processSingleMinidump(minidumpFile, minidumpSubfolder, savedDeviceInfo);
+            for (File minidumpFile : minidumpSubfolderFiles) {
+                processSingleMinidump(minidumpFile, minidumpSubfolder);
             }
         }
 
@@ -731,15 +737,10 @@ public class Crashes extends AbstractAppCenterService {
     /**
      * Process the minidump, save an error log with a reference to the minidump, move the minidump file to the 'pending' folder.
      *
-     * @param minidumpFile    a file with .dmp extension.
-     * @param minidumFolder   a folder that contains device info and a minidump file.
-     * @param savedDeviceInfo a saved device information.
+     * @param minidumpFile   a file where an ndk crash is saved.
+     * @param minidumpFolder a folder that contains device info and a minidump file.
      */
-    private void processSingleMinidump(File minidumpFile, File minidumFolder, @Nullable Device savedDeviceInfo) {
-        if (minidumpFile.getName().endsWith(ErrorLogHelper.DEVICE_INFO_FILE)) {
-            return;
-        }
-
+    private void processSingleMinidump(File minidumpFile, File minidumpFolder) {
         /* Create missing files from the native crash that we detected. */
         AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + minidumpFile);
         long minidumpDate = minidumpFile.lastModified();
@@ -752,7 +753,7 @@ public class Crashes extends AbstractAppCenterService {
         errorLog.setException(modelException);
         errorLog.setTimestamp(new Date(minidumpDate));
         errorLog.setFatal(true);
-        errorLog.setId(ErrorLogHelper.parseLogFolderUuid(minidumFolder));
+        errorLog.setId(ErrorLogHelper.parseLogFolderUuid(minidumpFolder));
 
         /* Lookup app launch timestamp in session history. */
         SessionContext.SessionInfo session = SessionContext.getInstance().getSessionAt(minidumpDate);
@@ -785,7 +786,13 @@ public class Crashes extends AbstractAppCenterService {
          */
         errorLog.setUserId(UserIdContext.getInstance().getUserId());
         try {
+            Device savedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
             if (savedDeviceInfo == null) {
+
+                /*
+                 * Fallback to use device info from the current launch.
+                 * It may lead to an incorrect app version being reported.
+                 */
                 savedDeviceInfo = getDeviceInfo(mContext);
                 savedDeviceInfo.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
             }
