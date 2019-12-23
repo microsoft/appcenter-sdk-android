@@ -58,32 +58,6 @@ public class DatabasePersistenceTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Test
-    public void countLogsForDate() throws Exception {
-
-        /* Expected values. */
-        int expectedCount = 1;
-        Date expectedDate = new Date();
-        String[] expectedColumns = new String[]{"COUNT(*)"};
-        String[] expectedWhereArgs = new String[]{String.valueOf(expectedDate.getTime())};
-
-        /* Mock instances. */
-        mockStatic(AppCenterLog.class);
-        DatabaseManager mockDatabaseManager = mock(DatabaseManager.class);
-        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mockDatabaseManager);
-        Cursor mockCursor = mock(Cursor.class);
-        when(mockCursor.getInt(anyInt())).thenReturn(expectedCount);
-        when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
-        DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
-
-        /* Get count. */
-        int actualCount = persistence.countLogs(expectedDate);
-
-        /* Verify. */
-        assertEquals(expectedCount, actualCount);
-        verify(mockDatabaseManager).getCursor(any(SQLiteQueryBuilder.class), eq(expectedColumns), eq(expectedWhereArgs), anyString());
-    }
-
-    @Test
     public void countLogsWithGetCountException() throws Exception {
 
         /* Mock instances. */
