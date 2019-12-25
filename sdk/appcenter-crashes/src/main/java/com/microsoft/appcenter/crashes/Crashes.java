@@ -741,6 +741,7 @@ public class Crashes extends AbstractAppCenterService {
      * @param minidumpFolder a folder that contains device info and a minidump file.
      */
     private void processSingleMinidump(File minidumpFile, File minidumpFolder) {
+
         /* Create missing files from the native crash that we detected. */
         AppCenterLog.debug(LOG_TAG, "Process pending minidump file: " + minidumpFile);
         long minidumpDate = minidumpFile.lastModified();
