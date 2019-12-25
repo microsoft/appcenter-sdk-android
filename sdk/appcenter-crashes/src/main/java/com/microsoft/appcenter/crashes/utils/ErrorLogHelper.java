@@ -325,7 +325,7 @@ public class ErrorLogHelper {
     /**
      * Look for 'deviceinfo' file inside the minidump folder and parse it.
      *
-     * @param logFolder - folder where to look for stored device information.
+     * @param logFolder folder where to look for stored device information.
      * @return a device information or null.
      */
     @Nullable
@@ -338,7 +338,7 @@ public class ErrorLogHelper {
             }
         });
         if (files == null || files.length == 0) {
-            AppCenterLog.warn(Crashes.LOG_TAG, "No stored deviceinfo file in a minidump folder.");
+            AppCenterLog.warn(Crashes.LOG_TAG, "No stored deviceinfo file found in a minidump folder.");
             return null;
         }
         File deviceInfoFile = files[0];
