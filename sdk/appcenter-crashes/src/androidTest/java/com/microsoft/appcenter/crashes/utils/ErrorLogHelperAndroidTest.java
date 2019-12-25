@@ -151,9 +151,14 @@ public class ErrorLogHelperAndroidTest {
         assertEquals(device.getAppVersion(), "2.5.4.2");
         assertEquals(device.getSdkName(), "appcenter.android");
 
-        /* Test malformed string. */
+        /* Test empty string. */
         String deviceInfo2 = "";
         Device device2 = ErrorLogHelper.parseDevice(deviceInfo2);
         assertNull(device2);
+
+        /* Test malformed string. */
+        String deviceInfo3 = "abcd";
+        Device device3 = ErrorLogHelper.parseDevice(deviceInfo3);
+        assertNull(device3);
     }
 }
