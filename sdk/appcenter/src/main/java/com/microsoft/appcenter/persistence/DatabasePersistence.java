@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -408,17 +407,13 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public int countLogs(@NonNull String group) {
-        return countLogs(COLUMN_GROUP + " = ?", group);
-    }
-
-    private int countLogs(String whereClause, String... whereArgs) {
 
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(whereClause);
+        builder.appendWhere(COLUMN_GROUP + " = ?");
         int count = 0;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, whereArgs, null);
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, new String[]{group}, null);
             try {
                 cursor.moveToNext();
                 count = cursor.getInt(0);
