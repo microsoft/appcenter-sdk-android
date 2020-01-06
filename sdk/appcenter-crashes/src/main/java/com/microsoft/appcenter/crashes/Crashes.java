@@ -692,6 +692,7 @@ public class Crashes extends AbstractAppCenterService {
                 continue;
             }
             File[] minidumpSubfolderFiles = minidumpSubfolder.listFiles(new FilenameFilter() {
+
                 @Override
                 public boolean accept(File dir, String filename) {
                     return !filename.equals(DEVICE_INFO_FILE);
