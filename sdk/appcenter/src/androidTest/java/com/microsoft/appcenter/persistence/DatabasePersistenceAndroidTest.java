@@ -1068,50 +1068,6 @@ public class DatabasePersistenceAndroidTest {
         assertEquals(4, outputLogs.size());
     }
 
-    @Test
-    public void countLogsWithYesterdayDate() throws PersistenceException {
-
-        /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence(sContext);
-
-        /* Set a mock log serializer. */
-        LogSerializer logSerializer = new DefaultLogSerializer();
-        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
-        persistence.setLogSerializer(logSerializer);
-        buildLogs(persistence);
-
-        /* Create yesterday date. */
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-        Date to = cal.getTime();
-
-        /* Count logs. */
-        int actualCount = persistence.countLogs(to);
-        assertEquals(3, actualCount);
-    }
-
-    @Test
-    public void countLogsWithTomorrowDate() throws PersistenceException {
-
-        /* Initialize database persistence. */
-        DatabasePersistence persistence = new DatabasePersistence(sContext);
-
-        /* Set a mock log serializer. */
-        LogSerializer logSerializer = new DefaultLogSerializer();
-        logSerializer.addLogFactory(MOCK_LOG_TYPE, new MockLogFactory());
-        persistence.setLogSerializer(logSerializer);
-        buildLogs(persistence);
-
-        /* Create yesterday date. */
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, +1);
-        Date to = cal.getTime();
-
-        /* Count logs. */
-        int actualCount = persistence.countLogs(to);
-        assertEquals(4, actualCount);
-    }
-
     private void buildLogs(DatabasePersistence persistence) throws PersistenceException {
         try {
             Calendar calendar = Calendar.getInstance();

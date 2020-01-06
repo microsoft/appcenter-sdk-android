@@ -64,14 +64,6 @@ public abstract class Persistence implements Closeable {
     public abstract int countLogs(@NonNull String group);
 
     /**
-     * Gets the number of logs before {@code timestamp}.
-     *
-     * @param timestamp The time to delete only logs with time before specified.
-     * @return The number of logs.
-     */
-    public abstract int countLogs(@NonNull Date timestamp);
-
-    /**
      * Gets an array of logs for the given {@code group}.
      *
      * @param group            The group of the storage for logs.
