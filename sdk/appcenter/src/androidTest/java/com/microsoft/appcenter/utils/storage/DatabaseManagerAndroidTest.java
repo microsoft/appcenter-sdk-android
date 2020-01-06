@@ -9,7 +9,6 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.test.InstrumentationRegistry;
@@ -167,10 +166,10 @@ public class DatabaseManagerAndroidTest {
         ContentValues value5 = generateContentValues();
         value4.put("COL_STRING", value2.getAsString("COL_STRING"));
         value5.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
-        Long value4Id = databaseManager.put(value4, "COL_INTEGER");
-        Long value5Id = databaseManager.put(value5, "COL_INTEGER");
-        assertNotNull(value4Id);
-        assertNotNull(value5Id);
+        long value4Id = databaseManager.put(value4, "COL_INTEGER");
+        long value5Id = databaseManager.put(value5, "COL_INTEGER");
+        assertTrue(value4Id >= 0);
+        assertTrue(value5Id >= 0);
 
         /* Delete logs with condition. */
         databaseManager.delete("COL_STRING", value2.getAsString("COL_STRING"));
@@ -221,24 +220,6 @@ public class DatabaseManagerAndroidTest {
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
         DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManager", 1, mSchema, listener);
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            runDatabaseManagerTest(databaseManager);
-        } finally {
-
-            /* Close. */
-            databaseManager.close();
-        }
-        verify(listener).onCreate(any(SQLiteDatabase.class));
-    }
-
-    @Test
-    public void databaseManagerWithZeroUniqueConstraint() {
-
-        /* Get instance to access database. */
-        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManager", 1, mSchema, listener, new String[0]);
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -397,238 +378,6 @@ public class DatabaseManagerAndroidTest {
             /* Close. */
             databaseManager.close();
         }
-    }
-
-    @Test
-    public void replace() {
-
-        /* Get instance to access database. */
-        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        String table = "someTable";
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, table, 1, mSchema, listener);
-        String documentIdProperty = "COL_STRING";
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            assertEquals(0L, databaseManager.getRowCount());
-            ContentValues contentValues = generateContentValues();
-            contentValues.put(documentIdProperty, "some id");
-            databaseManager.replace(table, contentValues, documentIdProperty);
-            assertEquals(1L, databaseManager.getRowCount());
-            databaseManager.replace(table, contentValues, documentIdProperty);
-            assertEquals(1L, databaseManager.getRowCount());
-
-            /* Set the documentIdProperty to another value, new row should be created. */
-            contentValues = generateContentValues();
-            contentValues.put(documentIdProperty, "new id");
-            databaseManager.replace(table, contentValues, documentIdProperty);
-            assertEquals(2L, databaseManager.getRowCount());
-
-            /* Replace a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
-            contentValues = generateContentValues();
-            contentValues.put(documentIdProperty, "new id");
-            databaseManager.replace(table, contentValues);
-            databaseManager.replace(table, contentValues, documentIdProperty);
-            assertEquals(4L, databaseManager.getRowCount());
-
-            /* Replace by matching an unknown property fails. */
-            assertEquals(-1, databaseManager.replace(table, contentValues, "COLUMN_NOT_FOUND"));
-            assertEquals(4L, databaseManager.getRowCount());
-        } finally {
-
-            /* Close. */
-            databaseManager.close();
-        }
-        verify(listener).onCreate(any(SQLiteDatabase.class));
-    }
-
-    @Test
-    public void replaceByMultipleColumns() {
-
-        /* Get instance to access database. */
-        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        String table = "someTable";
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, table, 1, mSchema, listener);
-        String[] documentIdProperties = new String[]{"COL_STRING", "COL_INTEGER"};
-
-        //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
-        try {
-            assertEquals(0L, databaseManager.getRowCount());
-            ContentValues contentValues = generateContentValues();
-            contentValues.put(documentIdProperties[0], "some id");
-            contentValues.put(documentIdProperties[1], 0);
-            databaseManager.replace(table, contentValues, documentIdProperties);
-            assertEquals(1L, databaseManager.getRowCount());
-            databaseManager.replace(table, contentValues, documentIdProperties);
-            assertEquals(1L, databaseManager.getRowCount());
-
-            /* Set the documentIdProperty to another value, new row should be created. */
-            contentValues = generateContentValues();
-            contentValues.put(documentIdProperties[0], "new id");
-            contentValues.put(documentIdProperties[1], 1);
-            databaseManager.replace(table, contentValues, documentIdProperties);
-            assertEquals(2L, databaseManager.getRowCount());
-
-            /* Replace a value with the same document id, if no matching condition given, or multiple matches happened replace will continue to insert. */
-            contentValues = generateContentValues();
-            contentValues.put(documentIdProperties[0], "new id");
-            contentValues.put(documentIdProperties[1], 1);
-            databaseManager.replace(table, contentValues);
-            databaseManager.replace(table, contentValues, documentIdProperties);
-            assertEquals(4L, databaseManager.getRowCount());
-
-            /* Replace by matching an unknown property fails. */
-            assertEquals(-1, databaseManager.replace(table, contentValues, "COLUMN_NOT_FOUND", "Random_Column"));
-            assertEquals(4L, databaseManager.getRowCount());
-        } finally {
-
-            /* Close. */
-            databaseManager.close();
-        }
-        verify(listener).onCreate(any(SQLiteDatabase.class));
-    }
-
-    @Test
-    public void replaceInTableWithUniquenessConstraint() {
-        String tableName = "myTable";
-        ContentValues content1 = new ContentValues();
-        ContentValues content2 = new ContentValues();
-        String colStr = "colStr";
-        content1.put(colStr, "first string");
-        content2.put(colStr, "different string");
-        String colInt = "colInt";
-        content1.put(colInt, -1);
-        content2.put(colInt, -1);
-        String colBoolean = "colBoolean";
-        content1.put(colBoolean, true);
-        content2.put(colBoolean, true);
-        DatabaseManager databaseManager = setupTableWithUniqueConstraint(tableName, content1);
-
-        /* Should replace first row because they have the same values in the unique columns. */
-        long result = databaseManager.replace(tableName, content2);
-        assertTrue(result > 0);
-        assertEquals(1L, databaseManager.getRowCount());
-        Cursor cursor = databaseManager.getCursor(null, null, null, null);
-        ContentValues row = databaseManager.nextValues(cursor);
-        assertNotNull(row);
-        assertEquals("different string", row.getAsString(colStr));
-        assertEquals(-1, row.getAsInteger(colInt).intValue());
-        assertEquals(true, row.getAsBoolean(colBoolean));
-    }
-
-    private DatabaseManager setupTableWithUniqueConstraint(String tableName, ContentValues contentValues) {
-
-        /* Get instance to access database. */
-        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, tableName, 1, contentValues, listener, new String[]{"colInt", "colBoolean"});
-        assertTrue(checkTableExists(databaseManager, tableName));
-
-        /* Insert a new row. */
-        long result = databaseManager.getDatabase().insert(tableName, null, contentValues);
-        assertTrue(result > 0);
-        assertEquals(1L, databaseManager.getRowCount());
-        Cursor cursor = databaseManager.getCursor(null, null, null, null);
-        ContentValues row = databaseManager.nextValues(cursor);
-        assertNotNull(row);
-        assertEquals("first string", row.getAsString("colStr"));
-        assertEquals(-1, row.getAsInteger("colInt").intValue());
-        assertEquals(true, row.getAsBoolean("colBoolean"));
-        return databaseManager;
-    }
-
-    @Test
-    public void insertInTableWithUniquenessConstraint() {
-        String tableName = "myTable";
-        ContentValues content1 = new ContentValues();
-        ContentValues content2 = new ContentValues();
-        String colStr = "colStr";
-        content1.put(colStr, "first string");
-        content2.put(colStr, "different string");
-        String colInt = "colInt";
-        content1.put(colInt, -1);
-        content2.put(colInt, -1);
-        String colBoolean = "colBoolean";
-        content1.put(colBoolean, true);
-        content2.put(colBoolean, true);
-
-        /* Get instance to access database. */
-        DatabaseManager databaseManager = setupTableWithUniqueConstraint(tableName, content1);
-
-        /* Insert another row with same unique columns constraint should throw an error. */
-        boolean insertThrowsSQLiteConstraintException = false;
-        try {
-            databaseManager.getDatabase().insertOrThrow(tableName, null, content2);
-        } catch (SQLiteConstraintException ex) {
-            insertThrowsSQLiteConstraintException = true;
-        }
-        assertTrue(insertThrowsSQLiteConstraintException);
-        assertEquals(1L, databaseManager.getRowCount());
-        Cursor cursor = databaseManager.getCursor(null, null, null, null);
-        ContentValues row = databaseManager.nextValues(cursor);
-        assertNotNull(row);
-        assertEquals("first string", row.getAsString(colStr));
-        assertEquals(-1, row.getAsInteger(colInt).intValue());
-        assertEquals(true, row.getAsBoolean(colBoolean));
-    }
-
-    @Test
-    public void testMultipleTablesReadWriteDelete() {
-        String firstTable = "firstTable";
-        ContentValues schema1 = new ContentValues();
-        String colStr = "colStr";
-        schema1.put(colStr, "str");
-        String colInt = "colInt";
-        schema1.put(colInt, -1);
-        String secondTable = "secondTable";
-        ContentValues schema2 = new ContentValues();
-        String colBool = "colBool";
-        schema2.put(colBool, true);
-        String colReal = "colReal";
-        schema2.put(colReal, 1.1);
-
-        /* Get instance to access database. */
-        DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager =
-                new DatabaseManager(
-                        sContext,
-                        DATABASE_NAME,
-                        firstTable,
-                        1,
-                        schema1,
-                        listener);
-        databaseManager.createTable(secondTable, schema2, null);
-        assertTrue(checkTableExists(databaseManager, firstTable));
-        assertTrue(checkTableExists(databaseManager, secondTable));
-
-        schema1 = new ContentValues();
-        schema1.put(colStr, "First Table String");
-        schema1.put(colInt, 55);
-        databaseManager.replace(firstTable, schema1);
-        schema2 = new ContentValues();
-        schema2.put(colBool, false);
-        schema2.put(colReal, 15.41);
-        databaseManager.replace(secondTable, schema2);
-
-        Cursor cursor1 = databaseManager.getCursor(firstTable, null, null, null, null);
-        cursor1.moveToNext();
-        assertEquals("First Table String", cursor1.getString(cursor1.getColumnIndex(colStr)));
-        assertEquals(55, cursor1.getInt(cursor1.getColumnIndex(colInt)));
-        cursor1.close();
-
-        Cursor cursor2 = databaseManager.getCursor(secondTable, null, null, null, null);
-        cursor2.moveToNext();
-        int id = cursor2.getInt(cursor2.getColumnIndex(DatabaseManager.PRIMARY_KEY));
-        assertTrue(id > 0);
-        assertEquals(0, cursor2.getInt(cursor2.getColumnIndex(colBool)));
-        assertEquals(15.41, cursor2.getFloat(cursor2.getColumnIndex(colReal)), 0.1);
-        cursor2.close();
-
-        /* Delete entry from table 2. */
-        int deletedRows = databaseManager.delete(secondTable, DatabaseManager.PRIMARY_KEY, id);
-        assertEquals(1, deletedRows);
-        cursor2 = databaseManager.getCursor(secondTable, null, null, null, null);
-        assertEquals(0, cursor2.getCount());
-        cursor2.close();
     }
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
