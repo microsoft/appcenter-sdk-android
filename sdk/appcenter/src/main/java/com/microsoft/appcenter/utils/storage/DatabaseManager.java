@@ -232,37 +232,7 @@ public class DatabaseManager implements Closeable {
      * @param id The database identifier.
      */
     public void delete(@IntRange(from = 0) long id) {
-        delete(mDefaultTable, id);
-    }
-
-    /**
-     * Deletes the entry by the identifier from the database.
-     *
-     * @param table The table to perform the operation on.
-     * @param id    The database identifier.
-     */
-    private void delete(@NonNull String table, @IntRange(from = 0) long id) {
-        delete(table, PRIMARY_KEY, id);
-    }
-
-    /**
-     * Deletes the entries that matches the condition.
-     *
-     * @param table       The table to perform the operation on.
-     * @param whereClause the optional WHERE clause to apply when deleting.
-     *                    Passing null will delete all rows.
-     * @param whereArgs   You may include ?s in the where clause, which
-     *                    will be replaced by the values from whereArgs. The values
-     *                    will be bound as Strings.
-     * @return the number of rows affected.
-     */
-    public int delete(@NonNull String table, String whereClause, String[] whereArgs) {
-        try {
-            return getDatabase().delete(table, whereClause, whereArgs);
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", whereClause, Arrays.toString(whereArgs), mDatabase), e);
-            return 0;
-        }
+        delete(mDefaultTable, PRIMARY_KEY, id);
     }
 
     /**
@@ -272,7 +242,7 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      * @return the number of rows affected.
      */
-    public int delete(@Nullable String key, @Nullable Object value) {
+    public int delete(@NonNull String key, @Nullable Object value) {
         return delete(mDefaultTable, key, value);
     }
 
@@ -284,8 +254,14 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      * @return the number of rows affected.
      */
-    public int delete(@NonNull String table, @Nullable String key, @Nullable Object value) {
-        return delete(table, key + " = ?", new String[]{String.valueOf(value)});
+    private int delete(@NonNull String table, @NonNull String key, @Nullable Object value) {
+        String[] whereArgs = new String[]{String.valueOf(value)};
+        try {
+            return getDatabase().delete(table, key + " = ?", whereArgs);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", key + " = ?", Arrays.toString(whereArgs), mDatabase), e);
+            return 0;
+        }
     }
 
     /**
