@@ -1314,7 +1314,7 @@ public class DatabasePersistenceAndroidTest {
             String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
             assertNotNull(token);
             assertNotEquals("test-guid", token);
-            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
+            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token).getDecryptedData());
 
             /* Verify target key stored as well. */
             String targetKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
@@ -1404,7 +1404,7 @@ public class DatabasePersistenceAndroidTest {
             String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
             assertNotNull(token);
             assertNotEquals("test-guid", token);
-            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
+            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token).getDecryptedData());
 
             /* Verify target key stored as well. */
             String targetKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
@@ -1496,7 +1496,7 @@ public class DatabasePersistenceAndroidTest {
             String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
             assertNotNull(token);
             assertNotEquals("test-guid", token);
-            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
+            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token).getDecryptedData());
 
             /* Verify target key stored as well. */
             String targetKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);
@@ -1588,7 +1588,7 @@ public class DatabasePersistenceAndroidTest {
             String token = values.getAsString(DatabasePersistence.COLUMN_TARGET_TOKEN);
             assertNotNull(token);
             assertNotEquals("test-guid", token);
-            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token, false).getDecryptedData());
+            assertEquals("test-guid", CryptoUtils.getInstance(sContext).decrypt(token).getDecryptedData());
 
             /* Verify target key stored as well. */
             String targetKey = values.getAsString(DatabasePersistence.COLUMN_TARGET_KEY);

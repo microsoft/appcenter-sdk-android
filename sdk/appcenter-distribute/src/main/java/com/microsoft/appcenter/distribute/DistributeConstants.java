@@ -206,11 +206,6 @@ public final class DistributeConstants {
     static final String NOTIFICATION_CHANNEL_ID = "appcenter.distribute";
 
     /**
-     * Previous name of preferences, used for fail-over logic for missing token/distribution group.
-     */
-    static final String PREFERENCES_NAME_MOBILE_CENTER = "MobileCenter";
-
-    /**
      * Base key for stored preferences.
      */
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
