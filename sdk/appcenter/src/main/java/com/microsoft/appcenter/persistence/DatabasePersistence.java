@@ -511,7 +511,7 @@ public class DatabasePersistence extends Persistence {
                     /* Restore target token. */
                     String targetToken = values.getAsString(COLUMN_TARGET_TOKEN);
                     if (targetToken != null) {
-                        CryptoUtils.DecryptedData data = CryptoUtils.getInstance(mContext).decrypt(targetToken, false);
+                        CryptoUtils.DecryptedData data = CryptoUtils.getInstance(mContext).decrypt(targetToken);
                         log.addTransmissionTarget(data.getDecryptedData());
                     }
 

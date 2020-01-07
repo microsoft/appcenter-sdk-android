@@ -45,6 +45,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -77,7 +78,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETU
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyMapOf;
@@ -1271,7 +1271,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
                 /* Do the call so that id had changed. */
                 Distribute.getInstance().getLatestReleaseDetails("mockGroup", "token");
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", Collections.<String, String>emptyMap()));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
@@ -1305,7 +1305,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
                 /* Do the call so that id had changed. */
                 Distribute.getInstance().onActivityPaused(mActivity);
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", Collections.<String, String>emptyMap()));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
@@ -1335,7 +1335,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", Collections.<String, String>emptyMap()));
                 return mock(ServiceCall.class);
             }
         });
@@ -1415,7 +1415,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock we already have token. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
-        when(mCryptoUtils.decrypt(eq("some encrypted token"), anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
+        when(mCryptoUtils.decrypt(eq("some encrypted token"))).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
         HashMap<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
@@ -1429,49 +1429,11 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some better encrypted token");
     }
 
-    @Test
-    public void useMobileCenterFailOverForDecryptAndReleaseDetailsPrivate() {
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
-
-        /* Primary storage will be missing data. */
-        start();
-        Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-
-        /* Verify the new strings were put into SharedPreferencesManager */
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token MC");
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "some group MC");
-        verify(mDistributeInfoTracker).updateDistributionGroupId("some group MC");
-    }
-
-    @Test
-    public void useMobileCenterFailOverForDecryptAndReleaseDetailsPublic() {
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("some group MC");
-        HashMap<String, String> headers = new HashMap<>();
-
-        /* Primary storage will be missing data. */
-        start();
-        Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-
-        /* Verify the group was saved into new storage. */
-        verifyStatic(never());
-        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_UPDATE_TOKEN), anyString());
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "some group MC");
-        verify(mDistributeInfoTracker).updateDistributionGroupId("some group MC");
-    }
 
     @Test
     public void willNotReportReleaseInstallForPrivateGroupWithoutStoredReleaseHash() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some encrypted token");
-        when(mCryptoUtils.decrypt(eq("some encrypted token"), anyBoolean())).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
+        when(mCryptoUtils.decrypt(eq("some encrypted token"))).thenReturn(new CryptoUtils.DecryptedData("some token", "some better encrypted token"));
 
         /* Mock httpClient. */
         HashMap<String, String> headers = new HashMap<>();
@@ -1492,13 +1454,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void willNotReportReleaseInstallForPrivateGroupWhenReleaseHashesDontMatch() {
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("fake-distribution-id");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-release-hash");
 
         /* Mock httpClient. */
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Primary storage will be missing data. */
         start();
@@ -1516,8 +1478,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     @Test
     public void reportReleaseInstallForPrivateGroupWhenReleaseHashesMatch() {
         final String distributionGroupId = "fake-distribution-id";
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn("some token MC");
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn(distributionGroupId);
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn(distributionGroupId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
         when(SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
 
@@ -1528,7 +1490,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Mock httpClient. */
         HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token MC");
+        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Primary storage will be missing data. */
         start();
@@ -1545,8 +1507,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void reportReleaseInstallForPublicGroupWhenReleaseHashesMatch() {
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null)).thenReturn(null);
-        when(mMobileCenterPreferencesStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null)).thenReturn("fake-distribution-id");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn(null);
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("fake-distribution-id");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
         when(SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
 

@@ -297,7 +297,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.getNotificationId()).thenReturn(2);
         NotificationManager manager = mock(NotificationManager.class);
         when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
-        Distribute.getInstance().onStarted(mContext, mChannel, any(String.class), any(String.class), false);
+        Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
         Distribute.getInstance().completeWorkflow();
         verify(manager).cancel(any(Integer.class));
     }
