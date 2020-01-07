@@ -16,12 +16,12 @@ public class SQLiteUtils {
         return new SQLiteQueryBuilder();
     }
 
-    public static void dropTable(@NonNull SQLiteDatabase db, @NonNull String table) {
+    static void dropTable(@NonNull SQLiteDatabase db, @NonNull String table) {
         db.execSQL(formatDropTableQuery(table));
     }
 
     @NonNull
-    public static String formatDropTableQuery(@NonNull String table) {
+    private static String formatDropTableQuery(@NonNull String table) {
         return String.format("DROP TABLE `%s`", table);
     }
 }
