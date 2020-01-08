@@ -8,6 +8,7 @@ package com.microsoft.appcenter.crashes.utils;
 import android.support.test.InstrumentationRegistry;
 
 import com.microsoft.appcenter.Constants;
+import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
 import org.junit.After;
@@ -19,8 +20,10 @@ import java.io.File;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
 public class ErrorLogHelperAndroidTest {
@@ -37,13 +40,13 @@ public class ErrorLogHelperAndroidTest {
     public void setUp() {
         mErrorDirectory = ErrorLogHelper.getErrorStorageDirectory();
         assertNotNull(mErrorDirectory);
-
         File[] files = mErrorDirectory.listFiles();
         if (files != null) {
             for (File file : files) {
                 file.delete();
             }
         }
+        assertTrue(mErrorDirectory.exists());
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -55,13 +58,24 @@ public class ErrorLogHelperAndroidTest {
                 file.delete();
             }
         }
+        ErrorLogHelper.clearStaticState();
         mErrorDirectory.delete();
+        assertFalse(mErrorDirectory.exists());
     }
 
     @Test
     public void getErrorStorageDirectory() {
         assertEquals(Constants.FILES_PATH, mErrorDirectory.getParent());
         assertEquals(ErrorLogHelper.ERROR_DIRECTORY, mErrorDirectory.getName());
+    }
+
+    @Test
+    public void removeMinidumpFolder() {
+        File minidumpFolder = new File(mErrorDirectory.getAbsolutePath(), "minidump");
+        ErrorLogHelper.getNewMinidumpSubfolder();
+        assertTrue(minidumpFolder.exists());
+        ErrorLogHelper.removeMinidumpFolder();
+        assertFalse(minidumpFolder.exists());
     }
 
     @Test
@@ -139,5 +153,25 @@ public class ErrorLogHelperAndroidTest {
         /* Clean up. */
         for (int i = 0; i < 2; i++)
             FileManager.delete(testFiles[i]);
+    }
+
+    @Test
+    public void parseDevice() {
+        String deviceInfoString = "{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}";
+        Device device = ErrorLogHelper.parseDevice(deviceInfoString);
+        assertNotNull(device);
+        assertEquals(device.getAppBuild(), "59");
+        assertEquals(device.getAppVersion(), "2.5.4.2");
+        assertEquals(device.getSdkName(), "appcenter.android");
+
+        /* Test empty string. */
+        String deviceInfo2 = "";
+        Device device2 = ErrorLogHelper.parseDevice(deviceInfo2);
+        assertNull(device2);
+
+        /* Test malformed string. */
+        String deviceInfo3 = "abcd";
+        Device device3 = ErrorLogHelper.parseDevice(deviceInfo3);
+        assertNull(device3);
     }
 }

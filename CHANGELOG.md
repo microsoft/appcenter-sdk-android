@@ -6,7 +6,8 @@
 
 * **[Fix]** Avoid opening browser to check for sign-in information after receiving an SSL error while checking for app updates (which often happens when using a public WIFI).
 * **[Fix]** When in-app update permissions become invalid and need to open browser again, updates are no longer postponed after sign-in (if user previously selected the action to postpone for a day).
-
+* **[Fix]** Fix incorrect app version when an NDK crash is sent after updating the app.
+* **[Behavior change]** Change the path to the minidump directory to use a subfolder in which the current contextual data (device information, etc.) is saved along with the .dmp file.
 ___
 
 ## Version 2.5.1
