@@ -73,10 +73,17 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_TARGET_TOKEN = "target_token";
 
     /**
-     * Current version of the schema.
+     * Version where we still had timestamp column, we need to drop table and recreate
+     * when upgrading from this version to another version (as opposed to alter table add column if
+     * upgrading from a version that already has the column removed).
      */
     @VisibleForTesting
-    static final int VERSION = 6;
+    static final int VERSION_TIMESTAMP_COLUMN = 5;
+
+    /**
+     * Current version of the schema.
+     */
+    private static final int VERSION = 6;
 
     /**
      * Project identifier part of the target token in clear text (the target token key).
@@ -89,6 +96,7 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String COLUMN_PRIORITY = "priority";
+
     /**
      * Name of target token column in the table.
      */
@@ -99,6 +107,7 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String DATABASE = "com.microsoft.appcenter.persistence";
+
     /**
      * Table schema for Persistence.
      */
@@ -175,7 +184,7 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") ContentValues schema) {
+    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") final ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
@@ -191,13 +200,17 @@ public class DatabasePersistence extends Persistence {
             }
 
             @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
                 /*
                  * With version 3.0 of the SDK we decided to remove timestamp column and as
                  * it's a major SDK version and SQLite does not support removing column we just start over.
+                 * When adding a new column in a future version, update this code by something like
+                 * if (oldVersion <= VERSION_TIMESTAMP_COLUMN) {drop/create} else {add missing columns}
                  */
-                return false;
+                SQLiteUtils.dropTable(db, TABLE);
+                SQLiteUtils.createTable(db, TABLE, schema);
+                createPriorityIndex(db);
             }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);

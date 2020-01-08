@@ -1105,8 +1105,7 @@ public class DatabasePersistenceAndroidTest {
 
         /* Initialize database persistence with old version. */
         ContentValues schema = new ContentValues(SCHEMA);
-        int oldVersion = DatabasePersistence.VERSION - 1;
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, oldVersion, schema, mock(DatabaseManager.Listener.class));
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TIMESTAMP_COLUMN, schema, mock(DatabaseManager.Listener.class));
 
         /* Init log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();
