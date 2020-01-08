@@ -22,7 +22,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
 import java.util.Arrays;
-import java.util.Map;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
@@ -82,7 +81,7 @@ public class DatabaseManager implements Closeable {
      * @param listener     The error listener.
      */
     public DatabaseManager(Context context, String database, String defaultTable, int version,
-                           ContentValues schema, Listener listener) {
+                           ContentValues schema, @NonNull Listener listener) {
         mContext = context;
         mDatabase = database;
         mDefaultTable = defaultTable;
@@ -92,18 +91,13 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                createTable(db, mDefaultTable, mSchema);
+                SQLiteUtils.createTable(db, mDefaultTable, mSchema);
                 mListener.onCreate(db);
             }
 
             @Override
             public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-                /* Upgrade by destroying the old table unless managed. */
-                if (!mListener.onUpgrade(db, oldVersion, newVersion)) {
-                    SQLiteUtils.dropTable(db, mDefaultTable);
-                    onCreate(db);
-                }
+                mListener.onUpgrade(db, oldVersion, newVersion);
             }
         };
     }
@@ -374,29 +368,6 @@ public class DatabaseManager implements Closeable {
         mSQLiteOpenHelper = helper;
     }
 
-    private void createTable(SQLiteDatabase db, String table, ContentValues schema) {
-
-        /* Generate a schema from specimen. */
-        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS `");
-        sql.append(table);
-        sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
-        for (Map.Entry<String, Object> col : schema.valueSet()) {
-            sql.append(", `").append(col.getKey()).append("` ");
-            Object val = col.getValue();
-            if (val instanceof Double || val instanceof Float) {
-                sql.append("REAL");
-            } else if (val instanceof Number || val instanceof Boolean) {
-                sql.append("INTEGER");
-            } else if (val instanceof byte[]) {
-                sql.append("BLOB");
-            } else {
-                sql.append("TEXT");
-            }
-        }
-        sql.append(");");
-        db.execSQL(sql.toString());
-    }
-
     /**
      * Set maximum SQLite database size.
      *
@@ -468,32 +439,7 @@ public class DatabaseManager implements Closeable {
          * @param db         database being upgraded.
          * @param oldVersion version of the schema the database was at open time.
          * @param newVersion new version of the schema.
-         * @return true if upgrade was managed, false to drop/create table.
          */
-        @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "RedundantSuppression"})
-        boolean onUpgrade(SQLiteDatabase db, int oldVersion, @SuppressWarnings("unused") int newVersion);
-    }
-
-    /**
-     * A default implementation of `Listener` that relies on `DatabaseManager` to do
-     * the set up and upgrades.
-     */
-    public static class DefaultListener implements DatabaseManager.Listener {
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-
-            /* No need to do anything on create because `DatabaseManager` creates a table. */
-        }
-
-        @Override
-        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-            /*
-             * No need to do anything on upgrade because this is the first version of the schema
-             * and the rest is handled by `DatabaseManager`.
-             */
-            return false;
-        }
+        void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
     }
 }
