@@ -46,6 +46,7 @@ import java.util.concurrent.Semaphore;
 
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.crashes.utils.ErrorLogHelper.getNewMinidumpDirectory;
 import static com.microsoft.appcenter.test.TestUtils.TAG;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -242,6 +243,11 @@ public class CrashesAndroidTest {
         assertNull(Crashes.getLastSessionCrashReport().get());
         assertFalse(Crashes.hasCrashedInLastSession().get());
         assertNull(Crashes.getMinidumpDirectory().get());
+
+        /* Simulate we have minidump from previous run. */
+        File minidumpDirectory = getNewMinidumpDirectory();
+        File sNewMinidumpDirectory = new File(minidumpDirectory, UUID.randomUUID().toString());
+        FileManager.mkdir(sNewMinidumpDirectory.getPath());
 
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
@@ -576,7 +582,7 @@ public class CrashesAndroidTest {
         ErrorLogHelper.getNewMinidumpSubfolderWithContextData(sApplication);
 
         /* Simulate we have a minidump saved with a previous sdk version. */
-        File directory = ErrorLogHelper.getNewMinidumpDirectory();
+        File directory = getNewMinidumpDirectory();
         File file = new File(directory, "oldMinidump.dmp");
         FileManager.write(file, "mock old minidump");
 

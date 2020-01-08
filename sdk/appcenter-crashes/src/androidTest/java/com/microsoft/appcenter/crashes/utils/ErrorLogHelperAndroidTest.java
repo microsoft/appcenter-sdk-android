@@ -40,13 +40,13 @@ public class ErrorLogHelperAndroidTest {
     public void setUp() {
         mErrorDirectory = ErrorLogHelper.getErrorStorageDirectory();
         assertNotNull(mErrorDirectory);
-
         File[] files = mErrorDirectory.listFiles();
         if (files != null) {
             for (File file : files) {
                 file.delete();
             }
         }
+        assertTrue(mErrorDirectory.exists());
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -58,7 +58,9 @@ public class ErrorLogHelperAndroidTest {
                 file.delete();
             }
         }
+        ErrorLogHelper.clearStaticState();
         mErrorDirectory.delete();
+        assertFalse(mErrorDirectory.exists());
     }
 
     @Test
