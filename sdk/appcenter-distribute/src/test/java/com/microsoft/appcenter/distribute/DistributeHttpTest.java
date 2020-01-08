@@ -59,7 +59,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         /* Put api token to header. */
         headers.put(HEADER_API_TOKEN, apiToken);
 
-         /* Call onBeforeCalling with parameters. */
+        /* Call onBeforeCalling with parameters. */
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
@@ -152,7 +152,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
                 return call;
             }
         });
-        Distribute.getInstance().getLatestReleaseDetails("mockGroup", apiToken);
+        Distribute.getInstance().requestLatestReleaseDetails("mockGroup", apiToken);
         return callTemplate.get();
     }
 }

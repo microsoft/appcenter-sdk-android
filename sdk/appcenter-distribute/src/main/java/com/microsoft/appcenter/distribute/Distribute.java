@@ -34,7 +34,6 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
@@ -51,7 +50,6 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
-import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
@@ -78,14 +76,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT;
-import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT;
 import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
@@ -103,8 +96,10 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
-import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
+import static com.microsoft.appcenter.distribute.DistributeUtils.getLatestReleaseDetailsUrlAsync;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
+import static com.microsoft.appcenter.distribute.DistributeUtils.isCurrentReleaseWasUpdated;
+import static com.microsoft.appcenter.distribute.DistributeUtils.isMoreRecent;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
@@ -645,7 +640,7 @@ public class Distribute extends AbstractAppCenterService {
              * If failed to enable in-app updates on the same app build before, don't go any further.
              * Only if the app build is different (different package hash), try enabling in-app updates again.
              */
-            String releaseHash = DistributeUtils.computeReleaseHash(this.mPackageInfo);
+            String releaseHash = DistributeUtils.computeReleaseHash(mPackageInfo);
             String updateSetupFailedPackageHash = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
             if (updateSetupFailedPackageHash != null) {
                 if (releaseHash.equals(updateSetupFailedPackageHash)) {
@@ -865,7 +860,7 @@ public class Distribute extends AbstractAppCenterService {
         }
 
         /* Check latest release. */
-        getLatestReleaseDetails(distributionGroupId, updateToken);
+        requestLatestReleaseDetails(distributionGroupId, updateToken);
     }
 
     /**
@@ -968,33 +963,36 @@ public class Distribute extends AbstractAppCenterService {
             mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
             enqueueDistributionStartSessionLog();
             cancelPreviousTasks();
-            getLatestReleaseDetails(distributionGroupId, updateToken);
+            requestLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
             AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
     }
 
     /**
-     * Get latest release details from server.
+     * Request latest release details from server.
      *
      * @param distributionGroupId distribution group id.
      * @param updateToken         token to secure API call.
      */
     @VisibleForTesting
-    synchronized void getLatestReleaseDetails(String distributionGroupId, String updateToken) {
-        AppCenterLog.debug(LOG_TAG, "Get latest release details...");
+    synchronized void requestLatestReleaseDetails(String distributionGroupId, final String updateToken) {
+        AppCenterLog.debug(LOG_TAG, "Request latest release details...");
+        getLatestReleaseDetailsUrlAsync(mApiUrl, mAppSecret, mPackageInfo, distributionGroupId, updateToken).thenAccept(new AppCenterConsumer<String>() {
+
+            @Override
+            public void accept(String url) {
+                Map<String, String> headers = new HashMap<>();
+                if (updateToken != null) {
+                    headers.put(HEADER_API_TOKEN, updateToken);
+                }
+                requestLatestReleaseDetails(url, headers);
+            }
+        });
+    }
+
+    private synchronized void requestLatestReleaseDetails(String url, Map<String, String> headers) {
         HttpClient httpClient = createHttpClient(mContext);
-        String releaseHash = computeReleaseHash(mPackageInfo);
-        String url = mApiUrl;
-        if (updateToken == null) {
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
-        } else {
-            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
-        }
-        Map<String, String> headers = new HashMap<>();
-        if (updateToken != null) {
-            headers.put(HEADER_API_TOKEN, updateToken);
-        }
         final Object releaseCallId = mCheckReleaseCallId = new Object();
         mCheckReleaseApiCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
@@ -1106,7 +1104,7 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, @NonNull ReleaseDetails releaseDetails) {
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
-            if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
+            if (isCurrentReleaseWasUpdated(mPackageInfo, lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Successfully reported app update for downloaded release hash (" + lastDownloadedReleaseHash + "), removing from store..");
                 SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
                 SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
@@ -1124,7 +1122,7 @@ public class Distribute extends AbstractAppCenterService {
 
                 /* Check version code is equals or higher and hash is different. */
                 AppCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
-                if (isMoreRecent(releaseDetails) && canUpdateNow(releaseDetails)) {
+                if (isMoreRecent(mPackageInfo, releaseDetails) && canUpdateNow(releaseDetails)) {
 
                     /* Load last known release to see if we need to prepare a cleanup. */
                     if (mReleaseDetails == null) {
@@ -1192,38 +1190,6 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Get reporting parameters for updated release.
-     *
-     * @param isPublic            are the parameters for public group or not.
-     *                            For public group we report install_id and release_id.
-     *                            For private group we report distribution_group_id and release_id.
-     * @param distributionGroupId distribution group id.
-     */
-    @NonNull
-    private String getReportingParametersForUpdatedRelease(boolean isPublic, String distributionGroupId) {
-        String reportingParameters = "";
-        AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
-        String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
-        if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
-            if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
-                AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
-                if (isPublic) {
-                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get();
-                } else {
-                    reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
-                }
-                int lastDownloadedReleaseId = SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
-                reportingParameters += "&" + PARAMETER_RELEASE_ID + "=" + lastDownloadedReleaseId;
-            } else {
-                AppCenterLog.debug(LOG_TAG, "New release was downloaded but not installed yet, skip reporting.");
-            }
-        } else {
-            AppCenterLog.debug(LOG_TAG, "Current release was already reported, skip reporting.");
-        }
-        return reportingParameters;
-    }
-
-    /**
      * Check if an updated release has different group ID and update current group ID if needed.
      * Group ID may change if one user is added to different distribution groups and a new release
      * was distributed to another group.
@@ -1231,7 +1197,7 @@ public class Distribute extends AbstractAppCenterService {
     private void changeDistributionGroupIdAfterAppUpdateIfNeeded() {
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         String lastDownloadedDistributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
-        if (!isCurrentReleaseWasUpdated(lastDownloadedReleaseHash) || TextUtils.isEmpty(lastDownloadedDistributionGroupId)) {
+        if (!isCurrentReleaseWasUpdated(mPackageInfo, lastDownloadedReleaseHash) || TextUtils.isEmpty(lastDownloadedDistributionGroupId)) {
             return;
         }
         String currentDistributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
@@ -1245,38 +1211,6 @@ public class Distribute extends AbstractAppCenterService {
 
         /* Remove saved downloaded group ID. */
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
-    }
-
-    /**
-     * Check if latest downloaded release was installed (app was updated).
-     *
-     * @param lastDownloadedReleaseHash hash of the last downloaded release.
-     * @return true if current release was updated.
-     */
-    private boolean isCurrentReleaseWasUpdated(String lastDownloadedReleaseHash) {
-        if (mPackageInfo == null || TextUtils.isEmpty(lastDownloadedReleaseHash)) {
-            return false;
-        }
-        String currentInstalledReleaseHash = computeReleaseHash(mPackageInfo);
-        return currentInstalledReleaseHash.equals(lastDownloadedReleaseHash);
-    }
-
-    /**
-     * Check if the fetched release information should be installed.
-     *
-     * @param releaseDetails latest release on server.
-     * @return true if latest release on server should be used.
-     */
-    private boolean isMoreRecent(ReleaseDetails releaseDetails) {
-        boolean moreRecent;
-        int versionCode = DeviceInfoHelper.getVersionCode(mPackageInfo);
-        if (releaseDetails.getVersion() == versionCode) {
-            moreRecent = !releaseDetails.getReleaseHash().equals(DistributeUtils.computeReleaseHash(mPackageInfo));
-        } else {
-            moreRecent = releaseDetails.getVersion() > versionCode;
-        }
-        AppCenterLog.debug(LOG_TAG, "Latest release more recent=" + moreRecent);
-        return moreRecent;
     }
 
     /**

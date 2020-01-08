@@ -10,12 +10,17 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.annotation.UiThread;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
@@ -23,7 +28,10 @@ import org.json.JSONException;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT;
+import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_PLATFORM;
@@ -31,7 +39,10 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_P
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REDIRECT_SCHEME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_REQUEST_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
@@ -110,7 +121,8 @@ class DistributeUtils {
      * @param appSecret   application secret.
      * @param packageInfo package info.
      */
-    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo) {
+    @UiThread
+    static void updateSetupUsingBrowser(final Activity activity, String installUrl, String appSecret, PackageInfo packageInfo) {
 
         /*
          * If network is disconnected, browser will fail so wait.
@@ -129,23 +141,31 @@ class DistributeUtils {
         /* Generate request identifier. */
         String requestId = UUID.randomUUID().toString();
 
-        /* Build URL. */
-        String url = installUrl;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, appSecret);
-        url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
-        url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
-        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
-        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
-        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
-        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
-        url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
-        AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
-
         /* Store request id. */
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
 
-        /* Open browser, remember that whatever the outcome to avoid opening it twice. */
-        BrowserUtils.openBrowser(url, activity);
+        /* Build URL. */
+        final StringBuilder urlBuilder = new StringBuilder(installUrl);
+        urlBuilder.append(String.format(UPDATE_SETUP_PATH_FORMAT, appSecret));
+        urlBuilder.append("?" + PARAMETER_RELEASE_HASH + "=").append(releaseHash);
+        urlBuilder.append("&" + PARAMETER_REDIRECT_ID + "=").append(activity.getPackageName());
+        urlBuilder.append("&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter");
+        urlBuilder.append("&" + PARAMETER_REQUEST_ID + "=").append(requestId);
+        urlBuilder.append("&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE);
+        urlBuilder.append("&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true");
+        AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
+
+            @Override
+            public void accept(UUID uuid) {
+                urlBuilder.append("&" + PARAMETER_INSTALL_ID + "=").append(uuid.toString());
+                String url = urlBuilder.toString();
+                AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
+
+
+                /* Open browser, remember that whatever the outcome to avoid opening it twice. */
+                BrowserUtils.openBrowser(url, activity);
+            }
+        });
     }
 
     /**
@@ -164,5 +184,91 @@ class DistributeUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * Check if latest downloaded release was installed (app was updated).
+     *
+     * @param lastDownloadedReleaseHash hash of the last downloaded release.
+     * @return true if current release was updated.
+     */
+    static boolean isCurrentReleaseWasUpdated(PackageInfo packageInfo, String lastDownloadedReleaseHash) {
+        if (packageInfo == null || TextUtils.isEmpty(lastDownloadedReleaseHash)) {
+            return false;
+        }
+        String currentInstalledReleaseHash = computeReleaseHash(packageInfo);
+        return currentInstalledReleaseHash.equals(lastDownloadedReleaseHash);
+    }
+
+    /**
+     * Check if the fetched release information should be installed.
+     *
+     * @param releaseDetails latest release on server.
+     * @return true if latest release on server should be used.
+     */
+    static boolean isMoreRecent(PackageInfo packageInfo, ReleaseDetails releaseDetails) {
+        boolean moreRecent;
+        int versionCode = DeviceInfoHelper.getVersionCode(packageInfo);
+        if (releaseDetails.getVersion() == versionCode) {
+            moreRecent = !releaseDetails.getReleaseHash().equals(computeReleaseHash(packageInfo));
+        } else {
+            moreRecent = releaseDetails.getVersion() > versionCode;
+        }
+        AppCenterLog.debug(LOG_TAG, "Latest release more recent=" + moreRecent);
+        return moreRecent;
+    }
+
+    static AppCenterFuture<String> getLatestReleaseDetailsUrlAsync(String apiUrl, final String appSecret, final PackageInfo packageInfo, final String distributionGroupId, String updateToken) {
+        final DefaultAppCenterFuture<String> future = new DefaultAppCenterFuture<>();
+        final String releaseHash = computeReleaseHash(packageInfo);
+        final StringBuilder urlBuilder = new StringBuilder(apiUrl);
+        if (updateToken == null) {
+            AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
+
+                @Override
+                public void accept(UUID uuid) {
+                    String reportingParameters = getReportingParametersForUpdatedRelease(packageInfo, true, uuid.toString(), null);
+                    urlBuilder.append(String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, appSecret, distributionGroupId, releaseHash, reportingParameters));
+                    future.complete(urlBuilder.toString());
+                }
+            });
+        } else {
+            String reportingParameters = getReportingParametersForUpdatedRelease(packageInfo, false, null, distributionGroupId);
+            urlBuilder.append(String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, appSecret, releaseHash, reportingParameters));
+            future.complete(urlBuilder.toString());
+        }
+        return future;
+    }
+
+    /**
+     * Get reporting parameters for updated release.
+     *
+     * @param isPublic            are the parameters for public group or not.
+     *                            For public group we report install_id and release_id.
+     *                            For private group we report distribution_group_id and release_id.
+     * @param distributionGroupId distribution group id.
+     */
+    @NonNull
+    private static String getReportingParametersForUpdatedRelease(PackageInfo packageInfo, boolean isPublic, String installId, String distributionGroupId) {
+        StringBuilder reportingParametersBuilder = new StringBuilder();
+        AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
+        String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+        if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
+            if (isCurrentReleaseWasUpdated(packageInfo, lastDownloadedReleaseHash)) {
+                AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
+                if (isPublic) {
+                    reportingParametersBuilder.append("&" + PARAMETER_INSTALL_ID + "=").append(installId);
+                } else {
+                    reportingParametersBuilder.append("&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=").append(distributionGroupId);
+                }
+                int lastDownloadedReleaseId = SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
+                reportingParametersBuilder.append("&" + PARAMETER_RELEASE_ID + "=").append(lastDownloadedReleaseId);
+            } else {
+                AppCenterLog.debug(LOG_TAG, "New release was downloaded but not installed yet, skip reporting.");
+            }
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Current release was already reported, skip reporting.");
+        }
+        return reportingParametersBuilder.toString();
     }
 }

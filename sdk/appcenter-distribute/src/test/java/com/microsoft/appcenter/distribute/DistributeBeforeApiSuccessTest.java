@@ -1163,13 +1163,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
             public ServiceCall answer(InvocationOnMock invocation) {
 
                 /* Do the call so that ids do not match. */
-                Distribute.getInstance().getLatestReleaseDetails("mockGroup", "token");
+                Distribute.getInstance().requestLatestReleaseDetails("mockGroup", "token");
                 ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(new HttpException(new HttpResponse(503)));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
 
-            /* On second time we don't answer as it's callback from getLatestReleaseDetails above. */
+            /* On second time we don't answer as it's callback from requestLatestReleaseDetails above. */
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 return mock(ServiceCall.class);
@@ -1270,13 +1270,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
             public ServiceCall answer(InvocationOnMock invocation) {
 
                 /* Do the call so that id had changed. */
-                Distribute.getInstance().getLatestReleaseDetails("mockGroup", "token");
+                Distribute.getInstance().requestLatestReleaseDetails("mockGroup", "token");
                 ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock", null));
                 return mock(ServiceCall.class);
             }
         }).thenAnswer(new Answer<ServiceCall>() {
 
-            /* On second time we don't answer as it's callback from getLatestReleaseDetails above. */
+            /* On second time we don't answer as it's callback from requestLatestReleaseDetails above. */
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 return mock(ServiceCall.class);
@@ -1310,7 +1310,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
             }
         }).thenAnswer(new Answer<ServiceCall>() {
 
-            /* On second time we don't answer as it's callback from getLatestReleaseDetails above. */
+            /* On second time we don't answer as it's callback from requestLatestReleaseDetails above. */
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 return mock(ServiceCall.class);
