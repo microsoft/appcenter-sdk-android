@@ -157,7 +157,7 @@ public class CrashesTest extends AbstractCrashesTest {
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
         /* Test. */
-        verifyStatic(times(3));
+        verifyStatic(times(4));
         SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true);
         assertFalse(Crashes.isEnabled().get());
         assertEquals(crashes.getInitializeTimestamp(), -1);

@@ -369,12 +369,14 @@ public class ErrorLogHelper {
      * so that they can be safely deleted.
      */
     public static void removeStaleMinidumpSubfolders() {
-        final File minidumpSubfolder = getNewMinidumpSubfolder();
         File[] previousSubFolders = getNewMinidumpDirectory().listFiles(new FilenameFilter() {
 
             @Override
             public boolean accept(File dir, String name) {
-                return !name.equals(minidumpSubfolder.getName());
+                if (sNewMinidumpDirectory != null) {
+                    return !name.equals(sNewMinidumpDirectory.getName());
+                }
+                return true;
             }
         });
         if (previousSubFolders == null || previousSubFolders.length == 0) {
@@ -384,6 +386,15 @@ public class ErrorLogHelper {
         for (File file : previousSubFolders) {
             FileManager.deleteDir(file);
         }
+    }
+
+    /**
+     * Remove the minidump folder.
+     */
+    public static void removeMinidumpFolder() {
+        File errorStorageDirectory = getErrorStorageDirectory();
+        File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
+        FileManager.deleteDir(minidumpDirectory);
     }
 
     @Nullable

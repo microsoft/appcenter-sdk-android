@@ -20,8 +20,10 @@ import java.io.File;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
 public class ErrorLogHelperAndroidTest {
@@ -63,6 +65,15 @@ public class ErrorLogHelperAndroidTest {
     public void getErrorStorageDirectory() {
         assertEquals(Constants.FILES_PATH, mErrorDirectory.getParent());
         assertEquals(ErrorLogHelper.ERROR_DIRECTORY, mErrorDirectory.getName());
+    }
+
+    @Test
+    public void removeMinidumpFolder() {
+        File minidumpFolder = new File(mErrorDirectory.getAbsolutePath(), "minidump");
+        ErrorLogHelper.getNewMinidumpSubfolder();
+        assertTrue(minidumpFolder.exists());
+        ErrorLogHelper.removeMinidumpFolder();
+        assertFalse(minidumpFolder.exists());
     }
 
     @Test

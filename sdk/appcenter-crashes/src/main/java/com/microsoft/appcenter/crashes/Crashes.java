@@ -464,6 +464,16 @@ public class Crashes extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
+        if (!isInstanceEnabled()) {
+
+            /*
+             * Clean up minidump data when starting on persisted disabled mode. It would be dangerous
+             * to delete/create at runtime inside Crashes.applyEnabledState() method as Breakpad can
+             * be configured only once per process.
+             */
+            ErrorLogHelper.removeMinidumpFolder();
+            AppCenterLog.debug(LOG_TAG, "Clean up minidump folder.");
+        }
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             processPendingErrors();
