@@ -199,7 +199,7 @@ public class CryptoUtils {
 
         /* Add the fake handler at the end of the list no matter what. */
         CryptoNoOpHandler cryptoNoOpHandler = new CryptoNoOpHandler();
-        mCryptoHandlers.put(cryptoNoOpHandler.getAlgorithm(), new CryptoHandlerEntry(0, 0, cryptoNoOpHandler));
+        mCryptoHandlers.put(cryptoNoOpHandler.getAlgorithm(), new CryptoHandlerEntry(0, cryptoNoOpHandler));
     }
 
     /**
@@ -228,20 +228,13 @@ public class CryptoUtils {
         /* Check which of the potential aliases is the more recent one, the one to use. */
         String alias0 = getAlias(handler, 0);
         String alias1 = getAlias(handler, 1);
-        String alias0MC = getAlias(handler, 0);
-        String alias1MC = getAlias(handler, 1);
         Date aliasDate0 = mKeyStore.getCreationDate(alias0);
         Date aliasDate1 = mKeyStore.getCreationDate(alias1);
-        Date aliasDate0MC = mKeyStore.getCreationDate(alias0MC);
-        Date aliasDate1MC = mKeyStore.getCreationDate(alias1MC);
-        int index = 0, indexMC = 0;
+        int index = 0;
         String alias = alias0;
         if (aliasDate1 != null && aliasDate1.after(aliasDate0)) {
             index = 1;
             alias = alias1;
-        }
-        if (aliasDate1MC != null && aliasDate1MC.after(aliasDate0MC)) {
-            indexMC = 1;
         }
 
         /* If it's the first time we use the preferred handler, create the alias. */
@@ -252,7 +245,7 @@ public class CryptoUtils {
 
         /* Register the handler. */
         AppCenterLog.debug(LOG_TAG, "Using " + alias);
-        mCryptoHandlers.put(handler.getAlgorithm(), new CryptoHandlerEntry(index, indexMC, handler));
+        mCryptoHandlers.put(handler.getAlgorithm(), new CryptoHandlerEntry(index, handler));
     }
 
     @NonNull
@@ -492,16 +485,10 @@ public class CryptoUtils {
         int mAliasIndex;
 
         /**
-         * Fallback Mobile Center Key Store alias index, 0 or 1.
-         */
-        final int mAliasIndexMC;
-
-        /**
          * Init.
          */
-        CryptoHandlerEntry(int aliasIndex, int aliasIndexMC, CryptoHandler cryptoHandler) {
+        CryptoHandlerEntry(int aliasIndex, CryptoHandler cryptoHandler) {
             mAliasIndex = aliasIndex;
-            mAliasIndexMC = aliasIndexMC;
             mCryptoHandler = cryptoHandler;
         }
     }
