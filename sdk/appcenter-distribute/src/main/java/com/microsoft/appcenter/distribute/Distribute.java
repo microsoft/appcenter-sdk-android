@@ -991,6 +991,12 @@ public class Distribute extends AbstractAppCenterService {
         });
     }
 
+    /**
+     * Request latest release details from server.
+     *
+     * @param url     url to latest release details endpoint.
+     * @param headers additional request headers.
+     */
     private synchronized void requestLatestReleaseDetails(String url, Map<String, String> headers) {
         HttpClient httpClient = createHttpClient(mContext);
         final Object releaseCallId = mCheckReleaseCallId = new Object();

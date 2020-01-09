@@ -189,6 +189,7 @@ class DistributeUtils {
     /**
      * Check if latest downloaded release was installed (app was updated).
      *
+     * @param packageInfo               current package info.
      * @param lastDownloadedReleaseHash hash of the last downloaded release.
      * @return true if current release was updated.
      */
@@ -203,6 +204,7 @@ class DistributeUtils {
     /**
      * Check if the fetched release information should be installed.
      *
+     * @param packageInfo    current package info.
      * @param releaseDetails latest release on server.
      * @return true if latest release on server should be used.
      */
@@ -218,6 +220,17 @@ class DistributeUtils {
         return moreRecent;
     }
 
+    /**
+     * Get endpoint url to request latest release details.
+     *
+     * @param apiUrl              current API base URL.
+     * @param appSecret           application secret.
+     * @param packageInfo         current package info.
+     * @param distributionGroupId distribution group id.
+     * @param updateToken         token to secure API call.
+     * @return future with result being the endpoint url.
+     * @see AppCenterFuture
+     */
     static AppCenterFuture<String> getLatestReleaseDetailsUrlAsync(String apiUrl, final String appSecret, final PackageInfo packageInfo, final String distributionGroupId, String updateToken) {
         final DefaultAppCenterFuture<String> future = new DefaultAppCenterFuture<>();
         final String releaseHash = computeReleaseHash(packageInfo);
@@ -243,9 +256,11 @@ class DistributeUtils {
     /**
      * Get reporting parameters for updated release.
      *
+     * @param packageInfo         current package info.
      * @param isPublic            are the parameters for public group or not.
      *                            For public group we report install_id and release_id.
      *                            For private group we report distribution_group_id and release_id.
+     * @param installId           installation id.
      * @param distributionGroupId distribution group id.
      */
     @NonNull
