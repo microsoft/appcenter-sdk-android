@@ -32,7 +32,7 @@ import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -47,6 +47,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
+import java.util.UUID;
+
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
@@ -56,7 +58,6 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -137,9 +138,6 @@ public class AbstractDistributeTest {
     SharedPreferences mMobileCenterPreferencesStorage;
 
     @Mock
-    private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
-
-    @Mock
     DistributeInfoTracker mDistributeInfoTracker;
 
     @Mock
@@ -163,6 +161,8 @@ public class AbstractDistributeTest {
     @Mock
     NotificationManager mNotificationManager;
 
+    protected UUID mInstallId = UUID.randomUUID();
+
     @Before
     @SuppressLint("ShowToast")
     @SuppressWarnings("ResourceType")
@@ -170,8 +170,9 @@ public class AbstractDistributeTest {
         Distribute.unsetInstance();
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
-        when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
-        when(mBooleanAppCenterFuture.get()).thenReturn(true);
+        DefaultAppCenterFuture<Boolean> isEnabled = new DefaultAppCenterFuture<>();
+        isEnabled.complete(true);
+        when(AppCenter.isEnabled()).thenReturn(isEnabled);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -180,6 +181,9 @@ public class AbstractDistributeTest {
                 return null;
             }
         }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        DefaultAppCenterFuture<UUID> installId = new DefaultAppCenterFuture<>();
+        installId.complete(mInstallId);
+        when(AppCenter.getInstallId()).thenReturn(installId);
         whenNew(DistributeInfoTracker.class).withAnyArguments().thenReturn(mDistributeInfoTracker);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */

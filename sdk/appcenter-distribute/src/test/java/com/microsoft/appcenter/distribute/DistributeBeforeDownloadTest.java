@@ -15,7 +15,6 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.http.HttpClient;
@@ -26,21 +25,18 @@ import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
-import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -61,6 +57,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -70,15 +67,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest(DistributeUtils.class)
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
-
-    @Mock
-    private AppCenterFuture<UUID> mAppCenterFuture;
 
     @Test
     public void moreRecentWithIncompatibleMinApiLevel() throws Exception {
@@ -810,13 +805,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Mock release hash storage. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
-
-        /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
-        when(mAppCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
+        doReturn("fake-hash").when(DistributeUtils.class);
+        DistributeUtils.computeReleaseHash(any(PackageInfo.class));
 
         /* Mock we already have token and no group. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -845,17 +836,13 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void shouldNotRemoveReleaseHashStorageIfHashesDontMatch() throws Exception {
+    public void shouldNotRemoveReleaseHashStorageIfHashesDoNotMatch() throws Exception {
 
         /* Mock release hash storage. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-old-hash");
-
-        /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
-        when(mAppCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
+        doReturn("fake-old-hash").when(DistributeUtils.class);
+        DistributeUtils.computeReleaseHash(any(PackageInfo.class));
 
         /* Mock we already have token and no group. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
@@ -930,11 +917,12 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     public void updateASecondTimeClearsPreviousReleaseCache() throws Exception {
 
         /* Mock first update completed. */
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
         when(mReleaseDetails.getVersion()).thenReturn(6);
         when(mReleaseDetails.getId()).thenReturn(1);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        doReturn(mReleaseDetails).when(DistributeUtils.class);
+        DistributeUtils.loadCachedReleaseDetails();
         ReleaseDownloader cachedReleaseDownloader = mock(ReleaseDownloader.class);
         when(ReleaseDownloaderFactory.create(any(Context.class), same(mReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(cachedReleaseDownloader);
         when(cachedReleaseDownloader.getReleaseDetails()).thenReturn(mReleaseDetails);
@@ -989,8 +977,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     public void disableThenEnableBeforeUpdatingSecondTime() throws Exception {
 
         /* Mock first update completed but we disable in this test so mock we don't have release details. */
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
+        doReturn(DOWNLOAD_STATE_COMPLETED).when(DistributeUtils.class);
+        DistributeUtils.getStoredDownloadState();
 
         /* Mock next release. */
         final ReleaseDetails nextReleaseDetails = mock(ReleaseDetails.class);
@@ -1006,7 +995,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(nextReleaseDetails);
+                doReturn(nextReleaseDetails).when(DistributeUtils.class);
+                DistributeUtils.loadCachedReleaseDetails();
                 return null;
             }
         }).when(SharedPreferencesManager.class);

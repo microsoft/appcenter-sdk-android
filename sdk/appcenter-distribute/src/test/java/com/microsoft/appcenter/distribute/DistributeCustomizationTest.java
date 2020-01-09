@@ -38,6 +38,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -45,6 +46,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doReturn;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -102,7 +104,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock. */
         mockForCustomizationTest(false);
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
         Distribute.unsetInstance();
         Distribute distribute = spy(Distribute.getInstance());
         doNothing().when(distribute).completeWorkflow();
@@ -154,7 +156,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+        doReturn(DOWNLOAD_STATE_AVAILABLE).when(DistributeUtils.class);
+        DistributeUtils.getStoredDownloadState();
 
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
@@ -176,7 +179,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         mockForCustomizationTest(false);
         DistributeListener listener = mock(DistributeListener.class);
         when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(false);
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
         Distribute.unsetInstance();
         Distribute.setListener(listener);
         Distribute distribute = spy(Distribute.getInstance());
@@ -221,7 +224,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+        doReturn(DOWNLOAD_STATE_AVAILABLE).when(DistributeUtils.class);
+        DistributeUtils.getStoredDownloadState();
 
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
@@ -241,7 +245,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock. */
         ReleaseDetails details = mockForCustomizationTest(false);
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
@@ -273,7 +277,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(mReleaseDownloader.isDownloading()).thenReturn(true);
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
@@ -302,7 +306,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(mReleaseDownloader.isDownloading()).thenReturn(true);
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
@@ -328,7 +332,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock. */
         ReleaseDetails details = mockForCustomizationTest(false);
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
@@ -357,7 +361,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock. */
         ReleaseDetails details = mockForCustomizationTest(true);
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
@@ -387,7 +391,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock. */
         ReleaseDetails details = mockForCustomizationTest(true);
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
@@ -417,7 +421,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock. */
         mockForCustomizationTest(false);
-        mockStatic(DistributeUtils.class);
+        mockStatic(DistributeUtils.class, CALLS_REAL_METHODS);
 
         /* Set Distribute listener so that Distribute doesn't use default update dialog. */
         DistributeListener listener = mock(DistributeListener.class);
