@@ -82,7 +82,6 @@ public class NetworkStateHelper implements Closeable {
         reopen();
     }
 
-    @VisibleForTesting
     public static synchronized void unsetInstance() {
         sSharedInstance = null;
     }

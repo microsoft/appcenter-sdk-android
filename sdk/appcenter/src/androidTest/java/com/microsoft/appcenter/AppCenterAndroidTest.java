@@ -116,6 +116,7 @@ public class AppCenterAndroidTest {
         final Semaphore lock1 = new Semaphore(0);
         final AtomicReference<Boolean> isEnabled1 = new AtomicReference<>();
         AppCenter.isEnabled().thenAccept(new AppCenterConsumer<Boolean>() {
+
             @Override
             public void accept(Boolean aBoolean) {
                 isEnabled1.set(aBoolean);
