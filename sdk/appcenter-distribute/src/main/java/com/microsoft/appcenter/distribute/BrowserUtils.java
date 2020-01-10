@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.distribute;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -36,12 +36,12 @@ class BrowserUtils {
     /**
      * Open a URL in the best browser available.
      *
-     * @param url      url to open.
-     * @param activity activity from which to open browser.
+     * @param url     url to open.
+     * @param context context from which to open browser.
      */
-    static void openBrowser(@NonNull String url, @NonNull Activity activity) {
+    static void openBrowser(@NonNull String url, @NonNull Context context) {
         try {
-            openBrowserWithoutIntentChooser(url, activity);
+            openBrowserWithoutIntentChooser(url, context);
         } catch (SecurityException e) {
 
             /*
@@ -51,7 +51,9 @@ class BrowserUtils {
              * and it simplifies testing for parameter verification.
              */
             AppCenterLog.warn(LOG_TAG, "Browser could not be opened by trying to avoid intent chooser, starting implicit intent instead.", e);
-            activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         }
     }
 
@@ -60,13 +62,13 @@ class BrowserUtils {
      * This approach fails on some devices: https://github.com/microsoft/appcenter-sdk-android/issues/1162.
      * This method thus must be caught for exceptions.
      *
-     * @param url      url to open browser.
-     * @param activity activity from which to open browser.
+     * @param url     url to open browser.
+     * @param context context from which to open browser.
      * @throws SecurityException unexpected permission issue while trying to open the browser.
      */
-    private static void openBrowserWithoutIntentChooser(@NonNull String url, @NonNull Activity activity) throws SecurityException {
+    private static void openBrowserWithoutIntentChooser(@NonNull String url, @NonNull Context context) throws SecurityException {
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        List<ResolveInfo> browsers = activity.getPackageManager().queryIntentActivities(intent, 0);
+        List<ResolveInfo> browsers = context.getPackageManager().queryIntentActivities(intent, 0);
         if (browsers.isEmpty()) {
             AppCenterLog.error(LOG_TAG, "No browser found on device, abort login.");
         } else {
@@ -78,7 +80,7 @@ class BrowserUtils {
              */
             String defaultBrowserPackageName = null;
             String defaultBrowserClassName = null;
-            ResolveInfo defaultBrowser = activity.getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            ResolveInfo defaultBrowser = context.getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
             if (defaultBrowser != null) {
                 ActivityInfo activityInfo = defaultBrowser.activityInfo;
                 defaultBrowserPackageName = activityInfo.packageName;
@@ -112,7 +114,8 @@ class BrowserUtils {
             /* Launch generic browser. */
             AppCenterLog.debug(LOG_TAG, "Launch browser=" + selectedPackageName + "/" + selectedClassName);
             intent.setClassName(selectedPackageName, selectedClassName);
-            activity.startActivity(intent);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
         }
     }
 
