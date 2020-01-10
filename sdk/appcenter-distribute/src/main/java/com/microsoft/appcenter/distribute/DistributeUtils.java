@@ -216,6 +216,7 @@ class DistributeUtils {
         String requestId = UUID.randomUUID().toString();
 
         /* Store request id. */
+        AppCenterLog.debug(LOG_TAG, "Update setup requestId=" + requestId);
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
 
         /* Build URL. */

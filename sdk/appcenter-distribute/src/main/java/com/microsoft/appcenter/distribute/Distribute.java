@@ -494,13 +494,19 @@ public class Distribute extends AbstractAppCenterService {
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             mDistributeInfoTracker = new DistributeInfoTracker(distributionGroupId);
             mChannel.addListener(mDistributeInfoTracker);
-            HandlerUtils.runOnUiThread(new Runnable() {
 
-                @Override
-                public void run() {
-                    resumeDistributeWorkflow();
-                }
-            });
+            /* Resume distribute workflow only if there is foreground activity. */
+            if (mForegroundActivity != null) {
+                HandlerUtils.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        resumeDistributeWorkflow();
+                    }
+                });
+            } else {
+                AppCenterLog.verbose(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
+            }
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -623,6 +629,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     @UiThread
     private synchronized void resumeDistributeWorkflow() {
+        AppCenterLog.verbose(LOG_TAG, "Resume distribute workflow...");
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
@@ -929,6 +936,8 @@ public class Distribute extends AbstractAppCenterService {
         } else if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
             SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
+        } else {
+            AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
     }
 
@@ -945,6 +954,8 @@ public class Distribute extends AbstractAppCenterService {
         } else if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored tester app update setup failed parameter.");
             SharedPreferencesManager.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, testerAppUpdateSetupFailed);
+        } else {
+            AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
     }
 
