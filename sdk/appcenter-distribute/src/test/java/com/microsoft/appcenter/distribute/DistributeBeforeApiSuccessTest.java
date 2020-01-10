@@ -195,7 +195,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -559,7 +559,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
     }
@@ -606,7 +606,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Start and resume: open tester app. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mActivity).startActivity(any(Intent.class));
+        verify(mContext).startActivity(any(Intent.class));
 
         /* Start and resume: open browser. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("true");
@@ -622,14 +622,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
         verifyStatic();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
 
         /* Start and resume: open browser. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
     }
 
     @Test
@@ -656,7 +656,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Start and resume: open tester app. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mActivity).startActivity(any(Intent.class));
+        verify(mContext).startActivity(any(Intent.class));
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -707,7 +707,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         restartResumeLauncher(mActivity);
 
         /* Verify behavior not changed. */
-        verify(mActivity).startActivity(any(Intent.class));
+        verify(mContext).startActivity(any(Intent.class));
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
@@ -761,7 +761,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -769,7 +769,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -823,7 +823,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Verify behavior not changed. */
         verifyStatic();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, "some token");
         verifyStatic();
@@ -878,7 +878,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -886,7 +886,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -939,7 +939,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Verify behavior not changed. */
         verifyStatic();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
         verifyStatic();
@@ -995,7 +995,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 
@@ -1055,7 +1055,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
-        BrowserUtils.openBrowser(url, mActivity);
+        BrowserUtils.openBrowser(url, mContext);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
 

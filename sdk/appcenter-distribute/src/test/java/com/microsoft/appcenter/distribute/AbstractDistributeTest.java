@@ -31,6 +31,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
+import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
@@ -77,6 +78,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         DistributeUtils.class,
         HandlerUtils.class,
         HttpUtils.class,
+        IdHelper.class,
         InstallerUtils.class,
         NetworkStateHelper.class,
         ReleaseDetails.class,
@@ -181,9 +183,8 @@ public class AbstractDistributeTest {
                 return null;
             }
         }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
-        DefaultAppCenterFuture<UUID> installId = new DefaultAppCenterFuture<>();
-        installId.complete(mInstallId);
-        when(AppCenter.getInstallId()).thenReturn(installId);
+        mockStatic(IdHelper.class);
+        when(IdHelper.getInstallId()).thenReturn(mInstallId);
         whenNew(DistributeInfoTracker.class).withAnyArguments().thenReturn(mDistributeInfoTracker);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
