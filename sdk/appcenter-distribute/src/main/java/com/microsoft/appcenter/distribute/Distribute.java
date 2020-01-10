@@ -1219,7 +1219,7 @@ public class Distribute extends AbstractAppCenterService {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
-                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get();
+                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId();
                 } else {
                     reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 }

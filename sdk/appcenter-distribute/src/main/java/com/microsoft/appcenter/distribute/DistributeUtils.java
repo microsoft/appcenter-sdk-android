@@ -11,10 +11,10 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HashUtils;
+import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -138,7 +138,7 @@ class DistributeUtils {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
-        url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
+        url += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId().toString();
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
         /* Store request id. */
