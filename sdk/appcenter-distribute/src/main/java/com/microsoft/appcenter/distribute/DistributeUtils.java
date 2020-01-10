@@ -5,22 +5,21 @@
 
 package com.microsoft.appcenter.distribute;
 
-import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
+import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HashUtils;
-import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
@@ -46,6 +45,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
 
 /**
@@ -56,6 +56,7 @@ class DistributeUtils {
     /**
      * Scheme used to open the native Android tester app.
      */
+    @VisibleForTesting
     static final String TESTER_APP_PACKAGE_NAME = "com.microsoft.hockeyapp.testerapp";
 
     /**
@@ -81,91 +82,53 @@ class DistributeUtils {
         return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + DeviceInfoHelper.getVersionCode(packageInfo));
     }
 
+    static boolean shouldUseTesterAppForUpdateSetup(@NonNull Context context) {
+        String testerAppUpdateSetupFailedMessage = SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+        return isAppCenterTesterAppInstalled(context) && TextUtils.isEmpty(testerAppUpdateSetupFailedMessage) && !context.getPackageName().equals(DistributeUtils.TESTER_APP_PACKAGE_NAME);
+    }
+
+    private static boolean isAppCenterTesterAppInstalled(@NonNull Context context) {
+        try {
+            context.getPackageManager().getPackageInfo(TESTER_APP_PACKAGE_NAME, 0);
+        } catch (PackageManager.NameNotFoundException ignored) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Update setup using native tester app.
      *
-     * @param activity    activity from which to start tester app.
+     * @param context     context from which to start tester app.
      * @param packageInfo package info.
      */
-    static void updateSetupUsingTesterApp(Activity activity, PackageInfo packageInfo) {
-
-        /* Compute hash. */
-        String releaseHash = computeReleaseHash(packageInfo);
-
-        /* Generate request identifier. */
-        String requestId = UUID.randomUUID().toString();
-
-        /* Build URL. */
+    static void updateSetupUsingTesterApp(@NonNull final Context context, PackageInfo packageInfo) {
         String url = "ms-actesterapp://update-setup";
-        url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
-        url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
-        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
-        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
-        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
+        url = getUpdateSetupUrl(url, packageInfo, false);
         AppCenterLog.debug(LOG_TAG, "No token, need to open tester app to url=" + url);
-
-        /* Store request id. */
-        SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
 
         /* Open the native tester app */
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        activity.startActivity(intent);
+        context.startActivity(intent);
     }
 
     /**
      * Update setup using browser.
      *
-     * @param activity    activity from which to start browser.
+     * @param context     context from which to start browser.
      * @param installUrl  base install site URL.
      * @param appSecret   application secret.
      * @param packageInfo package info.
      */
     @UiThread
-    static void updateSetupUsingBrowser(final Activity activity, String installUrl, String appSecret, PackageInfo packageInfo) {
+    static void updateSetupUsingBrowser(@NonNull final Context context, String installUrl, String appSecret, PackageInfo packageInfo) {
+        String url = installUrl + String.format(UPDATE_SETUP_PATH_FORMAT, appSecret);
+        url = getUpdateSetupUrl(url, packageInfo, true);
+        AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
-        /*
-         * If network is disconnected, browser will fail so wait.
-         * Also we can't just wait for network to be up and launch browser at that time
-         * as it's unpredictable and will interrupt the user, so just wait next relaunch.
-         */
-        if (!NetworkStateHelper.getSharedInstance(activity).isNetworkConnected()) {
-            AppCenterLog.info(LOG_TAG, "Postpone enabling in app updates via browser as network is disconnected.");
-            Distribute.getInstance().completeWorkflow();
-            return;
-        }
-
-        /* Compute hash. */
-        String releaseHash = computeReleaseHash(packageInfo);
-
-        /* Generate request identifier. */
-        String requestId = UUID.randomUUID().toString();
-
-        /* Store request id. */
-        SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
-
-        /* Build URL. */
-        final StringBuilder urlBuilder = new StringBuilder(installUrl);
-        urlBuilder.append(String.format(UPDATE_SETUP_PATH_FORMAT, appSecret));
-        urlBuilder.append("?" + PARAMETER_RELEASE_HASH + "=").append(releaseHash);
-        urlBuilder.append("&" + PARAMETER_REDIRECT_ID + "=").append(activity.getPackageName());
-        urlBuilder.append("&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter");
-        urlBuilder.append("&" + PARAMETER_REQUEST_ID + "=").append(requestId);
-        urlBuilder.append("&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE);
-        urlBuilder.append("&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true");
-        AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
-
-            @Override
-            public void accept(UUID uuid) {
-                urlBuilder.append("&" + PARAMETER_INSTALL_ID + "=").append(uuid.toString());
-                String url = urlBuilder.toString();
-                AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
-
-
-                /* Open browser, remember that whatever the outcome to avoid opening it twice. */
-                BrowserUtils.openBrowser(url, activity);
-            }
-        });
+        /* Open browser, remember that whatever the outcome to avoid opening it twice. */
+        BrowserUtils.openBrowser(url, context);
     }
 
     /**
@@ -231,26 +194,42 @@ class DistributeUtils {
      * @return future with result being the endpoint url.
      * @see AppCenterFuture
      */
-    static AppCenterFuture<String> getLatestReleaseDetailsUrlAsync(String apiUrl, final String appSecret, final PackageInfo packageInfo, final String distributionGroupId, String updateToken) {
-        final DefaultAppCenterFuture<String> future = new DefaultAppCenterFuture<>();
+    static String getLatestReleaseDetailsUrl(String apiUrl, final String appSecret, final PackageInfo packageInfo, final String distributionGroupId, String updateToken) {
         final String releaseHash = computeReleaseHash(packageInfo);
         final StringBuilder urlBuilder = new StringBuilder(apiUrl);
         if (updateToken == null) {
-            AppCenter.getInstallId().thenAccept(new AppCenterConsumer<UUID>() {
-
-                @Override
-                public void accept(UUID uuid) {
-                    String reportingParameters = getReportingParametersForUpdatedRelease(packageInfo, true, uuid.toString(), null);
-                    urlBuilder.append(String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, appSecret, distributionGroupId, releaseHash, reportingParameters));
-                    future.complete(urlBuilder.toString());
-                }
-            });
+            String reportingParameters = getReportingParametersForUpdatedRelease(packageInfo, true, IdHelper.getInstallId().toString(), null);
+            urlBuilder.append(String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, appSecret, distributionGroupId, releaseHash, reportingParameters));
         } else {
             String reportingParameters = getReportingParametersForUpdatedRelease(packageInfo, false, null, distributionGroupId);
             urlBuilder.append(String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, appSecret, releaseHash, reportingParameters));
-            future.complete(urlBuilder.toString());
         }
-        return future;
+        return urlBuilder.toString();
+    }
+
+    private static String getUpdateSetupUrl(String url, final PackageInfo packageInfo, boolean isBrowser) {
+
+        /* Compute hash. */
+        String releaseHash = computeReleaseHash(packageInfo);
+
+        /* Generate request identifier. */
+        String requestId = UUID.randomUUID().toString();
+
+        /* Store request id. */
+        SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId);
+
+        /* Build URL. */
+        final StringBuilder urlBuilder = new StringBuilder(url);
+        urlBuilder.append("?" + PARAMETER_RELEASE_HASH + "=").append(releaseHash);
+        urlBuilder.append("&" + PARAMETER_REDIRECT_ID + "=").append(packageInfo.packageName);
+        urlBuilder.append("&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter");
+        urlBuilder.append("&" + PARAMETER_REQUEST_ID + "=").append(requestId);
+        urlBuilder.append("&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE);
+        if (isBrowser) {
+            urlBuilder.append("&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true");
+            urlBuilder.append("&" + PARAMETER_INSTALL_ID + "=").append(IdHelper.getInstallId().toString());
+        }
+        return urlBuilder.toString();
     }
 
     /**

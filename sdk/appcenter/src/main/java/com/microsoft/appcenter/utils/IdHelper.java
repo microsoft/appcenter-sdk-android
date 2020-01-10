@@ -22,7 +22,7 @@ public class IdHelper {
      * @return the installID
      */
     @NonNull
-    public static UUID getInstallId() {
+    public synchronized static UUID getInstallId() {
         String installIdString = SharedPreferencesManager.getString(KEY_INSTALL_ID, "");
         UUID installId;
         try {

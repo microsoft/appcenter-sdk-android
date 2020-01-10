@@ -96,10 +96,13 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
-import static com.microsoft.appcenter.distribute.DistributeUtils.getLatestReleaseDetailsUrlAsync;
+import static com.microsoft.appcenter.distribute.DistributeUtils.getLatestReleaseDetailsUrl;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
 import static com.microsoft.appcenter.distribute.DistributeUtils.isCurrentReleaseWasUpdated;
 import static com.microsoft.appcenter.distribute.DistributeUtils.isMoreRecent;
+import static com.microsoft.appcenter.distribute.DistributeUtils.shouldUseTesterAppForUpdateSetup;
+import static com.microsoft.appcenter.distribute.DistributeUtils.updateSetupUsingBrowser;
+import static com.microsoft.appcenter.distribute.DistributeUtils.updateSetupUsingTesterApp;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
@@ -812,25 +815,30 @@ public class Distribute extends AbstractAppCenterService {
             }
 
             /* If not, open native app (if installed) to update setup, unless it already failed. Otherwise, use the browser. */
-            String testerAppUpdateSetupFailedMessage = SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            boolean shouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && TextUtils.isEmpty(testerAppUpdateSetupFailedMessage) && !mContext.getPackageName().equals(DistributeUtils.TESTER_APP_PACKAGE_NAME);
-            if (shouldUseTesterAppForUpdateSetup && !mTesterAppOpenedOrAborted) {
-                DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
-                mTesterAppOpenedOrAborted = true;
-            } else if (!mBrowserOpenedOrAborted) {
-                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
-                mBrowserOpenedOrAborted = true;
-            }
+            updateSetup();
         }
     }
 
-    private boolean isAppCenterTesterAppInstalled() {
-        try {
-            mContext.getPackageManager().getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0);
-        } catch (PackageManager.NameNotFoundException ignored) {
-            return false;
+    private void updateSetup() {
+        if (shouldUseTesterAppForUpdateSetup(mContext) && !mTesterAppOpenedOrAborted) {
+            updateSetupUsingTesterApp(mContext, mPackageInfo);
+            mTesterAppOpenedOrAborted = true;
+        } else if (!mBrowserOpenedOrAborted) {
+
+            /*
+             * If network is disconnected, browser will fail so wait.
+             * Also we can't just wait for network to be up and launch browser at that time
+             * as it's unpredictable and will interrupt the user, so just wait next relaunch.
+             */
+            if (!NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected()) {
+                AppCenterLog.info(LOG_TAG, "Postpone enabling in app updates via browser as network is disconnected.");
+                completeWorkflow();
+                return;
+            }
+
+            updateSetupUsingBrowser(mContext, mInstallUrl, mAppSecret, mPackageInfo);
+            mBrowserOpenedOrAborted = true;
         }
-        return true;
     }
 
     private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {
@@ -890,6 +898,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
+    @VisibleForTesting
     synchronized void completeWorkflow() {
         cancelNotification();
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
@@ -978,17 +987,12 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     synchronized void requestLatestReleaseDetails(String distributionGroupId, final String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Request latest release details...");
-        getLatestReleaseDetailsUrlAsync(mApiUrl, mAppSecret, mPackageInfo, distributionGroupId, updateToken).thenAccept(new AppCenterConsumer<String>() {
-
-            @Override
-            public void accept(String url) {
-                Map<String, String> headers = new HashMap<>();
-                if (updateToken != null) {
-                    headers.put(HEADER_API_TOKEN, updateToken);
-                }
-                requestLatestReleaseDetails(url, headers);
-            }
-        });
+        String url = getLatestReleaseDetailsUrl(mApiUrl, mAppSecret, mPackageInfo, distributionGroupId, updateToken);
+        Map<String, String> headers = new HashMap<>();
+        if (updateToken != null) {
+            headers.put(HEADER_API_TOKEN, updateToken);
+        }
+        requestLatestReleaseDetails(url, headers);
     }
 
     /**
