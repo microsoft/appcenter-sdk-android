@@ -15,7 +15,6 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.http.HttpClient;
@@ -26,21 +25,18 @@ import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
-import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -76,9 +72,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest(DistributeUtils.class)
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
-
-    @Mock
-    private AppCenterFuture<UUID> mAppCenterFuture;
 
     @Test
     public void moreRecentWithIncompatibleMinApiLevel() throws Exception {
@@ -813,11 +806,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-hash");
 
-        /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
-        when(mAppCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
-
         /* Mock we already have token and no group. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
@@ -851,11 +839,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("fake-old-hash");
-
-        /* Mock install id from AppCenter. */
-        UUID installId = UUID.randomUUID();
-        when(mAppCenterFuture.get()).thenReturn(installId);
-        when(AppCenter.getInstallId()).thenReturn(mAppCenterFuture);
 
         /* Mock we already have token and no group. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
