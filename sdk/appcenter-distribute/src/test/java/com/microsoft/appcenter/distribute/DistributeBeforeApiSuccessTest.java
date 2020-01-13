@@ -87,6 +87,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doNothing;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -624,7 +625,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Setup mock. */
         UUID requestId = UUID.randomUUID();
         mockStatic(UUID.class);
-        when(UUID.randomUUID()).thenReturn(requestId);
+        when(UUID.randomUUID()).thenReturn(requestId).thenCallRealMethod();
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn(null);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
         String url = "ms-actesterapp://update-setup";
@@ -636,13 +637,28 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
 
-        /* Start and resume: open tester app. */
+        /*
+         * Start and resume: open tester app.
+         *
+         * Call resume before runOnUiThread callback to emulate regular activity behaviour.
+         * In this case, it should not overwrite request id to a new value.
+         */
+        ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
+        doNothing().when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(captor.capture());
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
+        if (!captor.getAllValues().isEmpty()) {
+            captor.getValue().run();
+        }
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         verify(mActivity).startActivity(intent);
         verifyStatic();
         SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
+
+        /* Verify that it was only one call. */
+        verifyStatic();
+        SharedPreferencesManager.putString(eq(PREFERENCE_KEY_REQUEST_ID), anyString());
 
         /* Store token. */
         Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", "some token");
