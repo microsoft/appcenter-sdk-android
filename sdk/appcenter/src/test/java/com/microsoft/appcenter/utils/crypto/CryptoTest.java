@@ -8,6 +8,7 @@ package com.microsoft.appcenter.utils.crypto;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
+import android.security.keystore.KeyExpiredException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.util.Base64;
 
@@ -266,9 +267,24 @@ public class CryptoTest {
     }
 
     @Test
-    public void failsToEncrypt() throws Exception {
+    public void failsToEncryptWithBadPadding() throws Exception {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
         when(mCipher.doFinal(any(byte[].class))).thenThrow(new BadPaddingException());
+        String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
+        String encryptedData = cryptoUtils.encrypt(data);
+        assertEquals(data, encryptedData);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        assertEquals(data, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+        decryptedData = cryptoUtils.decrypt(encryptedData, true);
+        assertEquals(data, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+    }
+
+    @Test
+    public void failsToEncryptWithInvalidKey() throws Exception {
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new InvalidKeyException());
         String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
         String encryptedData = cryptoUtils.encrypt(data);
         assertEquals(data, encryptedData);
@@ -295,7 +311,7 @@ public class CryptoTest {
     }
 
     @Test
-    public void readExpiredData() throws Exception {
+    public void readExpiredDataOnAfterAndroidM() throws Exception {
 
         /* Encrypt test data. */
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
@@ -303,7 +319,7 @@ public class CryptoTest {
         String encryptedData = cryptoUtils.encrypt(data);
 
         /* Make key rotate on next encryption. */
-        when(mCipher.doFinal(any(byte[].class))).thenThrow(new InvalidKeyException()).thenAnswer(new Answer<byte[]>() {
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new KeyExpiredException()).thenAnswer(new Answer<byte[]>() {
 
             @Override
             public byte[] answer(InvocationOnMock invocation) {
@@ -325,6 +341,55 @@ public class CryptoTest {
                 byte[] data = new byte[length];
                 System.arraycopy(input, offset, data, 0, length);
                 return data;
+            }
+        });
+        int expectedKeyStoreCalls = 3;
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(String.class), isNull(KeyStore.ProtectionParameter.class));
+
+        /* Verify we can decrypt with retry on expired key. */
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        assertEquals(data, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+
+        /* Verify the second alias was picked for decryption. */
+        expectedKeyStoreCalls += 2;
+        ArgumentCaptor<String> aliasCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(aliasCaptor.capture(), isNull(KeyStore.ProtectionParameter.class));
+        List<String> aliases = aliasCaptor.getAllValues();
+
+        /* Check last calls: first we tried to read with the second alias (after rotation). */
+        assertTrue(aliases.get(3).startsWith("appcenter.1."));
+
+        /* Then we tried with the old one. */
+        assertTrue(aliases.get(4).startsWith("appcenter.0."));
+    }
+
+    @Test
+    public void readExpiredDataOnBeforeAndroidM() throws Exception {
+
+        /* Encrypt test data. */
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
+        String data = "oldData";
+        String encryptedData = cryptoUtils.encrypt(data);
+
+        /* Make key rotate on next encryption. */
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new InvalidKeyException(new CertificateExpiredException())).thenAnswer(new Answer<byte[]>() {
+
+            @Override
+            public byte[] answer(InvocationOnMock invocation) {
+                return (byte[]) invocation.getArguments()[0];
+            }
+        });
+        cryptoUtils.encrypt("otherData");
+
+        /*
+         * Make decrypt fail with current key and work with expired key (i.e. the second call).
+         */
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new BadPaddingException()).thenAnswer(new Answer<byte[]>() {
+
+            @Override
+            public byte[] answer(InvocationOnMock invocation) {
+                return (byte[]) invocation.getArguments()[0];
             }
         });
         int expectedKeyStoreCalls = 3;

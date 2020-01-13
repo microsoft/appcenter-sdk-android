@@ -2,6 +2,10 @@
 
 ## Version 2.5.2 (Under development)
 
+### App Center
+
+* **[Fix]** Fix infinite recursion when handling encryption errors.
+
 ### App Center Crashes
 
 * **[Fix]** Fix incorrect app version when an NDK crash is sent after updating the app.

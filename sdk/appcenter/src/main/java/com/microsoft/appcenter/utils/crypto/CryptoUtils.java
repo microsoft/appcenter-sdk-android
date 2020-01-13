@@ -20,6 +20,7 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.Provider;
+import java.security.cert.CertificateExpiredException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -40,6 +41,11 @@ import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIA
  * Tool to encrypt/decrypt strings seamlessly.
  */
 public class CryptoUtils {
+
+    /**
+     * We can't reference this class directly on versions < M.
+     */
+    private static final String M_KEY_EXPIRED_EXCEPTION = "android.security.keystore.KeyExpiredException";
 
     @VisibleForTesting
     static final ICryptoFactory DEFAULT_CRYPTO_FACTORY = new ICryptoFactory() {
@@ -303,23 +309,30 @@ public class CryptoUtils {
                 return handler.getAlgorithm() + ALGORITHM_DATA_SEPARATOR + encryptedString;
             } catch (InvalidKeyException e) {
 
-                /* When key expires, switch to another alias. */
-                AppCenterLog.debug(LOG_TAG, "Alias expired: " + handlerEntry.mAliasIndex);
-                handlerEntry.mAliasIndex ^= 1;
-                String newAlias = getAlias(handler, handlerEntry.mAliasIndex, false);
+                /*
+                 * When key expires, switch to another alias.
+                 * Inner exception is for RSA (< M), key expired exception is Android M+.
+                 */
+                if (e.getCause() instanceof CertificateExpiredException || M_KEY_EXPIRED_EXCEPTION.equals(e.getClass().getName())) {
+                    AppCenterLog.debug(LOG_TAG, "Alias expired: " + handlerEntry.mAliasIndex);
+                    handlerEntry.mAliasIndex ^= 1;
+                    String newAlias = getAlias(handler, handlerEntry.mAliasIndex, false);
 
-                /* If this is the second time we switch, we delete the previous key. */
-                if (mKeyStore.containsAlias(newAlias)) {
-                    AppCenterLog.debug(LOG_TAG, "Deleting alias: " + newAlias);
-                    mKeyStore.deleteEntry(newAlias);
+                    /* If this is the second time we switch, we delete the previous key. */
+                    if (mKeyStore.containsAlias(newAlias)) {
+                        AppCenterLog.debug(LOG_TAG, "Deleting alias: " + newAlias);
+                        mKeyStore.deleteEntry(newAlias);
+                    }
+
+                    /* Generate new key. */
+                    AppCenterLog.debug(LOG_TAG, "Creating alias: " + newAlias);
+                    handler.generateKey(mCryptoFactory, newAlias, mContext);
+
+                    /* And encrypt using that new key. */
+                    return encrypt(data);
+                } else {
+                    throw e;
                 }
-
-                /* Generate new key. */
-                AppCenterLog.debug(LOG_TAG, "Creating alias: " + newAlias);
-                handler.generateKey(mCryptoFactory, newAlias, mContext);
-
-                /* And encrypt using that new key. */
-                return encrypt(data);
             }
         } catch (Exception e) {
 
