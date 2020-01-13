@@ -507,7 +507,7 @@ public class Distribute extends AbstractAppCenterService {
                     }
                 });
             } else {
-                AppCenterLog.verbose(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
+                AppCenterLog.debug(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
             }
         } else {
 
@@ -631,7 +631,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     @UiThread
     private synchronized void resumeDistributeWorkflow() {
-        AppCenterLog.verbose(LOG_TAG, "Resume distribute workflow...");
+        AppCenterLog.debug(LOG_TAG, "Resume distribute workflow...");
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
