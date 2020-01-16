@@ -311,7 +311,6 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
-        NetworkStateHelper.unsetInstance();
     }
 
     /**

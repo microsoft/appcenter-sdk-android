@@ -585,26 +585,26 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void getLastReleaseDetailsWithDifferentHttpClients() {
 
-        // Prepare data.
+        /* Prepare data. */
         HttpClient mockHttpClient = mock(HttpClient.class);
         DependencyConfiguration.setHttpClient(mockHttpClient);
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("mock-hash");
 
-        // Call get last release details.
+        /* Call get last release details. */
         Distribute.getInstance().getLatestReleaseDetails(anyString(), anyString());
 
-        // Verify.
+        /* Verify. */
         verifyStatic(never());
         HttpUtils.createHttpClient(any(Context.class));
 
-        // Clear http client.
+        /* Clear http client. */
         DependencyConfiguration.setHttpClient(null);
 
-        // Call get last release details.
+        /* Call get last release details. */
         Distribute.getInstance().getLatestReleaseDetails(anyString(), anyString());
 
-        // Verify.
+        /* Verify. */
         verifyStatic();
         HttpUtils.createHttpClient(any(Context.class));
     }
