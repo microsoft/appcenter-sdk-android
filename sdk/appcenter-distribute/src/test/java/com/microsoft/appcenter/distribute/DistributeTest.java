@@ -201,6 +201,14 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void resumeNullActivity() {
+        start();
+        Distribute.getInstance().onActivityResumed(null);
+
+        /* No exceptions. */
+    }
+
+    @Test
     public void setDownloadingReleaseDetailsEqualTest() {
 
         /* Mock release details and startFromBackground to apply it. */
