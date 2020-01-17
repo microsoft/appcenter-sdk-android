@@ -362,7 +362,7 @@ public class AuthTokenContext {
         String encryptedJson = SharedPreferencesManager.getString(PREFERENCE_KEY_TOKEN_HISTORY, null);
         String json = null;
         if (encryptedJson != null && !encryptedJson.isEmpty()) {
-            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(encryptedJson, false);
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(encryptedJson);
             json = decryptedData.getDecryptedData();
         }
         if (json == null || json.isEmpty()) {

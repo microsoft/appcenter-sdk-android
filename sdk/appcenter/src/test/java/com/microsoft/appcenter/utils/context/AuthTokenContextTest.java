@@ -245,7 +245,7 @@ public class AuthTokenContextTest {
     public void historyEmptyJson() {
         CryptoUtils.DecryptedData decryptedData = mock(CryptoUtils.DecryptedData.class);
         when(decryptedData.getDecryptedData()).thenReturn("");
-        when(mCryptoUtils.decrypt(eq("empty"), eq(false))).thenReturn(decryptedData);
+        when(mCryptoUtils.decrypt(eq("empty"))).thenReturn(decryptedData);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("empty");
         assertNull(mAuthTokenContext.getHistory());
     }
@@ -254,7 +254,7 @@ public class AuthTokenContextTest {
     public void historyEmptyArray() {
         CryptoUtils.DecryptedData decryptedData = mock(CryptoUtils.DecryptedData.class);
         when(decryptedData.getDecryptedData()).thenReturn("[]");
-        when(mCryptoUtils.decrypt(eq("secret"), eq(false))).thenReturn(decryptedData);
+        when(mCryptoUtils.decrypt(eq("secret"))).thenReturn(decryptedData);
         when(SharedPreferencesManager.getString(eq(PREFERENCE_KEY_TOKEN_HISTORY), isNull(String.class))).thenReturn("secret");
         assertEquals(0, mAuthTokenContext.getHistory().size());
     }

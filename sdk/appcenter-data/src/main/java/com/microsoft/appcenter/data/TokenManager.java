@@ -73,7 +73,7 @@ public class TokenManager {
 
     TokenResult getCachedToken(String partitionName, boolean includeExpiredToken) {
         String encryptedTokenResult = SharedPreferencesManager.getString(PREFERENCE_PARTITION_PREFIX + partitionName);
-        String decryptedTokenResult = CryptoUtils.getInstance(mContext).decrypt(encryptedTokenResult, false).getDecryptedData();
+        String decryptedTokenResult = CryptoUtils.getInstance(mContext).decrypt(encryptedTokenResult).getDecryptedData();
         TokenResult token = null;
         try {
             token = Utils.getGson().fromJson(decryptedTokenResult, TokenResult.class);

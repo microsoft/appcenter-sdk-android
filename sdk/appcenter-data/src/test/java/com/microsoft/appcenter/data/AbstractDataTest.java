@@ -260,7 +260,7 @@ abstract public class AbstractDataTest {
                 return (String) args[0];
             }
         });
-        when(cryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+        when(cryptoUtils.decrypt(anyString())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
 
             @Override
             public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {
