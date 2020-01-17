@@ -284,10 +284,10 @@ public class CryptoTest {
         String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
         String encryptedData = cryptoUtils.encrypt(data);
         assertEquals(data, encryptedData);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
         assertEquals(data, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
-        decryptedData = cryptoUtils.decrypt(encryptedData, true);
+        decryptedData = cryptoUtils.decrypt(encryptedData);
         assertEquals(data, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
     }
@@ -392,7 +392,7 @@ public class CryptoTest {
         verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(String.class), isNull(KeyStore.ProtectionParameter.class));
 
         /* Verify we can decrypt with retry on expired key. */
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
         assertEquals(data, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
