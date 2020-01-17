@@ -34,6 +34,7 @@ import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
@@ -52,6 +53,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
@@ -486,13 +488,19 @@ public class Distribute extends AbstractAppCenterService {
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             mDistributeInfoTracker = new DistributeInfoTracker(distributionGroupId);
             mChannel.addListener(mDistributeInfoTracker);
-            HandlerUtils.runOnUiThread(new Runnable() {
 
-                @Override
-                public void run() {
-                    resumeDistributeWorkflow();
-                }
-            });
+            /* Resume distribute workflow only if there is foreground activity. */
+            if (mForegroundActivity != null) {
+                HandlerUtils.runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        resumeDistributeWorkflow();
+                    }
+                });
+            } else {
+                AppCenterLog.debug(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
+            }
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -615,6 +623,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     @UiThread
     private synchronized void resumeDistributeWorkflow() {
+        AppCenterLog.debug(LOG_TAG, "Resume distribute workflow...");
         if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
             /* Don't go any further it this is a debug app. */
@@ -894,6 +903,8 @@ public class Distribute extends AbstractAppCenterService {
         } else if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored update setup failed parameter.");
             SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY, updateSetupFailed);
+        } else {
+            AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
     }
 
@@ -910,6 +921,8 @@ public class Distribute extends AbstractAppCenterService {
         } else if (requestId.equals(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID))) {
             AppCenterLog.debug(LOG_TAG, "Stored tester app update setup failed parameter.");
             SharedPreferencesManager.putString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY, testerAppUpdateSetupFailed);
+        } else {
+            AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
     }
 
@@ -952,7 +965,10 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
-        HttpClient httpClient = createHttpClient(mContext);
+        HttpClient httpClient = DependencyConfiguration.getHttpClient();
+        if (httpClient == null) {
+            httpClient = createHttpClient(mContext);
+        }
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
@@ -1177,7 +1193,7 @@ public class Distribute extends AbstractAppCenterService {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
-                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get();
+                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId();
                 } else {
                     reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 }

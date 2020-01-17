@@ -21,6 +21,7 @@ import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -85,6 +86,47 @@ public class AppCenterAndroidTest {
         AppCenterLog.setLogLevel(Log.ASSERT);
         AppCenter.start(mApplication, UUID.randomUUID().toString());
         assertEquals(Log.WARN, AppCenter.getLogLevel());
+    }
+
+    @Test
+    public void enableDisable() {
+        String appSecret = UUID.randomUUID().toString();
+        AppCenter.start(mApplication, appSecret, DummyService.class);
+
+        /* Disable SDK. */
+        AppCenter.setEnabled(false);
+
+        /* Verify disabled. */
+        final Semaphore lock = new Semaphore(0);
+        final AtomicReference<Boolean> isEnabled = new AtomicReference<>();
+        AppCenter.isEnabled().thenAccept(new AppCenterConsumer<Boolean>() {
+
+            @Override
+            public void accept(Boolean aBoolean) {
+                isEnabled.set(aBoolean);
+                lock.release();
+            }
+        });
+        lock.acquireUninterruptibly();
+        Assert.assertFalse(isEnabled.get());
+
+        /* Restart SDK. */
+        AppCenter.unsetInstance();
+        AppCenter.start(mApplication, appSecret, DummyService.class);
+        final Semaphore lock1 = new Semaphore(0);
+        final AtomicReference<Boolean> isEnabled1 = new AtomicReference<>();
+        AppCenter.isEnabled().thenAccept(new AppCenterConsumer<Boolean>() {
+
+            @Override
+            public void accept(Boolean aBoolean) {
+                isEnabled1.set(aBoolean);
+                lock1.release();
+            }
+        });
+        lock1.acquireUninterruptibly();
+
+        /* Verify SDK is still disabled. */
+        Assert.assertFalse(isEnabled1.get());
     }
 
     private static class DummyService extends AbstractAppCenterService {

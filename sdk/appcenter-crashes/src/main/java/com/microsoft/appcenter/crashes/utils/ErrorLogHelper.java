@@ -21,13 +21,19 @@ import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
+import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -37,10 +43,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
+
 /**
  * ErrorLogHelper to help constructing, serializing, and de-serializing locally stored error logs.
  */
 public class ErrorLogHelper {
+
+    /**
+     * Device info filename.
+     */
+    public static final String DEVICE_INFO_FILE = "deviceInfo";
 
     /**
      * Error log file extension for the JSON schema.
@@ -215,17 +228,72 @@ public class ErrorLogHelper {
         return sErrorLogDirectory;
     }
 
+    /**
+     * A general folder where unprocessed NDK crashes are saved.
+     *
+     * @return a folder name e.g. /lib/files/error/minidump/new
+     */
     @NonNull
     public static synchronized File getNewMinidumpDirectory() {
+        File errorStorageDirectory = getErrorStorageDirectory();
+        File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
+        return new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
+    }
+
+    /**
+     * A one-time run-specific folder where unprocessed NDK crashes are saved.
+     *
+     * @return a folder name e.g. /lib/files/error/minidump/new/aae16c29-42a9-baee-0777e6ba8fe3
+     */
+    @NonNull
+    public static synchronized File getNewMinidumpSubfolder() {
         if (sNewMinidumpDirectory == null) {
-            File errorStorageDirectory = getErrorStorageDirectory();
-            File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
-            sNewMinidumpDirectory = new File(minidumpDirectory, NEW_MINIDUMP_DIRECTORY);
+            File minidumpDirectory = getNewMinidumpDirectory();
+            sNewMinidumpDirectory = new File(minidumpDirectory, UUID.randomUUID().toString());
             FileManager.mkdir(sNewMinidumpDirectory.getPath());
         }
         return sNewMinidumpDirectory;
     }
 
+    /**
+     * A one-time run-specific folder where unprocessed NDK crashes are saved.
+     * Each launch of the application creates its own sub-folder with a random name
+     * to store information about the current device (including the application version),
+     * which is used in the error report.
+     *
+     * @return a folder name e.g. /lib/files/error/minidump/new/aae16c29-f9e7-42a9-baee-0777e6ba8fe3
+     */
+    @NonNull
+    public static synchronized File getNewMinidumpSubfolderWithContextData(Context context) {
+        File directorySubfolder = getNewMinidumpSubfolder();
+        File deviceInfoFile = new File(directorySubfolder, ErrorLogHelper.DEVICE_INFO_FILE);
+        try {
+            Device deviceInfo = DeviceInfoHelper.getDeviceInfo(context);
+            deviceInfo.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
+
+            /* To JSON. */
+            JSONStringer writer = new JSONStringer();
+            writer.object();
+            deviceInfo.write(writer);
+            writer.endObject();
+            String deviceInfoString = writer.toString();
+
+            /* Write file. */
+            FileManager.write(deviceInfoFile, deviceInfoString);
+        } catch (DeviceInfoHelper.DeviceInfoException | IOException | JSONException e) {
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to store device info in a minidump folder.", e);
+
+            //noinspection ResultOfMethodCallIgnored
+            deviceInfoFile.delete();
+        }
+        return directorySubfolder;
+    }
+
+    /**
+     * A folder where minidumps of processed NDK crashes are saved.
+     *
+     * @return a folder name e.g. /lib/files/error/minidump/pending
+     */
     @NonNull
     public static synchronized File getPendingMinidumpDirectory() {
         if (sPendingMinidumpDirectory == null) {
@@ -252,6 +320,81 @@ public class ErrorLogHelper {
     public static File[] getNewMinidumpFiles() {
         File[] files = getNewMinidumpDirectory().listFiles();
         return files != null ? files : new File[0];
+    }
+
+    /**
+     * Look for 'deviceinfo' file inside the minidump folder and parse it.
+     *
+     * @param logFolder folder where to look for stored device information.
+     * @return a device information or null.
+     */
+    @Nullable
+    public static Device getStoredDeviceInfo(File logFolder) {
+        File[] files = logFolder.listFiles(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.equals(DEVICE_INFO_FILE);
+            }
+        });
+        if (files == null || files.length == 0) {
+            AppCenterLog.warn(Crashes.LOG_TAG, "No stored deviceinfo file found in a minidump folder.");
+            return null;
+        }
+        File deviceInfoFile = files[0];
+        String deviceInfoString = FileManager.read(deviceInfoFile);
+        if (deviceInfoString == null) {
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to read stored device info.");
+            return null;
+        }
+        return parseDevice(deviceInfoString);
+    }
+
+    @VisibleForTesting
+    static Device parseDevice(String deviceInfoString) {
+        try {
+            Device device = new Device();
+            JSONObject jsonObject = new JSONObject(deviceInfoString);
+            device.read(jsonObject);
+            return device;
+        } catch (JSONException e) {
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize device info.", e);
+        }
+        return null;
+    }
+
+    /**
+     * Remove the minidump sub-folders from previous sessions in the 'minidump/new' folder.
+     * Minidumps from these folders should already be moved to the 'minidump/pending' folder,
+     * so that they can be safely deleted.
+     */
+    public static void removeStaleMinidumpSubfolders() {
+        File[] previousSubFolders = getNewMinidumpDirectory().listFiles(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+                if (sNewMinidumpDirectory != null) {
+                    return !name.equals(sNewMinidumpDirectory.getName());
+                }
+                return true;
+            }
+        });
+        if (previousSubFolders == null || previousSubFolders.length == 0) {
+            AppCenterLog.debug(Crashes.LOG_TAG, "No previous minidump sub-folders.");
+            return;
+        }
+        for (File file : previousSubFolders) {
+            FileManager.deleteDir(file);
+        }
+    }
+
+    /**
+     * Remove the minidump folder.
+     */
+    public static void removeMinidumpFolder() {
+        File errorStorageDirectory = getErrorStorageDirectory();
+        File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
+        FileManager.deleteDir(minidumpDirectory);
     }
 
     @Nullable
@@ -425,5 +568,31 @@ public class ErrorLogHelper {
             result.put(key, value);
         }
         return result;
+    }
+
+    /**
+     * Parse log folder name UUID. Fallback to random UUID.
+     *
+     * @param logFolder a folder, e.g. lib/files/error/minidump/new/a80da2ae-8c85-43b0-a25b-d52319fb6d56
+     * @return parsed UUID or random UUID.
+     */
+    @NonNull
+    public static UUID parseLogFolderUuid(File logFolder) {
+        UUID uuid = null;
+        if (logFolder.isDirectory()) {
+            try {
+                uuid = UUID.fromString(logFolder.getName());
+            } catch (IllegalArgumentException e) {
+                AppCenterLog.warn(Crashes.LOG_TAG, "Cannot parse minidump folder name to UUID.", e);
+            }
+        }
+        return uuid == null ? UUID.randomUUID() : uuid;
+    }
+
+    @VisibleForTesting
+    public static void clearStaticState() {
+        sNewMinidumpDirectory = null;
+        sErrorLogDirectory = null;
+        sPendingMinidumpDirectory = null;
     }
 }

@@ -227,6 +227,22 @@ public class FileManager {
     }
 
     /**
+     * Delete a directory with files.
+     *
+     * @param file The file or directory to delete.
+     * @return {@code true} if it was deleted, {@code false} otherwise.
+     */
+    public static boolean deleteDir(File file) {
+        File[] contents = file.listFiles();
+        if (contents != null) {
+            for (File f : contents) {
+                deleteDir(f);
+            }
+        }
+        return file.delete();
+    }
+
+    /**
      * Create a directory if it does not already exist.
      * Will create the whole directory tree if necessary.
      *
