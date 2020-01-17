@@ -33,7 +33,6 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
@@ -791,17 +790,14 @@ public class Distribute extends AbstractAppCenterService {
             }
 
             /*
-             * Check if we have previously stored the redirection parameters.
-             * Note that distribution group was not stored in previous SDK versions < 0.12.0
-             * so we test for the presence of either group or token for compatibility.
-             *
-             * Later we will likely switch to just testing the presence of a group in the first if,
-             * especially if we decide to tie private in-app updates to a specific group. That is
-             * also why we already store the group for future use even for private group updates.
+             * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
+            UpdateTrack updateTrack = DistributeUtils.getStoredUpdateTrack();
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-            if (updateToken != null || distributionGroupId != null) {
+            if (updateTrack == UpdateTrack.PUBLIC || updateToken != null) {
+
+                /* We have what we need to check for updates via API. */
                 decryptAndGetReleaseDetails(updateToken, distributionGroupId);
                 return;
             }
@@ -971,7 +967,14 @@ public class Distribute extends AbstractAppCenterService {
         }
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
+
+        /* TODO use the new APIs when ready and remove hardcoded public group. */
         if (updateToken == null) {
+            if (distributionGroupId == null) {
+
+                /* This will work only for sasquatch on int until we have the new API. */
+                distributionGroupId = "3d054d79-8b26-426c-9a49-fed752c777d2";
+            }
             url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
