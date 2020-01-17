@@ -231,6 +231,7 @@ public class AppCenter {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
+        NetworkStateHelper.unsetInstance();
     }
 
     /**

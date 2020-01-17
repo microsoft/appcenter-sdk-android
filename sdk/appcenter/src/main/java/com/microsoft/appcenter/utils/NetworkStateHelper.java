@@ -82,6 +82,10 @@ public class NetworkStateHelper implements Closeable {
         reopen();
     }
 
+    public static synchronized void unsetInstance() {
+        sSharedInstance = null;
+    }
+
     /**
      * Get shared instance.
      *
