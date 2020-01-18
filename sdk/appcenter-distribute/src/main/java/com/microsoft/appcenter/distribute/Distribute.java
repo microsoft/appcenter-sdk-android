@@ -474,10 +474,17 @@ public class Distribute extends AbstractAppCenterService {
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (mChannel != null && getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
-                mWorkflowCompleted = false;
-                mBrowserOpenedOrAborted = false;
-            }
+            resetWorkflow();
+        }
+    }
+
+    /**
+     * Reset current state to allow a new update check.
+     */
+    private void resetWorkflow() {
+        if (mChannel != null && getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
+            mWorkflowCompleted = false;
+            mBrowserOpenedOrAborted = false;
         }
     }
 
@@ -512,17 +519,7 @@ public class Distribute extends AbstractAppCenterService {
             mChannel.addListener(mDistributeInfoTracker);
 
             /* Resume distribute workflow only if there is foreground activity. */
-            if (mForegroundActivity != null) {
-                HandlerUtils.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        resumeDistributeWorkflow();
-                    }
-                });
-            } else {
-                AppCenterLog.debug(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
-            }
+            resumeWorkflowIfForeground();
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -539,6 +536,20 @@ public class Distribute extends AbstractAppCenterService {
             /* Disable the distribute info tracker. */
             mChannel.removeListener(mDistributeInfoTracker);
             mDistributeInfoTracker = null;
+        }
+    }
+
+    private void resumeWorkflowIfForeground() {
+        if (mForegroundActivity != null) {
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    resumeDistributeWorkflow();
+                }
+            });
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
         }
     }
 
@@ -609,11 +620,22 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized AppCenterFuture<Void> setInstanceInUpdateTrack(final UpdateTrack updateTrack) {
         final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
+        if (updateTrack == null) {
+            AppCenterLog.error(LOG_TAG, "Null argument is not allowed for Distribute.setInUpdateTrack().");
+            future.complete(null);
+            return future;
+        }
         Runnable runnable = new Runnable() {
 
             @Override
             public void run() {
-                SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TRACK, updateTrack.toString());
+                String oldValue = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TRACK);
+                String newValue = updateTrack.toString();
+                SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TRACK, newValue);
+                if (!newValue.equals(oldValue)) {
+                    resetWorkflow();
+                    resumeWorkflowIfForeground();
+                }
                 future.complete(null);
             }
         };
@@ -839,10 +861,11 @@ public class Distribute extends AbstractAppCenterService {
             UpdateTrack updateTrack = DistributeUtils.getStoredUpdateTrack();
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-            if (updateTrack == UpdateTrack.PUBLIC || updateToken != null) {
+            boolean isPublicTrack = updateTrack == UpdateTrack.PUBLIC;
+            if (isPublicTrack || updateToken != null) {
 
                 /* We have what we need to check for updates via API. */
-                decryptAndGetReleaseDetails(updateToken, distributionGroupId);
+                decryptAndGetReleaseDetails(isPublicTrack ? null : updateToken, distributionGroupId);
                 return;
             }
 
