@@ -56,6 +56,7 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -101,6 +102,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TRACK;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
@@ -187,6 +189,11 @@ public class Distribute extends AbstractAppCenterService {
      * In memory tester app update setup failure error message if we receive deep link intent before onStart.
      */
     private String mBeforeStartTesterAppUpdateSetupFailed;
+
+    /**
+     * In memory update track change when called before start.
+     */
+    private UpdateTrack mBeforeStartInUpdateTrack;
 
     /**
      * Current API call identifier to check latest release from server, used for state check.
@@ -346,6 +353,16 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Change the in-app update track (public vs private).
+     *
+     * @param updateTrack update track.
+     * @return future with null result to monitor when the new setting value is acknowledged.
+     */
+    public static AppCenterFuture<Void> setInUpdateTrack(UpdateTrack updateTrack) {
+        return getInstance().setInstanceInUpdateTrack(updateTrack);
+    }
+
+    /**
      * Sets a distribute listener.
      *
      * @param listener The custom distribute listener.
@@ -412,6 +429,12 @@ public class Distribute extends AbstractAppCenterService {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
         } catch (PackageManager.NameNotFoundException e) {
             AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
+        }
+
+        /* Store update track change made before start if any. */
+        if (mBeforeStartInUpdateTrack != null) {
+            SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TRACK, mBeforeStartInUpdateTrack.toString());
+            mBeforeStartInUpdateTrack = null;
         }
 
         /*
@@ -579,6 +602,27 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void setInstanceApiUrl(String apiUrl) {
         mApiUrl = apiUrl;
+    }
+
+    /**
+     * Implements {@link #setInUpdateTrack(UpdateTrack)}.
+     */
+    private synchronized AppCenterFuture<Void> setInstanceInUpdateTrack(final UpdateTrack updateTrack) {
+        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
+        Runnable runnable = new Runnable() {
+
+            @Override
+            public void run() {
+                SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TRACK, updateTrack.toString());
+                future.complete(null);
+            }
+        };
+        if (!post(runnable, runnable, runnable)) {
+            AppCenterLog.debug(LOG_TAG, "Updating track before start.");
+            mBeforeStartInUpdateTrack = updateTrack;
+            future.complete(null);
+        }
+        return future;
     }
 
     /**
