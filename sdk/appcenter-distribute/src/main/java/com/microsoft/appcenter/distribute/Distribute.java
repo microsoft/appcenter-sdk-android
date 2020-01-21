@@ -56,7 +56,6 @@ import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -191,9 +190,9 @@ public class Distribute extends AbstractAppCenterService {
     private String mBeforeStartTesterAppUpdateSetupFailed;
 
     /**
-     * In memory update track change when called before start.
+     * In-app update track.
      */
-    private UpdateTrack mBeforeStartInUpdateTrack;
+    private int mUpdateTrack = UpdateTrack.PUBLIC;
 
     /**
      * Current API call identifier to check latest release from server, used for state check.
@@ -356,10 +355,9 @@ public class Distribute extends AbstractAppCenterService {
      * Change the in-app update track (public vs private).
      *
      * @param updateTrack update track.
-     * @return future with null result to monitor when the new setting value is acknowledged.
      */
-    public static AppCenterFuture<Void> setInUpdateTrack(UpdateTrack updateTrack) {
-        return getInstance().setInstanceInUpdateTrack(updateTrack);
+    public static void setUpdateTrack(@UpdateTrack int updateTrack) {
+        getInstance().setInstanceUpdateTrack(updateTrack);
     }
 
     /**
@@ -431,11 +429,8 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
         }
 
-        /* Store update track change made before start if any. */
-        if (mBeforeStartInUpdateTrack != null) {
-            SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TRACK, mBeforeStartInUpdateTrack.toString());
-            mBeforeStartInUpdateTrack = null;
-        }
+        /* Store update track as it may have been changed before start. */
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, mUpdateTrack);
 
         /*
          * Apply enabled state is called by this method, we need fields to be initialized before.
@@ -539,6 +534,7 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
+    @WorkerThread
     private void resumeWorkflowIfForeground() {
         if (mForegroundActivity != null) {
             HandlerUtils.runOnUiThread(new Runnable() {
@@ -616,35 +612,32 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #setInUpdateTrack(UpdateTrack)}.
+     * Implements {@link #setUpdateTrack(int)}.
      */
-    private synchronized AppCenterFuture<Void> setInstanceInUpdateTrack(final UpdateTrack updateTrack) {
-        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
-        if (updateTrack == null) {
-            AppCenterLog.error(LOG_TAG, "Null argument is not allowed for Distribute.setInUpdateTrack().");
-            future.complete(null);
-            return future;
+    private synchronized void setInstanceUpdateTrack(final int updateTrack) {
+        if (DistributeUtils.isInvalidUpdateTrack(updateTrack)) {
+            AppCenterLog.error(LOG_TAG, "Invalid argument passed to Distribute.setUpdateTrack().");
+            return;
         }
+        final int oldUpdateTrackValue = mUpdateTrack;
+        mUpdateTrack = updateTrack;
         Runnable runnable = new Runnable() {
 
             @Override
             public void run() {
-                String oldValue = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TRACK);
-                String newValue = updateTrack.toString();
-                SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TRACK, newValue);
-                if (!newValue.equals(oldValue)) {
-                    resetWorkflow();
-                    resumeWorkflowIfForeground();
-                }
-                future.complete(null);
+                processUpdateTrackChange(updateTrack, oldUpdateTrackValue);
             }
         };
-        if (!post(runnable, runnable, runnable)) {
-            AppCenterLog.debug(LOG_TAG, "Updating track before start.");
-            mBeforeStartInUpdateTrack = updateTrack;
-            future.complete(null);
+        post(runnable, runnable, runnable);
+    }
+
+    @WorkerThread
+    private synchronized void processUpdateTrackChange(int updateTrack, int oldUpdateTrackValue) {
+        if (updateTrack != oldUpdateTrackValue) {
+            SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, updateTrack);
+            resetWorkflow();
+            resumeWorkflowIfForeground();
         }
-        return future;
     }
 
     /**
@@ -858,7 +851,7 @@ public class Distribute extends AbstractAppCenterService {
             /*
              * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
-            UpdateTrack updateTrack = DistributeUtils.getStoredUpdateTrack();
+            int updateTrack = DistributeUtils.getStoredUpdateTrack();
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             boolean isPublicTrack = updateTrack == UpdateTrack.PUBLIC;

@@ -5,18 +5,28 @@
 
 package com.microsoft.appcenter.distribute;
 
+import android.support.annotation.IntDef;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * Track to use for in-app updates.
  */
-public enum UpdateTrack {
+@Retention(RetentionPolicy.SOURCE)
+@IntDef({
+        UpdateTrack.PUBLIC,
+        UpdateTrack.PRIVATE
+})
+public @interface UpdateTrack {
 
     /**
      * Releases from the public group that don't require authentication.
      */
-    PUBLIC,
+    int PUBLIC = 0;
 
     /**
      * Releases from private groups that require authentication, also contain public releases.
      */
-    PRIVATE
+    int PRIVATE = 1;
 }

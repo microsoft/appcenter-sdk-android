@@ -172,17 +172,17 @@ class DistributeUtils {
      *
      * @return stored update track (public by default).
      */
-    @NonNull
-    static UpdateTrack getStoredUpdateTrack() {
-        String updateTrackString = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TRACK);
-        UpdateTrack updateTrack = UpdateTrack.PUBLIC;
-        if (updateTrackString != null) {
-            try {
-                updateTrack = UpdateTrack.valueOf(updateTrackString);
-            } catch (IllegalArgumentException e) {
-                AppCenterLog.warn(LOG_TAG, "Corrupted stored update track, switching to public.", e);
-            }
+    @UpdateTrack
+    static int getStoredUpdateTrack() {
+        int updateTrack = SharedPreferencesManager.getInt(PREFERENCE_KEY_UPDATE_TRACK, UpdateTrack.PUBLIC);
+        if (isInvalidUpdateTrack(updateTrack)) {
+            AppCenterLog.warn(LOG_TAG, "Corrupted stored update track, switching to public.");
+            updateTrack = UpdateTrack.PUBLIC;
         }
         return updateTrack;
+    }
+
+    static boolean isInvalidUpdateTrack(int updateTrack) {
+        return updateTrack != UpdateTrack.PUBLIC && updateTrack != UpdateTrack.PRIVATE;
     }
 }
