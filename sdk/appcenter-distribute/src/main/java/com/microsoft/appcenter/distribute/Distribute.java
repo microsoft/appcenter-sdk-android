@@ -539,6 +539,7 @@ public class Distribute extends AbstractAppCenterService {
             mTesterAppOpenedOrAborted = false;
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
+            mLastCheckedUpdateTrack = null;
             cancelPreviousTasks();
             SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
             SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
