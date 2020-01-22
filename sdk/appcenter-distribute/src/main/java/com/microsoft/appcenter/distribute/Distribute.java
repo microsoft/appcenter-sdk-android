@@ -441,7 +441,7 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
         }
 
-        /* Store update track it has been changed before start. */
+        /* Store update track if it has been changed before start. */
         if (mUpdateTrack != null) {
             SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, mUpdateTrack);
         } else {
