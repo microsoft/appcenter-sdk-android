@@ -23,10 +23,10 @@ public @interface UpdateTrack {
     /**
      * Releases from the public group that don't require authentication.
      */
-    int PUBLIC = 0;
+    int PUBLIC = 1;
 
     /**
      * Releases from private groups that require authentication, also contain public releases.
      */
-    int PRIVATE = 1;
+    int PRIVATE = 2;
 }
