@@ -666,7 +666,7 @@ public class Distribute extends AbstractAppCenterService {
 
     @WorkerThread
     private synchronized void processUpdateTrackChange(int updateTrack) {
-        if (updateTrack != mLastCheckedUpdateTrack) {
+        if (mLastCheckedUpdateTrack == null || updateTrack != mLastCheckedUpdateTrack) {
             resetWorkflow();
             resumeWorkflowIfForeground();
         }
