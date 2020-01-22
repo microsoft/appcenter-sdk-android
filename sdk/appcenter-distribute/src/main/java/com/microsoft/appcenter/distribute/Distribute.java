@@ -190,9 +190,14 @@ public class Distribute extends AbstractAppCenterService {
     private String mBeforeStartTesterAppUpdateSetupFailed;
 
     /**
-     * In-app update track.
+     * Update track as set and returned by the API. The change with that value might not have been processed yet.
      */
-    private int mUpdateTrack = UpdateTrack.PUBLIC;
+    private Integer mUpdateTrack;
+
+    /**
+     * Last used value for update check.
+     */
+    private Integer mLastCheckedUpdateTrack;
 
     /**
      * Current API call identifier to check latest release from server, used for state check.
@@ -352,7 +357,14 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Change the in-app update track (public vs private).
+     * Get the current update track (public vs private).
+     */
+    public static int getUpdateTrack() {
+        return getInstance().getInstanceUpdateTrack();
+    }
+
+    /**
+     * Set the update track (public vs private).
      *
      * @param updateTrack update track.
      */
@@ -429,8 +441,14 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
         }
 
-        /* Store update track as it may have been changed before start. */
-        SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, mUpdateTrack);
+        /* Store update track it has been changed before start. */
+        if (mUpdateTrack != null) {
+            SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, mUpdateTrack);
+        } else {
+
+            /* Otherwise use previous run value that was persisted. */
+            mUpdateTrack = SharedPreferencesManager.getInt(PREFERENCE_KEY_UPDATE_TRACK, UpdateTrack.PUBLIC);
+        }
 
         /*
          * Apply enabled state is called by this method, we need fields to be initialized before.
@@ -612,6 +630,13 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Implements {@link #getUpdateTrack()}.
+     */
+    private synchronized int getInstanceUpdateTrack() {
+        return mUpdateTrack == null ? UpdateTrack.PUBLIC : mUpdateTrack;
+    }
+
+    /**
      * Implements {@link #setUpdateTrack(int)}.
      */
     private synchronized void setInstanceUpdateTrack(final int updateTrack) {
@@ -619,22 +644,28 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.error(LOG_TAG, "Invalid argument passed to Distribute.setUpdateTrack().");
             return;
         }
-        final int oldUpdateTrackValue = mUpdateTrack;
         mUpdateTrack = updateTrack;
-        Runnable runnable = new Runnable() {
+        Runnable disabledRunnable = new Runnable() {
 
             @Override
             public void run() {
-                processUpdateTrackChange(updateTrack, oldUpdateTrackValue);
+                SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, updateTrack);
             }
         };
-        post(runnable, runnable, runnable);
+        Runnable enabledRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, updateTrack);
+                processUpdateTrackChange(updateTrack);
+            }
+        };
+        post(enabledRunnable, disabledRunnable, disabledRunnable);
     }
 
     @WorkerThread
-    private synchronized void processUpdateTrackChange(int updateTrack, int oldUpdateTrackValue) {
-        if (updateTrack != oldUpdateTrackValue) {
-            SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, updateTrack);
+    private synchronized void processUpdateTrackChange(int updateTrack) {
+        if (updateTrack != mLastCheckedUpdateTrack) {
             resetWorkflow();
             resumeWorkflowIfForeground();
         }
@@ -852,6 +883,7 @@ public class Distribute extends AbstractAppCenterService {
              * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
             int updateTrack = DistributeUtils.getStoredUpdateTrack();
+            mLastCheckedUpdateTrack = updateTrack;
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             boolean isPublicTrack = updateTrack == UpdateTrack.PUBLIC;
