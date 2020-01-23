@@ -37,6 +37,7 @@ import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.distribute.Distribute;
+import com.microsoft.appcenter.distribute.UpdateTrack;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
@@ -309,6 +310,18 @@ public class SettingsActivity extends AppCompatActivity {
                 public void setEnabled(boolean enabled) {
                     MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_debug_state_key), enabled).apply();
                     Distribute.setEnabledForDebuggableBuild(enabled);
+                }
+            });
+            initCheckBoxSetting(R.string.appcenter_distribute_track_state_key, R.string.appcenter_distribute_track_public_enabled, R.string.appcenter_distribute_track_private_enabled, new HasEnabled() {
+
+                @Override
+                public boolean isEnabled() {
+                    return Distribute.getUpdateTrack() == UpdateTrack.PUBLIC;
+                }
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    Distribute.setUpdateTrack(enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE);
                 }
             });
 

@@ -67,6 +67,10 @@
     <string name="appcenter_distribute_debug_state_title" tools:ignore="MissingTranslation">Distribute in debug state</string>
     <string name="appcenter_distribute_debug_summary_enabled" tools:ignore="MissingTranslation">Distribute in debug is enabled</string>
     <string name="appcenter_distribute_debug_summary_disabled" tools:ignore="MissingTranslation">Distribute in debug is disabled</string>
+    <string name="appcenter_distribute_track_state_key" tools:ignore="MissingTranslation">appcenter_distribute_track_state_key</string>
+    <string name="appcenter_distribute_track_state_title" tools:ignore="MissingTranslation">Update source</string>
+    <string name="appcenter_distribute_track_public_enabled" tools:ignore="MissingTranslation">Distribute uses public track</string>
+    <string name="appcenter_distribute_track_private_enabled" tools:ignore="MissingTranslation">Distribute uses private track</string>
 
     <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
     <string name="push_title" tools:ignore="MissingTranslation">Push</string>

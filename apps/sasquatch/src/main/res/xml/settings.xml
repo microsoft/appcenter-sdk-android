@@ -63,6 +63,9 @@
         <CheckBoxPreference
             android:key="@string/appcenter_distribute_debug_state_key"
             android:title="@string/appcenter_distribute_debug_state_title" />
+        <CheckBoxPreference
+            android:key="@string/appcenter_distribute_track_state_key"
+            android:title="@string/appcenter_distribute_track_state_title" />
     </PreferenceCategory>
 
     <PreferenceCategory
