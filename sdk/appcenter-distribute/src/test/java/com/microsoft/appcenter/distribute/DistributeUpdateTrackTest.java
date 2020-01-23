@@ -7,11 +7,11 @@ package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
-import android.os.Build;
 
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,7 +19,9 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.Collections;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TRACK;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -63,6 +65,19 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
 
         /* Check value didn't change. */
         Assert.assertEquals(UpdateTrack.PRIVATE, Distribute.getUpdateTrack());
+    }
+
+    @Test
+    public void invalidPersistedTrackFallsBackToPublic() {
+
+        /* Corrupt storage. */
+        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_UPDATE_TRACK), anyInt())).thenReturn(42);
+
+        /* Start. */
+        start();
+
+        /* Check value didn't change. */
+        Assert.assertEquals(UpdateTrack.PUBLIC, Distribute.getUpdateTrack());
     }
 
     @Test

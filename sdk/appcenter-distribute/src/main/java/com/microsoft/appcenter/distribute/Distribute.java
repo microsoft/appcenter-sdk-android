@@ -449,7 +449,7 @@ public class Distribute extends AbstractAppCenterService {
         } else {
 
             /* Otherwise use previous run value that was persisted. */
-            mUpdateTrack = SharedPreferencesManager.getInt(PREFERENCE_KEY_UPDATE_TRACK, UpdateTrack.PUBLIC);
+            mUpdateTrack = DistributeUtils.getStoredUpdateTrack();
         }
 
         /*
@@ -885,11 +885,10 @@ public class Distribute extends AbstractAppCenterService {
             /*
              * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
-            int updateTrack = DistributeUtils.getStoredUpdateTrack();
-            mLastCheckedUpdateTrack = updateTrack;
+            mLastCheckedUpdateTrack = mUpdateTrack;
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-            boolean isPublicTrack = updateTrack == UpdateTrack.PUBLIC;
+            boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
             if (isPublicTrack || updateToken != null) {
 
                 /* We have what we need to check for updates via API. */
