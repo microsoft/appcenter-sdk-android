@@ -198,6 +198,7 @@ public class AbstractDistributeTest {
         SharedPreferencesManager.putBoolean(eq(DISTRIBUTE_ENABLED_KEY), anyBoolean());
 
         /* Mock storage of update track. */
+        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_UPDATE_TRACK), anyInt())).thenReturn(UpdateTrack.PUBLIC);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -210,6 +211,17 @@ public class AbstractDistributeTest {
             }
         }).when(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_UPDATE_TRACK), anyInt());
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+
+                /* When key removed, restore default value. */
+                when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_UPDATE_TRACK), anyInt())).thenReturn(UpdateTrack.PUBLIC);
+                return null;
+            }
+        }).when(SharedPreferencesManager.class);
+        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TRACK);
 
         /* Default download id when not found. */
         when(SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
