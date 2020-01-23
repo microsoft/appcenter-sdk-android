@@ -37,7 +37,6 @@ import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.distribute.Distribute;
-import com.microsoft.appcenter.distribute.UpdateTrack;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
@@ -316,12 +315,34 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
-                    return Distribute.getUpdateTrack() == UpdateTrack.PUBLIC;
+                    /*
+                     * TODO: Replace the whole block with
+                     * return Distribute.getUpdateTrack() == UpdateTrack.PUBLIC;
+                     * when updating the demo during release process.
+                     */
+                    try {
+                        Method getUpdateTrackMethod = Distribute.class.getMethod("getUpdateTrack");
+                        int updateTrack = (int) getUpdateTrackMethod.invoke(null);
+                        return updateTrack == 1;
+                    } catch (Exception e) {
+                        Toast.makeText(getActivity(), "No Update Track api in this build", Toast.LENGTH_SHORT).show();
+                    }
+                    return false;
                 }
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    Distribute.setUpdateTrack(enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE);
+                    /*
+                     * TODO: Replace the whole block with
+                     * Distribute.setUpdateTrack(enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE);
+                     * when updating the demo during release process.
+                     */
+                    try {
+                        Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
+                        setUpdateTrackMethod.invoke(null, enabled ? 1 : 2);
+                    } catch (Exception e) {
+                        Toast.makeText(getActivity(), "No Update Track api in this build", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
 
