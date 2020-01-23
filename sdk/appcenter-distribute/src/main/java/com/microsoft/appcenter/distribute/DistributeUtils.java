@@ -35,6 +35,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_R
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TRACK;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
 
 /**
@@ -164,5 +165,24 @@ class DistributeUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * Get stored update track.
+     *
+     * @return stored update track (public by default).
+     */
+    @UpdateTrack
+    static int getStoredUpdateTrack() {
+        int updateTrack = SharedPreferencesManager.getInt(PREFERENCE_KEY_UPDATE_TRACK, UpdateTrack.PUBLIC);
+        if (isInvalidUpdateTrack(updateTrack)) {
+            AppCenterLog.warn(LOG_TAG, "Corrupted stored update track, switching to public.");
+            updateTrack = UpdateTrack.PUBLIC;
+        }
+        return updateTrack;
+    }
+
+    static boolean isInvalidUpdateTrack(int updateTrack) {
+        return updateTrack != UpdateTrack.PUBLIC && updateTrack != UpdateTrack.PRIVATE;
     }
 }

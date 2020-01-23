@@ -37,6 +37,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -88,8 +89,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        Map<String, String> headers = new HashMap<>();
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
@@ -170,8 +170,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        Map<String, String> headers = new HashMap<>();
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(6);
@@ -266,7 +265,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
+        Map<String, String> headers = new HashMap<>();
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
@@ -280,6 +279,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(AppNameHelper.getAppName(mContext)).thenReturn("hardcoded-app-name");
 
         /* Trigger call. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
