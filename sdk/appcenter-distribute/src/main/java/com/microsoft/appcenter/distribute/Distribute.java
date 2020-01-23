@@ -359,8 +359,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Get the current update track (public vs private).
      */
-    @SuppressWarnings("WeakerAccess")
-    // TODO Remove suppress when app uses it without reflection on jCenter
+    @SuppressWarnings("WeakerAccess") // TODO Remove suppress when app uses it without reflection on jCenter
     public static int getUpdateTrack() {
         return getInstance().getInstanceUpdateTrack();
     }
@@ -370,8 +369,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param updateTrack update track.
      */
-    @SuppressWarnings("WeakerAccess")
-    // TODO Remove suppress when app uses it without reflection on jCenter
+    @SuppressWarnings("WeakerAccess") // TODO Remove suppress when app uses it without reflection on jCenter
     public static void setUpdateTrack(@UpdateTrack int updateTrack) {
         getInstance().setInstanceUpdateTrack(updateTrack);
     }

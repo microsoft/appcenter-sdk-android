@@ -143,4 +143,22 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
         verifyStatic();
         BrowserUtils.openBrowser(anyString(), eq(mActivity));
     }
+
+    @Test
+    public void switchTrackBeforeForeground() throws PackageManager.NameNotFoundException {
+
+        /* Start (in public mode) in background. */
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        start();
+
+        /* Switch to private. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+
+        /* Go foreground. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify browser is opened. */
+        verifyStatic();
+        BrowserUtils.openBrowser(anyString(), eq(mActivity));
+    }
 }
