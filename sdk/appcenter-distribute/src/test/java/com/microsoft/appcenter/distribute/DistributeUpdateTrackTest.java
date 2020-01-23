@@ -6,15 +6,28 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
+import android.content.pm.PackageManager;
+import android.os.Build;
+
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
+import com.microsoft.appcenter.http.ServiceCallback;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+
+import java.util.Collections;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 /**
@@ -89,5 +102,45 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
 
         /* Check. */
         Assert.assertEquals(UpdateTrack.PRIVATE, Distribute.getUpdateTrack());
+    }
+
+    @Test
+    public void switchTrackBeforeCallCompletes() {
+
+        /* Start (in public mode). */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Check http call done. */
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* If we switch before flow is completed, it has no effect. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void switchTrackAfterCallCompletes() throws PackageManager.NameNotFoundException {
+
+        /* Start (in public mode). */
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        start();
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Check http call done. */
+        ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+
+        /* Without browser because its public. */
+        verifyStatic(never());
+        BrowserUtils.openBrowser(anyString(), any(Activity.class));
+
+        /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
+        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
+
+        /* If we switch to private, browser must open. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+        verifyStatic();
+        BrowserUtils.openBrowser(anyString(), eq(mActivity));
     }
 }
