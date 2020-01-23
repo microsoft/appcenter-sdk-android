@@ -176,4 +176,23 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
         verifyStatic();
         BrowserUtils.openBrowser(anyString(), eq(mActivity));
     }
+
+    @Test
+    public void switchToSameTrackDoesNothing() {
+
+        /* Start (in public mode). */
+        start();
+        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+
+        /* Check http call done. */
+        ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+
+        /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
+        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
+
+        /* If we switch to public from public, no action. */
+        Distribute.setUpdateTrack(UpdateTrack.PUBLIC);
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
 }
