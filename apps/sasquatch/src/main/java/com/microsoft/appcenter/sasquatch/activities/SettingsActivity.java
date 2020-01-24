@@ -311,15 +311,49 @@ public class SettingsActivity extends AppCompatActivity {
                     Distribute.setEnabledForDebuggableBuild(enabled);
                 }
             });
+            initCheckBoxSetting(R.string.appcenter_distribute_update_track_before_start_key, R.string.appcenter_distribute_update_track_before_start_enabled, R.string.appcenter_distribute_update_track_before_start_disabled, new HasEnabled() {
+
+                @Override
+                public boolean isEnabled() {
+                    return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false);
+                }
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), enabled).apply();
+
+                    /*
+                     * TODO when updating the demo during release process:
+                     *  1) Replace the next line with 'int currentTrack = Distribute.getUpdateTrack();'
+                     *  2) remove try/catch block
+                     */
+                    int currentTrack = 1;
+                    try {
+                        Method getUpdateTrackMethod = Distribute.class.getMethod("getUpdateTrack");
+                        currentTrack = (int) getUpdateTrackMethod.invoke(null);
+                    } catch (Exception e) {
+                        Toast.makeText(getActivity(), "No Update Track api in this build", Toast.LENGTH_SHORT).show();
+                    }
+                    MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), currentTrack).apply();
+                }
+            });
             initCheckBoxSetting(R.string.appcenter_distribute_track_state_key, R.string.appcenter_distribute_track_public_enabled, R.string.appcenter_distribute_track_private_enabled, new HasEnabled() {
 
                 @Override
                 public boolean isEnabled() {
+                    if (MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
+
+                        /*
+                         * TODO Replace the next line with:
+                         *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC) == UpdateTrack.PUBLIC;'
+                         */
+                        return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), 1) == 1;
+                    }
 
                     /*
                      * TODO: Replace the whole block with
-                     * return Distribute.getUpdateTrack() == UpdateTrack.PUBLIC;
-                     * when updating the demo during release process.
+                     *  return Distribute.getUpdateTrack() == UpdateTrack.PUBLIC;
+                     *  when updating the demo during release process.
                      */
                     try {
                         Method getUpdateTrackMethod = Distribute.class.getMethod("getUpdateTrack");
@@ -333,11 +367,21 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void setEnabled(boolean enabled) {
+                    if (MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
+
+                        /*
+                         * TODO Replace the next line with:
+                         *  'MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE).apply();'
+                         *  when updating the demo during release process.
+                         */
+                        MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), enabled ? 1 : 2).apply();
+                        return;
+                    }
 
                     /*
                      * TODO: Replace the whole block with
-                     * Distribute.setUpdateTrack(enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE);
-                     * when updating the demo during release process.
+                     *  Distribute.setUpdateTrack(enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE);
+                     *  when updating the demo during release process.
                      */
                     try {
                         Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
