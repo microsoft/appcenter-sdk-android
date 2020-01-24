@@ -315,6 +315,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean isEnabled() {
+
                     /*
                      * TODO: Replace the whole block with
                      * return Distribute.getUpdateTrack() == UpdateTrack.PUBLIC;
@@ -332,6 +333,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void setEnabled(boolean enabled) {
+
                     /*
                      * TODO: Replace the whole block with
                      * Distribute.setUpdateTrack(enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE);
