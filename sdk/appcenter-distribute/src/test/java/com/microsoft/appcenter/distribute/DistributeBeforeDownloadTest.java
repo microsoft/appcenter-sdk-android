@@ -38,6 +38,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
@@ -79,8 +80,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Mock we already have redirection parameters. */
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN_MR2);
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -94,6 +93,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(releaseDetails.getMinApiLevel()).thenReturn(Build.VERSION_CODES.KITKAT);
+        String distributionGroupId = UUID.randomUUID().toString();
+        when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -109,6 +110,11 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
+        /* Verify we still track the distribution group statistics. */
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
+
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -119,7 +125,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     public void olderVersionCode() throws Exception {
 
         /* Mock we already have public group, no token. */
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -133,6 +138,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(5);
         when(releaseDetails.getMinApiLevel()).thenReturn(Build.VERSION_CODES.M);
+        String distributionGroupId = UUID.randomUUID().toString();
+        when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N_MR1);
 
@@ -147,6 +154,11 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
+        /* Verify we still track the distribution group statistics. */
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
+
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -159,9 +171,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
     @Test
     public void sameVersionCodeSameHash() throws Exception {
-
-        /* Mock we already have token and no group. */
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -175,6 +184,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(6);
         when(releaseDetails.getReleaseHash()).thenReturn(TEST_HASH);
+        String distributionGroupId = UUID.randomUUID().toString();
+        when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -188,6 +199,11 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
+        /* Verify we still track the distribution group statistics. */
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
+
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -196,9 +212,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
     @Test
     public void moreRecentVersionCode() throws Exception {
-
-        /* Mock we already have public group, no token. */
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -212,6 +225,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
         when(releaseDetails.getShortVersion()).thenReturn("7.0");
+        String distributionGroupId = UUID.randomUUID().toString();
+        when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
         when(InstallerUtils.isUnknownSourcesEnabled(any(Context.class))).thenReturn(true);
 
@@ -225,6 +240,11 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder).setMessage("unit-test-app7.07");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
+
+        /* Verify we track the distribution group statistics. */
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
 
         /* After that if we resume app we refresh dialog. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -272,6 +292,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(releaseDetails.getVersion()).thenReturn(6);
         when(releaseDetails.getShortVersion()).thenReturn("1.2.3");
         when(releaseDetails.getReleaseHash()).thenReturn("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60");
+        String distributionGroupId = UUID.randomUUID().toString();
+        when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Mock app name to be not localizable. */
@@ -289,6 +311,11 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder).setMessage("hardcoded-app-name1.2.36");
         verify(mDialogBuilder).create();
         verify(mDialog).show();
+
+        /* Verify we didn't track the distribution group statistics since it was already done at redirection. */
+        verifyStatic(never());
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        verify(mDistributeInfoTracker, never()).updateDistributionGroupId(distributionGroupId);
     }
 
     @Test
@@ -308,6 +335,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
+        String distributionGroupId = UUID.randomUUID().toString();
+        when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -342,6 +371,11 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         verifyStatic();
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), eq(now));
+
+        /* Verify we didn't track distribution group stats since we already had redirection parameters. */
+        verifyStatic(never());
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        verify(mDistributeInfoTracker, never()).updateDistributionGroupId(distributionGroupId);
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -394,10 +428,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
     @Test
     public void disableBeforePostponeDialog() throws Exception {
-
-        /* Mock we already have redirection parameters. */
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -409,6 +439,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
+        String distributionGroupId = UUID.randomUUID().toString();
+        when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
 
         /* Trigger call. */
@@ -419,6 +451,11 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder).setNegativeButton(eq(R.string.appcenter_distribute_update_dialog_postpone), clickListener.capture());
         verify(mDialog).show();
+
+        /* Verify we track the distribution group statistics. */
+        verifyStatic();
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
 
         /* Disable. */
         Distribute.setEnabled(false);
