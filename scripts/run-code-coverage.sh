@@ -1,7 +1,5 @@
 #!/bin/bash
 
-java -version
-
 # We can't run emulator as a daemon
 # VSTS will not execute next step until emulator killed
 # So we need to run tests in same step...
@@ -44,11 +42,11 @@ if [ -z $1 ]
 then
 
     # Using env variable COVERALLS_REPO_TOKEN if set, this will not fail process unset.
-    ./gradlew coveralls
+    ./gradlew --parallel coveralls
 else
 
     # Expose variable just for this run based on script parameter.
-    COVERALLS_REPO_TOKEN=$1 ./gradlew coveralls
+    COVERALLS_REPO_TOKEN=$1 ./gradlew --parallel coveralls
 fi
 EXIT_CODE=$?
 
