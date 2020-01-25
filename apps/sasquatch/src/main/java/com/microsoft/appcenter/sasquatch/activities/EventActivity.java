@@ -188,7 +188,7 @@ public class EventActivity extends PropertyActivity {
     }
 
     @Override
-    protected void send(View view) {
+    public void send(View view) {
         AnalyticsTransmissionTarget target = getSelectedTarget();
         PersistenceFlag persistenceFlag = PersistenceFlag.values()[mPersistenceFlagSpinner.getSelectedItemPosition()];
         int flags = getFlags(persistenceFlag);
