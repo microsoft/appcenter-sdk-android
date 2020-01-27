@@ -120,14 +120,14 @@ public class MainActivity extends AppCompatActivity {
              *  'int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
              *  when updating the demo during release process.
              */
-            int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_update_track_before_start_value), 1);
+            int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1);
 
             /* TODO replace the next line with 'Distribute.setUpdateTrack(savedTrack);' * when updating the demo during release process. */
             try {
                 Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
                 setUpdateTrackMethod.invoke(null, savedTrack);
             } catch (Exception e) {
-                Toast.makeText(application, "No Update Track api in this build", Toast.LENGTH_SHORT).show();
+                Toast.makeText(application, "No Update Track API in this build", Toast.LENGTH_SHORT).show();
             }
         }
         if (sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {

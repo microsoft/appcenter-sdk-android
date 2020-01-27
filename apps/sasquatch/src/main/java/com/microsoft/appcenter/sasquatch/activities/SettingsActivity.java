@@ -311,16 +311,27 @@ public class SettingsActivity extends AppCompatActivity {
                     Distribute.setEnabledForDebuggableBuild(enabled);
                 }
             });
-            initCheckBoxSetting(R.string.appcenter_distribute_update_track_before_start_key, R.string.appcenter_distribute_update_track_before_start_enabled, R.string.appcenter_distribute_update_track_before_start_disabled, new HasEnabled() {
-
+            final IsEnabled updateTrackBeforeStartIsEnabled = new IsEnabled() {
                 @Override
                 public boolean isEnabled() {
                     return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false);
                 }
 
                 @Override
-                public void setEnabled(boolean enabled) {
-                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), enabled).apply();
+                public String getSummary() {
+                    return getString(this.isEnabled() ? R.string.appcenter_distribute_update_track_before_start_enabled : R.string.appcenter_distribute_update_track_before_start_disabled);
+                }
+            };
+            initChangeableSetting(R.string.appcenter_distribute_update_track_before_start_key, updateTrackBeforeStartIsEnabled.getSummary(), new Preference.OnPreferenceChangeListener() {
+
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if (newValue == null) {
+                        return false;
+                    }
+                    String[] whenToUpdateTrackEntries = getResources().getStringArray(R.array.appcenter_distribute_when_to_update_track_entries);
+                    boolean updateTrackBeforeStartNewValue = newValue.toString().equals(whenToUpdateTrackEntries[1]);
+                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), updateTrackBeforeStartNewValue).apply();
 
                     /*
                      * TODO when updating the demo during release process:
@@ -332,12 +343,14 @@ public class SettingsActivity extends AppCompatActivity {
                         Method getUpdateTrackMethod = Distribute.class.getMethod("getUpdateTrack");
                         currentTrack = (int) getUpdateTrackMethod.invoke(null);
                     } catch (Exception e) {
-                        Toast.makeText(getActivity(), "No Update Track api in this build", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
                     }
-                    MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), currentTrack).apply();
+                    MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), currentTrack).apply();
+                    preference.setSummary(updateTrackBeforeStartIsEnabled.getSummary());
+                    return true;
                 }
             });
-            initCheckBoxSetting(R.string.appcenter_distribute_track_state_key, R.string.appcenter_distribute_track_public_enabled, R.string.appcenter_distribute_track_private_enabled, new HasEnabled() {
+            final IsEnabled updateTrackIsEnabled = new IsEnabled() {
 
                 @Override
                 public boolean isEnabled() {
@@ -347,7 +360,7 @@ public class SettingsActivity extends AppCompatActivity {
                          * TODO Replace the next line with:
                          *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC) == UpdateTrack.PUBLIC;'
                          */
-                        return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), 1) == 1;
+                        return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1) == 1;
                     }
 
                     /*
@@ -360,35 +373,57 @@ public class SettingsActivity extends AppCompatActivity {
                         int updateTrack = (int) getUpdateTrackMethod.invoke(null);
                         return updateTrack == 1;
                     } catch (Exception e) {
-                        Toast.makeText(getActivity(), "No Update Track api in this build", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
                     }
                     return false;
                 }
 
                 @Override
-                public void setEnabled(boolean enabled) {
+                public String getSummary() {
+                    return getString(this.isEnabled() ? R.string.appcenter_distribute_track_public_enabled : R.string.appcenter_distribute_track_private_enabled);
+                }
+            };
+            initChangeableSetting(R.string.appcenter_distribute_track_state_key, updateTrackIsEnabled.getSummary(), new Preference.OnPreferenceChangeListener() {
+
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if (newValue == null) {
+                        return false;
+                    }
+                    String[] updateTrackEntries = getResources().getStringArray(R.array.appcenter_distribute_update_track_entries);
+
+                    /*
+                     * TODO Replace the next line with:
+                     *  'int updateTrackNewValue = newValue.toString().equals(updateTrackEntries[0]) ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE;'
+                     *  when updating the demo during release process.
+                     */
+                    int updateTrackNewValue = newValue.toString().equals(updateTrackEntries[0]) ? 1 : 2;
+
                     if (MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
 
                         /*
                          * TODO Replace the next line with:
-                         *  'MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE).apply();'
+                         *  'MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), updateTrackNewValue).apply();'
                          *  when updating the demo during release process.
                          */
-                        MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), enabled ? 1 : 2).apply();
-                        return;
+                        MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), updateTrackNewValue).apply();
+                        preference.setSummary(updateTrackIsEnabled.getSummary());
+                        return true;
                     }
 
                     /*
-                     * TODO: Replace the whole block with
-                     *  Distribute.setUpdateTrack(enabled ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE);
+                     * TODO: Replace the try/catch block with
+                     *  Distribute.setUpdateTrack(updateTrackNewValue);
                      *  when updating the demo during release process.
                      */
                     try {
                         Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
-                        setUpdateTrackMethod.invoke(null, enabled ? 1 : 2);
+                        setUpdateTrackMethod.invoke(null, updateTrackNewValue);
                     } catch (Exception e) {
-                        Toast.makeText(getActivity(), "No Update Track api in this build", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
                     }
+                    preference.setSummary(updateTrackIsEnabled.getSummary());
+                    return true;
                 }
             });
 
@@ -1000,6 +1035,14 @@ public class SettingsActivity extends AppCompatActivity {
             boolean isEnabled();
 
             void setEnabled(boolean enabled);
+        }
+
+        private interface IsEnabled {
+
+            boolean isEnabled();
+
+            String getSummary();
+
         }
 
         private interface EditTextListener {
