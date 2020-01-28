@@ -312,6 +312,7 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
             final IsEnabled updateTrackBeforeStartIsEnabled = new IsEnabled() {
+
                 @Override
                 public boolean isEnabled() {
                     return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false);
@@ -1042,7 +1043,6 @@ public class SettingsActivity extends AppCompatActivity {
             boolean isEnabled();
 
             String getSummary();
-
         }
 
         private interface EditTextListener {

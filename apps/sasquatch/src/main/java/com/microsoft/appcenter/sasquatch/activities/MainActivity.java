@@ -122,7 +122,9 @@ public class MainActivity extends AppCompatActivity {
              */
             int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1);
 
-            /* TODO replace the next line with 'Distribute.setUpdateTrack(savedTrack);' * when updating the demo during release process. */
+            /* TODO replace the next line with 'Distribute.setUpdateTrack(savedTrack);'
+             * when updating the demo during release process.
+             */
             try {
                 Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
                 setUpdateTrackMethod.invoke(null, savedTrack);
