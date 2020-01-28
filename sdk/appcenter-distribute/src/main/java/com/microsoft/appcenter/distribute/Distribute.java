@@ -1068,10 +1068,7 @@ public class Distribute extends AbstractAppCenterService {
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-
-            /* TODO Remove this group and use new endpoint. The hardcoded is temporary to keep testing on sasquatch int. */
-            String publicDistributionGroupId = distributionGroupId == null ? "3d054d79-8b26-426c-9a49-fed752c777d2" : distributionGroupId;
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, publicDistributionGroupId, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
