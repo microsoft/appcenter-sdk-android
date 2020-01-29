@@ -18,11 +18,11 @@
         <item>Custom</item>
     </string-array>
     <string-array name="appcenter_distribute_when_to_update_track_entries" tools:ignore="MissingTranslation">
-        <item>NOW</item>
-        <item>BEFORE_NEXT_START</item>
+        <item>Now</item>
+        <item>Before next start</item>
     </string-array>
     <string-array name="appcenter_distribute_update_track_entries" tools:ignore="MissingTranslation">
-        <item>PUBLIC</item>
-        <item>PRIVATE</item>
+        <item>Public</item>
+        <item>Private</item>
     </string-array>
 </resources>
