@@ -1067,7 +1067,7 @@ public class Distribute extends AbstractAppCenterService {
         }
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
-        if (getUpdateTrack() == UpdateTrack.PUBLIC) {
+        if (updateToken == null) {
             url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
