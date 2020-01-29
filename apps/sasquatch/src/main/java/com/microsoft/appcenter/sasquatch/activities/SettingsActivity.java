@@ -19,6 +19,7 @@ import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -311,19 +312,15 @@ public class SettingsActivity extends AppCompatActivity {
                     Distribute.setEnabledForDebuggableBuild(enabled);
                 }
             });
-            final IsEnabled updateTrackBeforeStartIsEnabled = new IsEnabled() {
-
-                @Override
-                public boolean isEnabled() {
-                    return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false);
-                }
+            final HasSummary updateTrackBeforeStartHasSummary = new HasSummary() {
 
                 @Override
                 public String getSummary() {
-                    return getString(this.isEnabled() ? R.string.appcenter_distribute_update_track_before_start_enabled : R.string.appcenter_distribute_update_track_before_start_disabled);
+                    boolean updateTrackBeforeStart = MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false);
+                    return getString(updateTrackBeforeStart ? R.string.appcenter_distribute_update_track_before_start_enabled : R.string.appcenter_distribute_update_track_before_start_disabled);
                 }
             };
-            initChangeableSetting(R.string.appcenter_distribute_update_track_before_start_key, updateTrackBeforeStartIsEnabled.getSummary(), new Preference.OnPreferenceChangeListener() {
+            initChangeableSetting(R.string.appcenter_distribute_update_track_before_start_key, updateTrackBeforeStartHasSummary.getSummary(), new Preference.OnPreferenceChangeListener() {
 
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -347,44 +344,39 @@ public class SettingsActivity extends AppCompatActivity {
                         Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
                     }
                     MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), currentTrack).apply();
-                    preference.setSummary(updateTrackBeforeStartIsEnabled.getSummary());
+                    preference.setSummary(updateTrackBeforeStartHasSummary.getSummary());
                     return true;
                 }
             });
-            final IsEnabled updateTrackIsEnabled = new IsEnabled() {
-
-                @Override
-                public boolean isEnabled() {
-                    if (MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
-
-                        /*
-                         * TODO Replace the next line with:
-                         *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC) == UpdateTrack.PUBLIC;'
-                         */
-                        return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1) == 1;
-                    }
-
-                    /*
-                     * TODO: Replace the whole block with
-                     *  return Distribute.getUpdateTrack() == UpdateTrack.PUBLIC;
-                     *  when updating the demo during release process.
-                     */
-                    try {
-                        Method getUpdateTrackMethod = Distribute.class.getMethod("getUpdateTrack");
-                        int updateTrack = (int) getUpdateTrackMethod.invoke(null);
-                        return updateTrack == 1;
-                    } catch (Exception e) {
-                        Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
-                    }
-                    return false;
-                }
+            final HasSummary updateTrackHasSummary = new HasSummary() {
 
                 @Override
                 public String getSummary() {
-                    return getString(this.isEnabled() ? R.string.appcenter_distribute_track_public_enabled : R.string.appcenter_distribute_track_private_enabled);
+                    UpdateTrackEnum updateTrackEnum = null;
+                    if (MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
+                        /*
+                         * TODO Replace the next line with:
+                         *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
+                         */
+                        updateTrackEnum = UpdateTrackEnum.init(MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1));
+                    } else {
+                        /*
+                         * TODO: Replace the whole block with
+                         *  'updateTrack = Distribute.getUpdateTrack();'
+                         *  when updating the demo during release process.
+                         */
+                        try {
+                            Method getUpdateTrackMethod = Distribute.class.getMethod("getUpdateTrack");
+                            int updateTrack = (int) getUpdateTrackMethod.invoke(null);
+                            updateTrackEnum = UpdateTrackEnum.init(updateTrack);
+                        } catch (Exception e) {
+                            Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    return updateTrackEnum != null ? getString(updateTrackEnum.summaryRes) : "Couldn't parse update track";
                 }
             };
-            initChangeableSetting(R.string.appcenter_distribute_track_state_key, updateTrackIsEnabled.getSummary(), new Preference.OnPreferenceChangeListener() {
+            initChangeableSetting(R.string.appcenter_distribute_track_state_key, updateTrackHasSummary.getSummary(), new Preference.OnPreferenceChangeListener() {
 
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
@@ -408,7 +400,7 @@ public class SettingsActivity extends AppCompatActivity {
                          *  when updating the demo during release process.
                          */
                         MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), updateTrackNewValue).apply();
-                        preference.setSummary(updateTrackIsEnabled.getSummary());
+                        preference.setSummary(updateTrackHasSummary.getSummary());
                         return true;
                     }
 
@@ -423,7 +415,7 @@ public class SettingsActivity extends AppCompatActivity {
                     } catch (Exception e) {
                         Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
                     }
-                    preference.setSummary(updateTrackIsEnabled.getSummary());
+                    preference.setSummary(updateTrackHasSummary.getSummary());
                     return true;
                 }
             });
@@ -1038,11 +1030,32 @@ public class SettingsActivity extends AppCompatActivity {
             void setEnabled(boolean enabled);
         }
 
-        private interface IsEnabled {
+        private enum UpdateTrackEnum {
+            /*
+             * TODO: Replace the next line with
+             *  'PUBLIC(UpdateTrack.PUBLIC, R.string.appcenter_distribute_track_public_enabled), PRIVATE(UpdateTrack.PRIVATE, R.string.appcenter_distribute_track_private_enabled);'
+             *  when updating the demo during release process.
+             */
+            PUBLIC(1, R.string.appcenter_distribute_track_public_enabled), PRIVATE(2, R.string.appcenter_distribute_track_private_enabled);
 
-            boolean isEnabled();
+            public final int value;
 
-            String getSummary();
+            @StringRes
+            public final int summaryRes;
+
+            UpdateTrackEnum(int value, @StringRes int summaryRes) {
+                this.value = value;
+                this.summaryRes = summaryRes;
+            }
+
+            static UpdateTrackEnum init(int value) {
+                for (UpdateTrackEnum updateTrackEnum : UpdateTrackEnum.values()) {
+                    if (updateTrackEnum.value == value) {
+                        return updateTrackEnum;
+                    }
+                }
+                return PUBLIC;
+            }
         }
 
         private interface EditTextListener {
@@ -1050,6 +1063,11 @@ public class SettingsActivity extends AppCompatActivity {
             void onSave(String value);
 
             void onReset();
+        }
+
+        private interface HasSummary {
+
+            String getSummary();
         }
     }
 }
