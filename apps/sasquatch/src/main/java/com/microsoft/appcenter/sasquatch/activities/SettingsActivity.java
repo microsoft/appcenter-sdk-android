@@ -354,12 +354,14 @@ public class SettingsActivity extends AppCompatActivity {
                 public String getSummary() {
                     UpdateTrackEnum updateTrackEnum = null;
                     if (MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
+
                         /*
                          * TODO Replace the next line with:
                          *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
                          */
                         updateTrackEnum = UpdateTrackEnum.init(MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1));
                     } else {
+
                         /*
                          * TODO: Replace the whole block with
                          *  'updateTrack = Distribute.getUpdateTrack();'
@@ -517,7 +519,7 @@ public class SettingsActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    @SuppressWarnings("unchecked")
+                    @SuppressWarnings({"unchecked", "ConstantConditions"})
                     public boolean isEnabled() {
                         try {
                             return sRumStarted && ((AppCenterFuture<Boolean>) isEnabled.invoke(null)).get();
