@@ -1386,7 +1386,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     public void reportReleaseInstallForPrivateGroupWhenReleaseHashesMatch() {
         final String distributionGroupId = "fake-distribution-id";
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn(distributionGroupId);
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID)).thenReturn(distributionGroupId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
         when(SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
 
@@ -1410,8 +1410,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void reportReleaseInstallForPublicGroupWhenReleaseHashesMatch() {
+        final String distributionGroupId = "fake-distribution-id";
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn(null);
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("fake-distribution-id");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID)).thenReturn(distributionGroupId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
         when(SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
 
@@ -1425,7 +1426,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().matches("^https://.*?/public/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + mInstallId + "&downloaded_release_id=4$");
+                return argument.toString().matches("^https://.*?/public/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + mInstallId + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$");
             }
         };
         verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
