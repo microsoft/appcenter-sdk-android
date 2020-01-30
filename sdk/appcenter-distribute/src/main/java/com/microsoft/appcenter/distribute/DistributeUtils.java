@@ -36,6 +36,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TRACK;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PRIVATE_UPDATE_SETUP_PATH_FORMAT;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
 
 /**
@@ -106,12 +107,13 @@ class DistributeUtils {
     /**
      * Update setup using browser.
      *
-     * @param activity    activity from which to start browser.
-     * @param installUrl  base install site URL.
-     * @param appSecret   application secret.
-     * @param packageInfo package info.
+     * @param activity      activity from which to start browser.
+     * @param installUrl    base install site URL.
+     * @param appSecret     application secret.
+     * @param packageInfo   package info.
+     * @param isPublicTrack is public track.
      */
-    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo) {
+    static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo, boolean isPublicTrack) {
 
         /*
          * If network is disconnected, browser will fail so wait.
@@ -130,9 +132,10 @@ class DistributeUtils {
         /* Generate request identifier. */
         String requestId = UUID.randomUUID().toString();
 
+        //PRIVATE_UPDATE_SETUP_PATH_FORMAT
         /* Build URL. */
         String url = installUrl;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, appSecret);
+        url += String.format(isPublicTrack ? UPDATE_SETUP_PATH_FORMAT : PRIVATE_UPDATE_SETUP_PATH_FORMAT, appSecret);
         url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";

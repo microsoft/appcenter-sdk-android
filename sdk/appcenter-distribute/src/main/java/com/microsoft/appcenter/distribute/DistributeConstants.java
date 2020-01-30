@@ -72,9 +72,15 @@ public final class DistributeConstants {
     static final String UPDATE_SETUP_PATH_FORMAT = "/apps/%s/update-setup/";
 
     /**
+     * Private update setup URL path. Contains the app secret variable to replace.
+     * Trailing slash needed to avoid redirection that can lose the query string on some servers.
+     */
+    static final String PRIVATE_UPDATE_SETUP_PATH_FORMAT = "/apps/%s/private-update-setup/";
+
+    /**
      * Check latest private release API URL path. Contains the app secret variable to replace.
      */
-    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/apps/%s/private-update-setup?release_hash=%s%s";
+    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s%s";
 
     /**
      * Check latest public release API URL path. Contains the app secret variable to replace.
