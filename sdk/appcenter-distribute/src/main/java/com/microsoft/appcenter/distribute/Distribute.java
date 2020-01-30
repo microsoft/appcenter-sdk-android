@@ -1295,10 +1295,9 @@ public class Distribute extends AbstractAppCenterService {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
-                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId() + "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + lastDistributionGroupId;
-                } else {
-                    reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + lastDistributionGroupId;
+                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId();
                 }
+                reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + lastDistributionGroupId;
                 int lastDownloadedReleaseId = SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
                 reportingParameters += "&" + PARAMETER_RELEASE_ID + "=" + lastDownloadedReleaseId;
             } else {
