@@ -1068,9 +1068,9 @@ public class Distribute extends AbstractAppCenterService {
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true));
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, distributionGroupId));
         } else {
-            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false));
+            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
         Map<String, String> headers = new HashMap<>();
         if (updateToken != null) {
@@ -1287,11 +1287,10 @@ public class Distribute extends AbstractAppCenterService {
      *                 For private group we report distribution_group_id and release_id.
      */
     @NonNull
-    private String getReportingParametersForUpdatedRelease(boolean isPublic) {
+    private String getReportingParametersForUpdatedRelease(boolean isPublic, String distributionGroupId) {
         String reportingParameters = "";
         AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
-        String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
