@@ -132,7 +132,6 @@ class DistributeUtils {
         /* Generate request identifier. */
         String requestId = UUID.randomUUID().toString();
 
-        //PRIVATE_UPDATE_SETUP_PATH_FORMAT
         /* Build URL. */
         String url = installUrl;
         url += String.format(isPublicTrack ? UPDATE_SETUP_PATH_FORMAT : PRIVATE_UPDATE_SETUP_PATH_FORMAT, appSecret);
