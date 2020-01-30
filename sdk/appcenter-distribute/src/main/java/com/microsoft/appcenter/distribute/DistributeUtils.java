@@ -106,10 +106,10 @@ class DistributeUtils {
     /**
      * Update setup using browser.
      *
-     * @param activity      activity from which to start browser.
-     * @param installUrl    base install site URL.
-     * @param appSecret     application secret.
-     * @param packageInfo   package info.
+     * @param activity    activity from which to start browser.
+     * @param installUrl  base install site URL.
+     * @param appSecret   application secret.
+     * @param packageInfo package info.
      */
     static void updateSetupUsingBrowser(Activity activity, String installUrl, String appSecret, PackageInfo packageInfo) {
 

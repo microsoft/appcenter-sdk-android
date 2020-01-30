@@ -1281,9 +1281,10 @@ public class Distribute extends AbstractAppCenterService {
 
     /**
      * Get reporting parameters for updated release.
-     *  @param isPublic            are the parameters for public group or not.
-     *                            For public group we report install_id, distribution_group_id and release_id.
-     *                            For private group we report distribution_group_id and release_id.
+     *
+     * @param isPublic are the parameters for public group or not.
+     *                 For public group we report install_id, distribution_group_id and release_id.
+     *                 For private group we report distribution_group_id and release_id.
      */
     @NonNull
     private String getReportingParametersForUpdatedRelease(boolean isPublic) {
