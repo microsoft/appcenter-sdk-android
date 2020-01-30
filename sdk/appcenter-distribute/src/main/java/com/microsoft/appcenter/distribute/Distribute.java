@@ -889,11 +889,12 @@ public class Distribute extends AbstractAppCenterService {
              */
             mLastCheckedUpdateTrack = mUpdateTrack;
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
+            String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
             if (isPublicTrack || updateToken != null) {
 
                 /* We have what we need to check for updates via API. */
-                decryptAndGetReleaseDetails(isPublicTrack ? null : updateToken);
+                decryptAndGetReleaseDetails(isPublicTrack ? null : updateToken, distributionGroupId);
                 return;
             }
 
@@ -919,7 +920,7 @@ public class Distribute extends AbstractAppCenterService {
         return true;
     }
 
-    private void decryptAndGetReleaseDetails(String updateToken) {
+    private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId) {
 
         /* Decrypt token if any. */
         if (updateToken != null) {
@@ -934,7 +935,7 @@ public class Distribute extends AbstractAppCenterService {
         }
 
         /* Check latest release. */
-        getLatestReleaseDetails(updateToken);
+        getLatestReleaseDetails(distributionGroupId, updateToken);
     }
 
     /**
@@ -1039,7 +1040,7 @@ public class Distribute extends AbstractAppCenterService {
             processDistributionGroupId(distributionGroupId);
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             cancelPreviousTasks();
-            getLatestReleaseDetails(updateToken);
+            getLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
             AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
@@ -1054,10 +1055,11 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Get latest release details from server.
      *
+     * @param distributionGroupId distribution group id.
      * @param updateToken         token to secure API call.
      */
     @VisibleForTesting
-    synchronized void getLatestReleaseDetails(String updateToken) {
+    synchronized void getLatestReleaseDetails(final String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
         HttpClient httpClient = DependencyConfiguration.getHttpClient();
         if (httpClient == null) {
@@ -1066,9 +1068,9 @@ public class Distribute extends AbstractAppCenterService {
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true));
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
         } else {
-            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false));
+            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
         Map<String, String> headers = new HashMap<>();
         if (updateToken != null) {
@@ -1113,7 +1115,7 @@ public class Distribute extends AbstractAppCenterService {
                     public void run() {
                         try {
                             String payload = httpResponse.getPayload();
-                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
+                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload), distributionGroupId);
                         } catch (JSONException e) {
                             onCallFailed(e);
                         }
@@ -1182,7 +1184,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Handle API call success.
      */
-    private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, @NonNull ReleaseDetails releaseDetails) {
+    private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, @NonNull ReleaseDetails releaseDetails, String sourceDistributionId) {
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
@@ -1200,7 +1202,10 @@ public class Distribute extends AbstractAppCenterService {
             /* Reset state. */
             mCheckReleaseApiCall = null;
 
-            processDistributionGroupId(releaseDetails.getDistributionGroupId());
+            /* If we didn't know what distribution group we were originally tied to (public track). */
+            if (sourceDistributionId == null) {
+                processDistributionGroupId(releaseDetails.getDistributionGroupId());
+            }
 
             /* Check minimum Android API level. */
             if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
@@ -1278,20 +1283,20 @@ public class Distribute extends AbstractAppCenterService {
      * Get reporting parameters for updated release.
      *
      * @param isPublic            are the parameters for public group or not.
-     *                            For public group we report install_id, distribution_group_id and release_id.
+     *                            For public group we report install_id and release_id.
      *                            For private group we report distribution_group_id and release_id.
+     * @param distributionGroupId distribution group id.
      */
     @NonNull
-    private String getReportingParametersForUpdatedRelease(boolean isPublic) {
+    private String getReportingParametersForUpdatedRelease(boolean isPublic, String distributionGroupId) {
         String reportingParameters = "";
         AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
-        String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
-                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId() + "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
+                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId();
                 } else {
                     reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 }
