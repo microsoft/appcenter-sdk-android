@@ -1068,10 +1068,7 @@ public class Distribute extends AbstractAppCenterService {
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-
-            /* TODO Remove this group and use new endpoint. The hardcoded is temporary to keep testing on sasquatch int. */
-            String publicDistributionGroupId = distributionGroupId == null ? "3d054d79-8b26-426c-9a49-fed752c777d2" : distributionGroupId;
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, publicDistributionGroupId, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, distributionGroupId));
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
@@ -1286,7 +1283,7 @@ public class Distribute extends AbstractAppCenterService {
      * Get reporting parameters for updated release.
      *
      * @param isPublic            are the parameters for public group or not.
-     *                            For public group we report install_id and release_id.
+     *                            For public group we report install_id, distribution_group_id and release_id.
      *                            For private group we report distribution_group_id and release_id.
      * @param distributionGroupId distribution group id.
      */
@@ -1300,9 +1297,8 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
                     reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId();
-                } else {
-                    reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 }
+                reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 int lastDownloadedReleaseId = SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
                 reportingParameters += "&" + PARAMETER_RELEASE_ID + "=" + lastDownloadedReleaseId;
             } else {
