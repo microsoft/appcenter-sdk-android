@@ -50,6 +50,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
@@ -112,8 +113,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     static void startAppCenter(Application application, String startTypeString) {
-        if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
-            int latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
+        if (sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
+
+            /*
+             * TODO Replace the next line with:
+             *  'int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
+             *  when updating the demo during release process.
+             */
+            int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1);
+
+            /* TODO replace the next line with 'Distribute.setUpdateTrack(savedTrack);'
+             * when updating the demo during release process.
+             */
+            try {
+                Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
+                setUpdateTrackMethod.invoke(null, savedTrack);
+            } catch (Exception e) {
+                Toast.makeText(application, "No Update Track API in this build", Toast.LENGTH_SHORT).show();
+            }
+        }
+        if (sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
+            int latency = sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
             try {
                 boolean result = Analytics.setTransmissionInterval(latency);
                 if (result) {
