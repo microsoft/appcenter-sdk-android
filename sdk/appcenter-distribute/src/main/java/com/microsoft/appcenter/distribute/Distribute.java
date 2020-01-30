@@ -1068,9 +1068,9 @@ public class Distribute extends AbstractAppCenterService {
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, distributionGroupId));
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true));
         } else {
-            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
+            url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false));
         }
         Map<String, String> headers = new HashMap<>();
         if (updateToken != null) {
@@ -1281,24 +1281,23 @@ public class Distribute extends AbstractAppCenterService {
 
     /**
      * Get reporting parameters for updated release.
-     *
-     * @param isPublic            are the parameters for public group or not.
+     *  @param isPublic            are the parameters for public group or not.
      *                            For public group we report install_id, distribution_group_id and release_id.
      *                            For private group we report distribution_group_id and release_id.
-     * @param distributionGroupId distribution group id.
      */
     @NonNull
-    private String getReportingParametersForUpdatedRelease(boolean isPublic, String distributionGroupId) {
+    private String getReportingParametersForUpdatedRelease(boolean isPublic) {
         String reportingParameters = "";
         AppCenterLog.debug(LOG_TAG, "Check if we need to report release installation..");
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
+        String lastDistributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
-                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId() + "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
+                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId() + "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + lastDistributionGroupId;
                 } else {
-                    reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
+                    reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + lastDistributionGroupId;
                 }
                 int lastDownloadedReleaseId = SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
                 reportingParameters += "&" + PARAMETER_RELEASE_ID + "=" + lastDownloadedReleaseId;
