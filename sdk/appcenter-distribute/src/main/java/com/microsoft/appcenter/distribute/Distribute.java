@@ -1068,7 +1068,7 @@ public class Distribute extends AbstractAppCenterService {
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, distributionGroupId));
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
@@ -1283,7 +1283,7 @@ public class Distribute extends AbstractAppCenterService {
      * Get reporting parameters for updated release.
      *
      * @param isPublic            are the parameters for public group or not.
-     *                            For public group we report install_id and release_id.
+     *                            For public group we report install_id, distribution_group_id and release_id.
      *                            For private group we report distribution_group_id and release_id.
      * @param distributionGroupId distribution group id.
      */
@@ -1296,7 +1296,7 @@ public class Distribute extends AbstractAppCenterService {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
-                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId();
+                    reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId() + "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 } else {
                     reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 }
