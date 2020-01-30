@@ -905,7 +905,7 @@ public class Distribute extends AbstractAppCenterService {
                 DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
                 mTesterAppOpenedOrAborted = true;
             } else if (!mBrowserOpenedOrAborted) {
-                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo, isPublicTrack);
+                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
                 mBrowserOpenedOrAborted = true;
             }
         }

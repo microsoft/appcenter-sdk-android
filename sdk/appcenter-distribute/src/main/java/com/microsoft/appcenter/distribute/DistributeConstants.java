@@ -66,12 +66,6 @@ public final class DistributeConstants {
     static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1";
 
     /**
-     * Update setup URL path. Contains the app secret variable to replace.
-     * Trailing slash needed to avoid redirection that can lose the query string on some servers.
-     */
-    static final String UPDATE_SETUP_PATH_FORMAT = "/apps/%s/update-setup/";
-
-    /**
      * Private update setup URL path. Contains the app secret variable to replace.
      * Trailing slash needed to avoid redirection that can lose the query string on some servers.
      */
