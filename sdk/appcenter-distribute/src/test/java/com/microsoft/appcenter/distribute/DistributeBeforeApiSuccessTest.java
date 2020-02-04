@@ -734,7 +734,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* If process is restarted, a new call will be made. Need to mock storage for that. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        restartProcessAndSdk();
+        Distribute.unsetInstance();
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mHttpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
 
@@ -852,7 +854,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* If process is restarted, a new call will be made. Need to mock storage for that. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        restartProcessAndSdk();
+        Distribute.unsetInstance();
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mHttpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
 
