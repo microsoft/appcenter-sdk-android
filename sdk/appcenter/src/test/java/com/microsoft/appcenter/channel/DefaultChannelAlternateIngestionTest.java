@@ -17,7 +17,6 @@ import com.microsoft.appcenter.persistence.Persistence;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -77,7 +76,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, defaultIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
 
@@ -85,8 +84,8 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
 
         /* Verify that we have called sendAsync on the ingestion. */
-        verify(alternateIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(defaultIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* The counter should be 0 now as we sent data. */
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
@@ -114,7 +113,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
 
         /* Simulate we have 1 pending log in storage. */
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
 
         /* Create channel and groups. */
         DefaultChannel channel = new DefaultChannel(mock(Context.class), null, mockPersistence, defaultIngestion, mAppCenterHandler);
@@ -122,16 +121,16 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         channel.addGroup(oneCollectorGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
 
         /* App center previous log not sent yet. */
-        verify(defaultIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* One collector previous log sent. */
-        verify(alternateIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Enqueuing 1 new event for app center. */
         channel.enqueue(mock(Log.class), appCenterGroup, Flags.DEFAULTS);
 
         /* Not sent. */
-        verify(defaultIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify we didn't persist the log since AppCenter not started with app secret. */
         verify(mockPersistence, never()).putLog(any(Log.class), eq(appCenterGroup), eq(Flags.NORMAL));
@@ -140,13 +139,13 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         channel.enqueue(mock(Log.class), oneCollectorGroup, Flags.DEFAULTS);
 
         /* Verify that we have called sendAsync on the alternate ingestion a second time. */
-        verify(alternateIngestion, times(2)).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(defaultIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Verify that we can now send logs to app center after we have set app secret. */
         channel.setAppSecret("testAppSecret");
         channel.enqueue(mock(Log.class), appCenterGroup, Flags.DEFAULTS);
-        verify(defaultIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -158,7 +157,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
 
         /* Simulate we have 1 pending log in storage. */
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
@@ -169,11 +168,11 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
 
         /* Verify that we can now send logs to app center after we have set app secret. */
         channel.setAppSecret("testAppSecret");
-        verify(defaultIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* If we add a one collector group it also resumes. */
         channel.addGroup(oneCollectorGroup, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, alternateIngestion, null);
-        verify(alternateIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -185,7 +184,7 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
         Persistence mockPersistence = mock(Persistence.class);
         Ingestion defaultIngestion = mock(Ingestion.class);
         Ingestion alternateIngestion = mock(Ingestion.class);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
 
         /* Simulate we have 1 pending log in storage for App Center. */
         when(mockPersistence.countLogs(appCenterGroup)).thenReturn(1);
@@ -200,14 +199,14 @@ public class DefaultChannelAlternateIngestionTest extends AbstractDefaultChannel
 
         /* Verify that no log is sent even if we set app secret while channel is disabled. */
         channel.setAppSecret("testAppSecret");
-        verify(defaultIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(alternateIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Enable channel. */
         channel.setEnabled(true);
 
         /* Verify that now logs are sent when channel is enabled. */
-        verify(defaultIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-        verify(alternateIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(defaultIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(alternateIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 }

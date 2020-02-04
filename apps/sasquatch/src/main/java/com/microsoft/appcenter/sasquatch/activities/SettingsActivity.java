@@ -31,22 +31,17 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AppCenter;
-import com.microsoft.appcenter.AppCenterService;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
-import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.crashes.Crashes;
-import com.microsoft.appcenter.data.Data;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -367,34 +362,6 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
 
-            /* Auth. */
-            initCheckBoxSetting(R.string.appcenter_auth_state_key, R.string.appcenter_auth_state_summary_enabled, R.string.appcenter_auth_state_summary_disabled, new HasEnabled() {
-
-                @Override
-                public boolean isEnabled() {
-                    return Auth.isEnabled().get();
-                }
-
-                @Override
-                public void setEnabled(boolean enabled) {
-                    Auth.setEnabled(enabled);
-                }
-            });
-
-            /* Data. */
-            initCheckBoxSetting(R.string.appcenter_data_state_key, R.string.appcenter_data_state_summary_enabled, R.string.appcenter_data_state_summary_disabled, new HasEnabled() {
-
-                @Override
-                public boolean isEnabled() {
-                    return Data.isEnabled().get();
-                }
-
-                @Override
-                public void setEnabled(boolean enabled) {
-                    Data.setEnabled(enabled);
-                }
-            });
-
             /* Push. */
             initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
 
@@ -427,41 +394,6 @@ public class SettingsActivity extends AppCompatActivity {
                     return isFirebaseEnabled();
                 }
             });
-
-            /* Real User Measurements. */
-            try {
-                @SuppressWarnings("unchecked") final Class<? extends AppCenterService> rum = (Class<? extends AppCenterService>) Class.forName("com.microsoft.appcenter.rum.RealUserMeasurements");
-                final Method isEnabled = rum.getMethod("isEnabled");
-                final Method setEnabled = rum.getMethod("setEnabled", boolean.class);
-                initCheckBoxSetting(R.string.appcenter_rum_state_key, R.string.appcenter_rum_state_summary_enabled, R.string.appcenter_rum_state_summary_disabled, new HasEnabled() {
-
-                    @Override
-                    public void setEnabled(boolean enabled) {
-                        try {
-                            if (!sRumStarted) {
-                                rum.getMethod("setRumKey", String.class).invoke(null, getString(R.string.rum_key));
-                                AppCenter.start(rum);
-                                sRumStarted = true;
-                            }
-                            setEnabled.invoke(null, enabled);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    @Override
-                    @SuppressWarnings({"unchecked", "ConstantConditions"})
-                    public boolean isEnabled() {
-                        try {
-                            return sRumStarted && ((AppCenterFuture<Boolean>) isEnabled.invoke(null)).get();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            } catch (Exception e) {
-                getPreferenceScreen().removePreference(findPreference(getString(R.string.real_user_measurements_key)));
-            }
 
             /* EventFilter. */
             initCheckBoxSetting(R.string.appcenter_event_filter_state_key, R.string.appcenter_event_filter_state_summary_enabled, R.string.appcenter_event_filter_state_summary_disabled, new HasEnabled() {

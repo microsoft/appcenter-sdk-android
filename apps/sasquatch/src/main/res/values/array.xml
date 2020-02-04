@@ -13,8 +13,7 @@
         <item>SKIP_START</item>
     </string-array>
     <string-array name="appcenter_secret_values" tools:ignore="MissingTranslation">
-        <item>B2C</item>
-        <item>AAD</item>
+        <item>Default</item>
         <item>Custom</item>
     </string-array>
     <string-array name="appcenter_distribute_update_track_entries" tools:ignore="MissingTranslation">

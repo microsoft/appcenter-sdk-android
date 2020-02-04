@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,30 +42,11 @@ import java.util.Set;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class DatabasePersistence extends Persistence {
-
-    /**
-     * Version of the schema that introduced api key and type field.
-     */
-    @VisibleForTesting
-    static final int VERSION_TYPE_API_KEY = 2;
-
-    /**
-     * Version of the schema that introduced target key field.
-     */
-    @VisibleForTesting
-    static final int VERSION_TARGET_KEY = 3;
-
-    /**
-     * Version of the schema that introduced persistence priority for logs.
-     */
-    @VisibleForTesting
-    static final int VERSION_PRIORITY_KEY = 4;
 
     /**
      * Table name.
@@ -87,23 +67,23 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_LOG = "log";
 
     /**
-     * Name of date column in the table.
-     * Value is stored in milliseconds.
-     */
-    @VisibleForTesting
-    static final String COLUMN_TIMESTAMP = "timestamp";
-
-    /**
      * Name of target token column in the table.
      */
     @VisibleForTesting
     static final String COLUMN_TARGET_TOKEN = "target_token";
 
     /**
-     * Name of target token column in the table.
+     * Version where we still had timestamp column, we need to drop table and recreate
+     * when upgrading from this version to another version (as opposed to alter table add column if
+     * upgrading from a version that already has the column removed).
      */
     @VisibleForTesting
-    static final String COLUMN_DATA_TYPE = "type";
+    static final int VERSION_TIMESTAMP_COLUMN = 5;
+
+    /**
+     * Current version of the schema.
+     */
+    private static final int VERSION = 6;
 
     /**
      * Project identifier part of the target token in clear text (the target token key).
@@ -118,10 +98,9 @@ public class DatabasePersistence extends Persistence {
     static final String COLUMN_PRIORITY = "priority";
 
     /**
-     * Table schema for Persistence.
+     * Name of target token column in the table.
      */
-    @VisibleForTesting
-    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0, 0L);
+    private static final String COLUMN_DATA_TYPE = "type";
 
     /**
      * Database name.
@@ -130,9 +109,10 @@ public class DatabasePersistence extends Persistence {
     static final String DATABASE = "com.microsoft.appcenter.persistence";
 
     /**
-     * Current version of the schema.
+     * Table schema for Persistence.
      */
-    private static final int VERSION = 5;
+    @VisibleForTesting
+    static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0);
 
     /**
      * Priority index.
@@ -204,7 +184,7 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") ContentValues schema) {
+    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") final ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
@@ -220,22 +200,17 @@ public class DatabasePersistence extends Persistence {
             }
 
             @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
-                /* Update columns only if needed, this callback is called only on upgrade. */
-                if (oldVersion < VERSION_TYPE_API_KEY) {
-                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_TOKEN + "` TEXT");
-                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_DATA_TYPE + "` TEXT");
-                }
-                if (oldVersion < VERSION_TARGET_KEY) {
-                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TARGET_KEY + "` TEXT");
-                }
-                if (oldVersion < VERSION_PRIORITY_KEY) {
-                    db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_PRIORITY + "` INTEGER DEFAULT " + NORMAL);
-                }
-                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN `" + COLUMN_TIMESTAMP + "` INTEGER DEFAULT 0");
+                /*
+                 * With version 3.0 of the SDK we decided to remove timestamp column and as
+                 * it's a major SDK version and SQLite does not support removing column we just start over.
+                 * When adding a new column in a future version, update this code by something like
+                 * if (oldVersion <= VERSION_TIMESTAMP_COLUMN) {drop/create} else {add missing columns}
+                 */
+                SQLiteUtils.dropTable(db, TABLE);
+                SQLiteUtils.createTable(db, TABLE, schema);
                 createPriorityIndex(db);
-                return true;
             }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);
@@ -254,7 +229,7 @@ public class DatabasePersistence extends Persistence {
      * @param priority    The persistence priority.
      * @return A {@link ContentValues} instance.
      */
-    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey, int priority, Long timestamp) {
+    private static ContentValues getContentValues(@Nullable String group, @Nullable String logJ, String targetToken, String type, String targetKey, int priority) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_GROUP, group);
         values.put(COLUMN_LOG, logJ);
@@ -262,7 +237,6 @@ public class DatabasePersistence extends Persistence {
         values.put(COLUMN_DATA_TYPE, type);
         values.put(COLUMN_TARGET_KEY, targetKey);
         values.put(COLUMN_PRIORITY, priority);
-        values.put(COLUMN_TIMESTAMP, timestamp);
         return values;
     }
 
@@ -304,7 +278,7 @@ public class DatabasePersistence extends Persistence {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false), log.getTimestamp().getTime());
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
             long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
@@ -408,22 +382,13 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public int countLogs(@NonNull String group) {
-        return countLogs(COLUMN_GROUP + " = ?", group);
-    }
-
-    @Override
-    public int countLogs(@NonNull Date timestamp) {
-        return countLogs(COLUMN_TIMESTAMP + " < ?", String.valueOf(timestamp.getTime()));
-    }
-
-    private int countLogs(String whereClause, String... whereArgs) {
 
         /* Query database and get scanner. */
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        builder.appendWhere(whereClause);
+        builder.appendWhere(COLUMN_GROUP + " = ?");
         int count = 0;
         try {
-            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, whereArgs, null);
+            Cursor cursor = mDatabaseManager.getCursor(builder, new String[]{"COUNT(*)"}, new String[]{group}, null);
             try {
                 cursor.moveToNext();
                 count = cursor.getInt(0);
@@ -438,7 +403,7 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     @Nullable
-    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs, @Nullable Date from, @Nullable Date to) {
+    public String getLogs(@NonNull String group, @NonNull Collection<String> pausedTargetKeys, @IntRange(from = 0) int limit, @NonNull List<Log> outLogs) {
 
         /* Log. */
         AppCenterLog.debug(LOG_TAG, "Trying to get " + limit + " logs from the Persistence database for " + group);
@@ -457,18 +422,6 @@ public class DatabasePersistence extends Persistence {
             builder.appendWhere(" AND ");
             builder.appendWhere(COLUMN_TARGET_KEY + " NOT IN (" + filter.toString() + ")");
             selectionArgs.addAll(pausedTargetKeys);
-        }
-
-        /* Filter by time. */
-        if (from != null) {
-            builder.appendWhere(" AND ");
-            builder.appendWhere(COLUMN_TIMESTAMP + " >= ?");
-            selectionArgs.add(String.valueOf(from.getTime()));
-        }
-        if (to != null) {
-            builder.appendWhere(" AND ");
-            builder.appendWhere(COLUMN_TIMESTAMP + " < ?");
-            selectionArgs.add(String.valueOf(to.getTime()));
         }
 
         /* Add logs to output parameter after deserialization if logs are not already sent. */

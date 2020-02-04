@@ -78,13 +78,6 @@ public class HttpUtilsTest {
     }
 
     @Test
-    public void hideAuthToken() {
-        String token = "Bearer jwt-token-string";
-        String hiddenToken = HttpUtils.hideAuthToken(token);
-        assertEquals(hiddenToken, "Bearer ***");
-    }
-
-    @Test
     public void defaultCompressionSettings() {
         HttpClient httpClient = HttpUtils.createHttpClient(mock(Context.class));
         DefaultHttpClient defaultHttpClient = getDefaultHttpClient((HttpClientDecorator) httpClient);

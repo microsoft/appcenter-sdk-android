@@ -62,7 +62,8 @@ public class AppCenterIngestionTest {
     @Mock
     private HttpClient mHttpClient;
 
-    private void sendAuthToken(String authToken) throws Exception {
+    @Test
+    public void sendAsync() throws Exception {
 
         /* Build some payload. */
         LogContainer container = new LogContainer();
@@ -77,7 +78,6 @@ public class AppCenterIngestionTest {
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
-
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
@@ -91,14 +91,11 @@ public class AppCenterIngestionTest {
         String appSecret = UUID.randomUUID().toString();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(authToken, appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
-        if (authToken != null) {
-            expectedHeaders.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
-        }
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -111,16 +108,6 @@ public class AppCenterIngestionTest {
         /* Verify reopen. */
         ingestion.reopen();
         verify(mHttpClient).reopen();
-    }
-
-    @Test
-    public void sendAsyncWithoutAuthToken() throws Exception {
-        sendAuthToken(null);
-    }
-
-    @Test
-    public void sendAsyncWithAuthToken() throws Exception {
-        sendAuthToken(UUID.randomUUID().toString());
     }
 
     @Test
@@ -152,15 +139,13 @@ public class AppCenterIngestionTest {
         AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, serializer);
         ingestion.setLogUrl("http://mock");
         String appSecret = UUID.randomUUID().toString();
-        String authToken = UUID.randomUUID().toString();
         UUID installId = UUID.randomUUID();
         ServiceCallback serviceCallback = mock(ServiceCallback.class);
-        assertEquals(call, ingestion.sendAsync(authToken, appSecret, installId, container, serviceCallback));
+        assertEquals(call, ingestion.sendAsync(appSecret, installId, container, serviceCallback));
 
         /* Verify call to http client. */
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
-        expectedHeaders.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
         verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
         assertNotNull(callTemplate.get());
@@ -182,12 +167,11 @@ public class AppCenterIngestionTest {
         /* Mock instances. */
         URL url = new URL("http://mock/path/file");
         String appSecret = UUID.randomUUID().toString();
-        String authToken = UUID.randomUUID().toString();
         String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
         String obfuscatedToken = "Bearer ***";
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
-        HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, authToken);
+        HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret);
         AppCenterLog.setLogLevel(android.util.Log.VERBOSE);
         mockStatic(AppCenterLog.class);
 
@@ -206,7 +190,6 @@ public class AppCenterIngestionTest {
 
         /* Put app secret to header. */
         headers.put(Constants.APP_SECRET, appSecret);
-        headers.put(Constants.AUTHORIZATION_HEADER, String.format(Constants.AUTH_TOKEN_FORMAT, authToken));
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */
@@ -221,8 +204,7 @@ public class AppCenterIngestionTest {
 
         /* Mock instances. */
         String appSecret = UUID.randomUUID().toString();
-        String authToken = UUID.randomUUID().toString();
-        HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret, authToken);
+        HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret);
 
         /* Change log level. */
         AppCenterLog.setLogLevel(android.util.Log.WARN);
@@ -235,7 +217,7 @@ public class AppCenterIngestionTest {
         AppCenterLog.verbose(anyString(), anyString());
     }
 
-    private HttpClient.CallTemplate getCallTemplate(String appSecret, String authToken) {
+    private HttpClient.CallTemplate getCallTemplate(String appSecret) {
 
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         final ServiceCall call = mock(ServiceCall.class);
@@ -250,7 +232,7 @@ public class AppCenterIngestionTest {
         });
         AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
-        assertEquals(call, ingestion.sendAsync(authToken, appSecret, UUID.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
+        assertEquals(call, ingestion.sendAsync(appSecret, UUID.randomUUID(), mock(LogContainer.class), mock(ServiceCallback.class)));
         return callTemplate.get();
     }
 }
