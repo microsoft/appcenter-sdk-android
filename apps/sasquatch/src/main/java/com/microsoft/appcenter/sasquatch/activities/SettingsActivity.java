@@ -348,6 +348,7 @@ public class SettingsActivity extends AppCompatActivity {
                      */
                     MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_track_state_key), updateTrackNewValue).apply();
                     preference.setSummary(updateTrackHasSummary.getSummary());
+                    Toast.makeText(getActivity(), R.string.appcenter_distribute_track_state_updated, Toast.LENGTH_SHORT).show();
                     return true;
                 }
             });
