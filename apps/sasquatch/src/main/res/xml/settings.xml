@@ -64,11 +64,6 @@
             android:key="@string/appcenter_distribute_debug_state_key"
             android:title="@string/appcenter_distribute_debug_state_title" />
         <ListPreference
-            android:key="@string/appcenter_distribute_update_track_before_start_key"
-            android:entries="@array/appcenter_distribute_when_to_update_track_entries"
-            android:entryValues="@array/appcenter_distribute_when_to_update_track_entries"
-            android:title="@string/appcenter_distribute_update_track_before_start_title" />
-        <ListPreference
             android:key="@string/appcenter_distribute_track_state_key"
             android:entries="@array/appcenter_distribute_update_track_entries"
             android:entryValues="@array/appcenter_distribute_update_track_entries"

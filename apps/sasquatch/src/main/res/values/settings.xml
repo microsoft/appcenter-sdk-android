@@ -74,12 +74,6 @@
     <string name="appcenter_distribute_track_public_enabled" tools:ignore="MissingTranslation">Distribute uses public track</string>
     <string name="appcenter_distribute_track_private_enabled" tools:ignore="MissingTranslation">Distribute uses private track</string>
 
-    <string name="appcenter_distribute_update_track_before_start_key" tools:ignore="MissingTranslation">appcenter_distribute_update_track_before_start_key</string>
-    <string name="appcenter_distribute_update_track_before_start_chosen_track" tools:ignore="MissingTranslation">appcenter_distribute_update_track_before_start_chosen_track</string>
-    <string name="appcenter_distribute_update_track_before_start_title" tools:ignore="MissingTranslation">When to update track</string>
-    <string name="appcenter_distribute_update_track_before_start_enabled" tools:ignore="MissingTranslation">Will update track before next start</string>
-    <string name="appcenter_distribute_update_track_before_start_disabled" tools:ignore="MissingTranslation">Update track now</string>
-
     <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
     <string name="push_title" tools:ignore="MissingTranslation">Push</string>
 

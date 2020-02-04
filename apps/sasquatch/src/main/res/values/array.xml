@@ -17,10 +17,6 @@
         <item>AAD</item>
         <item>Custom</item>
     </string-array>
-    <string-array name="appcenter_distribute_when_to_update_track_entries" tools:ignore="MissingTranslation">
-        <item>Now</item>
-        <item>Before next start</item>
-    </string-array>
     <string-array name="appcenter_distribute_update_track_entries" tools:ignore="MissingTranslation">
         <item>Public</item>
         <item>Private</item>
