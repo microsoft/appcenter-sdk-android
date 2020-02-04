@@ -211,11 +211,6 @@ public final class DistributeConstants {
     private static final String PREFERENCE_PREFIX = SERVICE_NAME + ".";
 
     /**
-     * Preference key to store tracking mode (public/private), value format is string value of {@link UpdateTrack}.
-     */
-    static final String PREFERENCE_KEY_UPDATE_TRACK = PREFERENCE_PREFIX + "update_track";
-
-    /**
      * Preference key to store the current/last download identifier (we keep download until a next
      * one is scheduled as the file can be opened from device downloads U.I.).
      */
