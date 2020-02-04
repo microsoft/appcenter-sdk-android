@@ -70,17 +70,12 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-crashes')
     projectDependencyImplementation project(':sdk:appcenter-distribute')
     projectDependencyImplementation project(':sdk:appcenter-push')
-    projectDependencyImplementation project(':sdk:appcenter-rum')
-    projectDependencyImplementation project(':sdk:appcenter-auth')
-    projectDependencyImplementation project(':sdk:appcenter-data')
 
     def appCenterSdkVersion = "2.5.1"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-auth:${appCenterSdkVersion}"
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-data:${appCenterSdkVersion}"
 
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'

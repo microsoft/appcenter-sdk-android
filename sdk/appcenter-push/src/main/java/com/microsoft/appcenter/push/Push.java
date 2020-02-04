@@ -30,8 +30,6 @@ import com.microsoft.appcenter.push.ingestion.models.PushInstallationLog;
 import com.microsoft.appcenter.push.ingestion.models.json.PushInstallationLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
-import com.microsoft.appcenter.utils.context.AbstractTokenContextListener;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 
 import java.util.HashMap;
@@ -115,11 +113,6 @@ public class Push extends AbstractAppCenterService {
      * The last value of push token.
      */
     private String mLatestPushToken;
-
-    /**
-     * Authorization listener for {@link AuthTokenContext}.
-     */
-    private AuthTokenContext.Listener mAuthListener;
 
     /**
      * User id context listener for {@link UserIdContext}.
@@ -303,11 +296,9 @@ public class Push extends AbstractAppCenterService {
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
         if (enabled) {
-            AuthTokenContext.getInstance().addListener(mAuthListener);
             UserIdContext.getInstance().addListener(mUserListener);
             registerPushToken();
         } else {
-            AuthTokenContext.getInstance().removeListener(mAuthListener);
             UserIdContext.getInstance().removeListener(mUserListener);
         }
     }
@@ -340,15 +331,6 @@ public class Push extends AbstractAppCenterService {
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
-        mAuthListener = new AbstractTokenContextListener() {
-
-            @Override
-            public void onNewUser(String accountId) {
-                if (mLatestPushToken != null) {
-                    enqueuePushInstallationLog(mLatestPushToken);
-                }
-            }
-        };
         mUserListener = new UserIdContext.Listener() {
 
             @Override
