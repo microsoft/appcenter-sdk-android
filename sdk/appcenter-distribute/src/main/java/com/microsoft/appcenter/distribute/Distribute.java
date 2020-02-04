@@ -18,7 +18,6 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -90,7 +89,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_I
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
@@ -277,12 +275,6 @@ public class Distribute extends AbstractAppCenterService {
     private Boolean mUsingDefaultUpdateDialog;
 
     /**
-     * Preferences to use in case of token/distribution group missing from Mobile Center SDK releases
-     * (versions 0.x).
-     */
-    private SharedPreferences mMobileCenterPreferenceStorage;
-
-    /**
      * Flag to track whether the distribute feature can be used in a debuggable build.
      * Flag is false by default.
      * Updated by calling {@link #setEnabledForDebuggableBuild(boolean)}.
@@ -417,7 +409,6 @@ public class Distribute extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
-        mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
         try {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
         } catch (PackageManager.NameNotFoundException e) {
@@ -441,7 +432,6 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Called before onStart, init storage");
             mContext = context;
             SharedPreferencesManager.initialize(mContext);
-            mMobileCenterPreferenceStorage = mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE);
             updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
         }
     }
@@ -812,17 +802,8 @@ public class Distribute extends AbstractAppCenterService {
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             if (updateToken != null || distributionGroupId != null) {
-                decryptAndGetReleaseDetails(updateToken, distributionGroupId, false);
+                decryptAndGetReleaseDetails(updateToken, distributionGroupId);
                 return;
-            } else {
-
-                /* Use fail-over logic to search for missing token/distribution group */
-                updateToken = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_UPDATE_TOKEN, null);
-                distributionGroupId = mMobileCenterPreferenceStorage.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, null);
-                if (updateToken != null || distributionGroupId != null) {
-                    decryptAndGetReleaseDetails(updateToken, distributionGroupId, true);
-                    return;
-                }
             }
 
             /* If not, open native app (if installed) to update setup, unless it already failed. Otherwise, use the browser. */
@@ -847,11 +828,11 @@ public class Distribute extends AbstractAppCenterService {
         return true;
     }
 
-    private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId, boolean mobileCenterFailOver) {
+    private void decryptAndGetReleaseDetails(String updateToken, String distributionGroupId) {
 
         /* Decrypt token if any. */
         if (updateToken != null) {
-            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken, mobileCenterFailOver);
+            CryptoUtils.DecryptedData decryptedData = CryptoUtils.getInstance(mContext).decrypt(updateToken);
             String newEncryptedData = decryptedData.getNewEncryptedData();
 
             /* Store new encrypted value if updated. */
@@ -859,18 +840,6 @@ public class Distribute extends AbstractAppCenterService {
                 SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, newEncryptedData);
             }
             updateToken = decryptedData.getDecryptedData();
-            if (mobileCenterFailOver) {
-
-                /* Store the token from Mobile Center into App Center storage, re-encrypting it */
-                String encryptedUpdateToken = CryptoUtils.getInstance(mContext).encrypt(updateToken);
-                SharedPreferencesManager.putString(PREFERENCE_KEY_UPDATE_TOKEN, encryptedUpdateToken);
-            }
-        }
-
-        /* If the group was from Mobile Center storage, save it in the new storage. */
-        if (mobileCenterFailOver) {
-            SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
-            mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
         }
 
         /* Check latest release. */

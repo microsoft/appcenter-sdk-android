@@ -14,7 +14,6 @@ import java.util.Map;
 import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.Constants.APP_SECRET;
-import static com.microsoft.appcenter.Constants.AUTHORIZATION_HEADER;
 
 /**
  * Common logic between calls that have app secret and authorization headers.
@@ -33,10 +32,6 @@ public abstract class AbstractAppCallTemplate implements HttpClient.CallTemplate
             String appSecret = logHeaders.get(APP_SECRET);
             if (appSecret != null) {
                 logHeaders.put(APP_SECRET, HttpUtils.hideSecret(appSecret));
-            }
-            String authToken = logHeaders.get(AUTHORIZATION_HEADER);
-            if (authToken != null) {
-                logHeaders.put(AUTHORIZATION_HEADER, HttpUtils.hideAuthToken(authToken));
             }
             AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
         }

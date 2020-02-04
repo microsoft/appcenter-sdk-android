@@ -17,15 +17,11 @@ import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
 
@@ -85,23 +81,7 @@ public class DatabaseManager implements Closeable {
      * @param listener     The error listener.
      */
     public DatabaseManager(Context context, String database, String defaultTable, int version,
-                           ContentValues schema, Listener listener) {
-        this(context, database, defaultTable, version, schema, listener, null);
-    }
-
-    /**
-     * Initializes the table in the database.
-     *
-     * @param context       The application context.
-     * @param database      The database name.
-     * @param defaultTable  The default table name.
-     * @param version       The version of current schema.
-     * @param schema        The schema.
-     * @param listener      The error listener.
-     * @param uniqueColumns The name of the columns where the combination of the columns is unique.
-     */
-    DatabaseManager(Context context, String database, String defaultTable, int version,
-                    ContentValues schema, Listener listener, final String[] uniqueColumns) {
+                           ContentValues schema, @NonNull Listener listener) {
         mContext = context;
         mDatabase = database;
         mDefaultTable = defaultTable;
@@ -111,18 +91,13 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                createTable(db, mDefaultTable, mSchema, uniqueColumns);
+                SQLiteUtils.createTable(db, mDefaultTable, mSchema);
                 mListener.onCreate(db);
             }
 
             @Override
             public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-                /* Upgrade by destroying the old table unless managed. */
-                if (!mListener.onUpgrade(db, oldVersion, newVersion)) {
-                    SQLiteUtils.dropTable(db, mDefaultTable);
-                    onCreate(db);
-                }
+                mListener.onUpgrade(db, oldVersion, newVersion);
             }
         };
     }
@@ -168,28 +143,6 @@ public class DatabaseManager implements Closeable {
     }
 
     /**
-     * Delete the database and then create a new, empty one.
-     */
-    public void resetDatabase() {
-        close();
-        mContext.deleteDatabase(mDatabase);
-
-        /* Call getDatabase to recreate database. */
-        getDatabase();
-    }
-
-    /**
-     * Creates a new table in the database.
-     *
-     * @param table                   name.
-     * @param schema                  of the table.
-     * @param uniqueColumnsConstraint The name of the columns where the combination of the columns is unique.
-     */
-    public void createTable(@NonNull String table, @NonNull ContentValues schema, String[] uniqueColumnsConstraint) {
-        createTable(getDatabase(), table, schema, uniqueColumnsConstraint);
-    }
-
-    /**
      * Converts a cursor to an entry.
      *
      * @param cursor The cursor to be converted to an entry.
@@ -215,45 +168,6 @@ public class DatabaseManager implements Closeable {
             AppCenterLog.error(LOG_TAG, "Failed to get next cursor value: ", e);
         }
         return null;
-    }
-
-    /**
-     * Replaces the row, if the given property string values match the values of the row. Insert a new row if cannot find the match property values or multiple rows matches.
-     *
-     * @param table      The table to perform the operation on.
-     * @param values     The entry to be stored.
-     * @param properties The property to be used for filter the rows.
-     * @return If an entry was inserted or updated, the database identifier. Otherwise -1.
-     */
-    @SuppressWarnings("TryFinallyCanBeTryWithResources")
-    public long replace(@NonNull String table, @NonNull ContentValues values, String... properties) {
-        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
-        List<String> selectionArgs = new ArrayList<>();
-        try {
-            List<String> propertyQueryList = new ArrayList<>();
-            for (String property : properties) {
-                propertyQueryList.add(property + " = ?");
-                selectionArgs.add(values.getAsString(property));
-            }
-            builder.appendWhere(TextUtils.join(" AND ", propertyQueryList));
-            if (selectionArgs.size() > 0) {
-                Cursor cursor = getCursor(table, builder, null, selectionArgs.toArray(new String[0]), null);
-                try {
-                    ContentValues value = nextValues(cursor);
-
-                    /* If only contains one result, replace the value, otherwise insert directly. */
-                    if (value != null && !cursor.moveToNext()) {
-                        values.put(PRIMARY_KEY, value.getAsInteger(PRIMARY_KEY));
-                    }
-                } finally {
-                    cursor.close();
-                }
-            }
-            return getDatabase().replace(table, null, values);
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to replace values (%s) from database %s.", values.toString(), mDatabase), e);
-        }
-        return -1L;
     }
 
     /**
@@ -312,37 +226,7 @@ public class DatabaseManager implements Closeable {
      * @param id The database identifier.
      */
     public void delete(@IntRange(from = 0) long id) {
-        delete(mDefaultTable, id);
-    }
-
-    /**
-     * Deletes the entry by the identifier from the database.
-     *
-     * @param table The table to perform the operation on.
-     * @param id    The database identifier.
-     */
-    private void delete(@NonNull String table, @IntRange(from = 0) long id) {
-        delete(table, PRIMARY_KEY, id);
-    }
-
-    /**
-     * Deletes the entries that matches the condition.
-     *
-     * @param table       The table to perform the operation on.
-     * @param whereClause the optional WHERE clause to apply when deleting.
-     *                    Passing null will delete all rows.
-     * @param whereArgs   You may include ?s in the where clause, which
-     *                    will be replaced by the values from whereArgs. The values
-     *                    will be bound as Strings.
-     * @return the number of rows affected.
-     */
-    public int delete(@NonNull String table, String whereClause, String[] whereArgs) {
-        try {
-            return getDatabase().delete(table, whereClause, whereArgs);
-        } catch (RuntimeException e) {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", whereClause, Arrays.toString(whereArgs), mDatabase), e);
-            return 0;
-        }
+        delete(mDefaultTable, PRIMARY_KEY, id);
     }
 
     /**
@@ -352,7 +236,7 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      * @return the number of rows affected.
      */
-    public int delete(@Nullable String key, @Nullable Object value) {
+    public int delete(@NonNull String key, @Nullable Object value) {
         return delete(mDefaultTable, key, value);
     }
 
@@ -364,8 +248,14 @@ public class DatabaseManager implements Closeable {
      * @param value The optional value for query.
      * @return the number of rows affected.
      */
-    public int delete(@NonNull String table, @Nullable String key, @Nullable Object value) {
-        return delete(table, key + " = ?", new String[]{String.valueOf(value)});
+    private int delete(@NonNull String table, @NonNull String key, @Nullable Object value) {
+        String[] whereArgs = new String[]{String.valueOf(value)};
+        try {
+            return getDatabase().delete(table, key + " = ?", whereArgs);
+        } catch (RuntimeException e) {
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete values that match condition=\"%s\" and values=\"%s\" from database %s.", key + " = ?", Arrays.toString(whereArgs), mDatabase), e);
+            return 0;
+        }
     }
 
     /**
@@ -432,7 +322,7 @@ public class DatabaseManager implements Closeable {
      * @return A cursor for all rows that matches the given criteria.
      * @throws RuntimeException If an error occurs.
      */
-    public Cursor getCursor(@NonNull String table, @Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
+    Cursor getCursor(@NonNull String table, @Nullable SQLiteQueryBuilder queryBuilder, String[] columns, @Nullable String[] selectionArgs, @Nullable String sortOrder) throws RuntimeException {
         if (queryBuilder == null) {
             queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         }
@@ -476,32 +366,6 @@ public class DatabaseManager implements Closeable {
     void setSQLiteOpenHelper(@NonNull SQLiteOpenHelper helper) {
         mSQLiteOpenHelper.close();
         mSQLiteOpenHelper = helper;
-    }
-
-    private void createTable(SQLiteDatabase db, String table, ContentValues schema, String[] uniqueColumnsConstraint) {
-
-        /* Generate a schema from specimen. */
-        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS `");
-        sql.append(table);
-        sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
-        for (Map.Entry<String, Object> col : schema.valueSet()) {
-            sql.append(", `").append(col.getKey()).append("` ");
-            Object val = col.getValue();
-            if (val instanceof Double || val instanceof Float) {
-                sql.append("REAL");
-            } else if (val instanceof Number || val instanceof Boolean) {
-                sql.append("INTEGER");
-            } else if (val instanceof byte[]) {
-                sql.append("BLOB");
-            } else {
-                sql.append("TEXT");
-            }
-        }
-        if (uniqueColumnsConstraint != null && uniqueColumnsConstraint.length > 0) {
-            sql.append(", UNIQUE(`").append(TextUtils.join("`, `", uniqueColumnsConstraint)).append("`)");
-        }
-        sql.append(");");
-        db.execSQL(sql.toString());
     }
 
     /**
@@ -575,32 +439,7 @@ public class DatabaseManager implements Closeable {
          * @param db         database being upgraded.
          * @param oldVersion version of the schema the database was at open time.
          * @param newVersion new version of the schema.
-         * @return true if upgrade was managed, false to drop/create table.
          */
-        @SuppressWarnings({"BooleanMethodIsAlwaysInverted", "RedundantSuppression"})
-        boolean onUpgrade(SQLiteDatabase db, int oldVersion, @SuppressWarnings("unused") int newVersion);
-    }
-
-    /**
-     * A default implementation of `Listener` that relies on `DatabaseManager` to do
-     * the set up and upgrades.
-     */
-    public static class DefaultListener implements DatabaseManager.Listener {
-
-        @Override
-        public void onCreate(SQLiteDatabase db) {
-
-            /* No need to do anything on create because `DatabaseManager` creates a table. */
-        }
-
-        @Override
-        public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-            /*
-             * No need to do anything on upgrade because this is the first version of the schema
-             * and the rest is handled by `DatabaseManager`.
-             */
-            return false;
-        }
+        void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion);
     }
 }

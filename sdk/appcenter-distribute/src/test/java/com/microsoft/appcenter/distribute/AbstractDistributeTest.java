@@ -11,7 +11,6 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -50,7 +49,6 @@ import org.powermock.reflect.Whitebox;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
@@ -136,9 +134,6 @@ public class AbstractDistributeTest {
     Channel mChannel;
 
     @Mock
-    SharedPreferences mMobileCenterPreferencesStorage;
-
-    @Mock
     DistributeInfoTracker mDistributeInfoTracker;
 
     @Mock
@@ -162,7 +157,7 @@ public class AbstractDistributeTest {
     @Mock
     NotificationManager mNotificationManager;
 
-    protected UUID mInstallId = UUID.randomUUID();
+    UUID mInstallId = UUID.randomUUID();
 
     @Before
     @SuppressLint("ShowToast")
@@ -186,9 +181,6 @@ public class AbstractDistributeTest {
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(true);
-
-        /* Mobile Center Preferences failover initialization */
-        when(mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE)).thenReturn(mMobileCenterPreferencesStorage);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Void>() {
@@ -252,7 +244,7 @@ public class AbstractDistributeTest {
         /* Mock Crypto to not crypt. */
         mockStatic(CryptoUtils.class);
         when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mCryptoUtils);
-        when(mCryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+        when(mCryptoUtils.decrypt(anyString())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
 
             @Override
             public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {
