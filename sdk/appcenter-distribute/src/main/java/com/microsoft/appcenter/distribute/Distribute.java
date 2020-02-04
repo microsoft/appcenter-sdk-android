@@ -101,7 +101,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TRACK;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
 import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
 import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
@@ -190,14 +189,9 @@ public class Distribute extends AbstractAppCenterService {
     private String mBeforeStartTesterAppUpdateSetupFailed;
 
     /**
-     * Update track as set and returned by the API. The change with that value might not have been processed yet.
+     * Update track as set and returned by the API. Can only be set before start.
      */
-    private Integer mUpdateTrack;
-
-    /**
-     * Last used value for update check.
-     */
-    private Integer mLastCheckedUpdateTrack;
+    private int mUpdateTrack = UpdateTrack.PUBLIC;
 
     /**
      * Current API call identifier to check latest release from server, used for state check.
@@ -370,8 +364,6 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param updateTrack update track.
      */
-    // TODO Remove suppress when app uses it without reflection on jCenter
-    @SuppressWarnings("WeakerAccess")
     public static void setUpdateTrack(@UpdateTrack int updateTrack) {
         getInstance().setInstanceUpdateTrack(updateTrack);
     }
@@ -443,15 +435,6 @@ public class Distribute extends AbstractAppCenterService {
             mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
         } catch (PackageManager.NameNotFoundException e) {
             AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
-        }
-
-        /* Store update track if it has been changed before start. */
-        if (mUpdateTrack != null) {
-            SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, mUpdateTrack);
-        } else {
-
-            /* Otherwise use previous run value that was persisted. */
-            mUpdateTrack = DistributeUtils.getStoredUpdateTrack();
         }
 
         /*
@@ -543,7 +526,6 @@ public class Distribute extends AbstractAppCenterService {
             mTesterAppOpenedOrAborted = false;
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
-            mLastCheckedUpdateTrack = null;
             cancelPreviousTasks();
             SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
             SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
@@ -638,42 +620,22 @@ public class Distribute extends AbstractAppCenterService {
      * Implements {@link #getUpdateTrack()}.
      */
     private synchronized int getInstanceUpdateTrack() {
-        return mUpdateTrack == null ? UpdateTrack.PUBLIC : mUpdateTrack;
+        return mUpdateTrack;
     }
 
     /**
      * Implements {@link #setUpdateTrack(int)}.
      */
     private synchronized void setInstanceUpdateTrack(final int updateTrack) {
+        if (mContext != null) {
+            AppCenterLog.error(LOG_TAG, "Update track cannot be set after Distribute is started.");
+            return;
+        }
         if (DistributeUtils.isInvalidUpdateTrack(updateTrack)) {
             AppCenterLog.error(LOG_TAG, "Invalid argument passed to Distribute.setUpdateTrack().");
             return;
         }
         mUpdateTrack = updateTrack;
-        Runnable disabledRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, updateTrack);
-            }
-        };
-        Runnable enabledRunnable = new Runnable() {
-
-            @Override
-            public void run() {
-                SharedPreferencesManager.putInt(PREFERENCE_KEY_UPDATE_TRACK, updateTrack);
-                processUpdateTrackChange(updateTrack);
-            }
-        };
-        post(enabledRunnable, disabledRunnable, disabledRunnable);
-    }
-
-    @WorkerThread
-    private synchronized void processUpdateTrackChange(int updateTrack) {
-        if (mLastCheckedUpdateTrack == null || updateTrack != mLastCheckedUpdateTrack) {
-            resetWorkflow();
-            resumeWorkflowIfForeground();
-        }
     }
 
     /**
@@ -887,7 +849,6 @@ public class Distribute extends AbstractAppCenterService {
             /*
              * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
-            mLastCheckedUpdateTrack = mUpdateTrack;
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
             boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;

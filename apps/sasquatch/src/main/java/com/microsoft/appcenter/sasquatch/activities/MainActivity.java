@@ -113,19 +113,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     static void startAppCenter(Application application, String startTypeString) {
-        if (sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
 
-            /*
-             * TODO Replace the next line with:
-             *  'int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
-             *  when updating the demo during release process.
-             */
-            int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1);
-
-            /* TODO replace the next line with 'Distribute.setUpdateTrack(savedTrack);'
-             * when updating the demo during release process.
-             */
+        /* Set the track explicitly only if we set it in settings, to test the initial public by default at first launch. */
+        int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_track_state_key), 0);
+        if (savedTrack != 0) {
             try {
+
+                /*
+                 * TODO replace the next line with 'Distribute.setUpdateTrack(savedTrack);'
+                 * when updating the demo during release process.
+                 */
                 Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
                 setUpdateTrackMethod.invoke(null, savedTrack);
             } catch (Exception e) {

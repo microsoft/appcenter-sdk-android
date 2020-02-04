@@ -1004,8 +1004,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         SharedPreferencesManager.putString(eq(PREFERENCE_KEY_RELEASE_DETAILS), anyString());
 
         /* Mock we receive a second update. */
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -1014,13 +1012,11 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify prompt is shown. */
         verify(mDialog).show();
@@ -1071,6 +1067,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Start SDK. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
 
         /* Disable SDK. */

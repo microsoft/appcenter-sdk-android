@@ -312,69 +312,16 @@ public class SettingsActivity extends AppCompatActivity {
                     Distribute.setEnabledForDebuggableBuild(enabled);
                 }
             });
-            final HasSummary updateTrackBeforeStartHasSummary = new HasSummary() {
-
-                @Override
-                public String getSummary() {
-                    boolean updateTrackBeforeStart = MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false);
-                    return getString(updateTrackBeforeStart ? R.string.appcenter_distribute_update_track_before_start_enabled : R.string.appcenter_distribute_update_track_before_start_disabled);
-                }
-            };
-            initChangeableSetting(R.string.appcenter_distribute_update_track_before_start_key, updateTrackBeforeStartHasSummary.getSummary(), new Preference.OnPreferenceChangeListener() {
-
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    if (newValue == null) {
-                        return false;
-                    }
-                    String[] whenToUpdateTrackEntries = getResources().getStringArray(R.array.appcenter_distribute_when_to_update_track_entries);
-                    boolean updateTrackBeforeStartNewValue = newValue.toString().equals(whenToUpdateTrackEntries[1]);
-                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), updateTrackBeforeStartNewValue).apply();
-
-                    /*
-                     * TODO when updating the demo during release process:
-                     *  1) Replace the next line with 'int currentTrack = Distribute.getUpdateTrack();'
-                     *  2) remove try/catch block
-                     */
-                    int currentTrack = 1;
-                    try {
-                        Method getUpdateTrackMethod = Distribute.class.getMethod("getUpdateTrack");
-                        currentTrack = (int) getUpdateTrackMethod.invoke(null);
-                    } catch (Exception e) {
-                        Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
-                    }
-                    MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), currentTrack).apply();
-                    preference.setSummary(updateTrackBeforeStartHasSummary.getSummary());
-                    return true;
-                }
-            });
             final HasSummary updateTrackHasSummary = new HasSummary() {
 
                 @Override
                 public String getSummary() {
-                    UpdateTrackEnum updateTrackEnum = null;
-                    if (MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
 
-                        /*
-                         * TODO Replace the next line with:
-                         *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
-                         */
-                        updateTrackEnum = UpdateTrackEnum.init(MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), 1));
-                    } else {
-
-                        /*
-                         * TODO: Replace the whole block with
-                         *  'updateTrack = Distribute.getUpdateTrack();'
-                         *  when updating the demo during release process.
-                         */
-                        try {
-                            Method getUpdateTrackMethod = Distribute.class.getMethod("getUpdateTrack");
-                            int updateTrack = (int) getUpdateTrackMethod.invoke(null);
-                            updateTrackEnum = UpdateTrackEnum.init(updateTrack);
-                        } catch (Exception e) {
-                            Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
-                        }
-                    }
+                    /*
+                     * TODO Replace the next line with:
+                     *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
+                     */
+                    UpdateTrackEnum updateTrackEnum = UpdateTrackEnum.init(MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_track_state_key), 1));
                     return updateTrackEnum != null ? getString(updateTrackEnum.summaryRes) : "Couldn't parse update track";
                 }
             };
@@ -394,30 +341,14 @@ public class SettingsActivity extends AppCompatActivity {
                      */
                     int updateTrackNewValue = newValue.toString().equals(updateTrackEntries[0]) ? 1 : 2;
 
-                    if (MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_update_track_before_start_key), false)) {
-
-                        /*
-                         * TODO Replace the next line with:
-                         *  'MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), updateTrackNewValue).apply();'
-                         *  when updating the demo during release process.
-                         */
-                        MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_chosen_track), updateTrackNewValue).apply();
-                        preference.setSummary(updateTrackHasSummary.getSummary());
-                        return true;
-                    }
-
                     /*
-                     * TODO: Replace the try/catch block with
-                     *  Distribute.setUpdateTrack(updateTrackNewValue);
+                     * TODO Replace the next line with:
+                     *  'MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), updateTrackNewValue).apply();'
                      *  when updating the demo during release process.
                      */
-                    try {
-                        Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
-                        setUpdateTrackMethod.invoke(null, updateTrackNewValue);
-                    } catch (Exception e) {
-                        Toast.makeText(getActivity(), "No Update Track API in this build", Toast.LENGTH_SHORT).show();
-                    }
+                    MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_track_state_key), updateTrackNewValue).apply();
                     preference.setSummary(updateTrackHasSummary.getSummary());
+                    Toast.makeText(getActivity(), R.string.appcenter_distribute_track_state_updated, Toast.LENGTH_SHORT).show();
                     return true;
                 }
             });
