@@ -13,7 +13,7 @@
 
 ### App Center Distribute
 
-* **[Feature]** Add `setUpdateTrack`(and `getUpdateTrack`) method to be able to explicitly set either `UpdateTrack.PRIVATE` or `UpdateTrack.PUBLIC` update track. By default, a public distribution group is used. **Breaking change**: To allow users to access releases of private groups you now need to migrate your application to call `Distribute.setUpdateTrack(UpdateTrack.PRIVATE)`. Please read the documentation for more details.
+* **[Feature]** Add `setUpdateTrack`(and `getUpdateTrack`) method to be able to explicitly set either `UpdateTrack.PRIVATE` or `UpdateTrack.PUBLIC` update track. By default, a public distribution group is used. **Breaking change**: To allow users to access releases of private groups you now need to migrate your application to call `Distribute.setUpdateTrack(UpdateTrack.PRIVATE)` before the SDK start. Please read the documentation for more details.
 * **[Behavior change]** The public distribution is simplified to provide only one public group. If you have existing public groups defined for your application your users will receive the latest version of all public groups.
 * **[Fix]** Avoid opening browser to check for sign-in information after receiving an SSL error while checking for app updates (which often happens when using a public WIFI).
 * **[Fix]** When in-app update permissions become invalid and need to open browser again, updates are no longer postponed after sign-in (if user previously selected the action to postpone for a day).
