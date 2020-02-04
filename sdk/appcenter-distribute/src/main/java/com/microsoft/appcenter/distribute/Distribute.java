@@ -189,7 +189,7 @@ public class Distribute extends AbstractAppCenterService {
     private String mBeforeStartTesterAppUpdateSetupFailed;
 
     /**
-     * Update track as set and returned by the API. The change with that value might not have been processed yet.
+     * Update track as set and returned by the API. Can only be set before start.
      */
     private int mUpdateTrack = UpdateTrack.PUBLIC;
 
