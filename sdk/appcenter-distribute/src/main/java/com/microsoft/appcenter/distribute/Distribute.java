@@ -628,7 +628,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void setInstanceUpdateTrack(final int updateTrack) {
         if (mContext != null) {
-            AppCenterLog.error(LOG_TAG, "Update track cannot be changed after start.");
+            AppCenterLog.error(LOG_TAG, "Update track cannot be set after Distribute is started.");
             return;
         }
         if (DistributeUtils.isInvalidUpdateTrack(updateTrack)) {
