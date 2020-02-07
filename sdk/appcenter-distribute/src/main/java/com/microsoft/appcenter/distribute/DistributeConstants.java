@@ -72,12 +72,12 @@ public final class DistributeConstants {
     static final String PRIVATE_UPDATE_SETUP_PATH_FORMAT = "/apps/%s/private-update-setup/";
 
     /**
-     * Check latest private release API URL path. Contains the app secret variable to replace.
+     * Check latest private release API URL path. Contains variables: appSecret, release_hash, extra query string parameters.
      */
-    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s%s";
+    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/private/latest?release_hash=%s%s";
 
     /**
-     * Check latest public release API URL path. Contains the app secret variable to replace.
+     * Check latest public release API URL path. Contains variables: appSecret, release_hash, extra query string parameters.
      */
     static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/releases/latest?release_hash=%s%s";
 
