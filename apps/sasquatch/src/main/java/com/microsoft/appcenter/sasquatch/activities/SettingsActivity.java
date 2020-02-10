@@ -66,9 +66,7 @@ public class SettingsActivity extends AppCompatActivity {
     private static final int FILE_ATTACHMENT_DIALOG_ID = 1;
 
     private static final int DEFAULT_MAX_STORAGE_SIZE = 10 * 1024 * 1024;
-
-    private static boolean sRumStarted;
-
+    
     private static boolean sEventFilterStarted;
 
     private static boolean sNeedRestartOnStartTypeUpdate;
