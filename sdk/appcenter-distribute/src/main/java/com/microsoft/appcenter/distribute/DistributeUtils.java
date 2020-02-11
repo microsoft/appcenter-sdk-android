@@ -35,7 +35,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_R
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PRIVATE_UPDATE_SETUP_PATH_FORMAT;
 
 /**
  * Some static util methods to avoid the main file getting too big.
@@ -131,7 +131,7 @@ class DistributeUtils {
 
         /* Build URL. */
         String url = installUrl;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, appSecret);
+        url += String.format(PRIVATE_UPDATE_SETUP_PATH_FORMAT, appSecret);
         url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
@@ -164,5 +164,9 @@ class DistributeUtils {
             }
         }
         return null;
+    }
+
+    static boolean isInvalidUpdateTrack(int updateTrack) {
+        return updateTrack != UpdateTrack.PUBLIC && updateTrack != UpdateTrack.PRIVATE;
     }
 }

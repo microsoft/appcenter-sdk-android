@@ -33,7 +33,6 @@ import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
@@ -188,6 +187,11 @@ public class Distribute extends AbstractAppCenterService {
      * In memory tester app update setup failure error message if we receive deep link intent before onStart.
      */
     private String mBeforeStartTesterAppUpdateSetupFailed;
+
+    /**
+     * Update track as set and returned by the API. Can only be set before start.
+     */
+    private int mUpdateTrack = UpdateTrack.PUBLIC;
 
     /**
      * Current API call identifier to check latest release from server, used for state check.
@@ -347,6 +351,24 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Get the current update track (public vs private).
+     */
+    // TODO Remove suppress when app uses it without reflection on jCenter
+    @SuppressWarnings("WeakerAccess")
+    public static int getUpdateTrack() {
+        return getInstance().getInstanceUpdateTrack();
+    }
+
+    /**
+     * Set the update track (public vs private).
+     *
+     * @param updateTrack update track.
+     */
+    public static void setUpdateTrack(@UpdateTrack int updateTrack) {
+        getInstance().setInstanceUpdateTrack(updateTrack);
+    }
+
+    /**
      * Sets a distribute listener.
      *
      * @param listener The custom distribute listener.
@@ -452,10 +474,17 @@ public class Distribute extends AbstractAppCenterService {
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (mChannel != null && getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
-                mWorkflowCompleted = false;
-                mBrowserOpenedOrAborted = false;
-            }
+            resetWorkflow();
+        }
+    }
+
+    /**
+     * Reset current state to allow a new update check.
+     */
+    private void resetWorkflow() {
+        if (mChannel != null && getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
+            mWorkflowCompleted = false;
+            mBrowserOpenedOrAborted = false;
         }
     }
 
@@ -490,17 +519,7 @@ public class Distribute extends AbstractAppCenterService {
             mChannel.addListener(mDistributeInfoTracker);
 
             /* Resume distribute workflow only if there is foreground activity. */
-            if (mForegroundActivity != null) {
-                HandlerUtils.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        resumeDistributeWorkflow();
-                    }
-                });
-            } else {
-                AppCenterLog.debug(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
-            }
+            resumeWorkflowIfForeground();
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -517,6 +536,21 @@ public class Distribute extends AbstractAppCenterService {
             /* Disable the distribute info tracker. */
             mChannel.removeListener(mDistributeInfoTracker);
             mDistributeInfoTracker = null;
+        }
+    }
+
+    @WorkerThread
+    private void resumeWorkflowIfForeground() {
+        if (mForegroundActivity != null) {
+            HandlerUtils.runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    resumeDistributeWorkflow();
+                }
+            });
+        } else {
+            AppCenterLog.debug(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
         }
     }
 
@@ -580,6 +614,28 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void setInstanceApiUrl(String apiUrl) {
         mApiUrl = apiUrl;
+    }
+
+    /**
+     * Implements {@link #getUpdateTrack()}.
+     */
+    private synchronized int getInstanceUpdateTrack() {
+        return mUpdateTrack;
+    }
+
+    /**
+     * Implements {@link #setUpdateTrack(int)}.
+     */
+    private synchronized void setInstanceUpdateTrack(final int updateTrack) {
+        if (mContext != null) {
+            AppCenterLog.error(LOG_TAG, "Update track cannot be set after Distribute is started.");
+            return;
+        }
+        if (DistributeUtils.isInvalidUpdateTrack(updateTrack)) {
+            AppCenterLog.error(LOG_TAG, "Invalid argument passed to Distribute.setUpdateTrack().");
+            return;
+        }
+        mUpdateTrack = updateTrack;
     }
 
     /**
@@ -791,18 +847,15 @@ public class Distribute extends AbstractAppCenterService {
             }
 
             /*
-             * Check if we have previously stored the redirection parameters.
-             * Note that distribution group was not stored in previous SDK versions < 0.12.0
-             * so we test for the presence of either group or token for compatibility.
-             *
-             * Later we will likely switch to just testing the presence of a group in the first if,
-             * especially if we decide to tie private in-app updates to a specific group. That is
-             * also why we already store the group for future use even for private group updates.
+             * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-            if (updateToken != null || distributionGroupId != null) {
-                decryptAndGetReleaseDetails(updateToken, distributionGroupId);
+            boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
+            if (isPublicTrack || updateToken != null) {
+
+                /* We have what we need to check for updates via API. */
+                decryptAndGetReleaseDetails(isPublicTrack ? null : updateToken, distributionGroupId);
                 return;
             }
 
@@ -944,16 +997,20 @@ public class Distribute extends AbstractAppCenterService {
             } else {
                 SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
             }
-            SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
-            AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-            mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
-            enqueueDistributionStartSessionLog();
+            processDistributionGroupId(distributionGroupId);
+            AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             cancelPreviousTasks();
             getLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
             AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
+    }
+
+    private void processDistributionGroupId(@NonNull String distributionGroupId) {
+        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
+        mDistributeInfoTracker.updateDistributionGroupId(distributionGroupId);
+        enqueueDistributionStartSessionLog();
     }
 
     /**
@@ -963,7 +1020,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param updateToken         token to secure API call.
      */
     @VisibleForTesting
-    synchronized void getLatestReleaseDetails(String distributionGroupId, String updateToken) {
+    synchronized void getLatestReleaseDetails(final String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
         HttpClient httpClient = DependencyConfiguration.getHttpClient();
         if (httpClient == null) {
@@ -972,7 +1029,7 @@ public class Distribute extends AbstractAppCenterService {
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
-            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, distributionGroupId, releaseHash, getReportingParametersForUpdatedRelease(true, ""));
+            url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, distributionGroupId));
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
@@ -1019,7 +1076,7 @@ public class Distribute extends AbstractAppCenterService {
                     public void run() {
                         try {
                             String payload = httpResponse.getPayload();
-                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload));
+                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload), distributionGroupId);
                         } catch (JSONException e) {
                             onCallFailed(e);
                         }
@@ -1088,7 +1145,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Handle API call success.
      */
-    private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, @NonNull ReleaseDetails releaseDetails) {
+    private synchronized void handleApiCallSuccess(Object releaseCallId, String rawReleaseDetails, @NonNull ReleaseDetails releaseDetails, String sourceDistributionId) {
         String lastDownloadedReleaseHash = SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
         if (!TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             if (isCurrentReleaseWasUpdated(lastDownloadedReleaseHash)) {
@@ -1103,8 +1160,15 @@ public class Distribute extends AbstractAppCenterService {
         /* Check if state did not change. */
         if (mCheckReleaseCallId == releaseCallId) {
 
-            /* Check minimum Android API level. */
+            /* Reset state. */
             mCheckReleaseApiCall = null;
+
+            /* If we didn't know what distribution group we were originally tied to (public track). */
+            if (sourceDistributionId == null) {
+                processDistributionGroupId(releaseDetails.getDistributionGroupId());
+            }
+
+            /* Check minimum Android API level. */
             if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
 
                 /* Check version code is equals or higher and hash is different. */
@@ -1180,7 +1244,7 @@ public class Distribute extends AbstractAppCenterService {
      * Get reporting parameters for updated release.
      *
      * @param isPublic            are the parameters for public group or not.
-     *                            For public group we report install_id and release_id.
+     *                            For public group we report install_id, distribution_group_id and release_id.
      *                            For private group we report distribution_group_id and release_id.
      * @param distributionGroupId distribution group id.
      */
@@ -1194,9 +1258,8 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Current release was updated but not reported yet, reporting..");
                 if (isPublic) {
                     reportingParameters += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId();
-                } else {
-                    reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 }
+                reportingParameters += "&" + PARAMETER_DISTRIBUTION_GROUP_ID + "=" + distributionGroupId;
                 int lastDownloadedReleaseId = SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
                 reportingParameters += "&" + PARAMETER_RELEASE_ID + "=" + lastDownloadedReleaseId;
             } else {

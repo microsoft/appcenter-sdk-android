@@ -44,6 +44,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -71,7 +72,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PRIVATE_UPDATE_SETUP_PATH_FORMAT;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -180,11 +181,12 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = "http://mock";
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += String.format(PRIVATE_UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
@@ -376,6 +378,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Check browser not opened if no network. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic(never());
@@ -537,11 +540,12 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = DistributeConstants.DEFAULT_INSTALL_URL;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += String.format(PRIVATE_UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
@@ -566,6 +570,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mContext.getPackageName()).thenReturn(DistributeUtils.TESTER_APP_PACKAGE_NAME);
 
         /* Start and resume: open browser. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
@@ -590,6 +595,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
 
         /* Start and resume: open tester app. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -600,7 +606,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
         url = DistributeConstants.DEFAULT_INSTALL_URL;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += String.format(PRIVATE_UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
@@ -646,6 +652,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
         doNothing().when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(captor.capture());
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         if (!captor.getAllValues().isEmpty()) {
@@ -727,7 +734,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* If process is restarted, a new call will be made. Need to mock storage for that. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        restartProcessAndSdk();
+        Distribute.unsetInstance();
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mHttpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
 
@@ -749,11 +758,12 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = DistributeConstants.DEFAULT_INSTALL_URL;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += String.format(PRIVATE_UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
@@ -844,7 +854,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* If process is restarted, a new call will be made. Need to mock storage for that. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        restartProcessAndSdk();
+        Distribute.unsetInstance();
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+        start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mHttpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
 
@@ -856,53 +868,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void happyPathUntilHangingCallWithoutToken() throws Exception {
+    public void happyPathUntilHangingCallWithoutToken() {
 
-        /* Setup mock. */
-        UUID requestId = UUID.randomUUID();
-        mockStatic(UUID.class);
-        when(UUID.randomUUID()).thenReturn(requestId);
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
-
-        /* Start and resume: open browser. */
+        /* Start and resume: call public API directly. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verifyStatic();
-        String url = DistributeConstants.DEFAULT_INSTALL_URL;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
-        url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
-        url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
-        url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
-        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
-        url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
-        url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
-        url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
-        BrowserUtils.openBrowser(url, mActivity);
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
-
-        /* If browser already opened, activity changed must not recall it. */
-        Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.getInstance().onActivityResumed(mActivity);
-        verifyStatic();
-        BrowserUtils.openBrowser(url, mActivity);
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_REQUEST_ID, requestId.toString());
-
-        /* Store token. */
-        Distribute.getInstance().storeRedirectionParameters(requestId.toString(), "g", null);
 
         /* Verify behavior. */
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         HashMap<String, String> headers = new HashMap<>();
         verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
@@ -917,15 +889,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify behavior. */
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -938,17 +901,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         restartResumeLauncher(mActivity);
 
         /* Verify behavior not changed. */
-        verifyStatic();
-        BrowserUtils.openBrowser(url, mActivity);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-        verifyStatic();
-        SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, "g");
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
-        verifyStatic();
-        SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verify(mDistributeInfoTracker).updateDistributionGroupId("g");
         verify(mHttpClient).callAsync(argThat(new ArgumentMatcher<String>() {
 
             @Override
@@ -958,7 +910,6 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         }), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* If process is restarted, a new call will be made. Need to mock storage for that. */
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("g");
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mHttpClient, times(2)).callAsync(argThat(new ArgumentMatcher<String>() {
@@ -983,11 +934,12 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
 
         /* Start and resume: open browser. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = "http://mock";
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += String.format(PRIVATE_UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
@@ -1042,11 +994,12 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(UUID.randomUUID()).thenReturn(requestId);
 
         /* Start and resume: open browser. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic();
         String url = DistributeConstants.DEFAULT_INSTALL_URL;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, "a");
+        url += String.format(PRIVATE_UPDATE_SETUP_PATH_FORMAT, "a");
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
@@ -1092,14 +1045,12 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         ServiceCall firstCall = mock(ServiceCall.class);
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenReturn(firstCall).thenReturn(mock(ServiceCall.class));
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* The call is only triggered when app is resumed. */
         start();
-        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify cancel on disabling. */
         verify(firstCall, never()).cancel();
@@ -1157,13 +1108,11 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
         verifyStatic();
@@ -1180,7 +1129,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1299,8 +1248,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
                 return mock(ServiceCall.class);
             }
         });
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
+        Map<String, String> headers = new HashMap<>();
         when(ReleaseDetails.parse(anyString())).thenThrow(new JSONException("mock"));
 
         /* Trigger call. */
@@ -1380,6 +1328,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -1400,13 +1349,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Trigger call. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         ArgumentMatcher<String> urlArg = new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "$");
+                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/private/latest\\?release_hash=" + TEST_HASH + "$");
             }
         };
         verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -1423,13 +1373,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Primary storage will be missing data. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         ArgumentMatcher<String> urlArg = new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "$");
+                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/private/latest\\?release_hash=" + TEST_HASH + "$");
             }
         };
         verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -1448,13 +1399,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         headers.put(DistributeConstants.HEADER_API_TOKEN, "some token");
 
         /* Primary storage will be missing data. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
         ArgumentMatcher<String> urlArg = new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$");
+                return argument.toString().matches("^https://.*?/sdk/apps/a/releases/private/latest\\?release_hash=" + TEST_HASH + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$");
             }
         };
         verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -1462,8 +1414,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void reportReleaseInstallForPublicGroupWhenReleaseHashesMatch() {
+        final String distributionGroupId = "fake-distribution-id";
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn(null);
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("fake-distribution-id");
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn(distributionGroupId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn(TEST_HASH);
         when(SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID)).thenReturn(4);
 
@@ -1477,7 +1430,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
             @Override
             public boolean matches(Object argument) {
-                return argument.toString().matches("^https://.*?/public/sdk/apps/a/distribution_groups/fake-distribution-id/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + mInstallId + "&downloaded_release_id=4$");
+                return argument.toString().matches("^https://.*?/public/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + mInstallId + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$");
             }
         };
         verify(mHttpClient).callAsync(argThat(urlArg), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));

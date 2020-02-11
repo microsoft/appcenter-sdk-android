@@ -19,6 +19,7 @@ import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -302,6 +303,46 @@ public class SettingsActivity extends AppCompatActivity {
                 public void setEnabled(boolean enabled) {
                     MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_debug_state_key), enabled).apply();
                     Distribute.setEnabledForDebuggableBuild(enabled);
+                }
+            });
+            final HasSummary updateTrackHasSummary = new HasSummary() {
+
+                @Override
+                public String getSummary() {
+
+                    /*
+                     * TODO Replace the next line with:
+                     *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
+                     */
+                    UpdateTrackEnum updateTrackEnum = UpdateTrackEnum.init(MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_track_state_key), 1));
+                    return updateTrackEnum != null ? getString(updateTrackEnum.summaryRes) : "Couldn't parse update track";
+                }
+            };
+            initChangeableSetting(R.string.appcenter_distribute_track_state_key, updateTrackHasSummary.getSummary(), new Preference.OnPreferenceChangeListener() {
+
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    if (newValue == null) {
+                        return false;
+                    }
+                    String[] updateTrackEntries = getResources().getStringArray(R.array.appcenter_distribute_update_track_entries);
+
+                    /*
+                     * TODO Replace the next line with:
+                     *  'int updateTrackNewValue = newValue.toString().equals(updateTrackEntries[0]) ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE;'
+                     *  when updating the demo during release process.
+                     */
+                    int updateTrackNewValue = newValue.toString().equals(updateTrackEntries[0]) ? 1 : 2;
+
+                    /*
+                     * TODO Replace the next line with:
+                     *  'MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), updateTrackNewValue).apply();'
+                     *  when updating the demo during release process.
+                     */
+                    MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_track_state_key), updateTrackNewValue).apply();
+                    preference.setSummary(updateTrackHasSummary.getSummary());
+                    Toast.makeText(getActivity(), R.string.appcenter_distribute_track_state_updated, Toast.LENGTH_SHORT).show();
+                    return true;
                 }
             });
 
@@ -852,11 +893,44 @@ public class SettingsActivity extends AppCompatActivity {
             void setEnabled(boolean enabled);
         }
 
+        private enum UpdateTrackEnum {
+            /*
+             * TODO: Replace the next line with
+             *  'PUBLIC(UpdateTrack.PUBLIC, R.string.appcenter_distribute_track_public_enabled), PRIVATE(UpdateTrack.PRIVATE, R.string.appcenter_distribute_track_private_enabled);'
+             *  when updating the demo during release process.
+             */
+            PUBLIC(1, R.string.appcenter_distribute_track_public_enabled), PRIVATE(2, R.string.appcenter_distribute_track_private_enabled);
+
+            public final int value;
+
+            @StringRes
+            public final int summaryRes;
+
+            UpdateTrackEnum(int value, @StringRes int summaryRes) {
+                this.value = value;
+                this.summaryRes = summaryRes;
+            }
+
+            static UpdateTrackEnum init(int value) {
+                for (UpdateTrackEnum updateTrackEnum : UpdateTrackEnum.values()) {
+                    if (updateTrackEnum.value == value) {
+                        return updateTrackEnum;
+                    }
+                }
+                return PUBLIC;
+            }
+        }
+
         private interface EditTextListener {
 
             void onSave(String value);
 
             void onReset();
+        }
+
+        private interface HasSummary {
+
+            String getSummary();
         }
     }
 }
