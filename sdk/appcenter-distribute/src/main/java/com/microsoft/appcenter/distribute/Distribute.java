@@ -393,8 +393,17 @@ public class Distribute extends AbstractAppCenterService {
      * @param updateAction one of {@link UpdateAction} actions.
      *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
-    public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
+    public static void notifyUpdateAction(@UpdateAction int updateAction) {
         getInstance().handleUpdateAction(updateAction);
+    }
+
+    /**
+     * Trigger a check for update.
+     * If the application is in background, it will delay the check for update until the application is in foreground.
+     * This call has no effect if there is already an ongoing check.
+     */
+    public static void checkForUpdate() {
+        getInstance().instanceCheckForUpdate();
     }
 
     @Override
@@ -474,18 +483,25 @@ public class Distribute extends AbstractAppCenterService {
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            resetWorkflow();
+            if (mChannel != null) {
+                tryResetWorkflow();
+            }
         }
     }
 
     /**
-     * Reset current state to allow a new update check.
+     * Reset current workflow to allow a new update check if we are not already in the process
+     * of checking one.
+     *
+     * @return true if workflow was reset, false otherwise.
      */
-    private void resetWorkflow() {
-        if (mChannel != null && getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
+    private boolean tryResetWorkflow() {
+        if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED && mCheckReleaseCallId == null) {
             mWorkflowCompleted = false;
             mBrowserOpenedOrAborted = false;
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -650,6 +666,28 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void setInstanceEnabledForDebuggableBuild(boolean enabled) {
         mEnabledForDebuggableBuild = enabled;
+    }
+
+    /**
+     * Implements {@link #checkForUpdate()}.
+     */
+    private void instanceCheckForUpdate() {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                handleCheckForUpdate();
+            }
+        });
+    }
+
+    @WorkerThread
+    private synchronized void handleCheckForUpdate() {
+        if (tryResetWorkflow()) {
+            resumeWorkflowIfForeground();
+        } else {
+            AppCenterLog.info(LOG_TAG, "A check for update is already ongoing.");
+        }
     }
 
     /**
@@ -1903,7 +1941,7 @@ public class Distribute extends AbstractAppCenterService {
          */
         SessionContext.SessionInfo lastSession = SessionContext.getInstance().getSessionAt(System.currentTimeMillis());
         if (lastSession == null || lastSession.getSessionId() == null) {
-            AppCenterLog.debug(DistributeConstants.LOG_TAG, "No sessions were logged before, ignore sending of the distribution start session log.");
+            AppCenterLog.debug(LOG_TAG, "No sessions were logged before, ignore sending of the distribution start session log.");
             return;
         }
         post(new Runnable() {
