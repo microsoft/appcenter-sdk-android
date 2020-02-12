@@ -17,6 +17,7 @@ import java.util.Collections;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -42,7 +43,7 @@ public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
         Distribute.checkForUpdate();
 
         /* Then we call again. */
-        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
     }
 
     @Test
@@ -60,11 +61,11 @@ public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
         Distribute.checkForUpdate();
 
         /* Then we don't call again. */
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
 
         /* And it's not queued when current call finishes with no update available. */
         httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
     }
 
     @Test
