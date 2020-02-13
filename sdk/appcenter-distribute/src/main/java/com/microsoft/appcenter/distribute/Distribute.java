@@ -286,6 +286,16 @@ public class Distribute extends AbstractAppCenterService {
     private boolean mEnabledForDebuggableBuild;
 
     /**
+     * Flags for Distribute configuration.
+     */
+    private int mFlags;
+
+    /**
+     * Flag to check if manual update was requested.
+     */
+    private boolean mManualCheckRequested;
+
+    /**
      * Init.
      */
     private Distribute() {
@@ -404,6 +414,26 @@ public class Distribute extends AbstractAppCenterService {
      */
     public static void checkForUpdate() {
         getInstance().instanceCheckForUpdate();
+    }
+
+    /**
+     * Configure Distribute options before the service starts.
+     *
+     * @param flags Distribute flags.
+     */
+    public static void configure(int flags) {
+        getInstance().configureInstance(flags);
+    }
+
+    /**
+     * Implements {@link #configure(int)}.
+     */
+    private synchronized void configureInstance(int flags) {
+        if (mChannel != null) {
+            AppCenterLog.error(LOG_TAG, "Flags cannot be set after Distribute is started.");
+            return;
+        }
+        mFlags = flags;
     }
 
     @Override
@@ -683,6 +713,7 @@ public class Distribute extends AbstractAppCenterService {
 
     @WorkerThread
     private synchronized void handleCheckForUpdate() {
+        mManualCheckRequested = true;
         if (tryResetWorkflow()) {
             resumeWorkflowIfForeground();
         } else {
@@ -884,6 +915,11 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
 
+            if (isCheckForUpdateDisabled()) {
+                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled.");
+                return;
+            }
+
             /*
              * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
@@ -1039,10 +1075,22 @@ public class Distribute extends AbstractAppCenterService {
             processDistributionGroupId(distributionGroupId);
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             cancelPreviousTasks();
+            if (isCheckForUpdateDisabled()) {
+                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled.");
+                return;
+            }
             getLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
             AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
+    }
+
+    /**
+     * Check if automatic check for update is disabled.
+     */
+    private boolean isCheckForUpdateDisabled() {
+        return ((mFlags & DistributeFlags.DISABLE_AUTOMATIC_CHECK_FOR_UPDATE) == DistributeFlags.DISABLE_AUTOMATIC_CHECK_FOR_UPDATE)
+                && !mManualCheckRequested;
     }
 
     private void processDistributionGroupId(@NonNull String distributionGroupId) {
