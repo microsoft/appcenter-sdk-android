@@ -286,14 +286,14 @@ public class Distribute extends AbstractAppCenterService {
     private boolean mEnabledForDebuggableBuild;
 
     /**
-     * Flags for Distribute configuration.
+     * Flags to check if automatic check for update is disabled.
      */
-    private int mFlags;
+    private boolean mAutomaticCheckForUpdateDisabled;
 
     /**
-     * Flag to check if manual update was requested.
+     * Flag to check if manual check for update was requested.
      */
-    private boolean mManualCheckRequested;
+    private boolean mManualCheckForUpdateRequested;
 
     /**
      * Init.
@@ -417,23 +417,21 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Configure Distribute options before the service starts.
-     *
-     * @param flags Distribute flags.
+     * Disable automatic check for update before the service starts.
      */
-    public static void configure(int flags) {
-        getInstance().configureInstance(flags);
+    public static void disableAutomaticCheckForUpdate() {
+        getInstance().instanceDisableAutomaticCheckForUpdate();
     }
 
     /**
-     * Implements {@link #configure(int)}.
+     * Implements {@link #disableAutomaticCheckForUpdate()}.
      */
-    private synchronized void configureInstance(int flags) {
+    private synchronized void instanceDisableAutomaticCheckForUpdate() {
         if (mChannel != null) {
-            AppCenterLog.error(LOG_TAG, "Flags cannot be set after Distribute is started.");
+            AppCenterLog.error(LOG_TAG, "Automatic check for update cannot be disabled after Distribute is started.");
             return;
         }
-        mFlags = flags;
+        mAutomaticCheckForUpdateDisabled = true;
     }
 
     @Override
@@ -713,7 +711,7 @@ public class Distribute extends AbstractAppCenterService {
 
     @WorkerThread
     private synchronized void handleCheckForUpdate() {
-        mManualCheckRequested = true;
+        mManualCheckForUpdateRequested = true;
         if (tryResetWorkflow()) {
             resumeWorkflowIfForeground();
         } else {
@@ -915,7 +913,7 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
 
-            if (isCheckForUpdateDisabled()) {
+            if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
                 AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled.");
                 return;
             }
@@ -1075,7 +1073,7 @@ public class Distribute extends AbstractAppCenterService {
             processDistributionGroupId(distributionGroupId);
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             cancelPreviousTasks();
-            if (isCheckForUpdateDisabled()) {
+            if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
                 AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled.");
                 return;
             }
@@ -1083,14 +1081,6 @@ public class Distribute extends AbstractAppCenterService {
         } else {
             AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
         }
-    }
-
-    /**
-     * Check if automatic check for update is disabled.
-     */
-    private boolean isCheckForUpdateDisabled() {
-        return ((mFlags & DistributeFlags.DISABLE_AUTOMATIC_CHECK_FOR_UPDATE) == DistributeFlags.DISABLE_AUTOMATIC_CHECK_FOR_UPDATE)
-                && !mManualCheckRequested;
     }
 
     private void processDistributionGroupId(@NonNull String distributionGroupId) {
