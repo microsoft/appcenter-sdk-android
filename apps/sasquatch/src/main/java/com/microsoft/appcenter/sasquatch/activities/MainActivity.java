@@ -112,11 +112,7 @@ public class MainActivity extends AppCompatActivity {
         /* Set the track explicitly only if we set it in settings, to test the initial public by default at first launch. */
         int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_track_state_key), 0);
         if (savedTrack != 0) {
-            try {
-                Distribute.setUpdateTrack(savedTrack);
-            } catch (Exception e) {
-                Toast.makeText(application, "No Update Track API in this build", Toast.LENGTH_SHORT).show();
-            }
+            Distribute.setUpdateTrack(savedTrack);
         }
         if (sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
             int latency = sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
