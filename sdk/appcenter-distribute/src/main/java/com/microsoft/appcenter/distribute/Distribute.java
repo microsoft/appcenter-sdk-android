@@ -570,6 +570,7 @@ public class Distribute extends AbstractAppCenterService {
             mTesterAppOpenedOrAborted = false;
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
+            mManualCheckForUpdateRequested = false;
             cancelPreviousTasks();
             SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
             SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
@@ -913,8 +914,9 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
 
+            /* Do not proceed if automatic check for update is disabled and manual check for update has not been called. */
             if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
-                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled.");
+                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled. Will not check for update.");
                 return;
             }
 
@@ -1073,8 +1075,10 @@ public class Distribute extends AbstractAppCenterService {
             processDistributionGroupId(distributionGroupId);
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             cancelPreviousTasks();
+
+            /* Do not proceed if automatic check for update is disabled and manual check for update has not been called. */
             if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
-                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled.");
+                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled. Will not check for update.");
                 return;
             }
             getLatestReleaseDetails(distributionGroupId, updateToken);
