@@ -305,6 +305,19 @@ public class SettingsActivity extends AppCompatActivity {
                     Distribute.setEnabledForDebuggableBuild(enabled);
                 }
             });
+            initCheckBoxSetting(R.string.appcenter_distribute_disable_check_for_update_key, R.string.appcenter_distribute_summary_enabled_check_for_update, R.string.appcenter_distribute_summary_disabled_check_for_update, new HasEnabled() {
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_disable_check_for_update_key), enabled).apply();
+                    Toast.makeText(getActivity(), R.string.appcenter_distribute_track_state_updated, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_disable_check_for_update_key), true);
+                }
+            });
             final HasSummary updateTrackHasSummary = new HasSummary() {
 
                 @Override

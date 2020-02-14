@@ -10,8 +10,10 @@ import android.content.Intent;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.crashes.Crashes;
+import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.AuthenticationProviderActivity;
 import com.microsoft.appcenter.sasquatch.activities.CrashActivity;
@@ -19,10 +21,13 @@ import com.microsoft.appcenter.sasquatch.activities.CustomPropertiesActivity;
 import com.microsoft.appcenter.sasquatch.activities.DeviceInfoActivity;
 import com.microsoft.appcenter.sasquatch.activities.DummyActivity;
 import com.microsoft.appcenter.sasquatch.activities.EventActivity;
+import com.microsoft.appcenter.sasquatch.activities.MainActivity;
 import com.microsoft.appcenter.sasquatch.activities.ManagedErrorActivity;
 import com.microsoft.appcenter.sasquatch.activities.PageActivity;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,12 +52,31 @@ public final class TestFeatures {
         sTestFeatureModels.add(new TestFeatureTitle(R.string.miscellaneous_title));
         sTestFeatureModels.add(new TestFeature(R.string.title_custom_properties, R.string.description_custom_properties, CustomPropertiesActivity.class));
         sTestFeatureModels.add(new TestFeature(R.string.title_device_info, R.string.description_device_info, DeviceInfoActivity.class));
+        sTestFeatureModels.add(new TestFeature(R.string.title_check_for_update, R.string.description_check_for_update, checkForUpdateClickListener));
     }
 
     @SuppressWarnings("unchecked")
     private static boolean hadMemoryWarning() {
         return Crashes.hasReceivedMemoryWarningInLastSession().get();
     }
+
+    private static View.OnClickListener checkForUpdateClickListener = new View.OnClickListener() {
+
+        @Override
+        public void onClick(View view) {
+            try {
+
+                /*
+                 * TODO replace the next line with 'Distribute.checkForUpdate();'
+                 * when updating the demo during release process.
+                 */
+                Method checkForUpdateMethod = Distribute.class.getMethod("checkForUpdate");
+                checkForUpdateMethod.invoke(null);
+            } catch (Exception e) {
+                AppCenterLog.warn(MainActivity.LOG_TAG, "No CheckForUpdate API in this build");
+            }
+        }
+    };
 
     public static List<TestFeatureModel> getAvailableControls() {
         return sTestFeatureModels;
