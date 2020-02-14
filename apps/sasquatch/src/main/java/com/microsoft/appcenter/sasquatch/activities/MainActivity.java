@@ -113,13 +113,7 @@ public class MainActivity extends AppCompatActivity {
         int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_track_state_key), 0);
         if (savedTrack != 0) {
             try {
-
-                /*
-                 * TODO replace the next line with 'Distribute.setUpdateTrack(savedTrack);'
-                 * when updating the demo during release process.
-                 */
-                Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
-                setUpdateTrackMethod.invoke(null, savedTrack);
+                Distribute.setUpdateTrack(savedTrack);
             } catch (Exception e) {
                 Toast.makeText(application, "No Update Track API in this build", Toast.LENGTH_SHORT).show();
             }

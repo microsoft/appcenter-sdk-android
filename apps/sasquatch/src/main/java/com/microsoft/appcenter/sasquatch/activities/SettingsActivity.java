@@ -35,6 +35,7 @@ import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
+import com.microsoft.appcenter.distribute.UpdateTrack;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
@@ -309,12 +310,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public String getSummary() {
-
-                    /*
-                     * TODO Replace the next line with:
-                     *  'return MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_update_track_before_start_value), UpdateTrack.PUBLIC);'
-                     */
-                    UpdateTrackEnum updateTrackEnum = UpdateTrackEnum.init(MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_track_state_key), 1));
+                    UpdateTrackEnum updateTrackEnum = UpdateTrackEnum.init(MainActivity.sSharedPreferences.getInt(getString(R.string.appcenter_distribute_track_state_key), UpdateTrack.PUBLIC));
                     return updateTrackEnum != null ? getString(updateTrackEnum.summaryRes) : "Couldn't parse update track";
                 }
             };
@@ -326,19 +322,7 @@ public class SettingsActivity extends AppCompatActivity {
                         return false;
                     }
                     String[] updateTrackEntries = getResources().getStringArray(R.array.appcenter_distribute_update_track_entries);
-
-                    /*
-                     * TODO Replace the next line with:
-                     *  'int updateTrackNewValue = newValue.toString().equals(updateTrackEntries[0]) ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE;'
-                     *  when updating the demo during release process.
-                     */
-                    int updateTrackNewValue = newValue.toString().equals(updateTrackEntries[0]) ? 1 : 2;
-
-                    /*
-                     * TODO Replace the next line with:
-                     *  'MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_update_track_before_start_value), updateTrackNewValue).apply();'
-                     *  when updating the demo during release process.
-                     */
+                    int updateTrackNewValue = newValue.toString().equals(updateTrackEntries[0]) ? UpdateTrack.PUBLIC : UpdateTrack.PRIVATE;
                     MainActivity.sSharedPreferences.edit().putInt(getString(R.string.appcenter_distribute_track_state_key), updateTrackNewValue).apply();
                     preference.setSummary(updateTrackHasSummary.getSummary());
                     Toast.makeText(getActivity(), R.string.appcenter_distribute_track_state_updated, Toast.LENGTH_SHORT).show();
@@ -894,12 +878,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private enum UpdateTrackEnum {
-            /*
-             * TODO: Replace the next line with
-             *  'PUBLIC(UpdateTrack.PUBLIC, R.string.appcenter_distribute_track_public_enabled), PRIVATE(UpdateTrack.PRIVATE, R.string.appcenter_distribute_track_private_enabled);'
-             *  when updating the demo during release process.
-             */
-            PUBLIC(1, R.string.appcenter_distribute_track_public_enabled), PRIVATE(2, R.string.appcenter_distribute_track_private_enabled);
+            PUBLIC(UpdateTrack.PUBLIC, R.string.appcenter_distribute_track_public_enabled), PRIVATE(UpdateTrack.PRIVATE, R.string.appcenter_distribute_track_private_enabled);
 
             public final int value;
 
