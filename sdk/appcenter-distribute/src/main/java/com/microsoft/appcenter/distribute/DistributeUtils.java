@@ -11,10 +11,10 @@ import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HashUtils;
+import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -35,7 +35,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_R
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_SETUP_PATH_FORMAT;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PRIVATE_UPDATE_SETUP_PATH_FORMAT;
 
 /**
  * Some static util methods to avoid the main file getting too big.
@@ -131,14 +131,14 @@ class DistributeUtils {
 
         /* Build URL. */
         String url = installUrl;
-        url += String.format(UPDATE_SETUP_PATH_FORMAT, appSecret);
+        url += String.format(PRIVATE_UPDATE_SETUP_PATH_FORMAT, appSecret);
         url += "?" + PARAMETER_RELEASE_HASH + "=" + releaseHash;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + activity.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
-        url += "&" + PARAMETER_INSTALL_ID + "=" + AppCenter.getInstallId().get().toString();
+        url += "&" + PARAMETER_INSTALL_ID + "=" + IdHelper.getInstallId().toString();
         AppCenterLog.debug(LOG_TAG, "No token, need to open browser to url=" + url);
 
         /* Store request id. */
@@ -164,5 +164,9 @@ class DistributeUtils {
             }
         }
         return null;
+    }
+
+    static boolean isInvalidUpdateTrack(int updateTrack) {
+        return updateTrack != UpdateTrack.PUBLIC && updateTrack != UpdateTrack.PRIVATE;
     }
 }

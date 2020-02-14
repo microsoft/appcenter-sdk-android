@@ -8,6 +8,7 @@ package com.microsoft.appcenter.channel;
 import android.content.Context;
 import android.os.Handler;
 
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
@@ -15,8 +16,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
-import com.microsoft.appcenter.utils.context.AuthTokenInfo;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Before;
@@ -29,7 +28,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.UUID;
 
 import static org.mockito.Matchers.any;
@@ -37,12 +35,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("WeakerAccess")
 @PrepareForTest({
         AppCenterLog.class,
-        AuthTokenContext.class,
         DefaultChannel.class,
         DeviceInfoHelper.class,
         HandlerUtils.class,
@@ -65,9 +61,6 @@ public class AbstractDefaultChannelTest {
 
     @Mock
     protected Handler mAppCenterHandler;
-
-    @Mock
-    protected AuthTokenContext mAuthTokenContext;
 
     static Answer<String> getGetLogsAnswer() {
         return getGetLogsAnswer(-1);
@@ -101,11 +94,11 @@ public class AbstractDefaultChannelTest {
             @Override
             public Object answer(InvocationOnMock invocation) {
                 Object[] args = invocation.getArguments();
-                if (args[4] instanceof ServiceCallback) {
+                if (args[3] instanceof ServiceCallback) {
                     if (e == null)
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("", null);
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded(new HttpResponse(200, ""));
                     else
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(e);
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(e);
                 }
                 return null;
             }
@@ -136,11 +129,6 @@ public class AbstractDefaultChannelTest {
             }
         }).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        mockStatic(AuthTokenContext.class);
-        when(mAuthTokenContext.getAuthToken()).thenReturn(MOCK_TOKEN);
-        when(mAuthTokenContext.getAuthTokenValidityList()).thenReturn(Collections.singletonList(new AuthTokenInfo()));
-        when(AuthTokenContext.getInstance()).thenReturn(mAuthTokenContext);
-        whenNew(AuthTokenContext.class).withAnyArguments().thenReturn(mAuthTokenContext);
         mockStatic(SharedPreferencesManager.class);
         mockStatic(System.class);
     }

@@ -20,6 +20,7 @@ import android.util.Log;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.channel.OneCollectorChannelListener;
+import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
@@ -36,7 +37,6 @@ import com.microsoft.appcenter.utils.NetworkStateHelper;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
-import com.microsoft.appcenter.utils.context.AuthTokenContext;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -55,6 +55,7 @@ import static android.util.Log.VERBOSE;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.utils.AppCenterLog.NONE;
 
 public class AppCenter {
@@ -230,6 +231,7 @@ public class AppCenter {
     @VisibleForTesting
     static synchronized void unsetInstance() {
         sInstance = null;
+        NetworkStateHelper.unsetInstance();
     }
 
     /**
@@ -776,7 +778,6 @@ public class AppCenter {
         /* If parameters are valid, init context related resources. */
         FileManager.initialize(mApplication);
         SharedPreferencesManager.initialize(mApplication);
-        AuthTokenContext.initialize(mApplication);
 
         /* Initialize session storage. */
         SessionContext.getInstance();
@@ -784,11 +785,17 @@ public class AppCenter {
         /* Get enabled state. */
         boolean enabled = isInstanceEnabled();
 
+        /* Instantiate HTTP client if it doesn't exist as a dependency. */
+        HttpClient httpClient = DependencyConfiguration.getHttpClient();
+        if (httpClient == null) {
+            httpClient = createHttpClient(mApplication);
+        }
+
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
         mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, mHandler);
+        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, httpClient, mHandler);
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {
@@ -800,7 +807,7 @@ public class AppCenter {
         }
         mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
-        mOneCollectorChannelListener = new OneCollectorChannelListener(mApplication, mChannel, mLogSerializer, IdHelper.getInstallId());
+        mOneCollectorChannelListener = new OneCollectorChannelListener(mChannel, mLogSerializer, httpClient, IdHelper.getInstallId());
         if (mLogUrl != null) {
             if (mAppSecret != null) {
                 AppCenterLog.info(LOG_TAG, "The log url of App Center endpoint has been changed to " + mLogUrl);
@@ -956,9 +963,6 @@ public class AppCenter {
 
         /* If starting from a library, we will send start service log later when app starts with an app secret. */
         if (startFromApp) {
-
-            /* Finish auth token context initialization. */
-            AuthTokenContext.getInstance().finishInitialization();
 
             /* Send start service log. */
             for (AppCenterService service : updatedServices) {

@@ -8,6 +8,7 @@ package com.microsoft.appcenter.channel;
 import android.content.Context;
 
 import com.microsoft.appcenter.CancellationException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.AppCenterIngestion;
@@ -22,7 +23,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
@@ -48,8 +48,8 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         doAnswer(new Answer<Void>() {
 
@@ -83,7 +83,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         afterCallSemaphore.acquireUninterruptibly();
 
         /* Verify ingestion not sent. */
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
     @Test(timeout = 5000)
@@ -94,10 +94,10 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
             @Override
             public Object answer(final InvocationOnMock invocation) {
@@ -106,7 +106,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("", null);
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallSucceeded(new HttpResponse(200, ""));
                         afterCallSemaphore.release();
                     }
                 }.start();
@@ -147,11 +147,11 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         final Exception mockException = new IOException();
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
             @Override
             public Object answer(final InvocationOnMock invocation) {
@@ -160,7 +160,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
                     @Override
                     public void run() {
                         beforeCallSemaphore.acquireUninterruptibly();
-                        ((ServiceCallback) invocation.getArguments()[4]).onCallFailed(mockException);
+                        ((ServiceCallback) invocation.getArguments()[3]).onCallFailed(mockException);
                         afterCallSemaphore.release();
                     }
                 }.start();

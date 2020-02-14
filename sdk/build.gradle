@@ -224,7 +224,7 @@ task coverageReport(type: JacocoReport, dependsOn: subprojects.coverageReport) {
         html.enabled = true
     }
 
-    def coverageReports = subprojects.coverageReport.findAll { !it.project.name.contains("rum") }
+    def coverageReports = subprojects.coverageReport
 
     //noinspection GroovyAssignabilityCheck
     sourceDirectories.from = files(coverageReports.sourceDirectories)

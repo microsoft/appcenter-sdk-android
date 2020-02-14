@@ -13,6 +13,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -478,7 +479,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
-                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded("mock", null);
+                ((ServiceCallback) invocation.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mock"));
                 return mock(ServiceCall.class);
             }
         });

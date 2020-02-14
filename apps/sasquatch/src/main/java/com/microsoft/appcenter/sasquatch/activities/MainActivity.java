@@ -29,14 +29,9 @@ import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
-import com.microsoft.appcenter.auth.Auth;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
-import com.microsoft.appcenter.data.Data;
-import com.microsoft.appcenter.data.exception.DataException;
-import com.microsoft.appcenter.data.models.DocumentMetadata;
-import com.microsoft.appcenter.data.models.RemoteOperationListener;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
@@ -50,6 +45,7 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
@@ -112,8 +108,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     static void startAppCenter(Application application, String startTypeString) {
-        if (MainActivity.sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
-            int latency = MainActivity.sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
+
+        /* Set the track explicitly only if we set it in settings, to test the initial public by default at first launch. */
+        int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_track_state_key), 0);
+        if (savedTrack != 0) {
+            try {
+
+                /*
+                 * TODO replace the next line with 'Distribute.setUpdateTrack(savedTrack);'
+                 * when updating the demo during release process.
+                 */
+                Method setUpdateTrackMethod = Distribute.class.getMethod("setUpdateTrack", int.class);
+                setUpdateTrackMethod.invoke(null, savedTrack);
+            } catch (Exception e) {
+                Toast.makeText(application, "No Update Track API in this build", Toast.LENGTH_SHORT).show();
+            }
+        }
+        if (sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
+            int latency = sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
             try {
                 boolean result = Analytics.setTransmissionInterval(latency);
                 if (result) {
@@ -144,10 +156,10 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
             case NO_SECRET:
-                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class, Auth.class, Data.class);
+                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
                 return;
         }
-        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class, Auth.class, Data.class);
+        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
     }
 
     public static void setUserId(String userId) {
@@ -236,16 +248,6 @@ public class MainActivity extends AppCompatActivity {
         return sPushListener;
     }
 
-    private RemoteOperationListener getDataRemoteOperationListener() {
-        return new RemoteOperationListener() {
-
-            @Override
-            public void onRemoteOperationCompleted(String operation, DocumentMetadata documentMetadata, DataException error) {
-                Log.i(LOG_TAG, String.format("Remote operation completed operation=%s partition=%s documentId=%s eTag=%s", operation, documentMetadata.getPartition(), documentMetadata.getId(), documentMetadata.getETag()), error);
-            }
-        };
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -267,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
         Push.setListener(getPushListener());
-        Data.setRemoteOperationListener(getDataRemoteOperationListener());
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
@@ -277,18 +278,6 @@ public class MainActivity extends AppCompatActivity {
         String apiUrl = getString(R.string.api_url);
         if (!TextUtils.isEmpty(apiUrl)) {
             Distribute.setApiUrl(apiUrl);
-        }
-
-        /* Set auth config url. */
-        String configUrl = getString(R.string.auth_config_url);
-        if (!TextUtils.isEmpty(configUrl)) {
-            Auth.setConfigUrl(configUrl);
-        }
-
-        /* Set token exchange url. */
-        String tokenExchangeUrl = getString(R.string.token_exchange_url);
-        if (!TextUtils.isEmpty(tokenExchangeUrl)) {
-            Data.setTokenExchangeUrl(tokenExchangeUrl);
         }
 
         /* Set push sender ID the old way for testing without firebase lib. */

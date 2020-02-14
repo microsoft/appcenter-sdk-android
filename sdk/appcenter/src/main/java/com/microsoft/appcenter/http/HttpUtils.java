@@ -104,7 +104,7 @@ public class HttpUtils {
         /* Check HTTP exception details. */
         if (t instanceof HttpException) {
             HttpException exception = (HttpException) t;
-            int code = exception.getStatusCode();
+            int code = exception.getHttpResponse().getStatusCode();
             return code >= 500 || code == 408 || code == 429;
         }
 
@@ -186,17 +186,6 @@ public class HttpUtils {
      */
     public static String hideTickets(@NonNull String tickets) {
         return TOKEN_VALUE_PATTERN.matcher(tickets).replaceAll(":***");
-    }
-
-    /**
-     * Hide JWT token value in Authorization header string.
-     *
-     * @param token string header value.
-     * @return obfuscated token string header value.
-     */
-    static String hideAuthToken(@NonNull String token) {
-        String prefix = token.split("\\s+")[0];
-        return prefix + " ***";
     }
 
     public static HttpClient createHttpClient(@NonNull Context context) {

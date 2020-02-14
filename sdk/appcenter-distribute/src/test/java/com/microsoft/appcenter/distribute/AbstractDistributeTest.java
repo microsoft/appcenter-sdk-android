@@ -11,7 +11,6 @@ import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -31,8 +30,8 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
+import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.NetworkStateHelper;
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -47,8 +46,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
+import java.util.UUID;
+
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCES_NAME_MOBILE_CENTER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
@@ -56,7 +56,6 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -76,6 +75,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         DistributeUtils.class,
         HandlerUtils.class,
         HttpUtils.class,
+        IdHelper.class,
         InstallerUtils.class,
         NetworkStateHelper.class,
         ReleaseDetails.class,
@@ -134,12 +134,6 @@ public class AbstractDistributeTest {
     Channel mChannel;
 
     @Mock
-    SharedPreferences mMobileCenterPreferencesStorage;
-
-    @Mock
-    private AppCenterFuture<Boolean> mBooleanAppCenterFuture;
-
-    @Mock
     DistributeInfoTracker mDistributeInfoTracker;
 
     @Mock
@@ -163,6 +157,8 @@ public class AbstractDistributeTest {
     @Mock
     NotificationManager mNotificationManager;
 
+    UUID mInstallId = UUID.randomUUID();
+
     @Before
     @SuppressLint("ShowToast")
     @SuppressWarnings("ResourceType")
@@ -170,8 +166,6 @@ public class AbstractDistributeTest {
         Distribute.unsetInstance();
         mockStatic(AppCenterLog.class);
         mockStatic(AppCenter.class);
-        when(AppCenter.isEnabled()).thenReturn(mBooleanAppCenterFuture);
-        when(mBooleanAppCenterFuture.get()).thenReturn(true);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -181,13 +175,12 @@ public class AbstractDistributeTest {
             }
         }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
         whenNew(DistributeInfoTracker.class).withAnyArguments().thenReturn(mDistributeInfoTracker);
+        mockStatic(IdHelper.class);
+        when(IdHelper.getInstallId()).thenReturn(mInstallId);
 
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(true);
-
-        /* Mobile Center Preferences failover initialization */
-        when(mContext.getSharedPreferences(PREFERENCES_NAME_MOBILE_CENTER, Context.MODE_PRIVATE)).thenReturn(mMobileCenterPreferencesStorage);
 
         /* Then simulate further changes to state. */
         doAnswer(new Answer<Void>() {
@@ -251,7 +244,7 @@ public class AbstractDistributeTest {
         /* Mock Crypto to not crypt. */
         mockStatic(CryptoUtils.class);
         when(CryptoUtils.getInstance(any(Context.class))).thenReturn(mCryptoUtils);
-        when(mCryptoUtils.decrypt(anyString(), anyBoolean())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
+        when(mCryptoUtils.decrypt(anyString())).thenAnswer(new Answer<CryptoUtils.DecryptedData>() {
 
             @Override
             public CryptoUtils.DecryptedData answer(InvocationOnMock invocation) {

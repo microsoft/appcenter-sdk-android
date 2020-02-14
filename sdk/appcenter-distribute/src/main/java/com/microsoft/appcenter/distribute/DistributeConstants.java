@@ -66,20 +66,20 @@ public final class DistributeConstants {
     static final String DEFAULT_API_URL = "https://api.appcenter.ms/v0.1";
 
     /**
-     * Update setup URL path. Contains the app secret variable to replace.
+     * Private update setup URL path. Contains the app secret variable to replace.
      * Trailing slash needed to avoid redirection that can lose the query string on some servers.
      */
-    static final String UPDATE_SETUP_PATH_FORMAT = "/apps/%s/update-setup/";
+    static final String PRIVATE_UPDATE_SETUP_PATH_FORMAT = "/apps/%s/private-update-setup/";
 
     /**
-     * Check latest private release API URL path. Contains the app secret variable to replace.
+     * Check latest private release API URL path. Contains variables: appSecret, release_hash, extra query string parameters.
      */
-    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/latest?release_hash=%s%s";
+    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/private/latest?release_hash=%s%s";
 
     /**
-     * Check latest public release API URL path. Contains the app secret variable to replace.
+     * Check latest public release API URL path. Contains variables: appSecret, release_hash, extra query string parameters.
      */
-    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/distribution_groups/%s/releases/latest?release_hash=%s%s";
+    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/releases/latest?release_hash=%s%s";
 
     /**
      * API parameter for release hash.
@@ -204,11 +204,6 @@ public final class DistributeConstants {
      * Notification channel identifier.
      */
     static final String NOTIFICATION_CHANNEL_ID = "appcenter.distribute";
-
-    /**
-     * Previous name of preferences, used for fail-over logic for missing token/distribution group.
-     */
-    static final String PREFERENCES_NAME_MOBILE_CENTER = "MobileCenter";
 
     /**
      * Base key for stored preferences.

@@ -19,7 +19,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
@@ -51,8 +50,8 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(50));
-        when(mockIngestion.sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
+        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(50));
+        when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -71,7 +70,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         /* 50 logs are persisted but never being sent to Ingestion. */
         assertEquals(50, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(mockPersistence, times(50)).putLog(any(Log.class), eq(TEST_GROUP), eq(Flags.NORMAL));
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence, never()).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, never()).onBeforeSending(any(Log.class));
         verify(mockListener, never()).onSuccess(any(Log.class));
@@ -85,7 +84,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Verify channel starts sending logs. */
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), eq(BATCH_TIME_INTERVAL));
-        verify(mockIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mockPersistence).deleteLogs(any(String.class), any(String.class));
         verify(mockListener, times(50)).onBeforeSending(any(Log.class));
         verify(mockListener, times(50)).onSuccess(any(Log.class));
@@ -146,7 +145,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.pauseGroup(TEST_GROUP, targetToken);
 
         /* Mock the database to return logs now. */
-        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
 
         /* Enqueue a log. */
@@ -158,7 +157,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         verify(persistence).putLog(log, TEST_GROUP, Flags.NORMAL);
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
         verify(persistence, never()).countLogs(TEST_GROUP);
-        verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Pausing a second time has no effect. */
         channel.pauseGroup(TEST_GROUP, targetToken);
@@ -168,17 +167,17 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         Log otherLog = mock(Log.class);
         when(otherLog.getTransmissionTargetTokens()).thenReturn(Collections.singleton("iKey2-apiKey2"));
         channel.enqueue(otherLog, TEST_GROUP, Flags.DEFAULTS);
-        verify(ingestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         reset(ingestion);
 
         /* Resume token. */
         channel.resumeGroup(TEST_GROUP, targetToken);
-        verify(ingestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Sending more logs works now. */
         reset(ingestion);
         channel.enqueue(log, TEST_GROUP, Flags.DEFAULTS);
-        verify(ingestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Calling resume a second time has 0 effect. */
         reset(persistence);
@@ -188,7 +187,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         verifyZeroInteractions(ingestion);
 
         /* AppCenter ingestion never used. */
-        verify(appCenterIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(appCenterIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -210,7 +209,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.pauseGroup(TEST_GROUP, targetToken);
 
         /* Mock the database to return logs now. */
-        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
 
         /* Enqueue a log. */
@@ -221,15 +220,15 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         /* Verify persisted but not incrementing and checking logs. */
         verify(persistence).putLog(log, TEST_GROUP, Flags.NORMAL);
         assertEquals(0, channel.getGroupState(TEST_GROUP).mPendingLogCount);
-        verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Resume group should not send the log. */
         channel.resumeGroup(TEST_GROUP, null);
-        verify(ingestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
         /* Resume token, send the log now. */
         channel.resumeGroup(TEST_GROUP, targetToken);
-        verify(ingestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(ingestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -271,19 +270,19 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.addGroup(TEST_GROUP, 10, batchTimeInterval, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
         verifyStatic(never());
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), anyLong());
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), anyLong());
 
         /* When we enqueue a log while being paused. */
         channel.pauseGroup(TEST_GROUP, null);
-        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
 
         /* Verify that timer does not start but that the current time is saved for future reference. */
         verifyStatic();
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(now));
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), anyLong());
 
         /* When we resume later (before interval is due) */
@@ -295,7 +294,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Check timer is started with remaining time. */
         verify(mAppCenterHandler).postDelayed(notNull(Runnable.class), eq(expectedTimeToWait));
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -314,19 +313,19 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         channel.addGroup(TEST_GROUP, 10, batchTimeInterval, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
         verifyStatic(never());
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), anyLong());
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), anyLong());
 
         /* When we enqueue a log while being paused. */
         channel.pauseGroup(TEST_GROUP, null);
-        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class), any(Date.class), any(Date.class))).then(getGetLogsAnswer(1));
+        when(persistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(persistence.countLogs(TEST_GROUP)).thenReturn(1);
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
 
         /* Verify that timer does not start but that the current time is saved for future reference. */
         verifyStatic();
         SharedPreferencesManager.putLong(eq(START_TIMER_PREFIX + TEST_GROUP), eq(now));
-        verify(mockIngestion, never()).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
         verify(mAppCenterHandler, never()).postDelayed(any(Runnable.class), anyLong());
 
         /* When we resume later (after interval is due) */
@@ -336,6 +335,6 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         /* Check timer is not started and logs send immediately. */
         verify(mAppCenterHandler, never()).postDelayed(notNull(Runnable.class), anyLong());
-        verify(mockIngestion).sendAsync(anyString(), anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 }

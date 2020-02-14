@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
+import android.text.TextUtils;
 
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
@@ -21,17 +22,23 @@ import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.storage.FileManager;
 
+import org.json.JSONException;
+import org.json.JSONStringer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -43,22 +50,30 @@ import java.util.UUID;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class, TextUtils.class})
 public class ErrorLogHelperTest {
 
     @Rule
     public PowerMockRule mRule = new PowerMockRule();
+
+    @Rule
+    public TemporaryFolder mTemporaryFolder = new TemporaryFolder();
 
     @Before
     public void setUp() {
@@ -362,5 +377,124 @@ public class ErrorLogHelperTest {
             depth++;
         }
         assertEquals(ErrorLogHelper.CAUSE_LIMIT, depth);
+    }
+
+    @Test
+    public void getStoredDeviceInfo() throws IOException {
+        String deviceInfoString = "{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}";
+        File minidumpFolder = mTemporaryFolder.newFolder("minidump");
+        File deviceInfoFile = new File(minidumpFolder, ErrorLogHelper.DEVICE_INFO_FILE);
+        assertTrue(deviceInfoFile.createNewFile());
+        mockStatic(FileManager.class);
+        when(FileManager.read(eq(deviceInfoFile))).thenReturn(deviceInfoString);
+        Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNotNull(storedDeviceInfo);
+    }
+
+    @Test
+    public void getStoredDeviceInfoNull() {
+        File minidumpFolder = mock(File.class);
+        when(minidumpFolder.listFiles(any(FilenameFilter.class))).thenReturn(null);
+        Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNull(storedDeviceInfo);
+    }
+
+    @Test
+    public void getStoredDeviceInfoEmpty() throws IOException {
+        File minidumpFolder = mTemporaryFolder.newFolder("minidump");
+        Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNull(storedDeviceInfo);
+    }
+
+    @Test
+    public void getStoredDeviceInfoCannotRead() throws IOException {
+        File minidumpFolder = mTemporaryFolder.newFolder("minidump");
+        File deviceInfoFile = new File(minidumpFolder, ErrorLogHelper.DEVICE_INFO_FILE);
+        assertTrue(deviceInfoFile.createNewFile());
+        mockStatic(FileManager.class);
+        when(FileManager.read(eq(deviceInfoFile))).thenReturn(null);
+        Device storedDeviceInfo3 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNull(storedDeviceInfo3);
+    }
+
+    @Test
+    public void throwIOExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
+
+        /* Prepare data. */
+        BufferedWriter mockBufferedWriter = mock(BufferedWriter.class);
+        FileWriter mockFileWriter = mock(FileWriter.class);
+        whenNew(BufferedWriter.class).withAnyArguments().thenReturn(mockBufferedWriter);
+        whenNew(FileWriter.class).withAnyArguments().thenReturn(mockFileWriter);
+        doThrow(new IOException()).when(mockBufferedWriter).write(anyString());
+        mockStatic(TextUtils.class);
+        when(TextUtils.isEmpty(anyString())).thenReturn(false);
+        when(TextUtils.getTrimmedLength(anyString())).thenReturn(1);
+        Device mockDevice = mock(Device.class);
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mockDevice);
+        Context mockContext = mock(Context.class);
+        File mockFile = mock(File.class);
+        whenNew(File.class).withAnyArguments().thenReturn(mockFile);
+
+        /* Verify. */
+        ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mockContext);
+        verify(mockFile).delete();
+    }
+
+    @Test
+    public void throwDeviceInfoExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
+
+        /* Prepare data. */
+        Device mockDevice = mock(Device.class);
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("crash", new java.lang.Exception()));
+        Context mockContext = mock(Context.class);
+        File mockFile = mock(File.class);
+        whenNew(File.class).withAnyArguments().thenReturn(mockFile);
+
+        /* Verify. */
+        ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mockContext);
+        verify(mockFile).delete();
+    }
+
+    @Test
+    public void throwJSONExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
+
+        /* Prepare data. */
+        Device mockDevice = mock(Device.class);
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mockDevice);
+        Context mockContext = mock(Context.class);
+        File mockFile = mock(File.class);
+        whenNew(File.class).withAnyArguments().thenReturn(mockFile);
+        doThrow(new JSONException("crash", new java.lang.Exception())).when(mockDevice).write(any(JSONStringer.class));
+
+        /* Verify. */
+        ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mockContext);
+        verify(mockFile).delete();
+    }
+
+    @Test
+    public void parseLogFolderUuid() throws IOException {
+        String originalFolderName = "a80da2ae-8c85-43b0-a25b-d52319fb6d56";
+        File logFolder = mTemporaryFolder.newFolder("new", originalFolderName);
+        UUID uuid = ErrorLogHelper.parseLogFolderUuid(logFolder);
+        assertEquals(uuid.toString(), originalFolderName);
+    }
+
+    @Test
+    public void parseLogFolderUuidFallback() throws IOException {
+        String originalFolderName = "a80da2ae-8c85-43b0-a25b-d52319fb6d56";
+        File logFile = mTemporaryFolder.newFile(originalFolderName);
+        UUID uuid = ErrorLogHelper.parseLogFolderUuid(logFile);
+        assertNotEquals(uuid.toString(), originalFolderName);
+    }
+
+    @Test
+    public void parseLogFolderUuidIllegalArgument() throws IOException {
+        String originalFolderName = "a80da2ae-8c85-43b0-a25b-d52319fb6d56";
+        File logFolder = mTemporaryFolder.newFolder("new", originalFolderName + ".dmp");
+        UUID uuid = ErrorLogHelper.parseLogFolderUuid(logFolder);
+        assertNotEquals(uuid.toString(), originalFolderName);
     }
 }

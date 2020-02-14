@@ -14,12 +14,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.os.Build;
 
+import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -62,7 +66,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest(DistributeUtils.class)
+@PrepareForTest({DistributeUtils.class, HttpUtils.class})
 public class DistributeTest extends AbstractDistributeTest {
 
     private static final String DISTRIBUTION_GROUP_ID = "group_id";
@@ -197,6 +201,14 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void resumeNullActivity() {
+        start();
+        Distribute.getInstance().onActivityResumed(null);
+
+        /* No exceptions. */
+    }
+
+    @Test
     public void setDownloadingReleaseDetailsEqualTest() {
 
         /* Mock release details and startFromBackground to apply it. */
@@ -297,7 +309,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.getNotificationId()).thenReturn(2);
         NotificationManager manager = mock(NotificationManager.class);
         when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
-        Distribute.getInstance().onStarted(mContext, mChannel, any(String.class), any(String.class), false);
+        Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
         Distribute.getInstance().completeWorkflow();
         verify(manager).cancel(any(Integer.class));
     }
@@ -576,6 +588,33 @@ public class DistributeTest extends AbstractDistributeTest {
         start();
         Distribute.setEnabledForDebuggableBuild(true);
         Distribute.getInstance().onActivityResumed(activity);
+    }
+
+    @Test
+    public void getLastReleaseDetailsWithDifferentHttpClients() {
+
+        /* Prepare data. */
+        HttpClient mockHttpClient = mock(HttpClient.class);
+        DependencyConfiguration.setHttpClient(mockHttpClient);
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("mock-hash");
+
+        /* Call get last release details. */
+        Distribute.getInstance().getLatestReleaseDetails(anyString(), anyString());
+
+        /* Verify. */
+        verifyStatic(never());
+        HttpUtils.createHttpClient(any(Context.class));
+
+        /* Clear http client. */
+        DependencyConfiguration.setHttpClient(null);
+
+        /* Call get last release details. */
+        Distribute.getInstance().getLatestReleaseDetails(anyString(), anyString());
+
+        /* Verify. */
+        verifyStatic();
+        HttpUtils.createHttpClient(any(Context.class));
     }
 
     @Test

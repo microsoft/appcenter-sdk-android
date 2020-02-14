@@ -8,6 +8,7 @@ package com.microsoft.appcenter.utils.crypto;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
+import android.security.keystore.KeyExpiredException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.util.Base64;
 
@@ -40,16 +41,12 @@ import javax.security.auth.x500.X500Principal;
 
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.AES_KEY_SIZE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALGORITHM_DATA_SEPARATOR;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALIAS_SEPARATOR;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_AES;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_RSA;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -200,10 +197,10 @@ public class CryptoTest {
     public void nullData() {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
         assertNull(cryptoUtils.encrypt(null));
-        CryptoUtils.DecryptedData nullDecryptedData = cryptoUtils.decrypt(null, false);
+        CryptoUtils.DecryptedData nullDecryptedData = cryptoUtils.decrypt(null);
         assertNull(nullDecryptedData.getDecryptedData());
         assertNull(nullDecryptedData.getNewEncryptedData());
-        nullDecryptedData = cryptoUtils.decrypt(null, true);
+        nullDecryptedData = cryptoUtils.decrypt(null);
         assertNull(nullDecryptedData.getDecryptedData());
         assertNull(nullDecryptedData.getNewEncryptedData());
     }
@@ -212,9 +209,9 @@ public class CryptoTest {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, apiLevel);
         String encrypted = cryptoUtils.encrypt("anything");
         assertEquals("None" + ALGORITHM_DATA_SEPARATOR + "anything", encrypted);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, false);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted);
         assertEquals("anything", decryptedData.getDecryptedData());
-        decryptedData = cryptoUtils.decrypt(encrypted, true);
+        decryptedData = cryptoUtils.decrypt(encrypted);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
     }
@@ -251,31 +248,46 @@ public class CryptoTest {
     @Test
     public void decryptUnknownAlgorithm() {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
-        CryptoUtils.DecryptedData data = cryptoUtils.decrypt("rot13:caesar", false);
+        CryptoUtils.DecryptedData data = cryptoUtils.decrypt("rot13:caesar");
         assertEquals("rot13:caesar", data.getDecryptedData());
         assertNull(data.getNewEncryptedData());
-        data = cryptoUtils.decrypt("rot13:caesar", true);
+        data = cryptoUtils.decrypt("rot13:caesar");
         assertEquals("rot13:caesar", data.getDecryptedData());
         assertNull(data.getNewEncryptedData());
-        data = cryptoUtils.decrypt(":", false);
+        data = cryptoUtils.decrypt(":");
         assertEquals(":", data.getDecryptedData());
         assertNull(data.getNewEncryptedData());
-        data = cryptoUtils.decrypt(":", true);
+        data = cryptoUtils.decrypt(":");
         assertEquals(":", data.getDecryptedData());
         assertNull(data.getNewEncryptedData());
     }
 
     @Test
-    public void failsToEncrypt() throws Exception {
+    public void failsToEncryptWithBadPadding() throws Exception {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
         when(mCipher.doFinal(any(byte[].class))).thenThrow(new BadPaddingException());
         String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
         String encryptedData = cryptoUtils.encrypt(data);
         assertEquals(data, encryptedData);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
         assertEquals(data, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
-        decryptedData = cryptoUtils.decrypt(encryptedData, true);
+        decryptedData = cryptoUtils.decrypt(encryptedData);
+        assertEquals(data, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+    }
+
+    @Test
+    public void failsToEncryptWithInvalidKey() throws Exception {
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new InvalidKeyException());
+        String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
+        String encryptedData = cryptoUtils.encrypt(data);
+        assertEquals(data, encryptedData);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
+        assertEquals(data, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+        decryptedData = cryptoUtils.decrypt(encryptedData);
         assertEquals(data, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
     }
@@ -287,7 +299,7 @@ public class CryptoTest {
         String encryptedData = cryptoUtils.encrypt(data);
         assertNotEquals(data, encryptedData);
         when(mCipher.doFinal(any(byte[].class), anyInt(), anyInt())).thenThrow(new BadPaddingException());
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
 
         /* Check decryption failed (data returned as is). */
         assertEquals(encryptedData, decryptedData.getDecryptedData());
@@ -295,7 +307,7 @@ public class CryptoTest {
     }
 
     @Test
-    public void readExpiredData() throws Exception {
+    public void readExpiredDataOnAfterAndroidM() throws Exception {
 
         /* Encrypt test data. */
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
@@ -303,7 +315,7 @@ public class CryptoTest {
         String encryptedData = cryptoUtils.encrypt(data);
 
         /* Make key rotate on next encryption. */
-        when(mCipher.doFinal(any(byte[].class))).thenThrow(new InvalidKeyException()).thenAnswer(new Answer<byte[]>() {
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new KeyExpiredException()).thenAnswer(new Answer<byte[]>() {
 
             @Override
             public byte[] answer(InvocationOnMock invocation) {
@@ -331,7 +343,56 @@ public class CryptoTest {
         verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(String.class), isNull(KeyStore.ProtectionParameter.class));
 
         /* Verify we can decrypt with retry on expired key. */
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData, false);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
+        assertEquals(data, decryptedData.getDecryptedData());
+        assertNull(decryptedData.getNewEncryptedData());
+
+        /* Verify the second alias was picked for decryption. */
+        expectedKeyStoreCalls += 2;
+        ArgumentCaptor<String> aliasCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(aliasCaptor.capture(), isNull(KeyStore.ProtectionParameter.class));
+        List<String> aliases = aliasCaptor.getAllValues();
+
+        /* Check last calls: first we tried to read with the second alias (after rotation). */
+        assertTrue(aliases.get(3).startsWith("appcenter.1."));
+
+        /* Then we tried with the old one. */
+        assertTrue(aliases.get(4).startsWith("appcenter.0."));
+    }
+
+    @Test
+    public void readExpiredDataOnBeforeAndroidM() throws Exception {
+
+        /* Encrypt test data. */
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
+        String data = "oldData";
+        String encryptedData = cryptoUtils.encrypt(data);
+
+        /* Make key rotate on next encryption. */
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new InvalidKeyException(new CertificateExpiredException())).thenAnswer(new Answer<byte[]>() {
+
+            @Override
+            public byte[] answer(InvocationOnMock invocation) {
+                return (byte[]) invocation.getArguments()[0];
+            }
+        });
+        cryptoUtils.encrypt("otherData");
+
+        /*
+         * Make decrypt fail with current key and work with expired key (i.e. the second call).
+         */
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new BadPaddingException()).thenAnswer(new Answer<byte[]>() {
+
+            @Override
+            public byte[] answer(InvocationOnMock invocation) {
+                return (byte[]) invocation.getArguments()[0];
+            }
+        });
+        int expectedKeyStoreCalls = 3;
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(String.class), isNull(KeyStore.ProtectionParameter.class));
+
+        /* Verify we can decrypt with retry on expired key. */
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
         assertEquals(data, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
@@ -352,27 +413,27 @@ public class CryptoTest {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, apiLevel);
         String encrypted = cryptoUtils.encrypt("anything");
         assertEquals(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "anything", encrypted);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, false);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
-        decryptedData = cryptoUtils.decrypt(encrypted, true);
+        decryptedData = cryptoUtils.decrypt(encrypted);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
         /* Test old data encryption upgrade. */
-        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData", false);
+        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData");
         assertEquals("oldData", oldDecryptedData.getDecryptedData());
         assertEquals(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldData", oldDecryptedData.getNewEncryptedData());
-        oldDecryptedData = cryptoUtils.decrypt("None:oldData", true);
+        oldDecryptedData = cryptoUtils.decrypt("None:oldData");
         assertEquals("oldData", oldDecryptedData.getDecryptedData());
         assertEquals(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldData", oldDecryptedData.getNewEncryptedData());
 
         /* Check we can still read data after expiration. */
         doThrow(new CertificateExpiredException()).doNothing().when(mRsaCert).checkValidity();
-        decryptedData = cryptoUtils.decrypt(encrypted, false);
+        decryptedData = cryptoUtils.decrypt(encrypted);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
-        decryptedData = cryptoUtils.decrypt(encrypted, true);
+        decryptedData = cryptoUtils.decrypt(encrypted);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
@@ -451,24 +512,24 @@ public class CryptoTest {
 
         /* The init vector is encoded alongside data, in the mock setup it's just a word. */
         assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "anything", encrypted);
-        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted, false);
+        CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
-        decryptedData = cryptoUtils.decrypt(encrypted, true);
+        decryptedData = cryptoUtils.decrypt(encrypted);
         assertEquals("anything", decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
         /* Test old data encryption upgrade. */
-        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData", false);
+        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData");
         assertEquals("oldData", oldDecryptedData.getDecryptedData());
         assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldData", oldDecryptedData.getNewEncryptedData());
-        oldDecryptedData = cryptoUtils.decrypt("None:oldData", true);
+        oldDecryptedData = cryptoUtils.decrypt("None:oldData");
         assertEquals("oldData", oldDecryptedData.getDecryptedData());
         assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldData", oldDecryptedData.getNewEncryptedData());
-        CryptoUtils.DecryptedData oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData", false);
+        CryptoUtils.DecryptedData oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData");
         assertEquals("oldRsaData", oldDecryptedRsaData.getDecryptedData());
         assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldRsaData", oldDecryptedRsaData.getNewEncryptedData());
-        oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData", true);
+        oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData");
         assertEquals("oldRsaData", oldDecryptedRsaData.getDecryptedData());
         assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldRsaData", oldDecryptedRsaData.getNewEncryptedData());
 
@@ -476,44 +537,6 @@ public class CryptoTest {
         ArgumentCaptor<String> alias = ArgumentCaptor.forClass(String.class);
         verify(mKeyStore).containsAlias(alias.capture());
         assertTrue(alias.getValue().contains(CIPHER_AES));
-    }
-
-    @Test
-    public void registerHandlerWithOldMCKeyStore() throws Exception {
-
-        /* Basically pre-constructing the four values that CryptoUtils.getAlias() will return */
-        String alias0 = KEYSTORE_ALIAS_PREFIX + ALIAS_SEPARATOR + "0" + ALIAS_SEPARATOR + CIPHER_RSA + "/" + RSA_KEY_SIZE;
-        String alias1 = KEYSTORE_ALIAS_PREFIX + ALIAS_SEPARATOR + "1" + ALIAS_SEPARATOR + CIPHER_RSA + "/" + RSA_KEY_SIZE;
-        String alias0MC = KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER + ALIAS_SEPARATOR + "0" + ALIAS_SEPARATOR + CIPHER_RSA + "/" + RSA_KEY_SIZE;
-        String alias1MC = KEYSTORE_ALIAS_PREFIX_MOBILE_CENTER + ALIAS_SEPARATOR + "1" + ALIAS_SEPARATOR + CIPHER_RSA + "/" + RSA_KEY_SIZE;
-
-        /* Create a calendar which will fall back to the MC aliases */
-        Calendar calendar = Calendar.getInstance();
-        Date d = calendar.getTime();
-        when(mKeyStore.getCreationDate(alias0)).thenReturn(d);
-        when(mKeyStore.getCreationDate(alias1)).thenReturn(d);
-        when(mKeyStore.getCreationDate(alias0MC)).thenReturn(d);
-        calendar.add(Calendar.YEAR, 1);
-        d = calendar.getTime();
-        when(mKeyStore.getCreationDate(alias1MC)).thenReturn(d);
-
-        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
-
-        CryptoUtils.CryptoHandlerEntry handlerEntry = cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE);
-        assertNotNull(handlerEntry);
-        assertEquals(0, handlerEntry.mAliasIndex);
-        assertEquals(1, handlerEntry.mAliasIndexMC);
-
-        /* do it again for sets of dates which are the same */
-        when(mKeyStore.getCreationDate(alias0MC)).thenReturn(d);
-        when(mKeyStore.getCreationDate(alias1MC)).thenReturn(d);
-
-        cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
-        handlerEntry = cryptoUtils.mCryptoHandlers.get(CIPHER_RSA + "/" + RSA_KEY_SIZE);
-        assertNotNull(handlerEntry);
-
-        assertEquals(0, handlerEntry.mAliasIndex);
-        assertEquals(0, handlerEntry.mAliasIndexMC);
     }
 }
 

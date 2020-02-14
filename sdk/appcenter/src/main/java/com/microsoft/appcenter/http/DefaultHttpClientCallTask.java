@@ -8,7 +8,6 @@ package com.microsoft.appcenter.http;
 import android.net.TrafficStats;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.util.Pair;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -156,7 +155,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     /**
      * Do http call.
      */
-    private Pair<String, Map<String, String>> doHttpCall() throws Exception {
+    private HttpResponse doHttpCall() throws Exception {
         URL url = new URL(mUrl);
         HttpsURLConnection httpsURLConnection = createHttpsConnection(url);
         try {
@@ -255,14 +254,15 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
             for (Map.Entry<String, List<String>> header : httpsURLConnection.getHeaderFields().entrySet()) {
                 responseHeaders.put(header.getKey(), header.getValue().iterator().next());
             }
+            HttpResponse httpResponse = new HttpResponse(status, response, responseHeaders);
 
             /* Accept all 2xx codes. */
             if (status >= 200 && status < 300) {
-                return new Pair<>(response, responseHeaders);
+                return httpResponse;
             }
 
             /* Generate exception on failure. */
-            throw new HttpException(status, response, responseHeaders);
+            throw new HttpException(httpResponse);
         } finally {
 
             /* Release connection. */
@@ -295,10 +295,8 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
         if (result instanceof Exception) {
             mServiceCallback.onCallFailed((Exception) result);
         } else {
-
-            @SuppressWarnings("unchecked")
-            Pair<String, Map<String, String>> response = (Pair<String, Map<String, String>>) result;
-            mServiceCallback.onCallSucceeded(response.first, response.second);
+            HttpResponse response = (HttpResponse) result;
+            mServiceCallback.onCallSucceeded(response);
         }
     }
 
@@ -306,7 +304,7 @@ class DefaultHttpClientCallTask extends AsyncTask<Void, Void, Object> {
     protected void onCancelled(Object result) {
 
         /* Handle the result even if it was cancelled. */
-        if (result instanceof Pair || result instanceof HttpException) {
+        if (result instanceof HttpResponse || result instanceof HttpException) {
             onPostExecute(result);
         } else {
             mTracker.onFinish(this);
