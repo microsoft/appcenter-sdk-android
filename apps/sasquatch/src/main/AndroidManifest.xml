@@ -65,6 +65,9 @@
         <activity
             android:name=".activities.AuthenticationProviderActivity"
             android:label="@string/title_auth" />
+        <activity
+            android:name=".activities.MSALoginActivity"
+            android:label="@string/msa_title" />
 
         <!-- Set default notification icon and color. -->
         <meta-data
