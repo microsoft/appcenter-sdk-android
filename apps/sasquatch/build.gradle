@@ -71,7 +71,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-distribute')
     projectDependencyImplementation project(':sdk:appcenter-push')
 
-    def appCenterSdkVersion = "2.5.1"
+    def appCenterSdkVersion = "3.0.0"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
