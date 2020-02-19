@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistributeTest {
 
     @Test
-    public void disableAutomaticCheckForUpdatesDoesNotCallEndPoint() {
+    public void disableAutomaticCheckForUpdateBeforeDistributeStartDoesNotCheckForUpdate() {
 
         /* Disable automatic check for update then start. */
         Distribute.disableAutomaticCheckForUpdate();
@@ -38,9 +38,9 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
     }
 
     @Test
-    public void automaticCheckForUpdatesCallsEndPointByDefault() {
+    public void disableAutomaticCheckForUpdateAfterDistributeStartChecksForUpdate() {
 
-        /* Start then call disable automatic check for update after Distribute is running. */
+        /* Start then call disable automatic check for update after Distribute has started. */
         start();
         Distribute.disableAutomaticCheckForUpdate();
         Distribute.setEnabled(true).get();
@@ -51,7 +51,7 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
     }
 
     @Test
-    public void disableAutomaticCheckForUpdatesBeforeStoringRedirectionParameters() {
+    public void storeRedirectionParametersDoesNotCheckForUpdateWhenAutomaticCheckDisabled() {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
@@ -67,7 +67,7 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
     }
 
     @Test
-    public void automaticCheckForUpdatesBeforeStoringRedirectionParameters() {
+    public void storeRedirectionParametersCheckForUpdateWhenAutomaticCheckNotDisabled() {
 
         /* Setup mock. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
