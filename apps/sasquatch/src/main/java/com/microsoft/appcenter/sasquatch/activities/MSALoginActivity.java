@@ -29,6 +29,7 @@ import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.http.DefaultHttpClient;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -47,9 +48,6 @@ import java.util.Map;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 
-/**
- * TODO during release, delete this version of this file and move projectDependency one to main source folder.
- */
 public class MSALoginActivity extends AppCompatActivity {
 
     private static final String URL_PREFIX = "https://login.live.com/oauth20_";
@@ -70,7 +68,6 @@ public class MSALoginActivity extends AppCompatActivity {
             "wl.offline_access",
             "AsimovRome.Telemetry",
     };
-
 
     private static final String USER_ID = "user_id";
 
@@ -140,7 +137,7 @@ public class MSALoginActivity extends AppCompatActivity {
         String cookie = CookieManager.getInstance().getCookie(AUTHORIZE_URL);
         boolean compact = mAuthType == AuthenticationProvider.Type.MSA_COMPACT;
         if (compact && cookie != null && cookie.contains("MSPPre")) {
-            mWebView.loadData(getString(R.string.signed_in_cookie), "text/plain", "UFT-8");
+            mWebView.loadData(getString(R.string.signed_in_cookie), "text/plain", "UTF-8");
         } else {
             signIn(null);
         }
@@ -321,9 +318,9 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, Map<String, String> responseHeaders) {
+                    public void onCallSucceeded(HttpResponse httpResponse) {
                         try {
-                            JSONObject response = new JSONObject(payload);
+                            JSONObject response = new JSONObject(httpResponse.getPayload());
                             String userId = response.getString(USER_ID);
                             mRefreshToken = response.getString(REFRESH_TOKEN);
                             mRefreshTokenScope = response.getString(SCOPE);
@@ -365,9 +362,9 @@ public class MSALoginActivity extends AppCompatActivity {
                 new ServiceCallback() {
 
                     @Override
-                    public void onCallSucceeded(String payload, Map<String, String> responseHeaders) {
+                    public void onCallSucceeded(HttpResponse httpResponse) {
                         try {
-                            JSONObject response = new JSONObject(payload);
+                            JSONObject response = new JSONObject(httpResponse.getPayload());
                             String accessToken = response.getString("access_token");
                             long expiresIn = response.getLong("expires_in") * 1000L;
                             Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);
@@ -388,7 +385,7 @@ public class MSALoginActivity extends AppCompatActivity {
     private void handleCallFailure(Exception e) {
         if (e instanceof HttpException) {
             HttpException he = (HttpException) e;
-            failSignIn(he.getStatusCode(), he.getPayload());
+            failSignIn(he.getHttpResponse().getStatusCode(), he.getHttpResponse().getPayload());
         } else {
             failSignIn(0, e.getMessage());
         }
