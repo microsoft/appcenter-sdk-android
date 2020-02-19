@@ -95,4 +95,21 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* HTTP call done. */
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
+
+    @Test
+    public void manualCheckWhenStoringRedirectionParametersWhileAutomaticCheckDisabledChecksForUpdate() {
+
+        /* Setup mock. */
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn("r");
+
+        /* Start then call disable automatic check for update after Distribute has started. */
+        Distribute.disableAutomaticCheckForUpdate();
+        start();
+        Distribute.setEnabled(true).get();
+        Distribute.checkForUpdate();
+        Distribute.getInstance().storeRedirectionParameters("r", "g", null);
+
+        /* HTTP call done. */
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
 }
