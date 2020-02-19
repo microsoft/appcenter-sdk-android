@@ -18,6 +18,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +45,20 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         start();
         Distribute.disableAutomaticCheckForUpdate();
         Distribute.setEnabled(true).get();
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* HTTP call done. */
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void manualCheckWhileAutomaticCheckDisabledChecksForUpdate() {
+
+        /* Start then call disable automatic check for update after Distribute has started. */
+        Distribute.disableAutomaticCheckForUpdate();
+        start();
+        Distribute.setEnabled(true).get();
+        Distribute.checkForUpdate();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* HTTP call done. */
@@ -80,5 +95,4 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* HTTP call done. */
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
-
 }
