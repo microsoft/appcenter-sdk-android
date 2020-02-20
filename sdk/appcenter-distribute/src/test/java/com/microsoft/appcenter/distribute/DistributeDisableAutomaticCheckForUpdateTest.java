@@ -7,20 +7,16 @@ package com.microsoft.appcenter.distribute;
 
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
 
 import java.util.Collections;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistributeTest {
 
@@ -54,7 +50,7 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Start then call disable automatic check for update after Distribute has started. */
         Distribute.disableAutomaticCheckForUpdate();
         start();
-        verify(mHttpClient, times(0)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Distribute.checkForUpdate();
         Distribute.getInstance().onActivityResumed(mActivity);
 
