@@ -22,7 +22,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-
 public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistributeTest {
 
     @Test
@@ -31,7 +30,6 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Disable automatic check for update then start. */
         Distribute.disableAutomaticCheckForUpdate();
         start();
-        Distribute.setEnabled(true).get();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* No HTTP call done. */
@@ -44,7 +42,6 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Start then call disable automatic check for update after Distribute has started. */
         start();
         Distribute.disableAutomaticCheckForUpdate();
-        Distribute.setEnabled(true).get();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* HTTP call done. */
@@ -57,7 +54,6 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Start then call disable automatic check for update after Distribute has started. */
         Distribute.disableAutomaticCheckForUpdate();
         start();
-        Distribute.setEnabled(true).get();
         Distribute.checkForUpdate();
         Distribute.getInstance().onActivityResumed(mActivity);
 
@@ -74,7 +70,6 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Enable in-app updates. */
         Distribute.disableAutomaticCheckForUpdate();
         start();
-        Distribute.setEnabled(true).get();
         Distribute.getInstance().storeRedirectionParameters("r", "g", null);
 
         /* No HTTP call done. */
@@ -89,7 +84,6 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         
         /* Enable in-app updates. */
         start();
-        Distribute.setEnabled(true).get();
         Distribute.getInstance().storeRedirectionParameters("r", "g", null);
 
         /* HTTP call done. */
@@ -105,7 +99,6 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Start then call disable automatic check for update after Distribute has started. */
         Distribute.disableAutomaticCheckForUpdate();
         start();
-        Distribute.setEnabled(true).get();
         Distribute.checkForUpdate();
         Distribute.getInstance().storeRedirectionParameters("r", "g", null);
 
