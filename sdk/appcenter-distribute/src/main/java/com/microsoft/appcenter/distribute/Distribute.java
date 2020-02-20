@@ -1075,12 +1075,6 @@ public class Distribute extends AbstractAppCenterService {
             processDistributionGroupId(distributionGroupId);
             AppCenterLog.debug(LOG_TAG, "Stored redirection parameters.");
             cancelPreviousTasks();
-
-            /* Do not proceed if automatic check for update is disabled and manual check for update has not been called. */
-            if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
-                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled. Will not check for update.");
-                return;
-            }
             getLatestReleaseDetails(distributionGroupId, updateToken);
         } else {
             AppCenterLog.warn(LOG_TAG, "Ignoring redirection parameters as requestId is invalid.");
