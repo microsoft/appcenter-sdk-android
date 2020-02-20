@@ -54,7 +54,7 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Start then call disable automatic check for update after Distribute has started. */
         Distribute.disableAutomaticCheckForUpdate();
         start();
-        verify(mHttpClient, times(0)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Distribute.checkForUpdate();
         Distribute.getInstance().onActivityResumed(mActivity);
 
