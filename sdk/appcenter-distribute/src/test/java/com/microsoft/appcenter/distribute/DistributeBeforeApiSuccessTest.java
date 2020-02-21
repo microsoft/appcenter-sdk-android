@@ -7,7 +7,6 @@ package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -15,7 +14,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Bundle;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
@@ -98,22 +96,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
  */
 @PrepareForTest({ErrorDetails.class, DistributeUtils.class, SessionContext.class, UUID.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
-
-    /**
-     * Shared code to mock a restart of an activity considered to be the launcher.
-     */
-    private void restartResumeLauncher(Activity activity) {
-        Intent intent = mock(Intent.class);
-        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
-        ComponentName componentName = mock(ComponentName.class);
-        when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
-        when(componentName.getClassName()).thenReturn(activity.getClass().getName());
-        Distribute.getInstance().onActivityPaused(activity);
-        Distribute.getInstance().onActivityStopped(activity);
-        Distribute.getInstance().onActivityDestroyed(activity);
-        Distribute.getInstance().onActivityCreated(activity, mock(Bundle.class));
-        Distribute.getInstance().onActivityResumed(activity);
-    }
 
     private void testDistributeInactive() {
 

@@ -286,7 +286,7 @@ public class Distribute extends AbstractAppCenterService {
     private boolean mEnabledForDebuggableBuild;
 
     /**
-     * Flags to check if automatic check for update is disabled.
+     * Flag to check if automatic check for update is disabled.
      */
     private boolean mAutomaticCheckForUpdateDisabled;
 
@@ -570,7 +570,6 @@ public class Distribute extends AbstractAppCenterService {
             mTesterAppOpenedOrAborted = false;
             mBrowserOpenedOrAborted = false;
             mWorkflowCompleted = false;
-            mManualCheckForUpdateRequested = false;
             cancelPreviousTasks();
             SharedPreferencesManager.remove(PREFERENCE_KEY_REQUEST_ID);
             SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
@@ -736,6 +735,7 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mCheckedDownload = false;
+        mManualCheckForUpdateRequested = false;
         updateReleaseDetails(null);
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
@@ -754,6 +754,7 @@ public class Distribute extends AbstractAppCenterService {
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
                 AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
                 mWorkflowCompleted = true;
+                mManualCheckForUpdateRequested = false;
                 return;
             }
 
@@ -761,6 +762,7 @@ public class Distribute extends AbstractAppCenterService {
             if (InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext)) {
                 AppCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
                 mWorkflowCompleted = true;
+                mManualCheckForUpdateRequested = false;
                 return;
             }
 
@@ -1015,6 +1017,7 @@ public class Distribute extends AbstractAppCenterService {
             mReleaseDownloaderListener.hideProgressDialog();
         }
         mWorkflowCompleted = true;
+        mManualCheckForUpdateRequested = false;
     }
 
     /**
