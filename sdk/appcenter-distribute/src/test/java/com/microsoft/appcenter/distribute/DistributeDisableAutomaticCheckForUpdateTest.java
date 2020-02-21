@@ -93,7 +93,7 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
         httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
 
-        /* Restart and check for updates again. */
+        /* Restart. */
         restartResumeLauncher(mActivity);
 
         /* Do not call again. */
