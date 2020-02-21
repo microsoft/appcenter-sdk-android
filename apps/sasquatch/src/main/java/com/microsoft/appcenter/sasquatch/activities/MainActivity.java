@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(application, "No Update Track API in this build", Toast.LENGTH_SHORT).show();
             }
         }
-        boolean automaticCheckForUpdate = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_disable_check_for_update_key), false);
+        boolean automaticCheckForUpdate = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_disable_check_for_update_key), true);
         if (!automaticCheckForUpdate) {
             try {
 
