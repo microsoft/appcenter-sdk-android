@@ -22,7 +22,6 @@ import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.analytics.EventProperties;
-import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
@@ -68,7 +67,6 @@ public class EventActivity extends PropertyActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Distribute.checkForUpdate();
         getLayoutInflater().inflate(R.layout.activity_log_top, ((LinearLayout) findViewById(R.id.top_layout)));
         getLayoutInflater().inflate(R.layout.layout_event, ((LinearLayout) findViewById(R.id.middle_layout)));
 

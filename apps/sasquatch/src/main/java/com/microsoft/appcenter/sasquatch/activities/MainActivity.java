@@ -109,8 +109,6 @@ public class MainActivity extends AppCompatActivity {
 
     static void startAppCenter(Application application, String startTypeString) {
 
-        Distribute.disableAutomaticCheckForUpdate();
-
         /* Set the track explicitly only if we set it in settings, to test the initial public by default at first launch. */
         int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_track_state_key), 0);
         if (savedTrack != 0) {
@@ -368,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setDistributeEnabledForDebuggableBuild() {
-        boolean enabledForDebuggableBuild = sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), true);
+        boolean enabledForDebuggableBuild = sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_debug_state_key), false);
         Distribute.setEnabledForDebuggableBuild(enabledForDebuggableBuild);
     }
 
