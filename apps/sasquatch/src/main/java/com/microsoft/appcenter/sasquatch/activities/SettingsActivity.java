@@ -325,7 +325,7 @@ public class SettingsActivity extends AppCompatActivity {
             /* TODO Remove all try catch blocks here and use Distribute.checkForUpdate directly while preparing the demo app with prerelease jCenter SDK. */
             try {
                 final Method checkForUpdate = Distribute.class.getMethod("checkForUpdate");
-                initClickableSetting(R.string.appcenter_distribute_check_for_update_key, null, new Preference.OnPreferenceClickListener() {
+                initClickableSetting(R.string.appcenter_distribute_check_for_update_key, new Preference.OnPreferenceClickListener() {
 
                     @Override
                     public boolean onPreferenceClick(Preference preference) {
