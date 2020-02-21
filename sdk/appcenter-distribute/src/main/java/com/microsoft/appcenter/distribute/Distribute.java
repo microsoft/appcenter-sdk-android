@@ -286,6 +286,16 @@ public class Distribute extends AbstractAppCenterService {
     private boolean mEnabledForDebuggableBuild;
 
     /**
+     * Flag to check if automatic check for update is disabled.
+     */
+    private boolean mAutomaticCheckForUpdateDisabled;
+
+    /**
+     * Flag to check if manual check for update was requested.
+     */
+    private boolean mManualCheckForUpdateRequested;
+
+    /**
      * Init.
      */
     private Distribute() {
@@ -404,6 +414,24 @@ public class Distribute extends AbstractAppCenterService {
      */
     public static void checkForUpdate() {
         getInstance().instanceCheckForUpdate();
+    }
+
+    /**
+     * Disable automatic check for update before the service starts.
+     */
+    public static void disableAutomaticCheckForUpdate() {
+        getInstance().instanceDisableAutomaticCheckForUpdate();
+    }
+
+    /**
+     * Implements {@link #disableAutomaticCheckForUpdate()}.
+     */
+    private synchronized void instanceDisableAutomaticCheckForUpdate() {
+        if (mChannel != null) {
+            AppCenterLog.error(LOG_TAG, "Automatic check for update cannot be disabled after Distribute is started.");
+            return;
+        }
+        mAutomaticCheckForUpdateDisabled = true;
     }
 
     @Override
@@ -683,6 +711,7 @@ public class Distribute extends AbstractAppCenterService {
 
     @WorkerThread
     private synchronized void handleCheckForUpdate() {
+        mManualCheckForUpdateRequested = true;
         if (tryResetWorkflow()) {
             resumeWorkflowIfForeground();
         } else {
@@ -706,6 +735,7 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mCheckedDownload = false;
+        mManualCheckForUpdateRequested = false;
         updateReleaseDetails(null);
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
@@ -724,6 +754,7 @@ public class Distribute extends AbstractAppCenterService {
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
                 AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
                 mWorkflowCompleted = true;
+                mManualCheckForUpdateRequested = false;
                 return;
             }
 
@@ -731,6 +762,7 @@ public class Distribute extends AbstractAppCenterService {
             if (InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext)) {
                 AppCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
                 mWorkflowCompleted = true;
+                mManualCheckForUpdateRequested = false;
                 return;
             }
 
@@ -884,6 +916,12 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
 
+            /* Do not proceed if automatic check for update is disabled and manual check for update has not been called. */
+            if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
+                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled. The SDK will not check for update now.");
+                return;
+            }
+
             /*
              * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
@@ -979,6 +1017,7 @@ public class Distribute extends AbstractAppCenterService {
             mReleaseDownloaderListener.hideProgressDialog();
         }
         mWorkflowCompleted = true;
+        mManualCheckForUpdateRequested = false;
     }
 
     /**
