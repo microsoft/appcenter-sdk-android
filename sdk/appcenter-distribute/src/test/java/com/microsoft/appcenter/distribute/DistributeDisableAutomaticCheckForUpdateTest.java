@@ -98,6 +98,10 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
 
         /* Do not call again. */
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
+
+        /* Check for update manually again and verify one more call. */
+        Distribute.checkForUpdate();
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
     }
 
     @Test
