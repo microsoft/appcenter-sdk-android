@@ -20,6 +20,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistributeTest {
@@ -68,8 +69,8 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Start then call disable automatic check for update after Distribute has started. */
         Distribute.disableAutomaticCheckForUpdate();
         start();
-        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Distribute.getInstance().onActivityResumed(mActivity);
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         Distribute.checkForUpdate();
 
         /* HTTP call done. */
@@ -115,8 +116,7 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
         httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
 
-        /* Resume the activity again and manually check for updates. */
-        Distribute.getInstance().onActivityResumed(mActivity);
+        /* Manually check for updates again. */
         Distribute.checkForUpdate();
 
         /* Http call done again. */
