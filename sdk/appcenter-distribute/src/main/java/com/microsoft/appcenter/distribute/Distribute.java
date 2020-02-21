@@ -918,7 +918,7 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Do not proceed if automatic check for update is disabled and manual check for update has not been called. */
             if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
-                AppCenterLog.info(LOG_TAG, "Automatic check for update is disabled. The SDK will not check for update now.");
+                AppCenterLog.debug(LOG_TAG, "Automatic check for update is disabled. The SDK will not check for update now.");
                 return;
             }
 
