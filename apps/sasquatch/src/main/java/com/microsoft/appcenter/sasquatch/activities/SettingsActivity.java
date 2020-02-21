@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
+import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
@@ -43,6 +44,7 @@ import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -319,6 +321,28 @@ public class SettingsActivity extends AppCompatActivity {
                     return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_disable_check_for_update_key), true);
                 }
             });
+
+            /* TODO Remove all try catch blocks here and use Distribute.checkForUpdate directly while preparing the demo app with prerelease jCenter SDK. */
+            try {
+                final Method checkForUpdate = Distribute.class.getMethod("checkForUpdate");
+                initClickableSetting(R.string.appcenter_distribute_check_for_update_key, new Preference.OnPreferenceClickListener() {
+
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        try {
+                            checkForUpdate.invoke(null);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        return true;
+                    }
+                });
+            } catch (NoSuchMethodException e) {
+                PreferenceGroup distributeSection = (PreferenceGroup) getPreferenceManager().findPreference(getString(R.string.distribute_key));
+
+                //noinspection ConstantConditions
+                distributeSection.removePreference(distributeSection.findPreference(getString(R.string.appcenter_distribute_check_for_update_key)));
+            }
             final HasSummary updateTrackHasSummary = new HasSummary() {
 
                 @Override

@@ -66,6 +66,9 @@
         <CheckBoxPreference
             android:key="@string/appcenter_distribute_disable_check_for_update_key"
             android:title="@string/appcenter_distribute_auto_check_for_update_title" />
+        <Preference
+            android:key="@string/appcenter_distribute_check_for_update_key"
+            android:title="@string/appcenter_distribute_check_for_update_title" />
         <ListPreference
             android:key="@string/appcenter_distribute_track_state_key"
             android:entries="@array/appcenter_distribute_update_track_entries"
