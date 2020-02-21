@@ -79,6 +79,8 @@
     <string name="appcenter_distribute_track_private_enabled" tools:ignore="MissingTranslation">Distribute uses private track</string>
     <string name="appcenter_distribute_track_state_updated" tools:ignore="MissingTranslation">Update track will be changed only when the application is restarted.</string>
     <string name="appcenter_distribute_automatic_check_updated" tools:ignore="MissingTranslation">Automatic update check settings will be applied after the application is restarted.</string>
+    <string name="appcenter_distribute_check_for_update_key" tools:ignore="MissingTranslation">appcenter_distribute_check_for_update_key</string>
+    <string name="appcenter_distribute_check_for_update_title" tools:ignore="MissingTranslation">Check for updates</string>
 
     <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
     <string name="push_title" tools:ignore="MissingTranslation">Push</string>
