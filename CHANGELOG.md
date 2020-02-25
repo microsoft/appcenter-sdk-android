@@ -6,7 +6,7 @@
 
 * **[Feature]** Add a `disableAutomaticCheckForUpdate` API that needs to be called before SDK start in order to turn off automatic check for update. 
 * **[Feature]** Add a `checkForUpdate` API to manually check for update.
-* **[Fix]** If user clicked "Ignore" on the error dialog after browser redirection on the private track, and if the application switches to public track after restart, the SDK now checks for updates correctly.
+* **[Fix]** Fix not checking updates on public track if it was ignored on error while initializing in-app update for private track
 
 ## Version 3.0.0
 
