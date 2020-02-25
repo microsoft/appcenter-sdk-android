@@ -769,18 +769,22 @@ public class Distribute extends AbstractAppCenterService {
             /*
              * If failed to enable in-app updates on the same app build before, don't go any further.
              * Only if the app build is different (different package hash), try enabling in-app updates again.
+             * This applies to private track only.
              */
-            String releaseHash = DistributeUtils.computeReleaseHash(this.mPackageInfo);
-            String updateSetupFailedPackageHash = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-            if (updateSetupFailedPackageHash != null) {
-                if (releaseHash.equals(updateSetupFailedPackageHash)) {
-                    AppCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
-                    return;
-                } else {
-                    AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
-                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-                    SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
+            if (!isPublicTrack) {
+                String updateSetupFailedPackageHash = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+                if (updateSetupFailedPackageHash != null) {
+                    String releaseHash = DistributeUtils.computeReleaseHash(this.mPackageInfo);
+                    if (releaseHash.equals(updateSetupFailedPackageHash)) {
+                        AppCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
+                        return;
+                    } else {
+                        AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                    }
                 }
             }
 
@@ -927,7 +931,6 @@ public class Distribute extends AbstractAppCenterService {
              */
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-            boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
             if (isPublicTrack || updateToken != null) {
 
                 /* We have what we need to check for updates via API. */

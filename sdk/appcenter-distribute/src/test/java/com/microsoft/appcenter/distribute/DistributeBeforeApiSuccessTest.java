@@ -80,6 +80,7 @@ import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -97,9 +98,11 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({ErrorDetails.class, DistributeUtils.class, SessionContext.class, UUID.class})
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
-    private void testDistributeInactive() {
+    private void testDistributeInactiveOnPrivateTrack() throws PackageManager.NameNotFoundException {
 
         /* Check browser not opened. */
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verifyStatic(never());
@@ -112,7 +115,9 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
          */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        restartProcessAndSdk();
+        Distribute.unsetInstance();
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
+        start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mHttpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
@@ -136,16 +141,16 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void doNothingIfEnabledForDebuggableBuildNotSet() {
+    public void doNothingIfEnabledForDebuggableBuildNotSet() throws PackageManager.NameNotFoundException {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
-        testDistributeInactive();
+        testDistributeInactiveOnPrivateTrack();
     }
 
     @Test
-    public void doNothingWhenEnabledForDebuggableBuildSetToFalse() {
+    public void doNothingWhenEnabledForDebuggableBuildSetToFalse() throws PackageManager.NameNotFoundException {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
         Distribute.setEnabledForDebuggableBuild(false);
-        testDistributeInactive();
+        testDistributeInactiveOnPrivateTrack();
     }
 
     @Test
@@ -194,29 +199,56 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void doNothingIfInstallComesFromStore() {
+    public void doNothingIfInstallComesFromStore() throws PackageManager.NameNotFoundException {
         when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
-        testDistributeInactive();
+        testDistributeInactiveOnPrivateTrack();
     }
 
     @Test
-    public void doNothingIfUpdateSetupFailedMessageExist() {
+    public void doNothingIfUpdateSetupFailedMessageExist() throws PackageManager.NameNotFoundException {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message_from_backend");
-        testDistributeInactive();
+        testDistributeInactiveOnPrivateTrack();
     }
 
     @Test
-    public void doNothingIfReleaseHashEqualsToFailedPackageHash() {
+    public void doNothingIfReleaseHashEqualsToFailedPackageHash() throws PackageManager.NameNotFoundException {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
         mockStatic(DistributeUtils.class);
 
         /* Mock the computeReleaseHash to some_hash value. */
         PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
-        testDistributeInactive();
+        testDistributeInactiveOnPrivateTrack();
     }
 
     @Test
-    public void continueIfReleaseHashNotEqualsToFailedPackageHash() {
+    public void checkForUpdateIfIgnoredSideLoadingButSwitchedToPublicTrack() throws PackageManager.NameNotFoundException {
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the computeReleaseHash to some_hash value. */
+        PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
+
+        /* When we start SDK (public track by default). */
+        start();
+        Activity activity = mock(Activity.class);
+        Distribute.getInstance().onActivityResumed(activity);
+
+        /* Then we check for update directly via API call. */
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verifyStatic(never());
+        DistributeUtils.updateSetupUsingBrowser(same(activity), anyString(), anyString(), any(PackageInfo.class));
+
+        /* Check we don't reset private track ignore state. */
+        verifyStatic(never());
+        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+        verifyStatic(never());
+        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+    }
+
+    @Test
+    public void continueIfReleaseHashNotEqualsToFailedPackageHash() throws PackageManager.NameNotFoundException {
+        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
         mockStatic(DistributeUtils.class);
 
@@ -224,19 +256,16 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         PowerMockito.when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("other_hash");
 
         /* Trigger call. */
+        Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Activity activity = mock(Activity.class);
+        Distribute.getInstance().onActivityResumed(activity);
+        verifyStatic();
+        DistributeUtils.updateSetupUsingBrowser(same(activity), anyString(), anyString(), any(PackageInfo.class));
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
         verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-    }
-
-    @Test
-    @SuppressWarnings("WrongConstant")
-    public void doNothingIfGetPackageInfoFails() throws Exception {
-        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenThrow(new PackageManager.NameNotFoundException());
-        testDistributeInactive();
     }
 
     @Test
