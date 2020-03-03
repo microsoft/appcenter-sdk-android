@@ -9,12 +9,14 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -327,5 +329,19 @@ public class AbstractDistributeTest {
     void start() {
         Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
+    }
+
+    /* Shared code to mock a restart of an activity considered to be the launcher. */
+    void restartResumeLauncher(Activity activity) {
+        Intent intent = mock(Intent.class);
+        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
+        ComponentName componentName = mock(ComponentName.class);
+        when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
+        when(componentName.getClassName()).thenReturn(activity.getClass().getName());
+        Distribute.getInstance().onActivityPaused(activity);
+        Distribute.getInstance().onActivityStopped(activity);
+        Distribute.getInstance().onActivityDestroyed(activity);
+        Distribute.getInstance().onActivityCreated(activity, mock(Bundle.class));
+        Distribute.getInstance().onActivityResumed(activity);
     }
 }

@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
+import android.preference.PreferenceGroup;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
@@ -43,6 +44,7 @@ import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -306,6 +308,41 @@ public class SettingsActivity extends AppCompatActivity {
                     Distribute.setEnabledForDebuggableBuild(enabled);
                 }
             });
+            initCheckBoxSetting(R.string.appcenter_distribute_disable_check_for_update_key, R.string.appcenter_distribute_summary_enabled_check_for_update, R.string.appcenter_distribute_summary_disabled_check_for_update, new HasEnabled() {
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_distribute_disable_check_for_update_key), enabled).apply();
+                    Toast.makeText(getActivity(), R.string.appcenter_distribute_track_state_updated, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_disable_check_for_update_key), true);
+                }
+            });
+
+            /* TODO Remove all try catch blocks here and use Distribute.checkForUpdate directly while preparing the demo app with prerelease jCenter SDK. */
+            try {
+                final Method checkForUpdate = Distribute.class.getMethod("checkForUpdate");
+                initClickableSetting(R.string.appcenter_distribute_check_for_update_key, new Preference.OnPreferenceClickListener() {
+
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        try {
+                            checkForUpdate.invoke(null);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        return true;
+                    }
+                });
+            } catch (NoSuchMethodException e) {
+                PreferenceGroup distributeSection = (PreferenceGroup) getPreferenceManager().findPreference(getString(R.string.distribute_key));
+
+                //noinspection ConstantConditions
+                distributeSection.removePreference(distributeSection.findPreference(getString(R.string.appcenter_distribute_check_for_update_key)));
+            }
             final HasSummary updateTrackHasSummary = new HasSummary() {
 
                 @Override

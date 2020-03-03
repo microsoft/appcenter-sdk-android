@@ -286,6 +286,16 @@ public class Distribute extends AbstractAppCenterService {
     private boolean mEnabledForDebuggableBuild;
 
     /**
+     * Flag to check if automatic check for update is disabled.
+     */
+    private boolean mAutomaticCheckForUpdateDisabled;
+
+    /**
+     * Flag to check if manual check for update was requested.
+     */
+    private boolean mManualCheckForUpdateRequested;
+
+    /**
      * Init.
      */
     private Distribute() {
@@ -393,8 +403,35 @@ public class Distribute extends AbstractAppCenterService {
      * @param updateAction one of {@link UpdateAction} actions.
      *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
-    public static synchronized void notifyUpdateAction(@UpdateAction int updateAction) {
+    public static void notifyUpdateAction(@UpdateAction int updateAction) {
         getInstance().handleUpdateAction(updateAction);
+    }
+
+    /**
+     * Trigger a check for update.
+     * If the application is in background, it will delay the check for update until the application is in foreground.
+     * This call has no effect if there is already an ongoing check.
+     */
+    public static void checkForUpdate() {
+        getInstance().instanceCheckForUpdate();
+    }
+
+    /**
+     * Disable automatic check for update before the service starts.
+     */
+    public static void disableAutomaticCheckForUpdate() {
+        getInstance().instanceDisableAutomaticCheckForUpdate();
+    }
+
+    /**
+     * Implements {@link #disableAutomaticCheckForUpdate()}.
+     */
+    private synchronized void instanceDisableAutomaticCheckForUpdate() {
+        if (mChannel != null) {
+            AppCenterLog.error(LOG_TAG, "Automatic check for update cannot be disabled after Distribute is started.");
+            return;
+        }
+        mAutomaticCheckForUpdateDisabled = true;
     }
 
     @Override
@@ -474,18 +511,25 @@ public class Distribute extends AbstractAppCenterService {
         /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
         if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
             AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            resetWorkflow();
+            if (mChannel != null) {
+                tryResetWorkflow();
+            }
         }
     }
 
     /**
-     * Reset current state to allow a new update check.
+     * Reset current workflow to allow a new update check if we are not already in the process
+     * of checking one.
+     *
+     * @return true if workflow was reset, false otherwise.
      */
-    private void resetWorkflow() {
-        if (mChannel != null && getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED) {
+    private boolean tryResetWorkflow() {
+        if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED && mCheckReleaseCallId == null) {
             mWorkflowCompleted = false;
             mBrowserOpenedOrAborted = false;
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -653,6 +697,29 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Implements {@link #checkForUpdate()}.
+     */
+    private void instanceCheckForUpdate() {
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                handleCheckForUpdate();
+            }
+        });
+    }
+
+    @WorkerThread
+    private synchronized void handleCheckForUpdate() {
+        mManualCheckForUpdateRequested = true;
+        if (tryResetWorkflow()) {
+            resumeWorkflowIfForeground();
+        } else {
+            AppCenterLog.info(LOG_TAG, "A check for update is already ongoing.");
+        }
+    }
+
+    /**
      * Cancel everything.
      */
     private synchronized void cancelPreviousTasks() {
@@ -668,6 +735,7 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mCheckedDownload = false;
+        mManualCheckForUpdateRequested = false;
         updateReleaseDetails(null);
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
@@ -686,6 +754,7 @@ public class Distribute extends AbstractAppCenterService {
             if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
                 AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
                 mWorkflowCompleted = true;
+                mManualCheckForUpdateRequested = false;
                 return;
             }
 
@@ -693,24 +762,29 @@ public class Distribute extends AbstractAppCenterService {
             if (InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext)) {
                 AppCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
                 mWorkflowCompleted = true;
+                mManualCheckForUpdateRequested = false;
                 return;
             }
 
             /*
              * If failed to enable in-app updates on the same app build before, don't go any further.
              * Only if the app build is different (different package hash), try enabling in-app updates again.
+             * This applies to private track only.
              */
-            String releaseHash = DistributeUtils.computeReleaseHash(this.mPackageInfo);
-            String updateSetupFailedPackageHash = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-            if (updateSetupFailedPackageHash != null) {
-                if (releaseHash.equals(updateSetupFailedPackageHash)) {
-                    AppCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
-                    return;
-                } else {
-                    AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
-                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-                    SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
+            if (!isPublicTrack) {
+                String updateSetupFailedPackageHash = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+                if (updateSetupFailedPackageHash != null) {
+                    String releaseHash = DistributeUtils.computeReleaseHash(this.mPackageInfo);
+                    if (releaseHash.equals(updateSetupFailedPackageHash)) {
+                        AppCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
+                        return;
+                    } else {
+                        AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                        SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                    }
                 }
             }
 
@@ -846,12 +920,17 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
 
+            /* Do not proceed if automatic check for update is disabled and manual check for update has not been called. */
+            if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
+                AppCenterLog.debug(LOG_TAG, "Automatic check for update is disabled. The SDK will not check for update now.");
+                return;
+            }
+
             /*
              * Check if we have previously stored the redirection parameters from private group or we simply use public track.
              */
             String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
             String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-            boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
             if (isPublicTrack || updateToken != null) {
 
                 /* We have what we need to check for updates via API. */
@@ -941,6 +1020,7 @@ public class Distribute extends AbstractAppCenterService {
             mReleaseDownloaderListener.hideProgressDialog();
         }
         mWorkflowCompleted = true;
+        mManualCheckForUpdateRequested = false;
     }
 
     /**
@@ -1903,7 +1983,7 @@ public class Distribute extends AbstractAppCenterService {
          */
         SessionContext.SessionInfo lastSession = SessionContext.getInstance().getSessionAt(System.currentTimeMillis());
         if (lastSession == null || lastSession.getSessionId() == null) {
-            AppCenterLog.debug(DistributeConstants.LOG_TAG, "No sessions were logged before, ignore sending of the distribution start session log.");
+            AppCenterLog.debug(LOG_TAG, "No sessions were logged before, ignore sending of the distribution start session log.");
             return;
         }
         post(new Runnable() {
