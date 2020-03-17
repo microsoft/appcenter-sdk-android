@@ -17,6 +17,8 @@
     <string name="description_auth" tools:ignore="MissingTranslation">Associate telemetry with user information</string>
     <string name="title_device_info" tools:ignore="MissingTranslation">Device info</string>
     <string name="description_device_info" tools:ignore="MissingTranslation">Display device information</string>
+    <string name="title_check_for_update" tools:ignore="MissingTranslation">Check for Update</string>
+    <string name="description_check_for_update" tools:ignore="MissingTranslation">Checks for new Distribute releases</string>
     <string name="title_generate_page_log" tools:ignore="MissingTranslation">Generate page logs</string>
     <string name="description_generate_page_log" tools:ignore="MissingTranslation">Simulate page open and close 5 times</string>
     <string name="error_device_info" tools:ignore="MissingTranslation">Could not retrieve device information</string>

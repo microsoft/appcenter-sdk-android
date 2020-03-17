@@ -114,6 +114,20 @@ public class MainActivity extends AppCompatActivity {
         if (savedTrack != 0) {
             Distribute.setUpdateTrack(savedTrack);
         }
+        boolean automaticCheckForUpdate = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_disable_check_for_update_key), true);
+        if (!automaticCheckForUpdate) {
+            try {
+
+                /*
+                 * TODO replace the next line with 'Distribute.disableAutomaticCheckForUpdate();'
+                 * when updating the demo during release process.
+                 */
+                Method disableAutomaticCheckForUpdateMethod = Distribute.class.getMethod("disableAutomaticCheckForUpdate");
+                disableAutomaticCheckForUpdateMethod.invoke(null);
+            } catch (Exception e) {
+                Toast.makeText(application, "No DisableAutomaticCheckForUpdate API in this build", Toast.LENGTH_SHORT).show();
+            }
+        }
         if (sSharedPreferences.contains(ANALYTICS_TRANSMISSION_INTERVAL_KEY)) {
             int latency = sSharedPreferences.getInt(ANALYTICS_TRANSMISSION_INTERVAL_KEY, DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS);
             try {
