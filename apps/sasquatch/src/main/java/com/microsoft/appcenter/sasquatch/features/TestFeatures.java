@@ -65,13 +65,7 @@ public final class TestFeatures {
         @Override
         public void onClick(View view) {
             try {
-
-                /*
-                 * TODO replace the next line with 'Distribute.checkForUpdate();'
-                 * when updating the demo during release process.
-                 */
-                Method checkForUpdateMethod = Distribute.class.getMethod("checkForUpdate");
-                checkForUpdateMethod.invoke(null);
+                Distribute.checkForUpdate();
             } catch (Exception e) {
                 AppCenterLog.warn(MainActivity.LOG_TAG, "No CheckForUpdate API in this build");
             }

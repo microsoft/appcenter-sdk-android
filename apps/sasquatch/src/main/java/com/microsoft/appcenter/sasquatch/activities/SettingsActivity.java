@@ -321,28 +321,14 @@ public class SettingsActivity extends AppCompatActivity {
                     return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_distribute_disable_check_for_update_key), true);
                 }
             });
+            initClickableSetting(R.string.appcenter_distribute_check_for_update_key, new Preference.OnPreferenceClickListener() {
 
-            /* TODO Remove all try catch blocks here and use Distribute.checkForUpdate directly while preparing the demo app with prerelease jCenter SDK. */
-            try {
-                final Method checkForUpdate = Distribute.class.getMethod("checkForUpdate");
-                initClickableSetting(R.string.appcenter_distribute_check_for_update_key, new Preference.OnPreferenceClickListener() {
-
-                    @Override
-                    public boolean onPreferenceClick(Preference preference) {
-                        try {
-                            checkForUpdate.invoke(null);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        return true;
-                    }
-                });
-            } catch (NoSuchMethodException e) {
-                PreferenceGroup distributeSection = (PreferenceGroup) getPreferenceManager().findPreference(getString(R.string.distribute_key));
-
-                //noinspection ConstantConditions
-                distributeSection.removePreference(distributeSection.findPreference(getString(R.string.appcenter_distribute_check_for_update_key)));
-            }
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Distribute.checkForUpdate();
+                    return true;
+                }
+            });
             final HasSummary updateTrackHasSummary = new HasSummary() {
 
                 @Override
