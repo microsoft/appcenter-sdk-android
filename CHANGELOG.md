@@ -1,5 +1,9 @@
 # App Center SDK for Android Change Log
 
+## Version 3.1.1 (Under development)
+
+___
+
 ## Version 3.1.0
 
 ### App Center Distribute
