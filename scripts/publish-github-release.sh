@@ -17,7 +17,7 @@ REQUEST_UPLOAD_URL_TEMPLATE="$(printf $GITHUB_API_URL_TEMPLATE $GITHUB_UPLOAD_HO
 
 # 1. Create a tag
 echo "Create a tag ($PUBLISH_VERSION) for the commit ($BUILD_SOURCEVERSION)"
-resp="$(curl -s -H "'Authorization: token $GITHUB_ACCESS_TOKEN'" -X POST $REQUEST_URL_TAG -d '{
+resp="$(curl -s -H "Authorization: token $GITHUB_ACCESS_TOKEN" -X POST $REQUEST_URL_TAG -d '{
     "tag": "'${PUBLISH_VERSION}'",
     "message": "'${PUBLISH_VERSION}'",
     "type": "commit",
@@ -36,7 +36,7 @@ fi
 
 # 2. Create a reference
 echo "Create a reference for the tag ($PUBLISH_VERSION)"
-resp="$(curl -s -H "'Authorization: token $GITHUB_ACCESS_TOKEN'" -X POST $REQUEST_REFERENCE_URL -d '{
+resp="$(curl -s -H "Authorization: token $GITHUB_ACCESS_TOKEN" -X POST $REQUEST_REFERENCE_URL -d '{
     "ref": "refs/tags/'${PUBLISH_VERSION}'",
     "sha": "'${sha}'"
   }')"
@@ -53,7 +53,7 @@ fi
 
 # 3. Create a release
 echo "Create a release for the tag ($PUBLISH_VERSION)"
-resp="$(curl -s -H "'Authorization: token $GITHUB_ACCESS_TOKEN'" -X POST $REQUEST_RELEASE_URL -d '{
+resp="$(curl -s -H "Authorization: token $GITHUB_ACCESS_TOKEN" -X POST $REQUEST_RELEASE_URL -d '{
     "tag_name": "'${PUBLISH_VERSION}'",
     "target_commitish": "master",
     "name": "'${PUBLISH_VERSION}'",
@@ -91,7 +91,7 @@ for file in $BINARY_FILE_FILTER
 do
   totalCount=`expr $totalCount + 1`
   url="$(echo $uploadUrl | sed 's/{filename}/'${file}'/g')"
-  resp="$(curl -s -H "'Authorization: token $GITHUB_ACCESS_TOKEN'" -H 'Content-Type: application/zip' -X POST --data-binary @${file} $url)"
+  resp="$(curl -s -H "Authorization: token $GITHUB_ACCESS_TOKEN" -H 'Content-Type: application/zip' -X POST --data-binary @${file} $url)"
   id="$(echo $resp | $JQ_COMMAND -r '.id')"
 
   # Log error if response doesn't contain "id" key
