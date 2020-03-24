@@ -27,10 +27,16 @@ import com.microsoft.appcenter.sasquatch.fragments.TypedPropertyFragment;
 import com.microsoft.appcenter.sasquatch.util.EventActivityUtil;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_EXPIRES_IN_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_USER_ID_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
 
 public class EventActivity extends PropertyActivity {
 
@@ -114,6 +120,20 @@ public class EventActivity extends PropertyActivity {
          * the forth is a grandchild, etc...
          */
         mTransmissionTargets = EventActivityUtil.getAnalyticTransmissionTargetList(this);
+
+        String msaUserId = sSharedPreferences.getString(MSA_USER_ID_KEY, null);
+        if (msaUserId != null) {
+            long expirationDate = sSharedPreferences.getLong(MSA_EXPIRES_IN_KEY, 0);
+            Calendar calendar = Calendar.getInstance();
+            if (calendar.getTimeInMillis() > expirationDate) {
+                sSharedPreferences.edit().remove(MSA_EXPIRES_IN_KEY).apply();
+                sSharedPreferences.edit().remove(MSA_USER_ID_KEY).apply();
+            } else {
+                for(AnalyticsTransmissionTarget target : mTransmissionTargets) {
+                    target.getPropertyConfigurator().setUserId(msaUserId);
+                }
+            }
+        }
 
         /* Init common schema properties button. */
         mOverrideCommonSchemaButton = findViewById(R.id.override_cs_button);

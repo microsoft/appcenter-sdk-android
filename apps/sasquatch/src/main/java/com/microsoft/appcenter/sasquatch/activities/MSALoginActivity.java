@@ -41,12 +41,16 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_EXPIRES_IN_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_USER_ID_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
 
 public class MSALoginActivity extends AppCompatActivity {
 
@@ -70,6 +74,8 @@ public class MSALoginActivity extends AppCompatActivity {
     };
 
     private static final String USER_ID = "user_id";
+
+    private static final String EXPIRES_IN = "expires_in";
 
     private static final String SCOPE = "scope";
 
@@ -322,6 +328,10 @@ public class MSALoginActivity extends AppCompatActivity {
                         try {
                             JSONObject response = new JSONObject(httpResponse.getPayload());
                             String userId = response.getString(USER_ID);
+                            long expiresIn = response.getLong(EXPIRES_IN) * 1000L;
+                            Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);
+                            sSharedPreferences.edit().putLong(MSA_EXPIRES_IN_KEY, expiryDate.getTime()).apply();
+                            sSharedPreferences.edit().putString(MSA_USER_ID_KEY, userId).apply();
                             mRefreshToken = response.getString(REFRESH_TOKEN);
                             mRefreshTokenScope = response.getString(SCOPE);
                             registerAppCenterAuthentication(userId);
@@ -366,8 +376,11 @@ public class MSALoginActivity extends AppCompatActivity {
                         try {
                             JSONObject response = new JSONObject(httpResponse.getPayload());
                             String accessToken = response.getString("access_token");
-                            long expiresIn = response.getLong("expires_in") * 1000L;
+                            String userId = response.getString(USER_ID);
+                            long expiresIn = response.getLong(EXPIRES_IN) * 1000L;
                             Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);
+                            sSharedPreferences.edit().putLong(MSA_EXPIRES_IN_KEY, expiryDate.getTime()).apply();
+                            sSharedPreferences.edit().putString(MSA_USER_ID_KEY, userId).apply();
                             callback.onAuthenticationResult(accessToken, expiryDate);
                         } catch (JSONException e) {
                             onCallFailed(e);

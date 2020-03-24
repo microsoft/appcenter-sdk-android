@@ -69,6 +69,10 @@ public class MainActivity extends AppCompatActivity {
 
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
 
+    public static final String MSA_USER_ID_KEY = "MSAUserId";
+
+    public static final String MSA_EXPIRES_IN_KEY = "MSAExpiresIn";
+
     private static final String SENDER_ID = "177539951155";
 
     private static final int DATABASE_SIZE_MULTIPLE = 4096;
