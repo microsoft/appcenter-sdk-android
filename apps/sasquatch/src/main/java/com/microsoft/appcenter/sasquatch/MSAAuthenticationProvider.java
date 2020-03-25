@@ -32,7 +32,11 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedP
 
 public class MSAAuthenticationProvider implements AuthenticationProvider.TokenProvider {
 
-    public static final String URL_PREFIX = "https://login.live.com/oauth20_";
+    private static final String URL_PREFIX = "https://login.live.com/oauth20_";
+
+    private static final String CLIENT_ID = "06181c2a-2403-437f-a490-9bcb06f85281";
+
+    private static final String EXPIRES_IN = "expires_in";
 
     public static final String REDIRECT_URL = URL_PREFIX + "desktop.srf";
 
@@ -41,8 +45,6 @@ public class MSAAuthenticationProvider implements AuthenticationProvider.TokenPr
     public static final String TOKEN_URL = URL_PREFIX + "token.srf";
 
     public static final String SIGN_OUT_URL = URL_PREFIX + "logout.srf?";
-
-    public static final String CLIENT_ID = "06181c2a-2403-437f-a490-9bcb06f85281";
 
     public static final String SCOPE = "scope";
 
@@ -54,9 +56,6 @@ public class MSAAuthenticationProvider implements AuthenticationProvider.TokenPr
 
     public static final String USER_ID = "user_id";
 
-    public static final String EXPIRES_IN = "expires_in";
-    private static MSAAuthenticationProvider instance;
-
     static {
         try {
             REDIRECT_URI_PARAM = "redirect_uri=" + URLEncoder.encode(REDIRECT_URL, "UTF-8");
@@ -65,9 +64,14 @@ public class MSAAuthenticationProvider implements AuthenticationProvider.TokenPr
         }
     }
 
+    private static MSAAuthenticationProvider instance;
+
     private String mRefreshToken;
+
     private String mRefreshTokenScope;
+
     private WeakReference<Activity> mActivity;
+    
     private HttpClient mHttpClient;
 
     private MSAAuthenticationProvider(String refreshToken, String refreshTokenScope, Activity activity) {
