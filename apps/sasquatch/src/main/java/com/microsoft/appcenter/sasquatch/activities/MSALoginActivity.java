@@ -31,6 +31,7 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -38,33 +39,28 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLEncoder;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.AUTHORIZE_URL;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.CLIENT_ID_PARAM;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.REDIRECT_URI_PARAM;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.REDIRECT_URL;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.REFRESH_TOKEN;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.SCOPE;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.SIGN_OUT_URL;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.TOKEN_URL;
+import static com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider.USER_ID;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_EXPIRES_IN_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_AUTH_TYPE_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_REFRESH_TOKEN_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_REFRESH_TOKEN_SCOPE_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_USER_ID_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
 
 public class MSALoginActivity extends AppCompatActivity {
-
-    private static final String URL_PREFIX = "https://login.live.com/oauth20_";
-
-    private static final String REDIRECT_URL = URL_PREFIX + "desktop.srf";
-
-    private static final String AUTHORIZE_URL = URL_PREFIX + "authorize.srf?";
-
-    private static final String TOKEN_URL = URL_PREFIX + "token.srf";
-
-    private static final String SIGN_OUT_URL = URL_PREFIX + "logout.srf?";
-
-    private static final String CLIENT_ID = "06181c2a-2403-437f-a490-9bcb06f85281";
 
     private static final String[] SCOPES_COMPACT = {"service::events.data.microsoft.com::MBI_SSL"};
 
@@ -72,26 +68,6 @@ public class MSALoginActivity extends AppCompatActivity {
             "wl.offline_access",
             "AsimovRome.Telemetry",
     };
-
-    private static final String USER_ID = "user_id";
-
-    private static final String EXPIRES_IN = "expires_in";
-
-    private static final String SCOPE = "scope";
-
-    private static final String REFRESH_TOKEN = "refresh_token";
-
-    private static final String CLIENT_ID_PARAM = "&client_id=" + CLIENT_ID;
-
-    private static final String REDIRECT_URI_PARAM;
-
-    static {
-        try {
-            REDIRECT_URI_PARAM = "redirect_uri=" + URLEncoder.encode(REDIRECT_URL, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * HTTP Client to get tokens.
@@ -282,15 +258,11 @@ public class MSALoginActivity extends AppCompatActivity {
     }
 
     private void registerAppCenterAuthentication(String userId) {
-        AuthenticationProvider.TokenProvider tokenProvider = new AuthenticationProvider.TokenProvider() {
-
-            @Override
-            public void acquireToken(String ticketKey, AuthenticationProvider.AuthenticationCallback callback) {
-
-                /* Refresh token, doing that even on first time to test the refresh code without having to wait 1 hour. */
-                refreshToken(callback);
-            }
-        };
+        sSharedPreferences.edit().putString(MSA_REFRESH_TOKEN_SCOPE_KEY, mRefreshTokenScope).apply();
+        sSharedPreferences.edit().putString(MSA_REFRESH_TOKEN_KEY, mRefreshToken).apply();
+        sSharedPreferences.edit().putInt(MSA_AUTH_TYPE_KEY, mAuthType.ordinal()).apply();
+        sSharedPreferences.edit().putString(MSA_USER_ID_KEY, userId).apply();
+        MSAAuthenticationProvider tokenProvider = MSAAuthenticationProvider.getInstance(mRefreshToken, mRefreshTokenScope, this);
         AuthenticationProvider provider = new AuthenticationProvider(mAuthType, userId, tokenProvider);
         AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
         finish();
@@ -328,10 +300,6 @@ public class MSALoginActivity extends AppCompatActivity {
                         try {
                             JSONObject response = new JSONObject(httpResponse.getPayload());
                             String userId = response.getString(USER_ID);
-                            long expiresIn = response.getLong(EXPIRES_IN) * 1000L;
-                            Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);
-                            sSharedPreferences.edit().putLong(MSA_EXPIRES_IN_KEY, expiryDate.getTime()).apply();
-                            sSharedPreferences.edit().putString(MSA_USER_ID_KEY, userId).apply();
                             mRefreshToken = response.getString(REFRESH_TOKEN);
                             mRefreshTokenScope = response.getString(SCOPE);
                             registerAppCenterAuthentication(userId);
@@ -342,54 +310,6 @@ public class MSALoginActivity extends AppCompatActivity {
 
                     @Override
                     public void onCallFailed(Exception e) {
-                        handleCallFailure(e);
-                    }
-                });
-    }
-
-    private void refreshToken(final AuthenticationProvider.AuthenticationCallback callback) {
-        Map<String, String> headers = new HashMap<>();
-        headers.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-www-form-urlencoded");
-        sHttpClient.callAsync(TOKEN_URL,
-                DefaultHttpClient.METHOD_POST,
-                headers,
-                new HttpClient.CallTemplate() {
-
-                    @Override
-                    public String buildRequestBody() {
-                        return REDIRECT_URI_PARAM +
-                                CLIENT_ID_PARAM +
-                                "&grant_type=" + REFRESH_TOKEN +
-                                "&" + REFRESH_TOKEN + "=" + mRefreshToken +
-                                "&scope=" + mRefreshTokenScope;
-                    }
-
-                    @Override
-                    public void onBeforeCalling(URL url, Map<String, String> headers) {
-                        AppCenterLog.verbose(AppCenter.LOG_TAG, "Calling " + url + "...");
-                    }
-                },
-                new ServiceCallback() {
-
-                    @Override
-                    public void onCallSucceeded(HttpResponse httpResponse) {
-                        try {
-                            JSONObject response = new JSONObject(httpResponse.getPayload());
-                            String accessToken = response.getString("access_token");
-                            String userId = response.getString(USER_ID);
-                            long expiresIn = response.getLong(EXPIRES_IN) * 1000L;
-                            Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);
-                            sSharedPreferences.edit().putLong(MSA_EXPIRES_IN_KEY, expiryDate.getTime()).apply();
-                            sSharedPreferences.edit().putString(MSA_USER_ID_KEY, userId).apply();
-                            callback.onAuthenticationResult(accessToken, expiryDate);
-                        } catch (JSONException e) {
-                            onCallFailed(e);
-                        }
-                    }
-
-                    @Override
-                    public void onCallFailed(Exception e) {
-                        callback.onAuthenticationResult(null, null);
                         handleCallFailure(e);
                     }
                 });
