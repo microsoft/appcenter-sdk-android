@@ -31,7 +31,6 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_USER
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
 
 public class MSAAuthenticationProvider implements AuthenticationProvider.TokenProvider {
-
     private static final String URL_PREFIX = "https://login.live.com/oauth20_";
 
     private static final String CLIENT_ID = "06181c2a-2403-437f-a490-9bcb06f85281";
