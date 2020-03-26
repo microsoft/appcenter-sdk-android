@@ -357,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
 
-        // Restore the MSA authentication callback.
+        /* Restore the MSA authentication callback. */
         String msaUserId = sSharedPreferences.getString(MSA_TOKEN_KEY, null);
         String refreshToken = sSharedPreferences.getString(MSA_REFRESH_TOKEN_KEY, null);
         String refreshTokenScope = sSharedPreferences.getString(MSA_REFRESH_TOKEN_SCOPE_KEY, null);
