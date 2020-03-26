@@ -57,7 +57,7 @@ import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_AUTH_TYPE_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_REFRESH_TOKEN_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_REFRESH_TOKEN_SCOPE_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_USER_ID_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_TOKEN_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
 
 public class MSALoginActivity extends AppCompatActivity {
@@ -261,7 +261,7 @@ public class MSALoginActivity extends AppCompatActivity {
         sSharedPreferences.edit().putString(MSA_REFRESH_TOKEN_SCOPE_KEY, mRefreshTokenScope).apply();
         sSharedPreferences.edit().putString(MSA_REFRESH_TOKEN_KEY, mRefreshToken).apply();
         sSharedPreferences.edit().putInt(MSA_AUTH_TYPE_KEY, mAuthType.ordinal()).apply();
-        sSharedPreferences.edit().putString(MSA_USER_ID_KEY, userId).apply();
+        sSharedPreferences.edit().putString(MSA_TOKEN_KEY, userId).apply();
         MSAAuthenticationProvider tokenProvider = MSAAuthenticationProvider.getInstance(mRefreshToken, mRefreshTokenScope, this);
         AuthenticationProvider provider = new AuthenticationProvider(mAuthType, userId, tokenProvider);
         AnalyticsTransmissionTarget.addAuthenticationProvider(provider);

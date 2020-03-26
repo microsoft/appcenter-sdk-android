@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.sasquatch;
 
 import android.app.Activity;
@@ -27,7 +32,7 @@ import java.util.Map;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_TAG;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_REFRESH_TOKEN_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_USER_ID_KEY;
+import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MSA_TOKEN_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.sSharedPreferences;
 
 public class MSAAuthenticationProvider implements AuthenticationProvider.TokenProvider {
@@ -63,7 +68,7 @@ public class MSAAuthenticationProvider implements AuthenticationProvider.TokenPr
         }
     }
 
-    private static MSAAuthenticationProvider instance;
+    private static MSAAuthenticationProvider sInstance;
 
     private String mRefreshToken;
 
@@ -81,13 +86,13 @@ public class MSAAuthenticationProvider implements AuthenticationProvider.TokenPr
     }
 
     public static MSAAuthenticationProvider getInstance(String refreshToken, String refreshTokenScope, Activity activity) {
-        if (instance == null) {
-            instance = new MSAAuthenticationProvider(refreshToken, refreshTokenScope, activity);
+        if (sInstance == null) {
+            sInstance = new MSAAuthenticationProvider(refreshToken, refreshTokenScope, activity);
         } else {
-            instance.mRefreshToken = refreshToken;
-            instance.mActivity = new WeakReference<>(activity);
+            sInstance.mRefreshToken = refreshToken;
+            sInstance.mActivity = new WeakReference<>(activity);
         }
-        return instance;
+        return sInstance;
     }
 
     @Override
@@ -124,7 +129,7 @@ public class MSAAuthenticationProvider implements AuthenticationProvider.TokenPr
                             long expiresIn = response.getLong(EXPIRES_IN) * 1000L;
                             Date expiryDate = new Date(System.currentTimeMillis() + expiresIn);
                             sSharedPreferences.edit().putString(MSA_REFRESH_TOKEN_KEY, mRefreshToken).apply();
-                            sSharedPreferences.edit().putString(MSA_USER_ID_KEY, userId).apply();
+                            sSharedPreferences.edit().putString(MSA_TOKEN_KEY, userId).apply();
                             callback.onAuthenticationResult(accessToken, expiryDate);
                         } catch (JSONException e) {
                             onCallFailed(e);

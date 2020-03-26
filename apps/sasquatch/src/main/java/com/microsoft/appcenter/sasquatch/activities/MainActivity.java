@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
 
-    public static final String MSA_USER_ID_KEY = "MSAUserId";
+    public static final String MSA_TOKEN_KEY = "MSAToken";
 
     public static final String MSA_REFRESH_TOKEN_KEY = "MSARefreshToken";
 
@@ -357,7 +357,8 @@ public class MainActivity extends AppCompatActivity {
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
 
-        String msaUserId = sSharedPreferences.getString(MSA_USER_ID_KEY, null);
+        // Restore the MSA authentication callback.
+        String msaUserId = sSharedPreferences.getString(MSA_TOKEN_KEY, null);
         String refreshToken = sSharedPreferences.getString(MSA_REFRESH_TOKEN_KEY, null);
         String refreshTokenScope = sSharedPreferences.getString(MSA_REFRESH_TOKEN_SCOPE_KEY, null);
         int rawAuthType = sSharedPreferences.getInt(MSA_AUTH_TYPE_KEY, 0);
