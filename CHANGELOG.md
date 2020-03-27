@@ -2,10 +2,6 @@
 
 ## Version 3.1.1 (Under development)
 
-### App Center Distribute
-
-* **[Feature]** Updates are checked automatically when an application enters a foreground state.
-
 ___
 
 ## Version 3.1.0
