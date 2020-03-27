@@ -93,16 +93,6 @@ public class AbstractAppCenterServiceTest {
     }
 
     @Test
-    public void onApplicationStarted() {
-        mService.onApplicationStarted();
-    }
-
-    @Test
-    public void onApplicationStopped() {
-        mService.onApplicationStopped();
-    }
-
-    @Test
     public void onActivityCreated() {
         mService.onActivityCreated(null, null);
     }

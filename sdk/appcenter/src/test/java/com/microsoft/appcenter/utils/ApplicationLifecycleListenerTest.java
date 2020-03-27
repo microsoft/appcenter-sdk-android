@@ -15,7 +15,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Timer;
@@ -118,13 +117,13 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
-        verify(mockAppCenterService1).onApplicationStarted();
-        verify(mockAppCenterService2).onApplicationStarted();
+        verify(mockAppCenterService1).onApplicationEnterForeground();
+        verify(mockAppCenterService2).onApplicationEnterForeground();
 
         /* Call onActivityStarted again. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
-        verify(mockAppCenterService1).onApplicationStarted();
-        verify(mockAppCenterService2).onApplicationStarted();
+        verify(mockAppCenterService1).onApplicationEnterForeground();
+        verify(mockAppCenterService2).onApplicationEnterForeground();
 
         /* Call onActivityStopped. */
         mApplicationLifecycleListenerMock.onActivityStopped(mActivityMock);
@@ -134,8 +133,8 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
-        verify(mockAppCenterService1, times(2)).onApplicationStarted();
-        verify(mockAppCenterService2, times(2)).onApplicationStarted();
+        verify(mockAppCenterService1, times(2)).onApplicationEnterForeground();
+        verify(mockAppCenterService2, times(2)).onApplicationEnterForeground();
     }
 
     @Test
@@ -149,8 +148,8 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
-        verify(mockAppCenterService1).onApplicationStarted();
-        verify(mockAppCenterService2).onApplicationStarted();
+        verify(mockAppCenterService1).onApplicationEnterForeground();
+        verify(mockAppCenterService2).onApplicationEnterForeground();
 
         /* Call onActivityResumed. */
         mApplicationLifecycleListenerMock.onActivityResumed(mActivityMock);
@@ -161,8 +160,8 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
-        verify(mockAppCenterService1).onApplicationStarted();
-        verify(mockAppCenterService2).onApplicationStarted();
+        verify(mockAppCenterService1).onApplicationEnterForeground();
+        verify(mockAppCenterService2).onApplicationEnterForeground();
     }
 
     @Test
@@ -177,8 +176,8 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
-        verify(mockAppCenterService1).onApplicationStarted();
-        verify(mockAppCenterService2).onApplicationStarted();
+        verify(mockAppCenterService1).onApplicationEnterForeground();
+        verify(mockAppCenterService2).onApplicationEnterForeground();
         mApplicationLifecycleListenerMock.onActivityCreated(mActivityMock, mockBundle);
 
         /* Call onActivityResumed. */
@@ -198,18 +197,20 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
-        verify(mockAppCenterService1, times(2)).onApplicationStarted();
-        verify(mockAppCenterService2, times(2)).onApplicationStarted();
+        verify(mockAppCenterService1, times(2)).onApplicationEnterForeground();
+        verify(mockAppCenterService2, times(2)).onApplicationEnterForeground();
     }
 
     private class MockCallbacks implements ApplicationLifecycleListener.ApplicationLifecycleCallbacks {
 
         @Override
-        public void onApplicationStarted() {
+        public void onApplicationEnterForeground() {
+
         }
 
         @Override
-        public void onApplicationStopped() {
+        public void onApplicationEnterBackground() {
+
         }
     }
 }
