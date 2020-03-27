@@ -74,6 +74,11 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
         mHandler = handler;
     }
 
+    /**
+     * Register an application lifecycle callback.
+     *
+     * @param lifecycleCallback listener to add.
+     */
     public void registerApplicationLifecycleCallbacks(ApplicationLifecycleCallbacks lifecycleCallback) {
         mLifecycleCallbacks.add(lifecycleCallback);
     }

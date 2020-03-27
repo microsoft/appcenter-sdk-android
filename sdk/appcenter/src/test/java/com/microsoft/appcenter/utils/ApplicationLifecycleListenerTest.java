@@ -9,7 +9,8 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 
-import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AbstractAppCenterTest;
+import com.microsoft.appcenter.AppCenterService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -83,8 +84,8 @@ public class ApplicationLifecycleListenerTest {
                 return null;
             }
         }).when(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
-        MockService mockAppCenterService1 = spy(new MockService());
-        MockService mockAppCenterService2 = spy(new MockService());
+        AppCenterService mockAppCenterService1 = spy(new AbstractAppCenterTest.DummyService());
+        AppCenterService mockAppCenterService2 = spy(new AbstractAppCenterTest.AnotherDummyService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -113,8 +114,8 @@ public class ApplicationLifecycleListenerTest {
     public void onActivityDoubleStartTest() {
 
         /* Prepare data. */
-        MockService mockAppCenterService1 = spy(new MockService());
-        MockService mockAppCenterService2 = spy(new MockService());
+        AppCenterService mockAppCenterService1 = spy(new AbstractAppCenterTest.DummyService());
+        AppCenterService mockAppCenterService2 = spy(new AbstractAppCenterTest.AnotherDummyService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -144,8 +145,8 @@ public class ApplicationLifecycleListenerTest {
     public void onActivityStartAfterResumeTest() {
 
         /* Prepare data. */
-        MockService mockAppCenterService1 = spy(new MockService());
-        MockService mockAppCenterService2 = spy(new MockService());
+        AppCenterService mockAppCenterService1 = spy(new AbstractAppCenterTest.DummyService());
+        AppCenterService mockAppCenterService2 = spy(new AbstractAppCenterTest.AnotherDummyService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -172,8 +173,8 @@ public class ApplicationLifecycleListenerTest {
 
         /* Prepare data. */
         Bundle mockBundle = mock(Bundle.class);
-        MockService mockAppCenterService1 = spy(new MockService());
-        MockService mockAppCenterService2 = spy(new MockService());
+        AppCenterService mockAppCenterService1 = spy(new AbstractAppCenterTest.DummyService());
+        AppCenterService mockAppCenterService2 = spy(new AbstractAppCenterTest.AnotherDummyService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -226,8 +227,9 @@ public class ApplicationLifecycleListenerTest {
         }).when(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
         Activity activityMock2 = mock(Activity.class);
         Bundle mockBundle = mock(Bundle.class);
-        MockService mockAppCenterService1 = spy(new MockService());
-        MockService mockAppCenterService2 = spy(new MockService());
+
+        AppCenterService mockAppCenterService1 = spy(new AbstractAppCenterTest.DummyService());
+        AppCenterService mockAppCenterService2 = spy(new AbstractAppCenterTest.AnotherDummyService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -257,23 +259,5 @@ public class ApplicationLifecycleListenerTest {
         /* Verify the callback was not called if we transition to another activity inside the app. */
         verify(mockAppCenterService1, times(1)).onApplicationEnterForeground();
         verify(mockAppCenterService2, times(1)).onApplicationEnterForeground();
-    }
-
-    private class MockService extends AbstractAppCenterService {
-
-        @Override
-        protected String getGroupName() {
-            return null;
-        }
-
-        @Override
-        protected String getLoggerTag() {
-            return null;
-        }
-
-        @Override
-        public String getServiceName() {
-            return null;
-        }
     }
 }
