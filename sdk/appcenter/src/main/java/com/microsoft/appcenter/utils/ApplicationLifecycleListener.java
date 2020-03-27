@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.utils;
 
 import android.app.Activity;
@@ -7,8 +12,8 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * Listens to the whole application (if the application is a single process) lifecycle events.
@@ -49,9 +54,9 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     private Handler mHandler;
 
     /**
-     * A collection of ApplicationLifecycleCallbacks.
+     * A set of ApplicationLifecycleCallbacks.
      */
-    private Collection<ApplicationLifecycleCallbacks> mLifecycleCallbacks = new ArrayList<>();
+    private final Set<ApplicationLifecycleCallbacks> mLifecycleCallbacks = new CopyOnWriteArraySet<>();
 
     private Runnable mDelayedPauseRunnable = new Runnable() {
 
@@ -79,7 +84,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     private void dispatchStopIfNeeded() {
         if (mStartedCounter == 0 && mPauseSent) {
             for (ApplicationLifecycleCallbacks service : mLifecycleCallbacks) {
-                service.onApplicationStopped();
+                service.onApplicationEnterBackground();
             }
             mStopSent = true;
         }
@@ -94,7 +99,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
         mStartedCounter++;
         if (mStartedCounter == 1 && mStopSent) {
             for (ApplicationLifecycleCallbacks service : mLifecycleCallbacks) {
-                service.onApplicationStarted();
+                service.onApplicationEnterForeground();
             }
             mStopSent = false;
         }
@@ -142,8 +147,8 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     }
 
     public interface ApplicationLifecycleCallbacks {
-        void onApplicationStarted();
+        void onApplicationEnterForeground();
 
-        void onApplicationStopped();
+        void onApplicationEnterBackground();
     }
 }
