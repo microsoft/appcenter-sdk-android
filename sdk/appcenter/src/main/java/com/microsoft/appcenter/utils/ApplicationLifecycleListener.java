@@ -54,6 +54,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     private Collection<ApplicationLifecycleCallbacks> mLifecycleCallbacks = new ArrayList<>();
 
     private Runnable mDelayedPauseRunnable = new Runnable() {
+
         @Override
         public void run() {
             dispatchPauseIfNeeded();
@@ -62,7 +63,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     };
 
     public ApplicationLifecycleListener(Handler handler) {
-        this.mHandler = handler;
+        mHandler = handler;
     }
 
     public void registerApplicationLifecycleCallbacks(ApplicationLifecycleCallbacks lifecycleCallback) {
