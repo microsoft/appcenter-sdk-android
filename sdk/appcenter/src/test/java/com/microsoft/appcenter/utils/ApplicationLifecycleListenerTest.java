@@ -6,11 +6,9 @@
 package com.microsoft.appcenter.utils;
 
 import android.app.Activity;
-import android.app.Application;
 import android.os.Bundle;
 import android.os.Handler;
 
-import com.microsoft.appcenter.AppCenterService;
 
 import org.junit.After;
 import org.junit.Before;
@@ -18,6 +16,9 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
@@ -67,15 +68,20 @@ public class ApplicationLifecycleListenerTest {
     @Test
     public void onActivityDoubleResumedTest() {
 
-        // Prepare data.
-       // Handler mockHandler = mock(Handler.class);
+        /* Prepare data. */
         doAnswer(new Answer<Void>() {
 
             @Override
-            public Void answer(InvocationOnMock invocation) throws InterruptedException {
+            public Void answer(final InvocationOnMock invocation) {
 
-                // todo add delay
-                ((Runnable) invocation.getArguments()[0]).run();
+                /* Post with a small delay to ensure that application resumes first. */
+                new Timer().schedule(new TimerTask() {
+
+                    @Override
+                    public void run() {
+                        ((Runnable) invocation.getArguments()[0]).run();
+                    }
+                }, 100);
                 return null;
             }
         }).when(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
@@ -84,23 +90,23 @@ public class ApplicationLifecycleListenerTest {
         mApplicationLifecycleListenerMock.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListenerMock.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
-        // Call onActivityResumed.
+        /* Call onActivityResumed. */
         mApplicationLifecycleListenerMock.onActivityResumed(mActivityMock);
         verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
 
-        // Call onActivityResumed again.
+        /* Call onActivityResumed again. */
         mApplicationLifecycleListenerMock.onActivityResumed(mActivityMock);
         verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
 
-        // Pause.
+        /* Pause.*/
         mApplicationLifecycleListenerMock.onActivityPaused(mActivityMock);
         verify(mHandlerMock, never()).postDelayed(any(Runnable.class), anyLong());
 
-        // Call onActivityPaused again.
+        /* Call onActivityPaused again. */
         mApplicationLifecycleListenerMock.onActivityPaused(mActivityMock);
         verify(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
 
-        // Call onActivityResumed.
+        /* Call onActivityResumed. */
         mApplicationLifecycleListenerMock.onActivityResumed(mActivityMock);
         verify(mHandlerMock).removeCallbacks(any(Runnable.class));
     }
@@ -108,29 +114,29 @@ public class ApplicationLifecycleListenerTest {
     @Test
     public void onActivityDoubleStartTest() {
 
-        // Prepare data.
+        /* Prepare data. */
         MockCallbacks mockAppCenterService1 = mock(MockCallbacks.class);
         MockCallbacks mockAppCenterService2 = mock(MockCallbacks.class);
         mApplicationLifecycleListenerMock.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListenerMock.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
-        // Call onActivityStarted.
+        /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
         verify(mockAppCenterService1).onApplicationStarted();
         verify(mockAppCenterService2).onApplicationStarted();
 
-        // Call onActivityStarted again.
+        /* Call onActivityStarted again. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
         verify(mockAppCenterService1).onApplicationStarted();
         verify(mockAppCenterService2).onApplicationStarted();
 
-        // Call onActivityStopped.
+        /* Call onActivityStopped. */
         mApplicationLifecycleListenerMock.onActivityStopped(mActivityMock);
 
-        // Call onActivityStopped again.
+        /* Call onActivityStopped again. */
         mApplicationLifecycleListenerMock.onActivityStopped(mActivityMock);
 
-        // Call onActivityStarted.
+        /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
         verify(mockAppCenterService1, times(2)).onApplicationStarted();
         verify(mockAppCenterService2, times(2)).onApplicationStarted();
@@ -139,25 +145,25 @@ public class ApplicationLifecycleListenerTest {
     @Test
     public void onActivityStartAfterResumeTest() {
 
-        // Prepare data.
+        /* Prepare data. */
         MockCallbacks mockAppCenterService1 = mock(MockCallbacks.class);
         MockCallbacks mockAppCenterService2 = mock(MockCallbacks.class);
         mApplicationLifecycleListenerMock.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListenerMock.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
-        // Call onActivityStarted.
+        /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
         verify(mockAppCenterService1).onApplicationStarted();
         verify(mockAppCenterService2).onApplicationStarted();
 
-        // Call onActivityResumed.
+        /* Call onActivityResumed. */
         mApplicationLifecycleListenerMock.onActivityResumed(mActivityMock);
         verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
 
-        // Call onActivityStopped.
+        /* Call onActivityStopped. */
         mApplicationLifecycleListenerMock.onActivityStopped(mActivityMock);
 
-        // Call onActivityStarted.
+        /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
         verify(mockAppCenterService1).onApplicationStarted();
         verify(mockAppCenterService2).onApplicationStarted();
@@ -166,35 +172,35 @@ public class ApplicationLifecycleListenerTest {
     @Test
     public void onExpectedLifecycleTest() {
 
-        // Prepare data.
+        /* Prepare data. */
         Bundle mockBundle = mock(Bundle.class);
         MockCallbacks mockAppCenterService1 = mock(MockCallbacks.class);
         MockCallbacks mockAppCenterService2 = mock(MockCallbacks.class);
         mApplicationLifecycleListenerMock.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListenerMock.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
-        // Call onActivityStarted.
+        /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
         verify(mockAppCenterService1).onApplicationStarted();
         verify(mockAppCenterService2).onApplicationStarted();
         mApplicationLifecycleListenerMock.onActivityCreated(mActivityMock, mockBundle);
 
-        // Call onActivityResumed.
+        /* Call onActivityResumed. */
         mApplicationLifecycleListenerMock.onActivityResumed(mActivityMock);
         verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
         mApplicationLifecycleListenerMock.onActivitySaveInstanceState(mActivityMock, mockBundle);
 
-        // Call onActivityPaused.
+        /* Call onActivityPaused. */
         mApplicationLifecycleListenerMock.onActivityPaused(mActivityMock);
         verify(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
 
-        // Call onActivityStopped.
+        /* Call onActivityStopped. */
         mApplicationLifecycleListenerMock.onActivityStopped(mActivityMock);
 
-        // Call onActivityDestroyed.
+        /* Call onActivityDestroyed. */
         mApplicationLifecycleListenerMock.onActivityDestroyed(mActivityMock);
 
-        // Call onActivityStarted.
+        /* Call onActivityStarted. */
         mApplicationLifecycleListenerMock.onActivityStarted(mActivityMock);
         verify(mockAppCenterService1, times(2)).onApplicationStarted();
         verify(mockAppCenterService2, times(2)).onApplicationStarted();
@@ -204,12 +210,10 @@ public class ApplicationLifecycleListenerTest {
 
         @Override
         public void onApplicationStarted() {
-
         }
 
         @Override
         public void onApplicationStopped() {
-
         }
     }
 }
