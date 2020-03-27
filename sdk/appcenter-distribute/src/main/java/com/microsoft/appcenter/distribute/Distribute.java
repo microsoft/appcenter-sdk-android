@@ -533,13 +533,6 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @Override
-    public void onApplicationStart() {
-        if (mChannel != null) {
-            tryResetWorkflow();
-        }
-    }
-
-    @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
 
