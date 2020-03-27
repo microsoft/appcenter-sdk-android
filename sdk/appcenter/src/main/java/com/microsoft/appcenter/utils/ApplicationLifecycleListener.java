@@ -150,8 +150,15 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     }
 
     public interface ApplicationLifecycleCallbacks {
+
+        /**
+         * Dispatched when an application enters foreground.
+         */
         void onApplicationEnterForeground();
 
+        /**
+         * Dispatched when an application enters background.
+         */
         void onApplicationEnterBackground();
     }
 }
