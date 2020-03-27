@@ -366,6 +366,7 @@ public class MainActivity extends AppCompatActivity {
             AuthenticationProvider.Type mAuthType = AuthenticationProvider.Type.values()[rawAuthType];
             MSAAuthenticationProvider tokenProvider = MSAAuthenticationProvider.getInstance(refreshToken, refreshTokenScope, this);
             AuthenticationProvider provider = new AuthenticationProvider(mAuthType, userId, tokenProvider);
+            AuthenticationProvider provider = new AuthenticationProvider(mAuthType, msaUserId, tokenProvider);
             AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
         }
     }
