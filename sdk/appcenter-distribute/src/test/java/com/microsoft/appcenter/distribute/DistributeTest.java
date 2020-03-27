@@ -94,11 +94,6 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void onApplicationStartTest() {
-
-    }
-
-    @Test
     public void recreateActivityTwice() {
 
         /* SharedPreferencesManager isn't initialized yet. */

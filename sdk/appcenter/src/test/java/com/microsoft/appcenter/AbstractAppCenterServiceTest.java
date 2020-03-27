@@ -98,7 +98,9 @@ public class AbstractAppCenterServiceTest {
     }
 
     @Test
-    public void onApplicationStopped() { mService.onApplicationStopped(); }
+    public void onApplicationStopped() {
+        mService.onApplicationStopped();
+    }
 
     @Test
     public void onActivityCreated() {
