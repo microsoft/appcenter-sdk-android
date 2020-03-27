@@ -674,9 +674,8 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNull() {
         Distribute.getInstance().onStarting(mAppCenterHandler);
-        Distribute.getInstance().onStarted(mContext, null, "a", null, true);
         Distribute.getInstance().onApplicationEnterForeground();
-        verifyStatic();
+        verifyStatic(never());
         DistributeUtils.getStoredDownloadState();
     }
 
@@ -684,7 +683,7 @@ public class DistributeTest extends AbstractDistributeTest {
     public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNotNull() {
         start();
         Distribute.getInstance().onApplicationEnterForeground();
-        verifyStatic(never());
+        verifyStatic();
         DistributeUtils.getStoredDownloadState();
     }
 
