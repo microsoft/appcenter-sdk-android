@@ -72,11 +72,11 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     }
 
     @Override
-    public void onApplicationStarted() {
+    public void onApplicationEnterForeground() {
     }
 
     @Override
-    public void onApplicationStopped() {
+    public void onApplicationEnterBackground() {
     }
 
     /**
