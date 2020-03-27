@@ -24,6 +24,7 @@ import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSess
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -34,6 +35,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
@@ -673,18 +675,36 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNull() {
+
+        /* Mock download state. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
+
+        /* Only invoking onStarting(), and not invoking Distribute.getInstance().onStarted() callback so that Channel is null. */
         Distribute.getInstance().onStarting(mAppCenterHandler);
+
+        /* Enter foreground. */
         Distribute.getInstance().onApplicationEnterForeground();
-        verifyStatic(never());
-        DistributeUtils.getStoredDownloadState();
+
+        /* Verify download is not checked after we reset workflow. */
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
     public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNotNull() {
+
+        /* Mock download state. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
+
+        /* Start distribute. */
         start();
+
+        /* Enter foreground. */
         Distribute.getInstance().onApplicationEnterForeground();
-        verifyStatic();
-        DistributeUtils.getStoredDownloadState();
+
+        /* Verify download is checked after we reset workflow. */
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     private void firstDownloadNotification(int apiLevel) throws Exception {
