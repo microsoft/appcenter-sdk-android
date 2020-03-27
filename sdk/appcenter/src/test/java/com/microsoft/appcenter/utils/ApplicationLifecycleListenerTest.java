@@ -144,8 +144,8 @@ public class ApplicationLifecycleListenerTest {
     public void onActivityStartAfterResumeTest() {
 
         /* Prepare data. */
-        MockService mockAppCenterService1 = spy(new MockCallbacks());
-        MockService mockAppCenterService2 = spy(new MockCallbacks());
+        MockService mockAppCenterService1 = spy(new MockService());
+        MockService mockAppCenterService2 = spy(new MockService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
