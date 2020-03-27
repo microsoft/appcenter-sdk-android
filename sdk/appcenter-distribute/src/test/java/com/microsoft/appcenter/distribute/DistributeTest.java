@@ -671,6 +671,23 @@ public class DistributeTest extends AbstractDistributeTest {
         verify(mReleaseDownloader, times(2)).resume();
     }
 
+    @Test
+    public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNull() {
+        Distribute.getInstance().onStarting(mAppCenterHandler);
+        Distribute.getInstance().onStarted(mContext, null, "a", null, true);
+        Distribute.getInstance().onApplicationEnterForeground();
+        verifyStatic();
+        DistributeUtils.getStoredDownloadState();
+    }
+
+    @Test
+    public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNotNull() {
+        start();
+        Distribute.getInstance().onApplicationEnterForeground();
+        verifyStatic(never());
+        DistributeUtils.getStoredDownloadState();
+    }
+
     private void firstDownloadNotification(int apiLevel) throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
         mockStatic(DistributeUtils.class);

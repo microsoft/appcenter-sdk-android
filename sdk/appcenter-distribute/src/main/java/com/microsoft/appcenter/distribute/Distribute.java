@@ -465,6 +465,13 @@ public class Distribute extends AbstractAppCenterService {
     private static final String DISTRIBUTE_GROUP = "group_distribute";
 
     @Override
+    public void onApplicationEnterForeground() {
+        if (mChannel != null) {
+            tryResetWorkflow();
+        }
+    }
+
+    @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
