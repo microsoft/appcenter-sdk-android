@@ -9,13 +9,14 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 
-
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -28,18 +29,20 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@PrepareForTest({Handler.class})
+@RunWith(PowerMockRunner.class)
 public class ApplicationLifecycleListenerTest {
 
-    private Handler mHandlerMock;
+    @Mock
+    Handler mHandlerMock;
+
+    @Mock
+    Activity mActivityMock;
+
     private ApplicationLifecycleListener mApplicationLifecycleListenerMock;
-    private Activity mActivityMock;
 
     @Before
     public void setUp() {
-        mHandlerMock = mock(Handler.class);
         mApplicationLifecycleListenerMock = new ApplicationLifecycleListener(mHandlerMock);
-        mActivityMock = mock(Activity.class);
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -57,14 +60,7 @@ public class ApplicationLifecycleListenerTest {
             }
         }).when(mHandlerMock).removeCallbacks(any(Runnable.class));
     }
-
-    @After
-    public void tearDown() {
-        mHandlerMock = null;
-        mApplicationLifecycleListenerMock = null;
-        mActivityMock = null;
-    }
-
+    
     @Test
     public void onActivityDoubleResumedTest() {
 
