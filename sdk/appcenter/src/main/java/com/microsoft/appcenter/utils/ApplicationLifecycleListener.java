@@ -20,6 +20,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * It allows catching of a foregrounded and a backgrounded state of the whole application.
  * It won't fire any events when there's a configuration change in a foregrounded app or if
  * user goes through activities inside a single application.
+ *
+ * The counters and timeouts approach is used from the ProcessLifecycleOwner class:
+ * https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-master-dev/lifecycle/lifecycle-process/src/main/java/androidx/lifecycle/ProcessLifecycleOwner.java
  */
 public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks {
 
