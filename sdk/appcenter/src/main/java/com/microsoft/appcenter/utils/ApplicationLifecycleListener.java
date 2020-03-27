@@ -8,8 +8,14 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
+/**
+ * Listens to the whole application (if the application is a single process) lifecycle events.
+ * It allows catching of a foregrounded and a backgrounded state of the whole application.
+ * It won't fire any events when there's a configuration change in a foregrounded app or if
+ * user goes through activities inside a single application.
+ */
 public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks {
 
     /**
@@ -17,14 +23,35 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
      */
     private static final long TIMEOUT_MS = 700;
 
+    /**
+     * Counter of onActivityStarted() minus onActivityStopped() events.
+     */
     private int mStartedCounter = 0;
+
+    /**
+     * Counter of onActivityResumed() minus onActivityPaused() events.
+     */
     private int mResumedCounter = 0;
+
+    /**
+     * Flag indicating that the last activity is paused.
+     */
     private boolean mPauseSent = true;
+
+    /**
+     * Flag indicating that the last activity is stopped.
+     */
     private boolean mStopSent = true;
 
+    /**
+     * Background thread handler.
+     */
     private Handler mHandler;
 
-    private List<ApplicationLifecycleCallbacks> mLifecycleCallbacks = new ArrayList<>();
+    /**
+     * A collection of ApplicationLifecycleCallbacks.
+     */
+    private Collection<ApplicationLifecycleCallbacks> mLifecycleCallbacks = new ArrayList<>();
 
     private Runnable mDelayedPauseRunnable = new Runnable() {
         @Override
@@ -88,6 +115,13 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     public void onActivityPaused(@NonNull Activity activity) {
         mResumedCounter--;
         if (mResumedCounter == 0) {
+
+            /*
+             * OnPause and onStop events will be dispatched with a delay after a last activity
+             * passed through them. This delay is long enough to guarantee that
+             * ApplicationLifecycleListener won't send any events if activities are destroyed
+             * and recreated due to a configuration change.
+             */
             mHandler.postDelayed(mDelayedPauseRunnable, TIMEOUT_MS);
         }
     }
