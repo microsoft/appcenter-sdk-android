@@ -83,8 +83,8 @@ public class ApplicationLifecycleListenerTest {
                 return null;
             }
         }).when(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
-        MockCallbacks mockAppCenterService1 = spy(new MockCallbacks());
-        MockCallbacks mockAppCenterService2 = spy(new MockCallbacks());
+        MockService mockAppCenterService1 = spy(new MockService());
+        MockService mockAppCenterService2 = spy(new MockService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -113,8 +113,8 @@ public class ApplicationLifecycleListenerTest {
     public void onActivityDoubleStartTest() {
 
         /* Prepare data. */
-        MockCallbacks mockAppCenterService1 = spy(new MockCallbacks());
-        MockCallbacks mockAppCenterService2 = spy(new MockCallbacks());
+        MockService mockAppCenterService1 = spy(new MockService());
+        MockService mockAppCenterService2 = spy(new MockService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -144,8 +144,8 @@ public class ApplicationLifecycleListenerTest {
     public void onActivityStartAfterResumeTest() {
 
         /* Prepare data. */
-        MockCallbacks mockAppCenterService1 = spy(new MockCallbacks());
-        MockCallbacks mockAppCenterService2 = spy(new MockCallbacks());
+        MockService mockAppCenterService1 = spy(new MockCallbacks());
+        MockService mockAppCenterService2 = spy(new MockCallbacks());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -172,8 +172,8 @@ public class ApplicationLifecycleListenerTest {
 
         /* Prepare data. */
         Bundle mockBundle = mock(Bundle.class);
-        MockCallbacks mockAppCenterService1 = spy(new MockCallbacks());
-        MockCallbacks mockAppCenterService2 = spy(new MockCallbacks());
+        MockService mockAppCenterService1 = spy(new MockService());
+        MockService mockAppCenterService2 = spy(new MockService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -226,8 +226,8 @@ public class ApplicationLifecycleListenerTest {
         }).when(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
         Activity activityMock2 = mock(Activity.class);
         Bundle mockBundle = mock(Bundle.class);
-        MockCallbacks mockAppCenterService1 = spy(new MockCallbacks());
-        MockCallbacks mockAppCenterService2 = spy(new MockCallbacks());
+        MockService mockAppCenterService1 = spy(new MockService());
+        MockService mockAppCenterService2 = spy(new MockService());
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService1);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(mockAppCenterService2);
 
@@ -259,7 +259,7 @@ public class ApplicationLifecycleListenerTest {
         verify(mockAppCenterService2, times(1)).onApplicationEnterForeground();
     }
 
-    private class MockCallbacks extends AbstractAppCenterService implements ApplicationLifecycleListener.ApplicationLifecycleCallbacks {
+    private class MockService extends AbstractAppCenterService {
 
         @Override
         protected String getGroupName() {
