@@ -74,6 +74,11 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
         mHandler = handler;
     }
 
+    /**
+     * Register an application lifecycle callback.
+     *
+     * @param lifecycleCallback listener to add.
+     */
     public void registerApplicationLifecycleCallbacks(ApplicationLifecycleCallbacks lifecycleCallback) {
         mLifecycleCallbacks.add(lifecycleCallback);
     }
@@ -150,8 +155,15 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
     }
 
     public interface ApplicationLifecycleCallbacks {
+
+        /**
+         * Dispatched when an application enters foreground.
+         */
         void onApplicationEnterForeground();
 
+        /**
+         * Dispatched when an application enters background.
+         */
         void onApplicationEnterBackground();
     }
 }
