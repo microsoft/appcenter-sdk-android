@@ -2,6 +2,10 @@
 
 ## Version 3.1.1 (Under development)
 
+### App Center Distribute
+
+* **[Feature]** Enable checking for update when application goes into background and then goes into foreground.
+
 ___
 
 ## Version 3.1.0
