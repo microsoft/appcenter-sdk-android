@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter;
 
+import android.app.Activity;
 import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -13,11 +14,13 @@ import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.ApplicationLifecycleListener;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -48,8 +51,10 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -1083,5 +1088,33 @@ public class AppCenterTest extends AbstractAppCenterTest {
                 return argument instanceof OneCollectorChannelListener;
             }
         }));
+    }
+
+    @Test
+    public void useApplicationLifecycleListener() {
+
+        /* Capture ApplicationLifecycleListener. */
+        ArgumentCaptor<ApplicationLifecycleListener> lifecycleListenerCaptor = ArgumentCaptor.forClass(ApplicationLifecycleListener.class);
+        doNothing().when(mApplication).registerActivityLifecycleCallbacks(lifecycleListenerCaptor.capture());
+
+        /* Start App Center. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
+
+        /* Verify that the service started. */
+        DummyService service = DummyService.getInstance();
+        verify(service).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(String.class), eq(true));
+
+        /* Verify that the listener is subscribed to application events. */
+        verify(mApplication).registerActivityLifecycleCallbacks(isA(ApplicationLifecycleListener.class));
+        ApplicationLifecycleListener lifecycleListener = lifecycleListenerCaptor.getAllValues().get(0);
+
+        /* Check enter foreground. */
+        Activity mockActivity = mock(Activity.class);
+        lifecycleListener.onActivityStarted(mockActivity);
+        verify(service).onApplicationEnterForeground();
+
+        /* Check enter background. */
+        lifecycleListener.onActivityStopped(mockActivity);
+        verify(service).onApplicationEnterBackground();
     }
 }

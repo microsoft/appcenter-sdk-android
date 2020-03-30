@@ -186,7 +186,7 @@ public class AbstractAppCenterTest {
         Constants.APPLICATION_DEBUGGABLE = false;
     }
 
-    public static class DummyService extends AbstractAppCenterService {
+    static class DummyService extends AbstractAppCenterService {
 
         private static DummyService sharedInstance;
 
@@ -223,7 +223,7 @@ public class AbstractAppCenterTest {
         }
     }
 
-    public static class AnotherDummyService extends AbstractAppCenterService {
+    static class AnotherDummyService extends AbstractAppCenterService {
 
         private static AnotherDummyService sharedInstance;
 
