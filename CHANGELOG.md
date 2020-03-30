@@ -4,7 +4,7 @@
 
 ### App Center Distribute
 
-* **[Feature]** Enable checking for update when application goes into background and then goes into foreground.
+* **[Feature]** Enable checking for update when application switches from background to foreground.
 
 ___
 
