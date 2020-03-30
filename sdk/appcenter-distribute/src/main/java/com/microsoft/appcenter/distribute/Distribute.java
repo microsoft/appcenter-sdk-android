@@ -507,14 +507,6 @@ public class Distribute extends AbstractAppCenterService {
                 mLauncherActivityClassName = intent.resolveActivity(packageManager).getClassName();
             }
         }
-
-        /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
-        if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
-            AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (mChannel != null) {
-                tryResetWorkflow();
-            }
-        }
     }
 
     /**
