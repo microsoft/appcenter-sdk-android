@@ -115,6 +115,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
 
         /* Callback. */
+        Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityCreated(mActivity, null);
         Distribute.getInstance().onActivityCreated(mActivity, null);
 
@@ -136,6 +137,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
 
         /* Callback. */
+        Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityCreated(mActivity, null);
 
         /* No exceptions. */
@@ -154,6 +156,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
 
         /* Callback. */
+        Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityCreated(mActivity, null);
 
         /* No exceptions. */
@@ -179,6 +182,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Channel initialization. */
         start();
+        Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityCreated(mActivity, null);
 
         /* No exceptions. */
@@ -202,6 +206,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Callback. */
         start();
+        Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityCreated(mActivity, null);
 
         /* No exceptions. */
