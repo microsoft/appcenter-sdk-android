@@ -341,6 +341,7 @@ public class AbstractDistributeTest {
         Distribute.getInstance().onActivityPaused(activity);
         Distribute.getInstance().onActivityStopped(activity);
         Distribute.getInstance().onActivityDestroyed(activity);
+        Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityCreated(activity, mock(Bundle.class));
         Distribute.getInstance().onActivityResumed(activity);
     }

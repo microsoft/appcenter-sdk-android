@@ -682,8 +682,6 @@ public class DistributeTest extends AbstractDistributeTest {
     public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNull() {
 
         /* Mock download state. */
-        HttpClient mockHttpClient = mock(HttpClient.class);
-        Activity mockActivity = mock(Activity.class);
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
         final ServiceCall call = mock(ServiceCall.class);
@@ -694,16 +692,16 @@ public class DistributeTest extends AbstractDistributeTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
                 return call;
             }
-        }).when(mockHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
 
         /* Only invoking onStarting(), and not invoking Distribute.getInstance().onStarted() callback so that Channel is null. */
         Distribute.getInstance().onStarting(mAppCenterHandler);
 
         /* Start activity. */
-        Distribute.getInstance().onActivityStarted(mockActivity);
+        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onApplicationEnterForeground();
-        Distribute.getInstance().onActivityResumed(mockActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify download is not checked after we reset workflow. */
         verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
@@ -713,9 +711,6 @@ public class DistributeTest extends AbstractDistributeTest {
     public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNotNull() {
 
         /* Prepare data. */
-        HttpClient mockHttpClient = mock(HttpClient.class);
-        DependencyConfiguration.setHttpClient(mockHttpClient);
-        Activity mockActivity = mock(Activity.class);
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
         final ServiceCall call = mock(ServiceCall.class);
@@ -726,34 +721,34 @@ public class DistributeTest extends AbstractDistributeTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
                 return call;
             }
-        }).when(mockHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Start distribute. */
         start();
 
         /* Start activity. */
-        Distribute.getInstance().onActivityStarted(mockActivity);
+        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onApplicationEnterForeground();
-        Distribute.getInstance().onActivityResumed(mockActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify download is checked after we reset workflow. */
-        verify(mockHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Stop activity. */
-        Distribute.getInstance().onActivityPaused(mockActivity);
-        Distribute.getInstance().onActivityStopped(mockActivity);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityStopped(mActivity);
         Distribute.getInstance().onApplicationEnterBackground();
 
-        /* Verify that any calls was did. */
-        verify(mockHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        /* Verify that all calls were completed. */
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Enter foreground again. */
-        Distribute.getInstance().onActivityStarted(mockActivity);
+        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onApplicationEnterForeground();
-        Distribute.getInstance().onActivityResumed(mockActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify download is checked after we reset workflow again. */
-        verify(mockHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     private void firstDownloadNotification(int apiLevel) throws Exception {
