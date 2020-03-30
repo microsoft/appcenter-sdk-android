@@ -73,7 +73,7 @@ public class ApplicationLifecycleListenerTest {
         mApplicationLifecycleListener.onActivityResumed(mActivityMock);
         verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
 
-        /* Pause.*/
+        /* Pause. */
         mApplicationLifecycleListener.onActivityPaused(mActivityMock);
         verify(mHandlerMock, never()).postDelayed(any(Runnable.class), anyLong());
 
