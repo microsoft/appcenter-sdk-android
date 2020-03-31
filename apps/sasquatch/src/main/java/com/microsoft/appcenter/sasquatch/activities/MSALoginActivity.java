@@ -161,6 +161,11 @@ public class MSALoginActivity extends AppCompatActivity {
                 if (url.startsWith(REDIRECT_URL)) {
                     clearCookies();
                     Uri uri = Uri.parse(url);
+
+                    sSharedPreferences.edit().remove(MSA_REFRESH_TOKEN_SCOPE_KEY).apply();
+                    sSharedPreferences.edit().remove(MSA_REFRESH_TOKEN_KEY).apply();
+                    sSharedPreferences.edit().remove(MSA_AUTH_TYPE_KEY).apply();
+                    sSharedPreferences.edit().remove(MSA_TOKEN_KEY).apply();
                     String error = uri.getQueryParameter("error");
                     if (error != null) {
                         failSignOut(0, error);
