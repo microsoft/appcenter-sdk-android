@@ -921,49 +921,6 @@ public class CrashesTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void sendMoreThan2ErrorAttachments() throws JSONException {
-        int MAX_ATTACHMENT_PER_CRASH = 2;
-        int numOfAttachments = MAX_ATTACHMENT_PER_CRASH + 1;
-
-        ArrayList<ErrorAttachmentLog> errorAttachmentLogs = new ArrayList<>(3);
-        for (int i = 0; i < numOfAttachments; ++i) {
-            ErrorAttachmentLog log = mock(ErrorAttachmentLog.class);
-            when(log.isValid()).thenReturn(true);
-            when(log.getData()).thenReturn(new byte[1]);
-            errorAttachmentLogs.add(log);
-        }
-
-        CrashesListener listener = mock(CrashesListener.class);
-        when(listener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
-        when(listener.getErrorAttachments(any(ErrorReport.class))).thenReturn(errorAttachmentLogs);
-
-        ManagedErrorLog log = mock(ManagedErrorLog.class);
-        when(log.getId()).thenReturn(UUID.randomUUID());
-
-        LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(log);
-
-        mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
-        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
-        when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(new ErrorReport());
-
-        when(FileManager.read(any(File.class))).thenReturn("");
-
-        Crashes crashes = Crashes.getInstance();
-        crashes.setInstanceListener(listener);
-        crashes.setLogSerializer(logSerializer);
-
-        crashes.onStarting(mAppCenterHandler);
-        crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
-
-        String expectedMessage = "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.";
-        PowerMockito.verifyStatic();
-        AppCenterLog.warn(Crashes.LOG_TAG, expectedMessage);
-    }
-
-    @Test
     public void discardHugeErrorAttachments() throws JSONException {
 
         /* Prepare a big (too big) attachment and a small one. */
