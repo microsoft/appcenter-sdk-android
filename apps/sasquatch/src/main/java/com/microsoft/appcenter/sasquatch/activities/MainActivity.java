@@ -45,7 +45,6 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
@@ -114,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         if (savedTrack != 0) {
             Distribute.setUpdateTrack(savedTrack);
         }
-        boolean automaticCheckForUpdate = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_disable_check_for_update_key), true);
+        boolean automaticCheckForUpdate = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_disable_automatic_check_for_update_key), true);
         if (!automaticCheckForUpdate) {
             Distribute.disableAutomaticCheckForUpdate();
         }
