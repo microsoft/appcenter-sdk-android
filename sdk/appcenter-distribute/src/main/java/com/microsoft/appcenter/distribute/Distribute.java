@@ -495,20 +495,6 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
-    @Override
-    public synchronized void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-
-        /* Resolve launcher class name only once, use empty string to cache a failed resolution. */
-        if (mLauncherActivityClassName == null) {
-            mLauncherActivityClassName = "";
-            PackageManager packageManager = activity.getPackageManager();
-            Intent intent = packageManager.getLaunchIntentForPackage(activity.getPackageName());
-            if (intent != null) {
-                mLauncherActivityClassName = intent.resolveActivity(packageManager).getClassName();
-            }
-        }
-    }
-
     /**
      * Reset current workflow to allow a new update check if we are not already in the process
      * of checking one.

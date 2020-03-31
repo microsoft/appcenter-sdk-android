@@ -116,8 +116,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Callback. */
         Distribute.getInstance().onApplicationEnterForeground();
-        Distribute.getInstance().onActivityCreated(mActivity, null);
-        Distribute.getInstance().onActivityCreated(mActivity, null);
+        Distribute.getInstance().onApplicationEnterForeground();
 
         /* No exceptions. */
     }
@@ -699,12 +698,10 @@ public class DistributeTest extends AbstractDistributeTest {
             }
         }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
-
-        /* Only invoking onStarting(), and not invoking Distribute.getInstance().onStarted() callback so that Channel is null. */
+        /* Starting distribute. */
         Distribute.getInstance().onStarting(mAppCenterHandler);
 
         /* Start activity. */
-        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityResumed(mActivity);
 
@@ -732,7 +729,6 @@ public class DistributeTest extends AbstractDistributeTest {
         start();
 
         /* Start activity. */
-        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityResumed(mActivity);
 
@@ -741,14 +737,12 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Stop activity. */
         Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.getInstance().onActivityStopped(mActivity);
         Distribute.getInstance().onApplicationEnterBackground();
 
         /* Verify that all calls were completed. */
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Enter foreground again. */
-        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityResumed(mActivity);
 
