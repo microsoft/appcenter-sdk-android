@@ -75,6 +75,7 @@
 
     <string name="appcenter_distribute_track_state_key" tools:ignore="MissingTranslation">appcenter_distribute_track_state_key</string>
     <string name="appcenter_distribute_track_state_title" tools:ignore="MissingTranslation">Update track</string>
+    <string name="appcenter_distribute_track_state_default_value" tools:ignore="MissingTranslation">Public</string>
     <string name="appcenter_distribute_track_public_enabled" tools:ignore="MissingTranslation">Distribute uses public track</string>
     <string name="appcenter_distribute_track_private_enabled" tools:ignore="MissingTranslation">Distribute uses private track</string>
     <string name="appcenter_distribute_track_state_updated" tools:ignore="MissingTranslation">Update track will be changed only when the application is restarted.</string>
@@ -103,6 +104,7 @@
     <string name="appcenter_event_filter_state_summary_disabled" tools:ignore="MissingTranslation">Event Filter is disabled</string>
 
     <string name="appcenter_start_type_key" tools:ignore="MissingTranslation">appcenter_start_type_key</string>
+    <string name="appcenter_start_type_default_value" tools:ignore="MissingTranslation">APP_SECRET</string>
     <string name="appcenter_start_type_title" tools:ignore="MissingTranslation">Start type</string>
     <string name="appcenter_start_type_changed" tools:ignore="MissingTranslation">Start type updated. Please close the application completely and relaunch again.</string>
 
