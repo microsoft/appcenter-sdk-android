@@ -41,6 +41,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
@@ -744,6 +746,53 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify download is checked after we reset workflow again. */
         verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void checkUpdateReleaseAfterInterruptDownloading() {
+
+        /* Prepare data. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
+        final ServiceCall call = mock(ServiceCall.class);
+        doAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(final InvocationOnMock invocationOnMock) {
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
+                    }
+                }, 2000);
+                return call;
+            }
+        }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Start distribute. */
+        start();
+
+        /* Start activity. */
+        Distribute.getInstance().onApplicationEnterForeground();
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify that checkForUpdate was called. */
+        verifyStatic(times(2));
+        Distribute.checkForUpdate();
+
+        /* Verify download is checked after we reset workflow. */
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        // Disable and enable distribute module.
+        Distribute.setEnabled(false);
+        Distribute.setEnabled(true);
+
+        /* Verify download is not called again. */
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+
+        /* Verify that checkForUpdate was called again. */
+        verifyStatic(times(7));
+        Distribute.checkForUpdate();
     }
 
     private void firstDownloadNotification(int apiLevel) throws Exception {
