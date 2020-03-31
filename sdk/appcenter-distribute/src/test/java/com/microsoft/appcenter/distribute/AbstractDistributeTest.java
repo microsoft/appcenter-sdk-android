@@ -16,7 +16,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.Toast;
 
@@ -339,10 +338,7 @@ public class AbstractDistributeTest {
         when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(activity.getClass().getName());
         Distribute.getInstance().onActivityPaused(activity);
-        Distribute.getInstance().onActivityStopped(activity);
-        Distribute.getInstance().onActivityDestroyed(activity);
         Distribute.getInstance().onApplicationEnterForeground();
-        Distribute.getInstance().onActivityCreated(activity, mock(Bundle.class));
         Distribute.getInstance().onActivityResumed(activity);
     }
 }

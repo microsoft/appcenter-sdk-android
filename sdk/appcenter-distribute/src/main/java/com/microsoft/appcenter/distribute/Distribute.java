@@ -22,7 +22,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -255,11 +254,6 @@ public class Distribute extends AbstractAppCenterService {
      * This can be reset to check update again when app restarts.
      */
     private boolean mWorkflowCompleted;
-
-    /**
-     * Cache launch intent not to resolve it every time from package manager in every onCreate call.
-     */
-    private String mLauncherActivityClassName;
 
     /**
      * Channel listener which adds extra fields to logs.
