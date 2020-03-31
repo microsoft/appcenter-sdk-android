@@ -22,7 +22,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Bundle;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -255,11 +254,6 @@ public class Distribute extends AbstractAppCenterService {
      * This can be reset to check update again when app restarts.
      */
     private boolean mWorkflowCompleted;
-
-    /**
-     * Cache launch intent not to resolve it every time from package manager in every onCreate call.
-     */
-    private String mLauncherActivityClassName;
 
     /**
      * Channel listener which adds extra fields to logs.
@@ -495,28 +489,6 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
-    @Override
-    public synchronized void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-
-        /* Resolve launcher class name only once, use empty string to cache a failed resolution. */
-        if (mLauncherActivityClassName == null) {
-            mLauncherActivityClassName = "";
-            PackageManager packageManager = activity.getPackageManager();
-            Intent intent = packageManager.getLaunchIntentForPackage(activity.getPackageName());
-            if (intent != null) {
-                mLauncherActivityClassName = intent.resolveActivity(packageManager).getClassName();
-            }
-        }
-
-        /* Clear workflow finished state if launch recreated, to achieve check on "startup". */
-        if (activity.getClass().getName().equals(mLauncherActivityClassName)) {
-            AppCenterLog.info(LOG_TAG, "Launcher activity restarted.");
-            if (mChannel != null) {
-                tryResetWorkflow();
-            }
-        }
-    }
-
     /**
      * Reset current workflow to allow a new update check if we are not already in the process
      * of checking one.
@@ -549,6 +521,14 @@ public class Distribute extends AbstractAppCenterService {
         /* Hide mandatory update progress dialog if exists. */
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
+        }
+    }
+
+    @Override
+    public void onApplicationEnterForeground() {
+        if (mChannel != null) {
+            AppCenterLog.debug(LOG_TAG, "Resetting workflow on entering foreground.");
+            tryResetWorkflow();
         }
     }
 
