@@ -64,8 +64,8 @@
             android:key="@string/appcenter_distribute_debug_state_key"
             android:title="@string/appcenter_distribute_debug_state_title" />
         <CheckBoxPreference
-            android:key="@string/appcenter_distribute_disable_check_for_update_key"
-            android:title="@string/appcenter_distribute_auto_check_for_update_title" />
+            android:key="@string/appcenter_distribute_disable_automatic_check_for_update_key"
+            android:title="@string/appcenter_distribute_disable_automatic_check_for_update_title" />
         <Preference
             android:key="@string/appcenter_distribute_check_for_update_key"
             android:title="@string/appcenter_distribute_check_for_update_title" />

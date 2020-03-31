@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright (c) Microsoft Corporation. All rights reserved.
   ~ Licensed under the MIT License.
   -->
@@ -60,18 +59,19 @@
     <string name="distribute_title" tools:ignore="MissingTranslation">Distribute</string>
 
     <string name="appcenter_distribute_state_key" tools:ignore="MissingTranslation">appcenter_distribute_state_key</string>
-    <string name="appcenter_distribute_disable_check_for_update_key" tools:ignore="MissingTranslation">appcenter_distribute_disable_check_for_update_key</string>
     <string name="appcenter_distribute_state_title" tools:ignore="MissingTranslation">Distribute state</string>
     <string name="appcenter_distribute_state_summary_enabled" tools:ignore="MissingTranslation">Distribute is enabled</string>
     <string name="appcenter_distribute_state_summary_disabled" tools:ignore="MissingTranslation">Distribute is disabled</string>
-    <string name="appcenter_distribute_summary_disabled_check_for_update" tools:ignore="MissingTranslation">Automatic check for update is disabled</string>
-    <string name="appcenter_distribute_summary_enabled_check_for_update" tools:ignore="MissingTranslation">Automatic check for update is enabled</string>
 
     <string name="appcenter_distribute_debug_state_key" tools:ignore="MissingTranslation">appcenter_distribute_debug_state_key</string>
     <string name="appcenter_distribute_debug_state_title" tools:ignore="MissingTranslation">Distribute in debug state</string>
-    <string name="appcenter_distribute_auto_check_for_update_title" tools:ignore="MissingTranslation">Automatic check for update</string>
     <string name="appcenter_distribute_debug_summary_enabled" tools:ignore="MissingTranslation">Distribute in debug is enabled</string>
     <string name="appcenter_distribute_debug_summary_disabled" tools:ignore="MissingTranslation">Distribute in debug is disabled</string>
+
+    <string name="appcenter_distribute_disable_automatic_check_for_update_key" tools:ignore="MissingTranslation">appcenter_distribute_disable_automatic_check_for_update_key</string>
+    <string name="appcenter_distribute_disable_automatic_check_for_update_title" tools:ignore="MissingTranslation">Automatic check for update</string>
+    <string name="appcenter_distribute_summary_disabled_automatic_check_for_update" tools:ignore="MissingTranslation">Automatic check for update is disabled</string>
+    <string name="appcenter_distribute_summary_enabled_automatic_check_for_update" tools:ignore="MissingTranslation">Automatic check for update is enabled</string>
 
     <string name="appcenter_distribute_track_state_key" tools:ignore="MissingTranslation">appcenter_distribute_track_state_key</string>
     <string name="appcenter_distribute_track_state_title" tools:ignore="MissingTranslation">Update track</string>

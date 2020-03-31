@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         if (savedTrack != 0) {
             Distribute.setUpdateTrack(savedTrack);
         }
-        boolean automaticCheckForUpdate = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_disable_check_for_update_key), true);
+        boolean automaticCheckForUpdate = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_distribute_disable_automatic_check_for_update_key), true);
         if (!automaticCheckForUpdate) {
             Distribute.disableAutomaticCheckForUpdate();
         }
