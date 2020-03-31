@@ -117,11 +117,6 @@ public class Crashes extends AbstractAppCenterService {
     public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
 
     /**
-     * Max allowed attachments per crash.
-     */
-    private static final int MAX_ATTACHMENT_PER_CRASH = 2;
-
-    /**
      * Maximum size for attachment data in bytes.
      */
     private static final int MAX_ATTACHMENT_SIZE = 7 * 1024 * 1024;
@@ -1070,7 +1065,6 @@ public class Crashes extends AbstractAppCenterService {
         if (attachments == null) {
             AppCenterLog.debug(LOG_TAG, "Error report: " + errorId.toString() + " does not have any attachment.");
         } else {
-            int totalErrorAttachments = 0;
             for (ErrorAttachmentLog attachment : attachments) {
                 if (attachment != null) {
                     attachment.setId(UUID.randomUUID());
@@ -1082,15 +1076,11 @@ public class Crashes extends AbstractAppCenterService {
                                 "Discarding attachment with size above %d bytes: size=%d, fileName=%s.",
                                 MAX_ATTACHMENT_SIZE, attachment.getData().length, attachment.getFileName()));
                     } else {
-                        ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);
                     }
                 } else {
                     AppCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog.");
                 }
-            }
-            if (totalErrorAttachments > MAX_ATTACHMENT_PER_CRASH) {
-                AppCenterLog.warn(LOG_TAG, "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.");
             }
         }
     }
