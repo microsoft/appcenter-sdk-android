@@ -28,6 +28,8 @@ import android.widget.Toast;
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
+import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
+import com.microsoft.appcenter.analytics.AuthenticationProvider;
 import com.microsoft.appcenter.analytics.channel.AnalyticsListener;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
@@ -35,6 +37,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.push.PushListener;
+import com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
 import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
@@ -45,7 +48,6 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANALYTICS_TRANSMISSION_INTERVAL_KEY;
@@ -68,6 +70,14 @@ public class MainActivity extends AppCompatActivity {
     static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
 
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
+
+    public static final String MSA_TOKEN_KEY = "MSAToken";
+
+    public static final String MSA_REFRESH_TOKEN_KEY = "MSARefreshToken";
+
+    public static final String MSA_AUTH_TYPE_KEY = "MSAAuthType";
+
+    public static final String MSA_REFRESH_TOKEN_SCOPE_KEY = "MSARefreshTokenScope";
 
     private static final String SENDER_ID = "177539951155";
 
@@ -346,6 +356,18 @@ public class MainActivity extends AppCompatActivity {
         ListView listView = findViewById(R.id.list);
         listView.setAdapter(new TestFeaturesListAdapter(TestFeatures.getAvailableControls()));
         listView.setOnItemClickListener(TestFeatures.getOnItemClickListener());
+
+        /* Restore the MSA authentication callback. */
+        String msaUserId = sSharedPreferences.getString(MSA_TOKEN_KEY, null);
+        String refreshToken = sSharedPreferences.getString(MSA_REFRESH_TOKEN_KEY, null);
+        String refreshTokenScope = sSharedPreferences.getString(MSA_REFRESH_TOKEN_SCOPE_KEY, null);
+        int rawAuthType = sSharedPreferences.getInt(MSA_AUTH_TYPE_KEY, 0);
+        if (msaUserId != null && refreshToken != null && refreshTokenScope != null) {
+            AuthenticationProvider.Type mAuthType = AuthenticationProvider.Type.values()[rawAuthType];
+            MSAAuthenticationProvider tokenProvider = MSAAuthenticationProvider.getInstance(refreshToken, refreshTokenScope, this);
+            AuthenticationProvider provider = new AuthenticationProvider(mAuthType, msaUserId, tokenProvider);
+            AnalyticsTransmissionTarget.addAuthenticationProvider(provider);
+        }
     }
 
     /* Get the default app secret from the app secret array. */
