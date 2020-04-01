@@ -29,6 +29,7 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.test.TestUtils;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
@@ -41,8 +42,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
@@ -75,7 +74,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({DistributeUtils.class, HttpUtils.class})
+@PrepareForTest({DistributeUtils.class, HttpUtils.class, DeviceInfoHelper.class })
 public class DistributeTest extends AbstractDistributeTest {
 
     private static final String DISTRIBUTION_GROUP_ID = "group_id";
@@ -753,46 +752,29 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Prepare data. */
         mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
-        final ServiceCall call = mock(ServiceCall.class);
-        doAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(final InvocationOnMock invocationOnMock) {
-                new Timer().schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
-                    }
-                }, 2000);
-                return call;
-            }
-        }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        mockStatic(DeviceInfoHelper.class);
+        when(mReleaseDetails.getVersion()).thenReturn(1);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+        when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(0);
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
 
         /* Start distribute. */
         start();
 
         /* Start activity. */
-        Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityResumed(mActivity);
+        ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
-        /* Verify that checkForUpdate was called. */
-        verifyStatic(times(2));
-        Distribute.checkForUpdate();
+        /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
+        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
 
-        /* Verify download is checked after we reset workflow. */
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-
-        // Disable and enable distribute module.
+        /* Disable and enable distribute module. */
         Distribute.setEnabled(false);
         Distribute.setEnabled(true);
 
         /* Verify download is not called again. */
-        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-
-        /* Verify that checkForUpdate was called again. */
-        verifyStatic(times(7));
-        Distribute.checkForUpdate();
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
     }
 
     private void firstDownloadNotification(int apiLevel) throws Exception {
