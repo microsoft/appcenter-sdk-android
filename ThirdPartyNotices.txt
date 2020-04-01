@@ -5,7 +5,7 @@ Visual Studio App Center SDK for Android incorporates third party material from 
 
 1.	Gradle (http://gradle.org)
 2.	Android Robot image (https://developer.android.com/distribute/tools/promote/brand.html)
-3.  Android Lifecycle Process (https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-process)
+3.	Android Lifecycle Process (https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-process)
 
 %% Gradle NOTICES, INFORMATION, AND LICENSE BEGIN HERE
 =========================================
