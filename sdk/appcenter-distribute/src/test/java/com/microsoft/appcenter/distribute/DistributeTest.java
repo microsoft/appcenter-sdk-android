@@ -691,17 +691,19 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Start activity. */
         Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify that check release for update was called. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
-        /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
+        /* Complete the first call. */
         httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
 
         /* Disable and enable distribute module. */
         Distribute.setEnabled(false);
         Distribute.setEnabled(true);
 
-        /* Verify download is not called again. */
+        /* Verify that check release for update was called again. */
         verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
     }
 
