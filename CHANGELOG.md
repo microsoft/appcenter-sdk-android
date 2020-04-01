@@ -15,6 +15,7 @@ ___
 * **[Feature]** Add a `disableAutomaticCheckForUpdate` API that needs to be called before SDK start in order to turn off automatic check for update. 
 * **[Feature]** Add a `checkForUpdate` API to manually check for update.
 * **[Fix]** Fix not checking updates on public track if it was ignored on error while initializing in-app update for private track.
+* **[Fix]** Fix checking updates after disabling the Distribute module during downloading the release.
 
 ## Version 3.0.0
 
