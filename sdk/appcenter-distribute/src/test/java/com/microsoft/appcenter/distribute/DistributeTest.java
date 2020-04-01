@@ -23,9 +23,12 @@ import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
+import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.test.TestUtils;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
@@ -34,6 +37,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
@@ -66,7 +70,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({DistributeUtils.class, HttpUtils.class})
+@PrepareForTest({DistributeUtils.class, HttpUtils.class, DeviceInfoHelper.class})
 public class DistributeTest extends AbstractDistributeTest {
 
     private static final String DISTRIBUTION_GROUP_ID = "group_id";
@@ -669,6 +673,36 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify that download is resumed after click Install but only twice (on third time Distribute is disabled). */
         verify(mReleaseDownloader, times(2)).resume();
+    }
+
+    @Test
+    public void checkUpdateReleaseAfterInterruptDownloading() {
+
+        /* Prepare data. */
+        mockStatic(DistributeUtils.class);
+        mockStatic(DeviceInfoHelper.class);
+        when(mReleaseDetails.getVersion()).thenReturn(1);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+        when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(0);
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+
+        /* Start distribute. */
+        start();
+
+        /* Start activity. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+
+        /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
+        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
+
+        /* Disable and enable distribute module. */
+        Distribute.setEnabled(false);
+        Distribute.setEnabled(true);
+
+        /* Verify download is not called again. */
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
     }
 
     private void firstDownloadNotification(int apiLevel) throws Exception {
