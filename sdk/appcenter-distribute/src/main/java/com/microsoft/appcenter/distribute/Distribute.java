@@ -726,8 +726,8 @@ public class Distribute extends AbstractAppCenterService {
         if (mCheckReleaseApiCall != null) {
             mCheckReleaseApiCall.cancel();
             mCheckReleaseApiCall = null;
-            mCheckReleaseCallId = null;
         }
+        mCheckReleaseCallId = null;
         mUpdateDialog = null;
         mUnknownSourcesDialog = null;
         mCompletedDownloadDialog = null;

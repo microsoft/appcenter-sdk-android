@@ -6,6 +6,10 @@
 
 * **[Fix]** Remove the multiple attachments warning as that is now supported by the portal.
 
+### App Center Distribute
+
+* **[Fix]** Fix checking for updates after disabling the Distribute module while downloading the release.
+
 ___
 
 ## Version 3.1.0
