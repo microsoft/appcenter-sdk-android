@@ -571,6 +571,18 @@ public class ErrorLogHelper {
     }
 
     /**
+     * Clear pending minidump directory.
+     */
+    public static void cleanPendingMinidumpDirectory() {
+        File[] files = getPendingMinidumpDirectory().listFiles();
+        if (files != null) {
+            for (File file : files) {
+                file.delete();
+            }
+        }
+    }
+
+    /**
      * Parse log folder name UUID. Fallback to random UUID.
      *
      * @param logFolder a folder, e.g. lib/files/error/minidump/new/a80da2ae-8c85-43b0-a25b-d52319fb6d56

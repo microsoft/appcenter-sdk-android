@@ -700,7 +700,7 @@ public class Crashes extends AbstractAppCenterService {
 
                 @Override
                 public boolean accept(File dir, String filename) {
-                    return !filename.equals(DEVICE_INFO_FILE);
+                    return filename.endsWith(".dmp");
                 }
             });
             if (minidumpSubfolderFiles == null || minidumpSubfolderFiles.length == 0) {
@@ -982,6 +982,7 @@ public class Crashes extends AbstractAppCenterService {
                         iterator.remove();
                         removeAllStoredErrorLogFiles(id);
                     }
+                    ErrorLogHelper.cleanPendingMinidumpDirectory();
                 }
 
                 /* We send the crash. */
