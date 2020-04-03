@@ -21,6 +21,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.test.TestUtils;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
@@ -60,13 +61,15 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class, TextUtils.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class, TextUtils.class, AppCenterLog.class})
 public class ErrorLogHelperTest {
 
     @Rule
@@ -363,6 +366,59 @@ public class ErrorLogHelperTest {
         String truncatedMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, '*');
         assertEquals(1, actualProperties.size());
         assertEquals(truncatedMapItem, actualProperties.get(truncatedMapItem));
+    }
+
+    @Test
+    public void cleanDirectory() {
+
+        /* Prepare data. */
+        mockStatic(AppCenterLog.class);
+        File pendingFolder = mock(File.class);
+        File mockFile = mock(File.class);
+        when(pendingFolder.isDirectory()).thenReturn(true);
+        when(pendingFolder.listFiles()).thenReturn(new File[] { mockFile });
+
+        /* Verify. */
+        ErrorLogHelper.cleanDirectory(pendingFolder);
+        verify(mockFile).delete();
+    }
+
+    @Test
+    public void cleanDirectoryWhenFileListIsNullOrEmpty() {
+
+        /* Prepare data. */
+        mockStatic(AppCenterLog.class);
+        File pendingFolder = mock(File.class);
+        when(pendingFolder.isDirectory()).thenReturn(true);
+
+        /* Verify when file list is empty. */
+        when(pendingFolder.listFiles()).thenReturn(new File[] {});
+        ErrorLogHelper.cleanDirectory(pendingFolder);
+        verifyStatic(never());
+        AppCenterLog.debug(anyString(), anyString());
+
+        /* Verify when file list is null. */
+        when(pendingFolder.listFiles()).thenReturn(new File[] {});
+        ErrorLogHelper.cleanDirectory(pendingFolder);
+        verifyStatic(never());
+        AppCenterLog.debug(anyString(), anyString());
+    }
+
+    @Test
+    public void cleanDirectoryWhenDirectoryIsNullOrNotDirectory() {
+
+        /* Prepare data. */
+        File pendingFolder = mock(File.class);
+
+        /* Verify when directory is not directory. */
+        when(pendingFolder.isDirectory()).thenReturn(false);
+        ErrorLogHelper.cleanDirectory(pendingFolder);
+        verify(pendingFolder, never()).listFiles();
+
+        /* Verify when directory is null. */
+        ErrorLogHelper.cleanDirectory(null);
+        verifyStatic(never());
+        AppCenterLog.debug(anyString(), anyString());
     }
 
     @Test

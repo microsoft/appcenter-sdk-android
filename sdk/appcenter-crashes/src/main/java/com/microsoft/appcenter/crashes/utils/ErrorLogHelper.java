@@ -571,14 +571,17 @@ public class ErrorLogHelper {
     }
 
     /**
-     * Clear pending minidump directory.
+     * Clear directory.
+     * @param dir a folder.
      */
-    public static void cleanPendingMinidumpDirectory() {
-        File[] files = getPendingMinidumpDirectory().listFiles();
-        if (files != null && files.length > 0) {
-            for (File file : files) {
-                boolean isDelete = file.delete();
-                AppCenterLog.debug(Crashes.LOG_TAG, String.format("Minidump file '%s' has delete status: '$s'", file.getPath(), isDelete));
+    public static void cleanDirectory(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null && files.length > 0) {
+                for (File file : files) {
+                    boolean isDelete = file.delete();
+                    AppCenterLog.debug(Crashes.LOG_TAG, String.format("Minidump file '%s' has delete status: '$s'", file.getPath(), isDelete));
+                }
             }
         }
     }

@@ -79,6 +79,7 @@ import static com.microsoft.appcenter.crashes.Crashes.PREF_KEY_MEMORY_RUNNING_LE
 import static com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog.attachmentWithBinary;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -103,6 +104,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doCallRealMethod;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
@@ -603,12 +605,20 @@ public class CrashesTest extends AbstractCrashesTest {
 
     @Test
     public void handleUserConfirmationDoNotSend() throws JSONException {
+        File pendingFolder = mock(File.class);
+        File minidumpFile = mock(File.class);
+        when(pendingFolder.listFiles()).thenReturn(new File[] {minidumpFile});
+        when(pendingFolder.isDirectory()).thenReturn(true);
+
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(new ErrorReport());
+        when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingFolder);
         when(FileManager.read(any(File.class))).thenReturn("");
+        doCallRealMethod().when(ErrorLogHelper.class);
+        ErrorLogHelper.cleanDirectory(any(File.class));
 
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
@@ -628,9 +638,12 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockListener, never()).getErrorAttachments(any(ErrorReport.class));
 
         verifyStatic();
+        ErrorLogHelper.cleanDirectory(any(File.class));
+        verifyStatic();
         ErrorLogHelper.removeStoredErrorLogFile(mErrorLog.getId());
         verifyStatic();
         ErrorLogHelper.removeStoredThrowableFile(mErrorLog.getId());
+        verify(minidumpFile).delete();
     }
 
     @Test
