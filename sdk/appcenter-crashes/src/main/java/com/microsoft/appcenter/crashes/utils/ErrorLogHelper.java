@@ -581,7 +581,7 @@ public class ErrorLogHelper {
             if (files != null && files.length > 0) {
                 for (File file : files) {
                     boolean isDelete = file.delete();
-                    AppCenterLog.debug(Crashes.LOG_TAG, String.format("Minidump file '%s' has delete status: '$s'", file.getPath(), isDelete));
+                    AppCenterLog.debug(Crashes.LOG_TAG, String.format("Minidump file '%s' has delete status: '%s'", file.getPath(), isDelete));
                 }
             }
         }
