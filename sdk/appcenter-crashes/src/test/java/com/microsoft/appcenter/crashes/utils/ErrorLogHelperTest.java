@@ -398,14 +398,14 @@ public class ErrorLogHelperTest {
         AppCenterLog.debug(anyString(), anyString());
 
         /* Verify when file list is null. */
-        when(pendingFolder.listFiles()).thenReturn(new File[] {});
+        when(pendingFolder.listFiles()).thenReturn(null);
         ErrorLogHelper.cleanDirectory(pendingFolder);
         verifyStatic(never());
         AppCenterLog.debug(anyString(), anyString());
     }
 
     @Test
-    public void cleanDirectoryWhenDirectoryIsNullOrNotDirectory() {
+    public void cleanDirectoryWhenNotDirectory() {
 
         /* Prepare data. */
         File pendingFolder = mock(File.class);
