@@ -604,20 +604,14 @@ public class CrashesTest extends AbstractCrashesTest {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Test
     public void handleUserConfirmationDoNotSend() throws JSONException {
-        File pendingFolder = mock(File.class);
-        File minidumpFile = mock(File.class);
-        when(pendingFolder.listFiles()).thenReturn(new File[] {minidumpFile});
-        when(pendingFolder.isDirectory()).thenReturn(true);
-
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(new ErrorReport());
+        File pendingFolder = mock(File.class);
         when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingFolder);
         when(FileManager.read(any(File.class))).thenReturn("");
-        doCallRealMethod().when(ErrorLogHelper.class);
-        ErrorLogHelper.cleanDirectory(any(File.class));
 
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
@@ -637,12 +631,11 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockListener, never()).getErrorAttachments(any(ErrorReport.class));
 
         verifyStatic();
-        ErrorLogHelper.cleanDirectory(any(File.class));
+        ErrorLogHelper.cleanDirectory(pendingFolder);
         verifyStatic();
         ErrorLogHelper.removeStoredErrorLogFile(mErrorLog.getId());
         verifyStatic();
         ErrorLogHelper.removeStoredThrowableFile(mErrorLog.getId());
-        verify(minidumpFile).delete();
     }
 
     @Test
