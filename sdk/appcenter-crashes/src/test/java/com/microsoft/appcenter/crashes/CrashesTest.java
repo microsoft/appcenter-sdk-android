@@ -47,13 +47,11 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.reflect.Whitebox;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -603,6 +601,7 @@ public class CrashesTest extends AbstractCrashesTest {
         Mockito.verifyNoMoreInteractions(mockListener);
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Test
     public void handleUserConfirmationDoNotSend() throws JSONException {
         File pendingFolder = mock(File.class);
@@ -1133,19 +1132,23 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), anyInt());
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession, boolean hasDeviceInfo) throws Exception {
 
-        /* Setup mock for a crash in disk. */
-        File minidumpFile = mock(File.class);
-        when(minidumpFile.getName()).thenReturn("mockFile");
-        when(minidumpFile.isDirectory()).thenReturn(false);
-        when(minidumpFile.lastModified()).thenReturn(crashTime);
+        /* Create minidump sub-folder. */
+        File minidumpSubfolder = new File("./mockFolder");
+        minidumpSubfolder.mkdir();
 
-        /* Mock sub-folder. */
-        File minidumpSubfolder = mock(File.class);
-        when(minidumpSubfolder.getName()).thenReturn("mockFolder");
-        when(minidumpSubfolder.isDirectory()).thenReturn(true);
-        when(minidumpSubfolder.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{minidumpFile});
+        /* Create a file for a crash in disk. */
+        File minidumpFile = new File("./mockFolder/mockFile.dmp");
+        minidumpFile.createNewFile();
+        minidumpFile.setLastModified(crashTime);
+
+        /* Create an additional file in a folder to be filtered later */
+        File otherFile = new File("./mockFolder/otherFile.txt");
+        long fakeCrashTime = new Date().getTime();
+        otherFile.createNewFile();
+        otherFile.setLastModified(fakeCrashTime);
 
         /* Mock session context. */
         mockStatic(SessionContext.class);
@@ -1198,14 +1201,19 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Verify timestamps on the crash log. */
         assertTrue(Crashes.hasCrashedInLastSession().get());
         assertTrue(log.getValue() instanceof ManagedErrorLog);
+        assertEquals(1, log.getAllValues().size());
+        assertNotEquals(new Date(fakeCrashTime), log.getValue().getTimestamp());
+
+        /* Clear created files */
+        FileManager.deleteDir(minidumpFile);
         return (ManagedErrorLog) log.getValue();
     }
 
     @Test
     @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
     public void minidumpDeviceInfoNull() throws Exception {
-        long appStartTime = 95L;
-        long crashTime = 126L;
+        long appStartTime = 95000L;
+        long crashTime = 126000L;
         ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false);
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(appStartTime), crashLog.getAppLaunchTimestamp());
@@ -1214,8 +1222,8 @@ public class CrashesTest extends AbstractCrashesTest {
     @Test
     @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
     public void minidumpAppLaunchTimestampFromSessionContext() throws Exception {
-        long appStartTime = 99L;
-        long crashTime = 123L;
+        long appStartTime = 99000L;
+        long crashTime = 123000L;
         ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true);
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(appStartTime), crashLog.getAppLaunchTimestamp());
@@ -1224,8 +1232,8 @@ public class CrashesTest extends AbstractCrashesTest {
     @Test
     @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
     public void minidumpAppLaunchTimestampFromSessionContextInFuture() throws Exception {
-        long appStartTime = 101L;
-        long crashTime = 100L;
+        long appStartTime = 101000L;
+        long crashTime = 100000L;
         ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true);
 
         /* Verify we fall back to crash time for app start time. */
@@ -1236,8 +1244,8 @@ public class CrashesTest extends AbstractCrashesTest {
     @Test
     @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
     public void minidumpAppLaunchTimestampFromSessionContextNotFound() throws Exception {
-        long appStartTime = 99L;
-        long crashTime = 123L;
+        long appStartTime = 99000L;
+        long crashTime = 123000L;
         ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, false, true);
 
         /* Verify we fall back to crash time for app start time. */
