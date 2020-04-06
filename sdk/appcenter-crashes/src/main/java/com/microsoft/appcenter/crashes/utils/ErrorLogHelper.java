@@ -574,8 +574,9 @@ public class ErrorLogHelper {
      * Clear directory.
      * @param dir a folder.
      */
+    @NonNull
     public static void cleanDirectory(File dir) {
-        if (dir != null && dir.isDirectory()) {
+        if (dir.isDirectory()) {
             File[] files = dir.listFiles();
             if (files != null && files.length > 0) {
                 for (File file : files) {

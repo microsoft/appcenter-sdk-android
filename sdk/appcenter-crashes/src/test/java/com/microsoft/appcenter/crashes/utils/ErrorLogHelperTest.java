@@ -414,11 +414,6 @@ public class ErrorLogHelperTest {
         when(pendingFolder.isDirectory()).thenReturn(false);
         ErrorLogHelper.cleanDirectory(pendingFolder);
         verify(pendingFolder, never()).listFiles();
-
-        /* Verify when directory is null. */
-        ErrorLogHelper.cleanDirectory(null);
-        verifyStatic(never());
-        AppCenterLog.debug(anyString(), anyString());
     }
 
     @Test
