@@ -40,7 +40,9 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
@@ -125,6 +127,9 @@ public class CrashesTest extends AbstractCrashesTest {
         assertEquals(errorLog.getDevice(), report.getDevice());
         assertNotNull(errorLog.getDevice());
     }
+
+    @Rule
+    public TemporaryFolder mTemporaryFolder = new TemporaryFolder();
 
     @Before
     public void setUp() {
@@ -601,7 +606,6 @@ public class CrashesTest extends AbstractCrashesTest {
         Mockito.verifyNoMoreInteractions(mockListener);
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Test
     public void handleUserConfirmationDoNotSend() throws JSONException {
         mockStatic(ErrorLogHelper.class);
@@ -1129,16 +1133,16 @@ public class CrashesTest extends AbstractCrashesTest {
     private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession, boolean hasDeviceInfo) throws Exception {
 
         /* Create minidump sub-folder. */
-        File minidumpSubfolder = new File("./mockFolder");
+        File minidumpSubfolder = mTemporaryFolder.newFolder("mockFolder");
         minidumpSubfolder.mkdir();
 
         /* Create a file for a crash in disk. */
-        File minidumpFile = new File("./mockFolder/mockFile.dmp");
+        File minidumpFile = new File(minidumpSubfolder, "mockFile.dmp");
         minidumpFile.createNewFile();
         minidumpFile.setLastModified(crashTime);
 
         /* Create an additional file in a folder to be filtered later */
-        File otherFile = new File("./mockFolder/otherFile.txt");
+        File otherFile = new File(minidumpSubfolder, "otherFile.txt");
         long fakeCrashTime = new Date().getTime();
         otherFile.createNewFile();
         otherFile.setLastModified(fakeCrashTime);
@@ -1196,9 +1200,6 @@ public class CrashesTest extends AbstractCrashesTest {
         assertTrue(log.getValue() instanceof ManagedErrorLog);
         assertEquals(1, log.getAllValues().size());
         assertNotEquals(new Date(fakeCrashTime), log.getValue().getTimestamp());
-
-        /* Clear created files */
-        FileManager.deleteDir(minidumpFile);
         return (ManagedErrorLog) log.getValue();
     }
 
