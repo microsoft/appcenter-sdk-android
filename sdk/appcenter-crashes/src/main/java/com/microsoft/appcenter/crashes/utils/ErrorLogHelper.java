@@ -576,19 +576,10 @@ public class ErrorLogHelper {
     }
 
     /**
-     * Clear directory.
-     * @param dir a folder.
+     * Clear (delete all content) pending minidump directory.
      */
-    public static void cleanDirectory(@NonNull File dir) {
-        if (dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            if (files != null && files.length > 0) {
-                for (File file : files) {
-                    //noinspection ResultOfMethodCallIgnored
-                    file.delete();
-                }
-            }
-        }
+    public static void cleanPendingMinidumps() {
+        FileManager.cleanDir(ErrorLogHelper.getPendingMinidumpDirectory());
     }
 
     /**

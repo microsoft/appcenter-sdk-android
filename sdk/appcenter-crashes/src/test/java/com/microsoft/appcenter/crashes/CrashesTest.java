@@ -635,7 +635,7 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockListener, never()).getErrorAttachments(any(ErrorReport.class));
 
         verifyStatic();
-        ErrorLogHelper.cleanDirectory(pendingFolder);
+        ErrorLogHelper.cleanPendingMinidumps();
         verifyStatic();
         ErrorLogHelper.removeStoredErrorLogFile(mErrorLog.getId());
         verifyStatic();

@@ -982,7 +982,7 @@ public class Crashes extends AbstractAppCenterService {
                         iterator.remove();
                         removeAllStoredErrorLogFiles(id);
                     }
-                    ErrorLogHelper.cleanDirectory(ErrorLogHelper.getPendingMinidumpDirectory());
+                    ErrorLogHelper.cleanPendingMinidumps();
                 }
 
                 /* We send the crash. */

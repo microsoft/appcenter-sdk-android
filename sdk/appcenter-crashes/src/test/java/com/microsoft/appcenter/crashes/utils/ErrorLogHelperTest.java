@@ -61,7 +61,6 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -369,51 +368,21 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    public void cleanDirectory() {
-
+    public void cleanDirectory() throws java.lang.Exception {
         /* Prepare data. */
-        mockStatic(AppCenterLog.class);
-        File pendingFolder = mock(File.class);
-        File mockFile = mock(File.class);
-        when(pendingFolder.isDirectory()).thenReturn(true);
-        when(pendingFolder.listFiles()).thenReturn(new File[] { mockFile });
+        mockStatic(FileManager.class);
+        File errorLogFolder = mTemporaryFolder.newFolder("errorLogFolder");
+        ErrorLogHelper.setErrorLogDirectory(errorLogFolder);
 
-        /* Verify. */
-        ErrorLogHelper.cleanDirectory(pendingFolder);
-        verify(mockFile).delete();
-    }
+        /* Clean pending minidump. */
+        ErrorLogHelper.cleanPendingMinidumps();
 
-    @Test
-    public void cleanDirectoryWhenFileListIsNullOrEmpty() {
+        /* Verify clean function was called. */
+        verifyStatic();
+        FileManager.cleanDir(ErrorLogHelper.getPendingMinidumpDirectory());
 
-        /* Prepare data. */
-        mockStatic(AppCenterLog.class);
-        File pendingFolder = mock(File.class);
-        when(pendingFolder.isDirectory()).thenReturn(true);
-
-        /* Verify when file list is empty. */
-        when(pendingFolder.listFiles()).thenReturn(new File[] {});
-        ErrorLogHelper.cleanDirectory(pendingFolder);
-        verifyStatic(never());
-        AppCenterLog.debug(anyString(), anyString());
-
-        /* Verify when file list is null. */
-        when(pendingFolder.listFiles()).thenReturn(null);
-        ErrorLogHelper.cleanDirectory(pendingFolder);
-        verifyStatic(never());
-        AppCenterLog.debug(anyString(), anyString());
-    }
-
-    @Test
-    public void cleanDirectoryWhenNotDirectory() {
-
-        /* Prepare data. */
-        File pendingFolder = mock(File.class);
-
-        /* Verify when directory is not directory. */
-        when(pendingFolder.isDirectory()).thenReturn(false);
-        ErrorLogHelper.cleanDirectory(pendingFolder);
-        verify(pendingFolder, never()).listFiles();
+        /* Clean up. */
+        ErrorLogHelper.setErrorLogDirectory(null);
     }
 
     @Test
