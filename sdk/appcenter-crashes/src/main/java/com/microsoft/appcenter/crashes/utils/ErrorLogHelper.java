@@ -124,6 +124,11 @@ public class ErrorLogHelper {
     public static final int MAX_PROPERTY_ITEM_LENGTH = 125;
 
     /**
+     * Minidump file extension for the NDK crashes.
+     */
+    public static final String MINIDUMP_FILE_EXTENSION = ".dmp";
+
+    /**
      * Directory for new minidump files.
      */
     private static File sNewMinidumpDirectory;
