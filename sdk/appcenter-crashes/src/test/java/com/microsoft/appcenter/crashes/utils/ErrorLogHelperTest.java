@@ -379,7 +379,7 @@ public class ErrorLogHelperTest {
 
         /* Verify clean function was called. */
         verifyStatic();
-        FileManager.cleanDir(ErrorLogHelper.getPendingMinidumpDirectory());
+        FileManager.cleanDirectory(ErrorLogHelper.getPendingMinidumpDirectory());
 
         /* Clean up. */
         ErrorLogHelper.setErrorLogDirectory(null);

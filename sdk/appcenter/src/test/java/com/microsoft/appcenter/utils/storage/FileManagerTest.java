@@ -172,12 +172,12 @@ public class FileManagerTest {
         assertTrue(folder.exists());
 
         /* Remove directory. */
-        FileManager.deleteDir(folder);
+        FileManager.deleteDirectory(folder);
 
         /* Verify. */
         assertFalse(folder.exists());
         verifyStatic();
-        FileManager.deleteDir(any(File.class));
+        FileManager.deleteDirectory(any(File.class));
     }
 
     @Test
@@ -197,7 +197,7 @@ public class FileManagerTest {
         assertTrue(file2.exists());
 
         /* Remove directory. */
-        FileManager.deleteDir(folder);
+        FileManager.deleteDirectory(folder);
 
         assertFalse(file2.exists());
         assertFalse(file1.exists());
@@ -206,11 +206,11 @@ public class FileManagerTest {
 
         /* Verify. */
         verifyStatic(times(4));
-        FileManager.deleteDir(any(File.class));
+        FileManager.deleteDirectory(any(File.class));
     }
 
     @Test
-    public void cleanDir() throws IOException {
+    public void cleanDirectory() throws IOException {
 
         /* Prepare data. */
         File folder = mTemporaryFolder.newFolder();
@@ -222,7 +222,7 @@ public class FileManagerTest {
         assertTrue(file2.exists());
 
         /* Clean directory. */
-        FileManager.cleanDir(folder);
+        FileManager.cleanDirectory(folder);
 
         /* Verify. */
         assertFalse(file2.exists());
@@ -231,7 +231,7 @@ public class FileManagerTest {
     }
 
     @Test
-    public void cleanDirWhenNotDirectory() throws IOException {
+    public void cleanDirectoryWhenNotDirectory() throws IOException {
 
         /* Prepare data. */
         File folder = mTemporaryFolder.newFolder();
@@ -240,6 +240,6 @@ public class FileManagerTest {
         assertTrue(file1.exists());
 
         /* Verify when directory is not directory, that no crashes happen */
-        FileManager.cleanDir(file1);
+        FileManager.cleanDirectory(file1);
     }
 }

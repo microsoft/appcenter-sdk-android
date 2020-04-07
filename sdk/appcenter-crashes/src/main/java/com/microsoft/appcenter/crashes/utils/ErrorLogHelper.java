@@ -389,7 +389,7 @@ public class ErrorLogHelper {
             return;
         }
         for (File file : previousSubFolders) {
-            FileManager.deleteDir(file);
+            FileManager.deleteDirectory(file);
         }
     }
 
@@ -399,7 +399,7 @@ public class ErrorLogHelper {
     public static void removeMinidumpFolder() {
         File errorStorageDirectory = getErrorStorageDirectory();
         File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
-        FileManager.deleteDir(minidumpDirectory);
+        FileManager.deleteDirectory(minidumpDirectory);
     }
 
     @Nullable
@@ -579,7 +579,7 @@ public class ErrorLogHelper {
      * Clear (delete all content) pending minidump directory.
      */
     public static void cleanPendingMinidumps() {
-        FileManager.cleanDir(ErrorLogHelper.getPendingMinidumpDirectory());
+        FileManager.cleanDirectory(ErrorLogHelper.getPendingMinidumpDirectory());
     }
 
     /**

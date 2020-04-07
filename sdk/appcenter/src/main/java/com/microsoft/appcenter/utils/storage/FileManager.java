@@ -232,11 +232,11 @@ public class FileManager {
      * @param file The file or directory to delete.
      * @return {@code true} if it was deleted, {@code false} otherwise.
      */
-    public static boolean deleteDir(@NonNull File file) {
+    public static boolean deleteDirectory(@NonNull File file) {
         File[] contents = file.listFiles();
         if (contents != null) {
             for (File f : contents) {
-                deleteDir(f);
+                deleteDirectory(f);
             }
         }
         return file.delete();
@@ -247,11 +247,11 @@ public class FileManager {
      *
      * @param directory The directory to delete.
      */
-    public static void cleanDir(@NonNull File directory) {
+    public static void cleanDirectory(@NonNull File directory) {
         File[] contents = directory.listFiles();
         if (contents != null) {
             for (File file : contents) {
-                deleteDir(file);
+                deleteDirectory(file);
             }
         }
     }
