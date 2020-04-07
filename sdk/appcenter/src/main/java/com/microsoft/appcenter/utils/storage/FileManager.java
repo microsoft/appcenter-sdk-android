@@ -245,13 +245,13 @@ public class FileManager {
     /**
      * Delete all files inside this directory, without deleting directory itself.
      *
-     * @param file The directory to delete.
+     * @param directory The directory to delete.
      */
-    public static void cleanDir(@NonNull File file) {
-        File[] contents = file.listFiles();
+    public static void cleanDir(@NonNull File directory) {
+        File[] contents = directory.listFiles();
         if (contents != null) {
-            for (File f : contents) {
-                deleteDir(f);
+            for (File file : contents) {
+                deleteDir(file);
             }
         }
     }
