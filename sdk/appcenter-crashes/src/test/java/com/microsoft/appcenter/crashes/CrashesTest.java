@@ -1129,23 +1129,22 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), anyInt());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession, boolean hasDeviceInfo) throws Exception {
 
         /* Create minidump sub-folder. */
         File minidumpSubfolder = mTemporaryFolder.newFolder("mockFolder");
-        minidumpSubfolder.mkdir();
+        assertTrue(minidumpSubfolder.mkdir());
 
         /* Create a file for a crash in disk. */
         File minidumpFile = new File(minidumpSubfolder, "mockFile.dmp");
-        minidumpFile.createNewFile();
-        minidumpFile.setLastModified(crashTime);
+        assertTrue(minidumpFile.createNewFile());
+        assertTrue(minidumpFile.setLastModified(crashTime));
 
         /* Create an additional file in a folder to be filtered later. */
         File otherFile = new File(minidumpSubfolder, "otherFile.txt");
         long fakeCrashTime = new Date().getTime();
-        otherFile.createNewFile();
-        otherFile.setLastModified(fakeCrashTime);
+        assertTrue(otherFile.createNewFile());
+        assertTrue(otherFile.setLastModified(fakeCrashTime));
 
         /* Mock session context. */
         mockStatic(SessionContext.class);
