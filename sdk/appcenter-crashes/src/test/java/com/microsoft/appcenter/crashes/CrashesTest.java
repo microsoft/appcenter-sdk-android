@@ -1133,7 +1133,6 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Create minidump sub-folder. */
         File minidumpSubfolder = mTemporaryFolder.newFolder("mockFolder");
-        assertTrue(minidumpSubfolder.mkdir());
 
         /* Create a file for a crash in disk. */
         File minidumpFile = new File(minidumpSubfolder, "mockFile.dmp");
