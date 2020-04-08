@@ -608,6 +608,8 @@ public class CrashesTest extends AbstractCrashesTest {
 
     @Test
     public void handleUserConfirmationDoNotSend() throws JSONException {
+
+        /* Prepare data. Mock classes */
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
@@ -616,24 +618,22 @@ public class CrashesTest extends AbstractCrashesTest {
         File pendingFolder = mock(File.class);
         when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingFolder);
         when(FileManager.read(any(File.class))).thenReturn("");
-
         CrashesListener mockListener = mock(CrashesListener.class);
         when(mockListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
         when(mockListener.shouldAwaitUserConfirmation()).thenReturn(true);
 
+        /* Prepare data. Set values. */
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
-
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
+        /* Verify */
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
-
         verify(mockListener, never()).getErrorAttachments(any(ErrorReport.class));
-
         verifyStatic();
         ErrorLogHelper.cleanPendingMinidumps();
         verifyStatic();
