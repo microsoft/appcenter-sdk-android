@@ -369,6 +369,7 @@ public class ErrorLogHelperTest {
 
     @Test
     public void cleanDirectory() throws java.lang.Exception {
+
         /* Prepare data. */
         mockStatic(FileManager.class);
         File errorLogFolder = mTemporaryFolder.newFolder("errorLogFolder");

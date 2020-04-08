@@ -1141,7 +1141,7 @@ public class CrashesTest extends AbstractCrashesTest {
         minidumpFile.createNewFile();
         minidumpFile.setLastModified(crashTime);
 
-        /* Create an additional file in a folder to be filtered later */
+        /* Create an additional file in a folder to be filtered later. */
         File otherFile = new File(minidumpSubfolder, "otherFile.txt");
         long fakeCrashTime = new Date().getTime();
         otherFile.createNewFile();

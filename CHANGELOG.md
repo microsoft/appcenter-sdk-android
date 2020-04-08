@@ -6,7 +6,7 @@
 
 * **[Fix]** Remove the multiple attachments warning as that is now supported by the portal.
 * **[Fix]** Change minidump filter to use file extension instead of name.
-* **[Fix]** Fix remove minidump files when the sending crash report was discarded.
+* **[Fix]** Fix removing minidump files when the sending crash report was discarded.
 
 ### App Center Distribute
 
