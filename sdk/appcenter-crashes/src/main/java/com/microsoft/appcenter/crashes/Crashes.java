@@ -66,7 +66,7 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
-import static com.microsoft.appcenter.crashes.utils.ErrorLogHelper.DEVICE_INFO_FILE;
+import static com.microsoft.appcenter.crashes.utils.ErrorLogHelper.MINIDUMP_FILE_EXTENSION;
 
 /**
  * Crashes service.
@@ -700,7 +700,7 @@ public class Crashes extends AbstractAppCenterService {
 
                 @Override
                 public boolean accept(File dir, String filename) {
-                    return !filename.equals(DEVICE_INFO_FILE);
+                    return filename.endsWith(MINIDUMP_FILE_EXTENSION);
                 }
             });
             if (minidumpSubfolderFiles == null || minidumpSubfolderFiles.length == 0) {
@@ -982,6 +982,7 @@ public class Crashes extends AbstractAppCenterService {
                         iterator.remove();
                         removeAllStoredErrorLogFiles(id);
                     }
+                    ErrorLogHelper.cleanPendingMinidumps();
                 }
 
                 /* We send the crash. */

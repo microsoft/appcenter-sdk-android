@@ -21,6 +21,7 @@ import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.test.TestUtils;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
@@ -62,11 +63,12 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class, TextUtils.class})
+@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class, TextUtils.class, AppCenterLog.class})
 public class ErrorLogHelperTest {
 
     @Rule
@@ -363,6 +365,25 @@ public class ErrorLogHelperTest {
         String truncatedMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, '*');
         assertEquals(1, actualProperties.size());
         assertEquals(truncatedMapItem, actualProperties.get(truncatedMapItem));
+    }
+
+    @Test
+    public void cleanDirectory() throws java.lang.Exception {
+
+        /* Prepare data. */
+        mockStatic(FileManager.class);
+        File errorLogFolder = mTemporaryFolder.newFolder("errorLogFolder");
+        ErrorLogHelper.setErrorLogDirectory(errorLogFolder);
+
+        /* Clean pending minidump. */
+        ErrorLogHelper.cleanPendingMinidumps();
+
+        /* Verify clean function was called. */
+        verifyStatic();
+        FileManager.cleanDirectory(ErrorLogHelper.getPendingMinidumpDirectory());
+
+        /* Clean up. */
+        ErrorLogHelper.setErrorLogDirectory(null);
     }
 
     @Test
