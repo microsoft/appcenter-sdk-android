@@ -609,7 +609,7 @@ public class CrashesTest extends AbstractCrashesTest {
     @Test
     public void handleUserConfirmationDoNotSend() throws JSONException {
 
-        /* Prepare data. Mock classes */
+        /* Prepare data. Mock classes. */
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
@@ -631,7 +631,7 @@ public class CrashesTest extends AbstractCrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
-        /* Verify */
+        /* Verify. */
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
         verify(mockListener, never()).getErrorAttachments(any(ErrorReport.class));
         verifyStatic();
