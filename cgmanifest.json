@@ -1,153 +1,154 @@
-{"Registrations":[ 
-    {
-     "component": {
-        "type": "Maven",
-        "maven": {
-          "artifactId": "gradle",
-          "groupId": "com.android.tools.build",
-          "version": "3.3.2"
+{
+    "Registrations":[ 
+        {
+        "component": {
+            "type": "Maven",
+            "maven": {
+            "artifactId": "gradle",
+            "groupId": "com.android.tools.build",
+            "version": "3.3.2"
+            }
         }
-      }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "gradle-bintray-plugin",
-                   "groupId": "com.jfrog.bintray.gradle",
-                   "version": "1.8.0"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "android-maven-gradle-plugin",
-                   "groupId": "com.github.dcendents",
-                   "version": "2.0"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "google-services",
-                   "groupId": "com.google.gms",
-                   "version": "4.0.1"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "coveralls-gradle-plugin",
-                   "groupId": "org.kt3k.gradle.plugin",
-                   "version": "2.8.2"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "firebase-core",
-                   "groupId": "com.google.firebase",
-                   "version": "16.0.9"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "firebase-messaging",
-                   "groupId": "com.google.firebase",
-                   "version": "18.0.0"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "espresso-core",
-                   "groupId": "com.android.support.test.espresso",
-                   "version": "3.0.2"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "espresso-idling-resource",
-                   "groupId": "com.android.support.test.espresso",
-                   "version": "3.0.2"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "rules",
-                   "groupId": "com.android.support.test",
-                   "version": "1.0.2"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "support-v4",
-                   "groupId": "com.android.support",
-                   "version": "28.0.0"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "appcompat-v7",
-                   "groupId": "com.android.support",
-                   "version": "28.0.0"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "customtabs",
-                   "groupId": "ccom.android.support",
-                   "version": "28.0.0"
-               }
-           }
-   },
-   {
-       "component": {
-           "type": "Maven",
-               "maven": {
-                   "artifactId": "recyclerview-v7",
-                   "groupId": "com.android.support",
-                   "version": "28.0.0"
-               }
-           }
-   },
-   {
-       "component": { 
-        "type": "git", 
-        "git": { 
-          "repositoryUrl": "https://github.com/google/breakpad.git", 
-          "commitHash": "54fa71efbe50fb2b58096d871575b59e12edba6d" 
-          }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "gradle-bintray-plugin",
+                        "groupId": "com.jfrog.bintray.gradle",
+                        "version": "1.8.0"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "android-maven-gradle-plugin",
+                        "groupId": "com.github.dcendents",
+                        "version": "2.0"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "google-services",
+                        "groupId": "com.google.gms",
+                        "version": "4.0.1"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "coveralls-gradle-plugin",
+                        "groupId": "org.kt3k.gradle.plugin",
+                        "version": "2.8.2"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "firebase-core",
+                        "groupId": "com.google.firebase",
+                        "version": "16.0.9"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "firebase-messaging",
+                        "groupId": "com.google.firebase",
+                        "version": "18.0.0"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "espresso-core",
+                        "groupId": "com.android.support.test.espresso",
+                        "version": "3.0.2"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "espresso-idling-resource",
+                        "groupId": "com.android.support.test.espresso",
+                        "version": "3.0.2"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "rules",
+                        "groupId": "com.android.support.test",
+                        "version": "1.0.2"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "support-v4",
+                        "groupId": "com.android.support",
+                        "version": "28.0.0"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "appcompat-v7",
+                        "groupId": "com.android.support",
+                        "version": "28.0.0"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "customtabs",
+                        "groupId": "ccom.android.support",
+                        "version": "28.0.0"
+                    }
+                }
+        },
+        {
+            "component": {
+                "type": "Maven",
+                    "maven": {
+                        "artifactId": "recyclerview-v7",
+                        "groupId": "com.android.support",
+                        "version": "28.0.0"
+                    }
+                }
+        },
+        {
+            "component": { 
+                "type": "git", 
+                "git": { 
+                "repositoryUrl": "https://github.com/google/breakpad.git", 
+                "commitHash": "54fa71efbe50fb2b58096d871575b59e12edba6d" 
+                }
+                }
         }
-   }
-],
-"Version": 1
+    ],
+    "Version": 1
 }
