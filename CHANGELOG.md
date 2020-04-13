@@ -1,6 +1,10 @@
 # App Center SDK for Android Change Log
 
-## Version 3.1.1 (Under development)
+## Version 3.2.0 (Under development)
+
+### App Center Distribute
+
+* **[Feature]** Automatically check for update when application switches from background to foreground (unless automatic checks are disabled).
 
 ### App Center Crashes
 
