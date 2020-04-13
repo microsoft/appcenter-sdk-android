@@ -142,6 +142,16 @@
         },
         {
             "component": {
+                "type": "Maven",
+                "maven": {
+                    "artifactId": "lifecycle-process",
+                    "groupId": "androidx.lifecycle",
+                    "version": "2.2.0"
+                }
+            }
+        },
+        {
+            "component": {
                 "type": "git",
                 "git": {
                     "repositoryUrl": "https://github.com/google/breakpad.git",
