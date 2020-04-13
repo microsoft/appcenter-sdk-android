@@ -142,11 +142,10 @@
         },
         {
             "component": {
-                "type": "Maven",
-                "maven": {
-                    "artifactId": "lifecycle-process",
-                    "groupId": "androidx.lifecycle",
-                    "version": "2.2.0"
+                "type": "git",
+                "git": {
+                    "repositoryUrl": "https://android.googlesource.com/platform/frameworks/support",
+                    "commitHash": "cb7620b6f66a6e33fb9882bbca995a45c64f3c3e"
                 }
             }
         },
