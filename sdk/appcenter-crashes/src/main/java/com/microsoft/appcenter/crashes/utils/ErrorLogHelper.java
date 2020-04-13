@@ -124,6 +124,11 @@ public class ErrorLogHelper {
     public static final int MAX_PROPERTY_ITEM_LENGTH = 125;
 
     /**
+     * Minidump file extension for the NDK crashes.
+     */
+    public static final String MINIDUMP_FILE_EXTENSION = ".dmp";
+
+    /**
      * Directory for new minidump files.
      */
     private static File sNewMinidumpDirectory;
@@ -384,7 +389,7 @@ public class ErrorLogHelper {
             return;
         }
         for (File file : previousSubFolders) {
-            FileManager.deleteDir(file);
+            FileManager.deleteDirectory(file);
         }
     }
 
@@ -394,7 +399,7 @@ public class ErrorLogHelper {
     public static void removeMinidumpFolder() {
         File errorStorageDirectory = getErrorStorageDirectory();
         File minidumpDirectory = new File(errorStorageDirectory.getAbsolutePath(), MINIDUMP_DIRECTORY);
-        FileManager.deleteDir(minidumpDirectory);
+        FileManager.deleteDirectory(minidumpDirectory);
     }
 
     @Nullable
@@ -568,6 +573,13 @@ public class ErrorLogHelper {
             result.put(key, value);
         }
         return result;
+    }
+
+    /**
+     * Clear (delete all content) pending minidump directory.
+     */
+    public static void cleanPendingMinidumps() {
+        FileManager.cleanDirectory(ErrorLogHelper.getPendingMinidumpDirectory());
     }
 
     /**

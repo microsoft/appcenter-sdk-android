@@ -64,8 +64,8 @@
             android:key="@string/appcenter_distribute_debug_state_key"
             android:title="@string/appcenter_distribute_debug_state_title" />
         <CheckBoxPreference
-            android:key="@string/appcenter_distribute_disable_check_for_update_key"
-            android:title="@string/appcenter_distribute_auto_check_for_update_title" />
+            android:key="@string/appcenter_distribute_disable_automatic_check_for_update_key"
+            android:title="@string/appcenter_distribute_disable_automatic_check_for_update_title" />
         <Preference
             android:key="@string/appcenter_distribute_check_for_update_key"
             android:title="@string/appcenter_distribute_check_for_update_title" />
@@ -73,6 +73,7 @@
             android:key="@string/appcenter_distribute_track_state_key"
             android:entries="@array/appcenter_distribute_update_track_entries"
             android:entryValues="@array/appcenter_distribute_update_track_entries"
+            android:defaultValue="@string/appcenter_distribute_track_state_default_value"
             android:title="@string/appcenter_distribute_track_state_title" />
     </PreferenceCategory>
 
@@ -118,6 +119,7 @@
             android:entries="@array/appcenter_start_type_values"
             android:entryValues="@array/appcenter_start_type_values"
             android:key="@string/appcenter_start_type_key"
+            android:defaultValue="@string/appcenter_start_type_default_value"
             android:title="@string/appcenter_start_type_title" />
         <Preference
             android:key="@string/target_id_key"
