@@ -66,7 +66,7 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
-import static com.microsoft.appcenter.crashes.utils.ErrorLogHelper.DEVICE_INFO_FILE;
+import static com.microsoft.appcenter.crashes.utils.ErrorLogHelper.MINIDUMP_FILE_EXTENSION;
 
 /**
  * Crashes service.
@@ -115,11 +115,6 @@ public class Crashes extends AbstractAppCenterService {
      * TAG used in logging for Crashes.
      */
     public static final String LOG_TAG = AppCenterLog.LOG_TAG + SERVICE_NAME;
-
-    /**
-     * Max allowed attachments per crash.
-     */
-    private static final int MAX_ATTACHMENT_PER_CRASH = 2;
 
     /**
      * Maximum size for attachment data in bytes.
@@ -705,7 +700,7 @@ public class Crashes extends AbstractAppCenterService {
 
                 @Override
                 public boolean accept(File dir, String filename) {
-                    return !filename.equals(DEVICE_INFO_FILE);
+                    return filename.endsWith(MINIDUMP_FILE_EXTENSION);
                 }
             });
             if (minidumpSubfolderFiles == null || minidumpSubfolderFiles.length == 0) {
@@ -987,6 +982,7 @@ public class Crashes extends AbstractAppCenterService {
                         iterator.remove();
                         removeAllStoredErrorLogFiles(id);
                     }
+                    ErrorLogHelper.cleanPendingMinidumps();
                 }
 
                 /* We send the crash. */
@@ -1070,7 +1066,6 @@ public class Crashes extends AbstractAppCenterService {
         if (attachments == null) {
             AppCenterLog.debug(LOG_TAG, "Error report: " + errorId.toString() + " does not have any attachment.");
         } else {
-            int totalErrorAttachments = 0;
             for (ErrorAttachmentLog attachment : attachments) {
                 if (attachment != null) {
                     attachment.setId(UUID.randomUUID());
@@ -1082,15 +1077,11 @@ public class Crashes extends AbstractAppCenterService {
                                 "Discarding attachment with size above %d bytes: size=%d, fileName=%s.",
                                 MAX_ATTACHMENT_SIZE, attachment.getData().length, attachment.getFileName()));
                     } else {
-                        ++totalErrorAttachments;
                         mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);
                     }
                 } else {
                     AppCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog.");
                 }
-            }
-            if (totalErrorAttachments > MAX_ATTACHMENT_PER_CRASH) {
-                AppCenterLog.warn(LOG_TAG, "A limit of " + MAX_ATTACHMENT_PER_CRASH + " attachments per error report might be enforced by server.");
             }
         }
     }

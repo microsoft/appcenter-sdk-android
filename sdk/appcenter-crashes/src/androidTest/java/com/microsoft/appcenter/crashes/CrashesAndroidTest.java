@@ -111,7 +111,7 @@ public class CrashesAndroidTest {
         File[] files = ErrorLogHelper.getErrorStorageDirectory().listFiles();
         assertNotNull(files);
         for (File logFile : files) {
-            assertTrue(FileManager.deleteDir(logFile));
+            assertTrue(FileManager.deleteDirectory(logFile));
         }
         mChannel = mock(Channel.class);
     }

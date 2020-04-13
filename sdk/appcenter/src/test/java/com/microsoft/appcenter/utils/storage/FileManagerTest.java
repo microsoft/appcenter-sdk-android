@@ -172,12 +172,12 @@ public class FileManagerTest {
         assertTrue(folder.exists());
 
         /* Remove directory. */
-        FileManager.deleteDir(folder);
+        FileManager.deleteDirectory(folder);
 
         /* Verify. */
         assertFalse(folder.exists());
         verifyStatic();
-        FileManager.deleteDir(any(File.class));
+        FileManager.deleteDirectory(any(File.class));
     }
 
     @Test
@@ -197,7 +197,7 @@ public class FileManagerTest {
         assertTrue(file2.exists());
 
         /* Remove directory. */
-        FileManager.deleteDir(folder);
+        FileManager.deleteDirectory(folder);
 
         assertFalse(file2.exists());
         assertFalse(file1.exists());
@@ -206,6 +206,40 @@ public class FileManagerTest {
 
         /* Verify. */
         verifyStatic(times(4));
-        FileManager.deleteDir(any(File.class));
+        FileManager.deleteDirectory(any(File.class));
+    }
+
+    @Test
+    public void cleanDirectory() throws IOException {
+
+        /* Prepare data. */
+        File folder = mTemporaryFolder.newFolder();
+        File file1 = new File(folder, "file1");
+        assertTrue(file1.createNewFile());
+        assertTrue(file1.exists());
+        File file2 = new File(folder, "file2");
+        assertTrue(file2.createNewFile());
+        assertTrue(file2.exists());
+
+        /* Clean directory. */
+        FileManager.cleanDirectory(folder);
+
+        /* Verify. */
+        assertFalse(file2.exists());
+        assertFalse(file1.exists());
+        assertTrue(folder.exists());
+    }
+
+    @Test
+    public void cleanDirectoryWhenNotDirectory() throws IOException {
+
+        /* Prepare data. */
+        File folder = mTemporaryFolder.newFolder();
+        File file1 = new File(folder, "file1");
+        assertTrue(file1.createNewFile());
+        assertTrue(file1.exists());
+
+        /* Verify when directory is not directory, that no crashes happen */
+        FileManager.cleanDirectory(file1);
     }
 }
