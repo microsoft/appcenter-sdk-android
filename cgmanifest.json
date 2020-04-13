@@ -153,8 +153,8 @@
             "component": {
                 "type": "git",
                 "git": {
-                    "repositoryUrl": "https://github.com/google/breakpad.git",
-                    "commitHash": "54fa71efbe50fb2b58096d871575b59e12edba6d"
+                    "repositoryUrl": "https://github.com/microsoft/appcenter-sdk-android-breakpad.git",
+                    "commitHash": "0d8e4133e2b9caadb012d438c4c12cf6daff2a40"
                 }
             }
         }
