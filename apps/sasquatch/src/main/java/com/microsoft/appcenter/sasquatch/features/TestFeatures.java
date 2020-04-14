@@ -64,11 +64,7 @@ public final class TestFeatures {
 
         @Override
         public void onClick(View view) {
-            try {
-                Distribute.checkForUpdate();
-            } catch (Exception e) {
-                AppCenterLog.warn(MainActivity.LOG_TAG, "No CheckForUpdate API in this build");
-            }
+            Distribute.checkForUpdate();
         }
     };
 

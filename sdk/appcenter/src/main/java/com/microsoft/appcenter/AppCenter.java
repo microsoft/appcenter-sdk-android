@@ -30,6 +30,7 @@ import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.StartServiceLogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.ApplicationLifecycleListener;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;
@@ -138,6 +139,11 @@ public class AppCenter {
      * Application context.
      */
     private Application mApplication;
+
+    /**
+     * Application lifecycle listener.
+     */
+    private ApplicationLifecycleListener mApplicationLifecycleListener;
 
     /**
      * Application secret.
@@ -674,6 +680,8 @@ public class AppCenter {
                 handlerAppCenterOperation(runnable, disabledRunnable);
             }
         };
+        mApplicationLifecycleListener = new ApplicationLifecycleListener(mHandler);
+        mApplication.registerActivityLifecycleCallbacks(mApplicationLifecycleListener);
 
         /* The rest of initialization is done in background as we need storage. */
         mServices = new HashSet<>();
@@ -924,6 +932,7 @@ public class AppCenter {
             return false;
         } else {
             serviceInstance.onStarting(mAppCenterHandler);
+            mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(serviceInstance);
             mApplication.registerActivityLifecycleCallbacks(serviceInstance);
             mServices.add(serviceInstance);
             startedServices.add(serviceInstance);

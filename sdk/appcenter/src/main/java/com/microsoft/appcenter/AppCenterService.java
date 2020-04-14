@@ -13,13 +13,14 @@ import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
+import com.microsoft.appcenter.utils.ApplicationLifecycleListener;
 
 import java.util.Map;
 
 /**
  * Service specification.
  */
-public interface AppCenterService extends Application.ActivityLifecycleCallbacks {
+public interface AppCenterService extends Application.ActivityLifecycleCallbacks, ApplicationLifecycleListener.ApplicationLifecycleCallbacks {
 
     /**
      * Check whether this service is enabled or not.
