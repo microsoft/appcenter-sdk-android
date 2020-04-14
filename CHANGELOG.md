@@ -5,16 +5,13 @@
 ### App Center Distribute
 
 * **[Feature]** Automatically check for update when application switches from background to foreground (unless automatic checks are disabled).
+* **[Fix]** Fix checking for updates after disabling the Distribute module while downloading the release.
 
 ### App Center Crashes
 
 * **[Fix]** Remove the multiple attachments warning as that is now supported by the portal.
 * **[Fix]** Change minidump filter to use file extension instead of name.
 * **[Fix]** Fix removing minidump files when the sending crash report was discarded.
-
-### App Center Distribute
-
-* **[Fix]** Fix checking for updates after disabling the Distribute module while downloading the release.
 
 ___
 
