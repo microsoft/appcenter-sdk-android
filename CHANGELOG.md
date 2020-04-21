@@ -2,6 +2,10 @@
 
 ## Version 3.2.1 (Under development)
 
+### App Center Distribute
+
+* **[Fix]** Fix checking updates when application switches from background to foreground if the SDK was started after `onCreate` callback.
+
 ___
 
 ## Version 3.2.0
