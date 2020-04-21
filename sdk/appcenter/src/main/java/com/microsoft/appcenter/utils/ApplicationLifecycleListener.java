@@ -141,6 +141,11 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
 
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
+
+        /*
+         * If the SDK starts from onStart or onResume, the first onActivityStarted/onActivityResumed isn't called.
+         * This breaks the flags logic and we need to restore their state.
+         */
         if (mStartedCounter == 0 && mStopSent) {
             mStopSent = false;
         }
