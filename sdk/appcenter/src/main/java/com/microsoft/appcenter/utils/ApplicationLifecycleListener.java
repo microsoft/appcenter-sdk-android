@@ -149,7 +149,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
         if (mStartedCounter == 0 && mStopSent) {
             mStopSent = false;
         }
-        if (mResumedCounter == 0 && mPauseSent) {
+        if (mResumedCounter == 0) {
             mPauseSent = false;
         }
         mResumedCounter = max(mResumedCounter - 1, 0);
