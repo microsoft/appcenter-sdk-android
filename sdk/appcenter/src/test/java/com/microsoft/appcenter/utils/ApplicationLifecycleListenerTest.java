@@ -235,4 +235,67 @@ public class ApplicationLifecycleListenerTest {
         /* Verify the callback was not called if we transition to another activity inside the app. */
         verifyNoMoreInteractions(callbacks1, callbacks2);
     }
+
+    @Test
+    public void skipCallOnStart() {
+
+        /* Prepare data. */
+        Activity secondActivityMock = mock(Activity.class);
+        Bundle mockBundle = mock(Bundle.class);
+        ApplicationLifecycleListener.ApplicationLifecycleCallbacks callbacks1 = mock(ApplicationLifecycleListener.ApplicationLifecycleCallbacks.class);
+        mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(callbacks1);
+
+        /* Skip call onActivityStarted. */
+
+        /* Call onActivityResumed. */
+        mApplicationLifecycleListener.onActivityResumed(mActivityMock);
+        verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
+        mApplicationLifecycleListener.onActivitySaveInstanceState(mActivityMock, mockBundle);
+
+        /* Call onActivityPaused. */
+        mApplicationLifecycleListener.onActivityPaused(mActivityMock);
+        verify(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
+
+        /* Call onActivityStopped. */
+        mApplicationLifecycleListener.onActivityStopped(mActivityMock);
+        verify(callbacks1, times(2)).onApplicationEnterBackground();
+
+        /* Call onActivityStarted. */
+        mApplicationLifecycleListener.onActivityStarted(mActivityMock);
+        verify(callbacks1, times(1)).onApplicationEnterForeground();
+
+        /* Go to another activity. */
+        mApplicationLifecycleListener.onActivityPaused(mActivityMock);
+        mApplicationLifecycleListener.onActivityStarted(secondActivityMock);
+        mApplicationLifecycleListener.onActivityResumed(secondActivityMock);
+
+        /* Verify that onApplicationEnterForeground was called once. */
+        verify(callbacks1, times(1)).onApplicationEnterForeground();
+    }
+
+    @Test
+    public void skipCallOnResume() {
+
+        /* Prepare data. */
+        Bundle mockBundle = mock(Bundle.class);
+        ApplicationLifecycleListener.ApplicationLifecycleCallbacks callbacks = mock(ApplicationLifecycleListener.ApplicationLifecycleCallbacks.class);
+        mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(callbacks);
+
+        /* Skip call onActivityStarted and onActivityResume. */
+
+        /* Call onActivityResumed. */
+        mApplicationLifecycleListener.onActivitySaveInstanceState(mActivityMock, mockBundle);
+
+        /* Call onActivityPaused. */
+        mApplicationLifecycleListener.onActivityPaused(mActivityMock);
+        verify(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
+
+        /* Call onActivityStopped. */
+        mApplicationLifecycleListener.onActivityStopped(mActivityMock);
+        verify(callbacks, times(2)).onApplicationEnterBackground();
+
+        /* Call onActivityStarted. */
+        mApplicationLifecycleListener.onActivityStarted(mActivityMock);
+        verify(callbacks, times(1)).onApplicationEnterForeground();
+    }
 }
