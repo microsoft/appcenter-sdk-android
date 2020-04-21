@@ -262,7 +262,7 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListener.onActivityStarted(mActivityMock);
-        verify(callbacks1, times(1)).onApplicationEnterForeground();
+        verify(callbacks1).onApplicationEnterForeground();
 
         /* Go to another activity. */
         mApplicationLifecycleListener.onActivityPaused(mActivityMock);
@@ -270,7 +270,7 @@ public class ApplicationLifecycleListenerTest {
         mApplicationLifecycleListener.onActivityResumed(secondActivityMock);
 
         /* Verify that onApplicationEnterForeground was called once. */
-        verify(callbacks1, times(1)).onApplicationEnterForeground();
+        verify(callbacks1).onApplicationEnterForeground();
     }
 
     @Test
@@ -296,6 +296,6 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListener.onActivityStarted(mActivityMock);
-        verify(callbacks, times(1)).onApplicationEnterForeground();
+        verify(callbacks).onApplicationEnterForeground();
     }
 }
