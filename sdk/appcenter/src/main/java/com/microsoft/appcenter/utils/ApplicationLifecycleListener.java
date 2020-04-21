@@ -146,7 +146,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
          * If the SDK starts from onStart or onResume, the first onActivityStarted/onActivityResumed isn't called.
          * This breaks the flags logic and we need to restore their state.
          */
-        if (mStartedCounter == 0 && mStopSent) {
+        if (mStartedCounter == 0) {
             mStopSent = false;
         }
         if (mResumedCounter == 0) {
