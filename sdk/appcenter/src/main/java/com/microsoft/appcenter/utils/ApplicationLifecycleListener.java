@@ -141,8 +141,10 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
 
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
-        if (mResumedCounter == 0) {
+        if (mStartedCounter == 0 && mStopSent) {
             mStopSent = false;
+        }
+        if (mResumedCounter == 0 && mPauseSent) {
             mPauseSent = false;
         }
         mResumedCounter = max(mResumedCounter - 1, 0);
@@ -154,7 +156,6 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
              * ApplicationLifecycleListener won't send any events if activities are destroyed
              * and recreated due to a configuration change.
              */
-            mHandler.removeCallbacks(mDelayedPauseRunnable);
             mHandler.postDelayed(mDelayedPauseRunnable, TIMEOUT_MS);
         }
     }
