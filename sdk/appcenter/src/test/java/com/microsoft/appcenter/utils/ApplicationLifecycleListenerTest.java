@@ -18,15 +18,11 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -49,7 +45,6 @@ public class ApplicationLifecycleListenerTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
         }).when(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
@@ -61,9 +56,6 @@ public class ApplicationLifecycleListenerTest {
         /* Prepare data. */
         ApplicationLifecycleListener.ApplicationLifecycleCallbacks callbacks = mock(ApplicationLifecycleListener.ApplicationLifecycleCallbacks.class);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(callbacks);
-
-        /* Do nothing and trigger manually captured runnable later to ensure that application resumes first. */
-        reset(mHandlerMock);
 
         /* Call onActivityResumed. */
         mApplicationLifecycleListener.onActivityResumed(mActivityMock);
@@ -86,8 +78,10 @@ public class ApplicationLifecycleListenerTest {
         mApplicationLifecycleListener.onActivityResumed(mActivityMock);
         verify(mHandlerMock).removeCallbacks(any(Runnable.class));
 
-        /* Verify that enter background callback won't call after the delay. */
+        /* Runnable from onActivityPaused is called after the timeout. */
         postDelayed.getValue().run();
+
+        /* Verify that enter background callback won't call after the delay. */
         verify(callbacks, never()).onApplicationEnterBackground();
     }
 
@@ -168,14 +162,20 @@ public class ApplicationLifecycleListenerTest {
         /* Call onActivityResumed. */
         mApplicationLifecycleListener.onActivityResumed(mActivityMock);
         verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
-        mApplicationLifecycleListener.onActivitySaveInstanceState(mActivityMock, mockBundle);
 
         /* Call onActivityPaused. */
         mApplicationLifecycleListener.onActivityPaused(mActivityMock);
-        verify(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
+        ArgumentCaptor<Runnable> postDelayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        verify(mHandlerMock).postDelayed(postDelayedRunnable.capture(), anyLong());
 
         /* Call onActivityStopped. */
         mApplicationLifecycleListener.onActivityStopped(mActivityMock);
+        mApplicationLifecycleListener.onActivitySaveInstanceState(mActivityMock, mockBundle);
+
+        /* Runnable from onActivityPaused is called after the timeout. */
+        postDelayedRunnable.getValue().run();
+
+        /* Verify background callbacks called once. */
         verify(callbacks1).onApplicationEnterBackground();
         verify(callbacks2).onApplicationEnterBackground();
 
@@ -184,6 +184,16 @@ public class ApplicationLifecycleListenerTest {
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListener.onActivityStarted(mActivityMock);
+
+        /* Call onActivityResumed. */
+        mApplicationLifecycleListener.onActivityResumed(mActivityMock);
+        verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
+
+        /* Verify background callbacks still were called once. */
+        verify(callbacks1).onApplicationEnterBackground();
+        verify(callbacks2).onApplicationEnterBackground();
+
+        /* Verify foreground callbacks were called twice. */
         verify(callbacks1, times(2)).onApplicationEnterForeground();
         verify(callbacks2, times(2)).onApplicationEnterForeground();
     }
@@ -194,10 +204,6 @@ public class ApplicationLifecycleListenerTest {
         /* Prepare data. */
         Activity anotherActivityMock = mock(Activity.class);
         Bundle mockBundle = mock(Bundle.class);
-
-        /* Do nothing and trigger manually captured runnable later to ensure that application resumes first. */
-        reset(mHandlerMock);
-
         ApplicationLifecycleListener.ApplicationLifecycleCallbacks callbacks1 = mock(ApplicationLifecycleListener.ApplicationLifecycleCallbacks.class);
         ApplicationLifecycleListener.ApplicationLifecycleCallbacks callbacks2 = mock(ApplicationLifecycleListener.ApplicationLifecycleCallbacks.class);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(callbacks1);
@@ -224,78 +230,91 @@ public class ApplicationLifecycleListenerTest {
         mApplicationLifecycleListener.onActivityStarted(anotherActivityMock);
         mApplicationLifecycleListener.onActivityResumed(anotherActivityMock);
 
+        /* Verify the runnable was removed in onActivityResumed. */
+        verify(mHandlerMock).removeCallbacks(any(Runnable.class));
+
+        /* Call onActivityStopped. */
+        mApplicationLifecycleListener.onActivityStopped(mActivityMock);
+
         /* Verify that delayed callback doesn't trigger enter background callbacks. */
         postDelayed.getValue().run();
         verify(callbacks1, never()).onApplicationEnterBackground();
         verify(callbacks2, never()).onApplicationEnterBackground();
-
-        /* Call onActivityStopped. */
-        mApplicationLifecycleListener.onActivityStopped(mActivityMock);
 
         /* Verify the callback was not called if we transition to another activity inside the app. */
         verifyNoMoreInteractions(callbacks1, callbacks2);
     }
 
     @Test
-    public void skipCallOnStart() {
+    public void skipCallOnStartOpenFoldOpen() {
 
         /* Prepare data. */
-        Activity secondActivityMock = mock(Activity.class);
-        Bundle mockBundle = mock(Bundle.class);
-        ApplicationLifecycleListener.ApplicationLifecycleCallbacks callbacks1 = mock(ApplicationLifecycleListener.ApplicationLifecycleCallbacks.class);
-        mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(callbacks1);
+        ApplicationLifecycleListener.ApplicationLifecycleCallbacks callbacks = mock(ApplicationLifecycleListener.ApplicationLifecycleCallbacks.class);
+        mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(callbacks);
 
         /* Skip call onActivityStarted. */
 
         /* Call onActivityResumed. */
         mApplicationLifecycleListener.onActivityResumed(mActivityMock);
         verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
-        mApplicationLifecycleListener.onActivitySaveInstanceState(mActivityMock, mockBundle);
 
         /* Call onActivityPaused. */
         mApplicationLifecycleListener.onActivityPaused(mActivityMock);
-        verify(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
+        ArgumentCaptor<Runnable> postDelayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        verify(mHandlerMock).postDelayed(postDelayedRunnable.capture(), anyLong());
 
         /* Call onActivityStopped. */
         mApplicationLifecycleListener.onActivityStopped(mActivityMock);
-        verify(callbacks1, times(2)).onApplicationEnterBackground();
+
+        /* Runnable from onActivityPaused is called after the timeout. */
+        postDelayedRunnable.getValue().run();
+
+        /* Verify onApplicationEnterBackground was called only once. */
+        verify(callbacks).onApplicationEnterBackground();
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListener.onActivityStarted(mActivityMock);
-        verify(callbacks1).onApplicationEnterForeground();
+        verify(callbacks).onApplicationEnterForeground();
 
-        /* Go to another activity. */
-        mApplicationLifecycleListener.onActivityPaused(mActivityMock);
-        mApplicationLifecycleListener.onActivityStarted(secondActivityMock);
-        mApplicationLifecycleListener.onActivityResumed(secondActivityMock);
-
-        /* Verify that onApplicationEnterForeground was called once. */
-        verify(callbacks1).onApplicationEnterForeground();
+        /* Call onActivityResumed. */
+        mApplicationLifecycleListener.onActivityResumed(mActivityMock);
+        verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
     }
 
     @Test
-    public void skipCallOnResume() {
+    public void skipCallOnResumeOpenFoldOpen() {
 
         /* Prepare data. */
-        Bundle mockBundle = mock(Bundle.class);
         ApplicationLifecycleListener.ApplicationLifecycleCallbacks callbacks = mock(ApplicationLifecycleListener.ApplicationLifecycleCallbacks.class);
         mApplicationLifecycleListener.registerApplicationLifecycleCallbacks(callbacks);
 
         /* Skip call onActivityStarted and onActivityResume. */
 
-        /* Call onActivityResumed. */
-        mApplicationLifecycleListener.onActivitySaveInstanceState(mActivityMock, mockBundle);
-
         /* Call onActivityPaused. */
         mApplicationLifecycleListener.onActivityPaused(mActivityMock);
-        verify(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
+        ArgumentCaptor<Runnable> postDelayedRunnable = ArgumentCaptor.forClass(Runnable.class);
+        verify(mHandlerMock).postDelayed(postDelayedRunnable.capture(), anyLong());
 
         /* Call onActivityStopped. */
         mApplicationLifecycleListener.onActivityStopped(mActivityMock);
-        verify(callbacks, times(2)).onApplicationEnterBackground();
+
+        /* Runnable for onActivityPaused is called after the timeout. */
+        postDelayedRunnable.getValue().run();
+
+        /* Verify onApplicationEnterBackground called. */
+        verify(callbacks).onApplicationEnterBackground();
 
         /* Call onActivityStarted. */
         mApplicationLifecycleListener.onActivityStarted(mActivityMock);
+        verify(callbacks).onApplicationEnterForeground();
+        verify(callbacks).onApplicationEnterForeground();
+
+        /* Call onActivityResumed. */
+        mApplicationLifecycleListener.onActivityResumed(mActivityMock);
+        verify(mHandlerMock, never()).removeCallbacks(any(Runnable.class));
+
+        /* Verify the callbacks were called only once. */
+        verify(callbacks).onApplicationEnterBackground();
         verify(callbacks).onApplicationEnterForeground();
     }
 }
