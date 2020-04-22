@@ -297,7 +297,6 @@ public class ApplicationLifecycleListenerTest {
         /* Call onActivityStarted. */
         mApplicationLifecycleListener.onActivityStarted(mActivityMock);
         verify(callbacks).onApplicationEnterForeground();
-        verify(callbacks).onApplicationEnterForeground();
 
         /* Call onActivityResumed. */
         mApplicationLifecycleListener.onActivityResumed(mActivityMock);
