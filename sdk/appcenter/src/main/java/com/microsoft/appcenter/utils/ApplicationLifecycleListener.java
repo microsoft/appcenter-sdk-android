@@ -27,6 +27,8 @@ import android.support.annotation.Nullable;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import static java.lang.Math.max;
+
 /**
  * Listens to the whole application (if the application is a single process) lifecycle events.
  * It allows catching of a foregrounded and a backgrounded state of the whole application.
@@ -139,7 +141,18 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
 
     @Override
     public void onActivityPaused(@NonNull Activity activity) {
-        mResumedCounter--;
+
+        /*
+         * If the SDK starts from onStart or onResume, the first onActivityStarted/onActivityResumed isn't called.
+         * This breaks the flags logic and we need to restore their state.
+         */
+        if (mStartedCounter == 0) {
+            mStopSent = false;
+        }
+        if (mResumedCounter == 0) {
+            mPauseSent = false;
+        }
+        mResumedCounter = max(mResumedCounter - 1, 0);
         if (mResumedCounter == 0) {
 
             /*
@@ -154,7 +167,7 @@ public class ApplicationLifecycleListener implements ActivityLifecycleCallbacks 
 
     @Override
     public void onActivityStopped(@NonNull Activity activity) {
-        mStartedCounter--;
+        mStartedCounter = max(mStartedCounter - 1, 0);
         dispatchStopIfNeeded();
     }
 
