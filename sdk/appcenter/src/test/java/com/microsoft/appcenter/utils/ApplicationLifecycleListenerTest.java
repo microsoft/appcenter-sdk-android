@@ -14,13 +14,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -41,13 +38,6 @@ public class ApplicationLifecycleListenerTest {
     @Before
     public void setUp() {
         mApplicationLifecycleListener = new ApplicationLifecycleListener(mHandlerMock);
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                return null;
-            }
-        }).when(mHandlerMock).postDelayed(any(Runnable.class), anyLong());
     }
 
     @Test
