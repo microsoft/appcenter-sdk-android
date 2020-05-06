@@ -13,7 +13,7 @@ jobs:
 
 
     # CodeQL runs on ubuntu-latest, windows-latest, and macos-latest
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: Checkout repository
@@ -23,13 +23,8 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
       # Override language selection by uncommenting this and choosing your languages
-      # with:
-      #   languages: go, javascript, csharp, python, cpp, java
-
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    # If this step fails, then you should remove it and run the build manually (see below).
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v1
+      with:
+        languages: java
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -37,10 +32,13 @@ jobs:
     # ✏️ If the Autobuild fails above, remove it and uncomment the following three lines
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
-
-    #- run: |
-    #   make bootstrap
-    #   make release
+    - run: |
+        echo "Downloading submodules"
+        git submodule update --init --recursive
+        
+    - run: |
+        echo "Assemble modules"
+        ./gradlew :sdk:appcenter:assemble :sdk:appcenter-crashes:assemble :sdk:appcenter-distribute:assemble
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
