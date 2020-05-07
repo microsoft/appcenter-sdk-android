@@ -38,7 +38,7 @@ jobs:
         
     - run: |
         echo "Assemble modules"
-        ./gradlew :sdk:appcenter:assemble :sdk:appcenter-crashes:assemble :sdk:appcenter-distribute:assemble
+        ./gradlew :sdk:appcenter:assemble :sdk:appcenter-analytics:assemble :sdk:appcenter-crashes:assemble :sdk:appcenter-distribute:assemble :sdk:appcenter-push:assemble 
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1

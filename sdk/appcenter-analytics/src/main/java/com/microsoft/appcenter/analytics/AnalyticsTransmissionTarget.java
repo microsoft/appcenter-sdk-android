@@ -154,7 +154,7 @@ public class AnalyticsTransmissionTarget {
      * Track a custom event with name.
      * <p>
      * The name cannot be null and needs to match the
-     * <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.
+     * <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.
      *
      * @param name An event name.
      */
@@ -167,9 +167,9 @@ public class AnalyticsTransmissionTarget {
      * <p>
      * The following rules apply:
      * <ul>
-     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The event name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.</li>
      * <li>The property names or values cannot be null.</li>
-     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The <code>baseData</code> and <code>baseDataType</code> properties are reserved and thus discarded.</li>
      * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
@@ -185,9 +185,9 @@ public class AnalyticsTransmissionTarget {
      * <p>
      * The following rules apply:
      * <ul>
-     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The event name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.</li>
      * <li>The property names or values cannot be null.</li>
-     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The <code>baseData</code> and <code>baseDataType</code> properties are reserved and thus discarded.</li>
      * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
@@ -215,10 +215,10 @@ public class AnalyticsTransmissionTarget {
      * <p>
      * The following rules apply:
      * <ul>
-     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The event name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.</li>
      * <li>The property names or values cannot be null.</li>
      * <li>Double values must be finite (NaN or Infinite values are discarded).</li>
-     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The <code>baseData</code> and <code>baseDataType</code> properties are reserved and thus discarded.</li>
      * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
@@ -234,10 +234,10 @@ public class AnalyticsTransmissionTarget {
      * <p>
      * The following rules apply:
      * <ul>
-     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
+     * <li>The event name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.</li>
      * <li>The property names or values cannot be null.</li>
      * <li>Double values must be finite (NaN or Infinite values are discarded).</li>
-     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The <code>baseData</code> and <code>baseDataType</code> properties are reserved and thus discarded.</li>
      * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
