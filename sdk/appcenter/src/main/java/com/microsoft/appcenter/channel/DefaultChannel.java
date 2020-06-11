@@ -45,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -132,7 +134,7 @@ public class DefaultChannel implements Channel {
      * State checker. If this counter changes during an async call, we have to ignore the result in the callback.
      * Cancelling a database call would be unreliable, and if it's too fast you could still have the callback being called.
      */
-    private int mCurrentState;
+    private final AtomicInteger mCurrentState;
 
     /**
      * Creates and initializes a new instance.
@@ -161,7 +163,7 @@ public class DefaultChannel implements Channel {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
-        mGroupStates = new HashMap<>();
+        mGroupStates = new ConcurrentHashMap<>();
         mListeners = new LinkedHashSet<>();
         mPersistence = persistence;
         mIngestion = ingestion;
@@ -169,6 +171,7 @@ public class DefaultChannel implements Channel {
         mIngestions.add(mIngestion);
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
+        mCurrentState = new AtomicInteger();
     }
 
     /**
@@ -195,8 +198,8 @@ public class DefaultChannel implements Channel {
      * @param stateSnapshot state as before the async call.
      * @return true if state did not change and code should proceed, false if state changed.
      */
-    private synchronized boolean checkStateDidNotChange(GroupState groupState, int stateSnapshot) {
-        return stateSnapshot == mCurrentState && groupState == mGroupStates.get(groupState.mName);
+    private boolean checkStateDidNotChange(GroupState groupState, int stateSnapshot) {
+        return stateSnapshot == mCurrentState.get() && groupState == mGroupStates.get(groupState.mName);
     }
 
     @Override
@@ -333,7 +336,7 @@ public class DefaultChannel implements Channel {
         if (enabled) {
             mEnabled = true;
             mDiscardLogs = false;
-            mCurrentState++;
+            mCurrentState.getAndIncrement();
             for (Ingestion ingestion : mIngestions) {
                 ingestion.reopen();
             }
@@ -388,7 +391,7 @@ public class DefaultChannel implements Channel {
     private void suspend(boolean deleteLogs, Exception exception) {
         mEnabled = false;
         mDiscardLogs = deleteLogs;
-        mCurrentState++;
+        mCurrentState.getAndIncrement();
         for (GroupState groupState : mGroupStates.values()) {
             cancelTimer(groupState);
 
@@ -472,7 +475,7 @@ public class DefaultChannel implements Channel {
 
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
-        final int stateSnapshot = mCurrentState;
+        final int stateSnapshot = mCurrentState.get();
         final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
@@ -525,7 +528,7 @@ public class DefaultChannel implements Channel {
      * @param batchId      The batch ID.
      */
     @MainThread
-    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
+    private void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
         if (checkStateDidNotChange(groupState, currentState)) {
 
             /* Send logs. */
