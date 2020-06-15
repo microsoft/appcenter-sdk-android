@@ -2,6 +2,10 @@
 
 ## Version 3.2.2 (Under development)
 
+### App Center
+
+* **[Fix]** Fix possible delays in UI thread when queueing a large number of events.
+
 ___
 
 ## Version 3.2.1
