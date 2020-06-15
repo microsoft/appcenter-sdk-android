@@ -28,7 +28,6 @@ import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -45,8 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -134,7 +131,7 @@ public class DefaultChannel implements Channel {
      * State checker. If this counter changes during an async call, we have to ignore the result in the callback.
      * Cancelling a database call would be unreliable, and if it's too fast you could still have the callback being called.
      */
-    private final AtomicInteger mCurrentState;
+    private int mCurrentState;
 
     /**
      * Creates and initializes a new instance.
@@ -163,7 +160,7 @@ public class DefaultChannel implements Channel {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
-        mGroupStates = new ConcurrentHashMap<>();
+        mGroupStates = new HashMap<>();
         mListeners = new LinkedHashSet<>();
         mPersistence = persistence;
         mIngestion = ingestion;
@@ -171,7 +168,6 @@ public class DefaultChannel implements Channel {
         mIngestions.add(mIngestion);
         mAppCenterHandler = appCenterHandler;
         mEnabled = true;
-        mCurrentState = new AtomicInteger();
     }
 
     /**
@@ -183,8 +179,9 @@ public class DefaultChannel implements Channel {
         return persistence;
     }
 
+    @WorkerThread
     @Override
-    public synchronized boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
         return mPersistence.setMaxStorageSize(maxStorageSizeInBytes);
     }
 
@@ -199,11 +196,12 @@ public class DefaultChannel implements Channel {
      * @return true if state did not change and code should proceed, false if state changed.
      */
     private boolean checkStateDidNotChange(GroupState groupState, int stateSnapshot) {
-        return stateSnapshot == mCurrentState.get() && groupState == mGroupStates.get(groupState.mName);
+        return stateSnapshot == mCurrentState && groupState == mGroupStates.get(groupState.mName);
     }
 
+    @WorkerThread
     @Override
-    public synchronized void setAppSecret(@NonNull String appSecret) {
+    public void setAppSecret(@NonNull String appSecret) {
 
         /* Set app secret. */
         mAppSecret = appSecret;
@@ -219,7 +217,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener) {
+    public void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener) {
 
         /* Init group. */
         AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
@@ -249,7 +247,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void removeGroup(String groupName) {
+    public void removeGroup(String groupName) {
         AppCenterLog.debug(LOG_TAG, "removeGroup(" + groupName + ")");
         GroupState groupState = mGroupStates.remove(groupName);
         if (groupState != null) {
@@ -263,7 +261,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void pauseGroup(String groupName, String targetToken) {
+    public void pauseGroup(String groupName, String targetToken) {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null) {
             if (targetToken != null) {
@@ -285,7 +283,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void resumeGroup(String groupName, String targetToken) {
+    public void resumeGroup(String groupName, String targetToken) {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null) {
             if (targetToken != null) {
@@ -317,7 +315,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized boolean isEnabled() {
+    public boolean isEnabled() {
         return mEnabled;
     }
 
@@ -329,14 +327,14 @@ public class DefaultChannel implements Channel {
      * @param enabled flag to enable or disable the channel.
      */
     @Override
-    public synchronized void setEnabled(boolean enabled) {
+    public void setEnabled(boolean enabled) {
         if (mEnabled == enabled) {
             return;
         }
         if (enabled) {
             mEnabled = true;
             mDiscardLogs = false;
-            mCurrentState.getAndIncrement();
+            mCurrentState++;
             for (Ingestion ingestion : mIngestions) {
                 ingestion.reopen();
             }
@@ -354,7 +352,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void setLogUrl(String logUrl) {
+    public void setLogUrl(String logUrl) {
         mIngestion.setLogUrl(logUrl);
     }
 
@@ -364,7 +362,7 @@ public class DefaultChannel implements Channel {
      * @param groupName the group name.
      */
     @Override
-    public synchronized void clear(String groupName) {
+    public void clear(String groupName) {
         if (!mGroupStates.containsKey(groupName)) {
             return;
         }
@@ -378,7 +376,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void invalidateDeviceCache() {
+    public void invalidateDeviceCache() {
         mDevice = null;
     }
 
@@ -391,7 +389,7 @@ public class DefaultChannel implements Channel {
     private void suspend(boolean deleteLogs, Exception exception) {
         mEnabled = false;
         mDiscardLogs = deleteLogs;
-        mCurrentState.getAndIncrement();
+        mCurrentState++;
         for (GroupState groupState : mGroupStates.values()) {
             cancelTimer(groupState);
 
@@ -458,7 +456,7 @@ public class DefaultChannel implements Channel {
      *
      * @param groupState the group state.
      */
-    private synchronized void triggerIngestion(final @NonNull GroupState groupState) {
+    private void triggerIngestion(final @NonNull GroupState groupState) {
         if (!mEnabled) {
             return;
         }
@@ -475,7 +473,7 @@ public class DefaultChannel implements Channel {
 
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
-        final int stateSnapshot = mCurrentState.get();
+        final int stateSnapshot = mCurrentState;
         final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
@@ -562,7 +560,7 @@ public class DefaultChannel implements Channel {
      * @param groupState The group state.
      * @param batchId    The batch ID.
      */
-    private synchronized void handleSendingSuccess(@NonNull GroupState groupState, @NonNull String batchId) {
+    private void handleSendingSuccess(@NonNull GroupState groupState, @NonNull String batchId) {
         List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
         if (removedLogsForBatchId != null) {
             mPersistence.deleteLogs(groupState.mName, batchId);
@@ -585,7 +583,7 @@ public class DefaultChannel implements Channel {
      * @param batchId    the batch ID
      * @param e          the exception
      */
-    private synchronized void handleSendingFailure(@NonNull GroupState groupState, @NonNull String batchId, @NonNull Exception e) {
+    private void handleSendingFailure(@NonNull GroupState groupState, @NonNull String batchId, @NonNull Exception e) {
         String groupName = groupState.mName;
         List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
         if (removedLogsForBatchId != null) {
@@ -606,7 +604,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName, int flags) {
+    public void enqueue(@NonNull Log log, @NonNull final String groupName, int flags) {
 
         /* Check group name is registered. */
         GroupState groupState = mGroupStates.get(groupName);
@@ -711,7 +709,7 @@ public class DefaultChannel implements Channel {
      * @param groupState the group state.
      */
     @VisibleForTesting
-    synchronized void checkPendingLogs(@NonNull GroupState groupState) {
+    void checkPendingLogs(@NonNull GroupState groupState) {
         AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s",
                 groupState.mName, groupState.mPendingLogCount, groupState.mBatchTimeInterval));
         Long batchTimeInterval = resolveTriggerInterval(groupState);
@@ -789,17 +787,17 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void addListener(Listener listener) {
+    public void addListener(Listener listener) {
         mListeners.add(listener);
     }
 
     @Override
-    public synchronized void removeListener(Listener listener) {
+    public void removeListener(Listener listener) {
         mListeners.remove(listener);
     }
 
     @Override
-    public synchronized void shutdown() {
+    public void shutdown() {
         suspend(false, new CancellationException());
     }
 
