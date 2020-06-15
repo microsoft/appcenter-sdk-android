@@ -496,27 +496,7 @@ public class DefaultChannel implements Channel {
 
         /* Remember this batch. */
         groupState.mSendingBatches.put(batchId, batch);
-
-        /*
-         * Due to bug on old Android versions (verified on 4.0.4),
-         * if we start an async task from here, i.e. the async handler thread,
-         * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
-         * instead of using main thread as advertised in Javadoc (and its a static field there).
-         *
-         * Our SDK guards against an application that would make a first async task in non UI
-         * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
-         * with our wrong handler to avoid creating bugs in the application code since we are
-         * a library.
-         *
-         * So make sure we execute the async task from UI thread to avoid any issue.
-         */
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                sendLogs(groupState, stateSnapshot, batch, batchId);
-            }
-        });
+        sendLogs(groupState, stateSnapshot, batch, batchId);
     }
 
     /**
