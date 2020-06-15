@@ -9,6 +9,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
@@ -136,6 +137,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
         return SharedPreferencesManager.getBoolean(getEnabledPreferenceKey(), true);
     }
 
+    @WorkerThread
     @Override
     public synchronized void setInstanceEnabled(boolean enabled) {
 
@@ -173,6 +175,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
         }
     }
 
+    @WorkerThread
     protected synchronized void applyEnabledState(boolean enabled) {
 
         /* Optional callback to react to enabled state change. */
@@ -193,6 +196,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
         mHandler = handler;
     }
 
+    @WorkerThread
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         String groupName = getGroupName();

@@ -632,6 +632,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param activity current activity.
      */
+    @WorkerThread
     private void processOnResume(Activity activity) {
         if (mSessionTracker != null) {
             mSessionTracker.onActivityResumed();
