@@ -473,7 +473,6 @@ public class DefaultChannel implements Channel {
 
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
-        final int stateSnapshot = mCurrentState;
         final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
@@ -494,7 +493,7 @@ public class DefaultChannel implements Channel {
 
         /* Remember this batch. */
         groupState.mSendingBatches.put(batchId, batch);
-        sendLogs(groupState, stateSnapshot, batch, batchId);
+        sendLogs(groupState, mCurrentState, batch, batchId);
     }
 
     /**
@@ -507,45 +506,43 @@ public class DefaultChannel implements Channel {
      */
     @MainThread
     private void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
-        if (checkStateDidNotChange(groupState, currentState)) {
 
-            /* Send logs. */
-            LogContainer logContainer = new LogContainer();
-            logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+        /* Send logs. */
+        LogContainer logContainer = new LogContainer();
+        logContainer.setLogs(batch);
+        groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
-                @Override
-                public void onCallSucceeded(HttpResponse httpResponse) {
-                    mAppCenterHandler.post(new Runnable() {
+            @Override
+            public void onCallSucceeded(HttpResponse httpResponse) {
+                mAppCenterHandler.post(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            handleSendingSuccess(groupState, batchId);
-                        }
-                    });
-                }
+                    @Override
+                    public void run() {
+                        handleSendingSuccess(groupState, batchId);
+                    }
+                });
+            }
 
-                @Override
-                public void onCallFailed(final Exception e) {
-                    mAppCenterHandler.post(new Runnable() {
+            @Override
+            public void onCallFailed(final Exception e) {
+                mAppCenterHandler.post(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            handleSendingFailure(groupState, batchId, e);
-                        }
-                    });
-                }
-            });
+                    @Override
+                    public void run() {
+                        handleSendingFailure(groupState, batchId, e);
+                    }
+                });
+            }
+        });
 
-            /* Check for more pending logs. */
-            mAppCenterHandler.post(new Runnable() {
+        /* Check for more pending logs. */
+        mAppCenterHandler.post(new Runnable() {
 
-                @Override
-                public void run() {
-                    checkPendingLogsAfterPost(groupState, currentState);
-                }
-            });
-        }
+            @Override
+            public void run() {
+                checkPendingLogsAfterPost(groupState, currentState);
+            }
+        });
     }
 
     private void checkPendingLogsAfterPost(@NonNull final GroupState groupState, int currentState) {
