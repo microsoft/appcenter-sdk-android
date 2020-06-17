@@ -28,7 +28,6 @@ import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.persistence.Persistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.IdHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -180,8 +179,9 @@ public class DefaultChannel implements Channel {
         return persistence;
     }
 
+    @WorkerThread
     @Override
-    public synchronized boolean setMaxStorageSize(long maxStorageSizeInBytes) {
+    public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
         return mPersistence.setMaxStorageSize(maxStorageSizeInBytes);
     }
 
@@ -195,12 +195,13 @@ public class DefaultChannel implements Channel {
      * @param stateSnapshot state as before the async call.
      * @return true if state did not change and code should proceed, false if state changed.
      */
-    private synchronized boolean checkStateDidNotChange(GroupState groupState, int stateSnapshot) {
+    private boolean checkStateDidNotChange(GroupState groupState, int stateSnapshot) {
         return stateSnapshot == mCurrentState && groupState == mGroupStates.get(groupState.mName);
     }
 
+    @WorkerThread
     @Override
-    public synchronized void setAppSecret(@NonNull String appSecret) {
+    public void setAppSecret(@NonNull String appSecret) {
 
         /* Set app secret. */
         mAppSecret = appSecret;
@@ -216,7 +217,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener) {
+    public void addGroup(final String groupName, int maxLogsPerBatch, long batchTimeInterval, int maxParallelBatches, Ingestion ingestion, GroupListener groupListener) {
 
         /* Init group. */
         AppCenterLog.debug(LOG_TAG, "addGroup(" + groupName + ")");
@@ -246,7 +247,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void removeGroup(String groupName) {
+    public void removeGroup(String groupName) {
         AppCenterLog.debug(LOG_TAG, "removeGroup(" + groupName + ")");
         GroupState groupState = mGroupStates.remove(groupName);
         if (groupState != null) {
@@ -260,7 +261,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void pauseGroup(String groupName, String targetToken) {
+    public void pauseGroup(String groupName, String targetToken) {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null) {
             if (targetToken != null) {
@@ -282,7 +283,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void resumeGroup(String groupName, String targetToken) {
+    public void resumeGroup(String groupName, String targetToken) {
         GroupState groupState = mGroupStates.get(groupName);
         if (groupState != null) {
             if (targetToken != null) {
@@ -314,7 +315,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized boolean isEnabled() {
+    public boolean isEnabled() {
         return mEnabled;
     }
 
@@ -326,7 +327,7 @@ public class DefaultChannel implements Channel {
      * @param enabled flag to enable or disable the channel.
      */
     @Override
-    public synchronized void setEnabled(boolean enabled) {
+    public void setEnabled(boolean enabled) {
         if (mEnabled == enabled) {
             return;
         }
@@ -351,7 +352,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void setLogUrl(String logUrl) {
+    public void setLogUrl(String logUrl) {
         mIngestion.setLogUrl(logUrl);
     }
 
@@ -361,7 +362,7 @@ public class DefaultChannel implements Channel {
      * @param groupName the group name.
      */
     @Override
-    public synchronized void clear(String groupName) {
+    public void clear(String groupName) {
         if (!mGroupStates.containsKey(groupName)) {
             return;
         }
@@ -375,7 +376,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void invalidateDeviceCache() {
+    public void invalidateDeviceCache() {
         mDevice = null;
     }
 
@@ -455,7 +456,7 @@ public class DefaultChannel implements Channel {
      *
      * @param groupState the group state.
      */
-    private synchronized void triggerIngestion(final @NonNull GroupState groupState) {
+    private void triggerIngestion(final @NonNull GroupState groupState) {
         if (!mEnabled) {
             return;
         }
@@ -472,7 +473,6 @@ public class DefaultChannel implements Channel {
 
         /* Get a batch from Persistence. */
         final List<Log> batch = new ArrayList<>(maxFetch);
-        final int stateSnapshot = mCurrentState;
         final String batchId = mPersistence.getLogs(groupState.mName, groupState.mPausedTargetKeys, maxFetch, batch);
 
         /* Decrement counter. */
@@ -493,27 +493,7 @@ public class DefaultChannel implements Channel {
 
         /* Remember this batch. */
         groupState.mSendingBatches.put(batchId, batch);
-
-        /*
-         * Due to bug on old Android versions (verified on 4.0.4),
-         * if we start an async task from here, i.e. the async handler thread,
-         * we end up with AsyncTask configured with the wrong Handler to use for onPostExecute
-         * instead of using main thread as advertised in Javadoc (and its a static field there).
-         *
-         * Our SDK guards against an application that would make a first async task in non UI
-         * thread before SDK is initialized, but we should also avoid corrupting AsyncTask
-         * with our wrong handler to avoid creating bugs in the application code since we are
-         * a library.
-         *
-         * So make sure we execute the async task from UI thread to avoid any issue.
-         */
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                sendLogs(groupState, stateSnapshot, batch, batchId);
-            }
-        });
+        sendLogs(groupState, mCurrentState, batch, batchId);
     }
 
     /**
@@ -525,46 +505,44 @@ public class DefaultChannel implements Channel {
      * @param batchId      The batch ID.
      */
     @MainThread
-    private synchronized void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
-        if (checkStateDidNotChange(groupState, currentState)) {
+    private void sendLogs(final GroupState groupState, final int currentState, List<Log> batch, final String batchId) {
 
-            /* Send logs. */
-            LogContainer logContainer = new LogContainer();
-            logContainer.setLogs(batch);
-            groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
+        /* Send logs. */
+        LogContainer logContainer = new LogContainer();
+        logContainer.setLogs(batch);
+        groupState.mIngestion.sendAsync(mAppSecret, mInstallId, logContainer, new ServiceCallback() {
 
-                @Override
-                public void onCallSucceeded(HttpResponse httpResponse) {
-                    mAppCenterHandler.post(new Runnable() {
+            @Override
+            public void onCallSucceeded(HttpResponse httpResponse) {
+                mAppCenterHandler.post(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            handleSendingSuccess(groupState, batchId);
-                        }
-                    });
-                }
+                    @Override
+                    public void run() {
+                        handleSendingSuccess(groupState, batchId);
+                    }
+                });
+            }
 
-                @Override
-                public void onCallFailed(final Exception e) {
-                    mAppCenterHandler.post(new Runnable() {
+            @Override
+            public void onCallFailed(final Exception e) {
+                mAppCenterHandler.post(new Runnable() {
 
-                        @Override
-                        public void run() {
-                            handleSendingFailure(groupState, batchId, e);
-                        }
-                    });
-                }
-            });
+                    @Override
+                    public void run() {
+                        handleSendingFailure(groupState, batchId, e);
+                    }
+                });
+            }
+        });
 
-            /* Check for more pending logs. */
-            mAppCenterHandler.post(new Runnable() {
+        /* Check for more pending logs. */
+        mAppCenterHandler.post(new Runnable() {
 
-                @Override
-                public void run() {
-                    checkPendingLogsAfterPost(groupState, currentState);
-                }
-            });
-        }
+            @Override
+            public void run() {
+                checkPendingLogsAfterPost(groupState, currentState);
+            }
+        });
     }
 
     private void checkPendingLogsAfterPost(@NonNull final GroupState groupState, int currentState) {
@@ -579,7 +557,7 @@ public class DefaultChannel implements Channel {
      * @param groupState The group state.
      * @param batchId    The batch ID.
      */
-    private synchronized void handleSendingSuccess(@NonNull GroupState groupState, @NonNull String batchId) {
+    private void handleSendingSuccess(@NonNull GroupState groupState, @NonNull String batchId) {
         List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
         if (removedLogsForBatchId != null) {
             mPersistence.deleteLogs(groupState.mName, batchId);
@@ -602,7 +580,7 @@ public class DefaultChannel implements Channel {
      * @param batchId    the batch ID
      * @param e          the exception
      */
-    private synchronized void handleSendingFailure(@NonNull GroupState groupState, @NonNull String batchId, @NonNull Exception e) {
+    private void handleSendingFailure(@NonNull GroupState groupState, @NonNull String batchId, @NonNull Exception e) {
         String groupName = groupState.mName;
         List<Log> removedLogsForBatchId = groupState.mSendingBatches.remove(batchId);
         if (removedLogsForBatchId != null) {
@@ -623,7 +601,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void enqueue(@NonNull Log log, @NonNull final String groupName, int flags) {
+    public void enqueue(@NonNull Log log, @NonNull final String groupName, int flags) {
 
         /* Check group name is registered. */
         GroupState groupState = mGroupStates.get(groupName);
@@ -728,7 +706,7 @@ public class DefaultChannel implements Channel {
      * @param groupState the group state.
      */
     @VisibleForTesting
-    synchronized void checkPendingLogs(@NonNull GroupState groupState) {
+    void checkPendingLogs(@NonNull GroupState groupState) {
         AppCenterLog.debug(LOG_TAG, String.format("checkPendingLogs(%s) pendingLogCount=%s batchTimeInterval=%s",
                 groupState.mName, groupState.mPendingLogCount, groupState.mBatchTimeInterval));
         Long batchTimeInterval = resolveTriggerInterval(groupState);
@@ -806,17 +784,17 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public synchronized void addListener(Listener listener) {
+    public void addListener(Listener listener) {
         mListeners.add(listener);
     }
 
     @Override
-    public synchronized void removeListener(Listener listener) {
+    public void removeListener(Listener listener) {
         mListeners.remove(listener);
     }
 
     @Override
-    public synchronized void shutdown() {
+    public void shutdown() {
         suspend(false, new CancellationException());
     }
 
