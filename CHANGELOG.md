@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 3.2.2
+
+### App Center
+
+* **[Fix]** Fix possible delays in UI thread when queueing a large number of events.
+
+___
+
 ## Version 3.2.1
 
 ### App Center Distribute

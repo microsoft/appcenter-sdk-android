@@ -319,7 +319,7 @@ public class Analytics extends AbstractAppCenterService {
      * Additional validation rules apply depending on the configured secret.
      * <p>
      * For App Center, the name cannot be longer than 256 and is truncated otherwise.
-     * For One Collector, the name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.
+     * For One Collector, the name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.
      *
      * @param name An event name.
      */
@@ -346,8 +346,8 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * For One Collector:
      * <ul>
-     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
-     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The event name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.</li>
+     * <li>The <code>baseData</code> and <code>baseDataType</code> properties are reserved and thus discarded.</li>
      * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
@@ -377,8 +377,8 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * For One Collector:
      * <ul>
-     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
-     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The event name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.</li>
+     * <li>The <code>baseData</code> and <code>baseDataType</code> properties are reserved and thus discarded.</li>
      * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
@@ -415,8 +415,8 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * For One Collector:
      * <ul>
-     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
-     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The event name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.</li>
+     * <li>The <code>baseData</code> and <code>baseDataType</code> properties are reserved and thus discarded.</li>
      * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
@@ -448,8 +448,8 @@ public class Analytics extends AbstractAppCenterService {
      * <p>
      * For One Collector:
      * <ul>
-     * <li>The event name needs to match the <tt>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</tt> regular expression.</li>
-     * <li>The <tt>baseData</tt> and <tt>baseDataType</tt> properties are reserved and thus discarded.</li>
+     * <li>The event name needs to match the <code>[a-zA-Z0-9]((\.(?!(\.|$)))|[_a-zA-Z0-9]){3,99}</code> regular expression.</li>
+     * <li>The <code>baseData</code> and <code>baseDataType</code> properties are reserved and thus discarded.</li>
      * <li>The full event size when encoded as a JSON string cannot be larger than 1.9MB.</li>
      * </ul>
      *
@@ -632,6 +632,7 @@ public class Analytics extends AbstractAppCenterService {
      *
      * @param activity current activity.
      */
+    @WorkerThread
     private void processOnResume(Activity activity) {
         if (mSessionTracker != null) {
             mSessionTracker.onActivityResumed();

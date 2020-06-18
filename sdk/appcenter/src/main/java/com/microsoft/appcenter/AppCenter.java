@@ -840,6 +840,7 @@ public class AppCenter {
         AppCenterLog.debug(LOG_TAG, "App Center initialized.");
     }
 
+    @WorkerThread
     private void applyStorageMaxSize() {
         boolean resizeResult = mChannel.setMaxStorageSize(mMaxStorageSizeInBytes);
         if (mSetMaxStorageSizeFuture != null) {

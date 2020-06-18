@@ -1128,20 +1128,12 @@ public class Distribute extends AbstractAppCenterService {
 
             @Override
             public void onCallSucceeded(final HttpResponse httpResponse) {
-
-                /* onPostExecute is not always called on UI thread due to an old Android bug. */
-                HandlerUtils.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        try {
-                            String payload = httpResponse.getPayload();
-                            handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload), distributionGroupId);
-                        } catch (JSONException e) {
-                            onCallFailed(e);
-                        }
-                    }
-                });
+                try {
+                    String payload = httpResponse.getPayload();
+                    handleApiCallSuccess(releaseCallId, payload, ReleaseDetails.parse(payload), distributionGroupId);
+                } catch (JSONException e) {
+                    onCallFailed(e);
+                }
             }
 
             @Override

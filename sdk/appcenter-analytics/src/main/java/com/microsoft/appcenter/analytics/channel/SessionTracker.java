@@ -7,6 +7,7 @@ package com.microsoft.appcenter.analytics.channel;
 
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.annotation.WorkerThread;
 
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.Analytics;
@@ -118,6 +119,7 @@ public class SessionTracker extends AbstractChannelListener {
      * the session even when no pages are triggered but at the same time we want to keep using
      * the same session as long as the current activity is not paused (long video for example).
      */
+    @WorkerThread
     private void sendStartSessionIfNeeded() {
         if (mSid == null || hasSessionTimedOut()) {
 
@@ -143,6 +145,7 @@ public class SessionTracker extends AbstractChannelListener {
     /**
      * Call this whenever an activity is resumed to update session tracker state.
      */
+    @WorkerThread
     public void onActivityResumed() {
 
         /* Record resume time for session timeout management. */
@@ -154,6 +157,7 @@ public class SessionTracker extends AbstractChannelListener {
     /**
      * Call this whenever an activity is paused to update session tracker state.
      */
+    @WorkerThread
     public void onActivityPaused() {
 
         /* Record pause time for session timeout management. */
