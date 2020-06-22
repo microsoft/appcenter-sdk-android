@@ -8,10 +8,13 @@ package com.microsoft.appcenter.utils;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Point;
+import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -60,7 +63,16 @@ public class DeviceInfoHelperTest {
     }
 
     @Test
-    public void getDeviceInfo() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
+    public void getDeviceInfoApi17() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
+        getDeviceInfo(17);
+    }
+
+    @Test
+    public void getDeviceInfoApi16() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
+        getDeviceInfo(16);
+    }
+
+    public void getDeviceInfo(Integer osApiLevel) throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
 
         /* Mock data. */
         final String appVersion = "1.0";
@@ -71,12 +83,13 @@ public class DeviceInfoHelperTest {
         final Locale locale = Locale.KOREA;
         final String model = "mock-model";
         final String oemName = "mock-manufacture";
-        final Integer osApiLevel = 23;
         final String osName = "Android";
         final String osVersion = "mock-version";
         final String osBuild = "mock-os-build";
         final String screenSizeLandscape = "100x200";
         final String screenSizePortrait = "200x100";
+        final int screenWidth = 100;
+        final int screenHeight = 200;
         final TimeZone timeZone = TimeZone.getTimeZone("KST");
         final Integer timeZoneOffset = timeZone.getOffset(System.currentTimeMillis());
 
@@ -88,8 +101,11 @@ public class DeviceInfoHelperTest {
         PackageManager packageManagerMock = mock(PackageManager.class);
         PackageInfo packageInfoMock = mock(PackageInfo.class);
         WindowManager windowManagerMock = mock(WindowManager.class);
+        DisplayManager displayManagerMock = mock(DisplayManager.class);
+        Resources resourcesMock = mock(Resources.class);
         TelephonyManager telephonyManagerMock = mock(TelephonyManager.class);
         Display displayMock = mock(Display.class);
+        DisplayMetrics displayMetricsMock = mock(DisplayMetrics.class);
 
         /* Delegates to mock instances. */
         when(contextMock.getPackageName()).thenReturn(appNamespace);
@@ -99,18 +115,29 @@ public class DeviceInfoHelperTest {
         //noinspection WrongConstant
         when(contextMock.getSystemService(eq(Context.WINDOW_SERVICE))).thenReturn(windowManagerMock);
         //noinspection WrongConstant
+        when(contextMock.getSystemService(eq(Context.DISPLAY_SERVICE))).thenReturn(displayManagerMock);
+        when(displayManagerMock.getDisplay(anyInt())).thenReturn(displayMock);
+        //noinspection WrongConstant
+        when(contextMock.getResources()).thenReturn(resourcesMock);
+        //noinspection WrongConstant
+        when(resourcesMock.getDisplayMetrics()).thenReturn(displayMetricsMock);
+        displayMetricsMock.widthPixels = screenWidth;
+        displayMetricsMock.heightPixels = screenHeight;
+        //noinspection WrongConstant
         when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenReturn(packageInfoMock);
         when(telephonyManagerMock.getNetworkCountryIso()).thenReturn(carrierCountry);
         when(telephonyManagerMock.getNetworkOperatorName()).thenReturn(carrierName);
+        //noinspection deprecation
         when(windowManagerMock.getDefaultDisplay()).thenReturn(displayMock);
         when(displayMock.getRotation()).thenReturn(Surface.ROTATION_0, Surface.ROTATION_90, Surface.ROTATION_180, Surface.ROTATION_270);
+        //noinspection deprecation
         doAnswer(new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocationOnMock) {
                 Object[] args = invocationOnMock.getArguments();
                 /* DO NOT call set method and assign values directly to variables. */
-                ((Point) args[0]).x = 100;
-                ((Point) args[0]).y = 200;
+                ((Point) args[0]).x = screenWidth;
+                ((Point) args[0]).y = screenHeight;
                 return null;
             }
         }).when(displayMock).getSize(any(Point.class));
@@ -222,6 +249,7 @@ public class DeviceInfoHelperTest {
         when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenReturn(windowManagerMock);
         //noinspection WrongConstant
         when(packageManagerMock.getPackageInfo(anyString(), anyInt())).thenReturn(mock(PackageInfo.class));
+        //noinspection deprecation
         when(windowManagerMock.getDefaultDisplay()).thenReturn(mock(Display.class));
 
         /* Verify. */
