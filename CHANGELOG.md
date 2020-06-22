@@ -2,6 +2,10 @@
 
 ## Version 3.2.3 (Under development)
 
+### App Center
+
+* **[Fix]** Fix an `IncorrectContextUseViolation` warning when calculating screen size on Android 11.
+
 ___
 
 ## Version 3.2.2
