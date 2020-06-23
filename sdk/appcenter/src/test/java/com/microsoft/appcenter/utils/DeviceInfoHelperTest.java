@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.mockito.verification.VerificationMode;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
@@ -42,8 +43,10 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -217,6 +220,18 @@ public class DeviceInfoHelperTest {
         /* Remove wrapper SDK information. */
         DeviceInfoHelper.setWrapperSdk(null);
         assertEquals(device, DeviceInfoHelper.getDeviceInfo(contextMock));
+
+        /* Verify the right API was called to get a screen size. */
+        VerificationMode calledIn17Api = osApiLevel >= 17 ? atLeastOnce() : never();
+        VerificationMode calledIn16Api = osApiLevel < 17 ? atLeastOnce() : never();
+        verify(contextMock, calledIn17Api).getSystemService(eq(Context.DISPLAY_SERVICE));
+        verify(contextMock, calledIn17Api).getResources();
+        verify(resourcesMock, calledIn17Api).getDisplayMetrics();
+        //noinspection deprecation
+        verify(displayMock, calledIn16Api).getSize(any(Point.class));
+        verify(contextMock, calledIn16Api).getSystemService(eq(Context.WINDOW_SERVICE));
+        //noinspection deprecation
+        verify(windowManagerMock, calledIn16Api).getDefaultDisplay();
     }
 
     @Test(expected = DeviceInfoHelper.DeviceInfoException.class)
