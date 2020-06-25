@@ -28,9 +28,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.mockito.verification.VerificationMode;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
@@ -49,7 +49,6 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -59,6 +58,42 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest({Build.class, AppCenterLog.class, TextUtils.class})
 public class DeviceInfoHelperTest {
 
+    private static final int SCREEN_WIDTH = 100;
+
+    private static final int SCREEN_HEIGHT = 200;
+
+    @Mock
+    Context mContext;
+
+    @Mock
+    PackageManager mPackageManager;
+
+    @Mock
+    PackageInfo mPackageInfo;
+
+    @Mock
+    WindowManager mWindowManager;
+
+    @Mock
+    DisplayManager mDisplayManager;
+
+    @Mock
+    Resources mResources;
+
+    @Mock
+    TelephonyManager mTelephonyManager;
+
+    @Mock
+    Display mDisplay;
+
+    @Mock
+    DisplayMetrics mDisplayMetrics;
+
+    @Before
+    public void setup() {
+        when(mContext.getPackageManager()).thenReturn(mPackageManager);
+    }
+
     @Before
     @After
     public void cleanWrapperSdk() {
@@ -67,12 +102,64 @@ public class DeviceInfoHelperTest {
 
     @Test
     public void getDeviceInfoApi17() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
+
+        /* Mock system calls. */
+        //noinspection WrongConstant
+        when(mContext.getSystemService(eq(Context.DISPLAY_SERVICE))).thenReturn(mDisplayManager);
+        when(mDisplayManager.getDisplay(anyInt())).thenReturn(mDisplay);
+        //noinspection WrongConstant
+        when(mContext.getResources()).thenReturn(mResources);
+        //noinspection WrongConstant
+        when(mResources.getDisplayMetrics()).thenReturn(mDisplayMetrics);
+        mDisplayMetrics.widthPixels = SCREEN_WIDTH;
+        mDisplayMetrics.heightPixels = SCREEN_HEIGHT;
+
+        /* Call getDeviceInfo for Android API 17. */
         getDeviceInfo(17);
+
+        /* Verify the right API was called to get a screen size. */
+        verify(mContext, atLeastOnce()).getSystemService(eq(Context.DISPLAY_SERVICE));
+        verify(mContext, atLeastOnce()).getResources();
+        verify(mResources, atLeastOnce()).getDisplayMetrics();
+        //noinspection deprecation
+        verify(mDisplay, never()).getSize(any(Point.class));
+        verify(mContext, never()).getSystemService(eq(Context.WINDOW_SERVICE));
+        //noinspection deprecation
+        verify(mWindowManager, never()).getDefaultDisplay();
     }
 
     @Test
     public void getDeviceInfoApi16() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
+
+        /* Mock system calls. */
+        //noinspection WrongConstant
+        when(mContext.getSystemService(eq(Context.WINDOW_SERVICE))).thenReturn(mWindowManager);
+        //noinspection deprecation
+        when(mWindowManager.getDefaultDisplay()).thenReturn(mDisplay);
+        //noinspection deprecation
+        doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocationOnMock) {
+                Object[] args = invocationOnMock.getArguments();
+                /* DO NOT call set method and assign values directly to variables. */
+                ((Point) args[0]).x = SCREEN_WIDTH;
+                ((Point) args[0]).y = SCREEN_HEIGHT;
+                return null;
+            }
+        }).when(mDisplay).getSize(any(Point.class));
+
+        /* Call getDeviceInfo for Android API 16. */
         getDeviceInfo(16);
+
+        /* Verify the right API was called to get a screen size. */
+        verify(mContext, never()).getSystemService(eq(Context.DISPLAY_SERVICE));
+        verify(mContext, never()).getResources();
+        verify(mResources, never()).getDisplayMetrics();
+        //noinspection deprecation
+        verify(mDisplay, atLeastOnce()).getSize(any(Point.class));
+        verify(mContext, atLeastOnce()).getSystemService(eq(Context.WINDOW_SERVICE));
+        //noinspection deprecation
+        verify(mWindowManager, atLeastOnce()).getDefaultDisplay();
     }
 
     public void getDeviceInfo(Integer osApiLevel) throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
@@ -91,63 +178,24 @@ public class DeviceInfoHelperTest {
         final String osBuild = "mock-os-build";
         final String screenSizeLandscape = "100x200";
         final String screenSizePortrait = "200x100";
-        final int screenWidth = 100;
-        final int screenHeight = 200;
         final TimeZone timeZone = TimeZone.getTimeZone("KST");
         final Integer timeZoneOffset = timeZone.getOffset(System.currentTimeMillis());
-
         Locale.setDefault(locale);
         TimeZone.setDefault(timeZone);
 
-        /* Mocking instances. */
-        Context contextMock = mock(Context.class);
-        PackageManager packageManagerMock = mock(PackageManager.class);
-        PackageInfo packageInfoMock = mock(PackageInfo.class);
-        WindowManager windowManagerMock = mock(WindowManager.class);
-        DisplayManager displayManagerMock = mock(DisplayManager.class);
-        Resources resourcesMock = mock(Resources.class);
-        TelephonyManager telephonyManagerMock = mock(TelephonyManager.class);
-        Display displayMock = mock(Display.class);
-        DisplayMetrics displayMetricsMock = mock(DisplayMetrics.class);
-
         /* Delegates to mock instances. */
-        when(contextMock.getPackageName()).thenReturn(appNamespace);
-        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
+        when(mContext.getPackageName()).thenReturn(appNamespace);
         //noinspection WrongConstant
-        when(contextMock.getSystemService(eq(Context.TELEPHONY_SERVICE))).thenReturn(telephonyManagerMock);
+        when(mContext.getSystemService(eq(Context.TELEPHONY_SERVICE))).thenReturn(mTelephonyManager);
         //noinspection WrongConstant
-        when(contextMock.getSystemService(eq(Context.WINDOW_SERVICE))).thenReturn(windowManagerMock);
-        //noinspection WrongConstant
-        when(contextMock.getSystemService(eq(Context.DISPLAY_SERVICE))).thenReturn(displayManagerMock);
-        when(displayManagerMock.getDisplay(anyInt())).thenReturn(displayMock);
-        //noinspection WrongConstant
-        when(contextMock.getResources()).thenReturn(resourcesMock);
-        //noinspection WrongConstant
-        when(resourcesMock.getDisplayMetrics()).thenReturn(displayMetricsMock);
-        displayMetricsMock.widthPixels = screenWidth;
-        displayMetricsMock.heightPixels = screenHeight;
-        //noinspection WrongConstant
-        when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenReturn(packageInfoMock);
-        when(telephonyManagerMock.getNetworkCountryIso()).thenReturn(carrierCountry);
-        when(telephonyManagerMock.getNetworkOperatorName()).thenReturn(carrierName);
-        //noinspection deprecation
-        when(windowManagerMock.getDefaultDisplay()).thenReturn(displayMock);
-        when(displayMock.getRotation()).thenReturn(Surface.ROTATION_0, Surface.ROTATION_90, Surface.ROTATION_180, Surface.ROTATION_270);
-        //noinspection deprecation
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) {
-                Object[] args = invocationOnMock.getArguments();
-                /* DO NOT call set method and assign values directly to variables. */
-                ((Point) args[0]).x = screenWidth;
-                ((Point) args[0]).y = screenHeight;
-                return null;
-            }
-        }).when(displayMock).getSize(any(Point.class));
+        when(mPackageManager.getPackageInfo(anyString(), eq(0))).thenReturn(mPackageInfo);
+        when(mTelephonyManager.getNetworkCountryIso()).thenReturn(carrierCountry);
+        when(mTelephonyManager.getNetworkOperatorName()).thenReturn(carrierName);
+        when(mDisplay.getRotation()).thenReturn(Surface.ROTATION_0, Surface.ROTATION_90, Surface.ROTATION_180, Surface.ROTATION_270);
 
         /* Sets values of fields for static classes. */
-        Whitebox.setInternalState(packageInfoMock, "versionName", appVersion);
-        Whitebox.setInternalState(packageInfoMock, "versionCode", Integer.parseInt(appBuild));
+        Whitebox.setInternalState(mPackageInfo, "versionName", appVersion);
+        Whitebox.setInternalState(mPackageInfo, "versionCode", Integer.parseInt(appBuild));
         Whitebox.setInternalState(Build.class, "MODEL", model);
         Whitebox.setInternalState(Build.class, "MANUFACTURER", oemName);
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", osApiLevel);
@@ -155,7 +203,7 @@ public class DeviceInfoHelperTest {
         Whitebox.setInternalState(Build.VERSION.class, "RELEASE", osVersion);
 
         /* First call */
-        Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        Device device = DeviceInfoHelper.getDeviceInfo(mContext);
 
         /* Verify device information. */
         assertNull(device.getWrapperSdkName());
@@ -177,19 +225,19 @@ public class DeviceInfoHelperTest {
         assertEquals(timeZoneOffset, device.getTimeZoneOffset());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_90). */
-        device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        device = DeviceInfoHelper.getDeviceInfo(mContext);
         assertEquals(screenSizePortrait, device.getScreenSize());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_180). */
-        device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        device = DeviceInfoHelper.getDeviceInfo(mContext);
         assertEquals(screenSizeLandscape, device.getScreenSize());
 
         /* Verify screen size based on different orientations (Surface.ROTATION_270). */
-        device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        device = DeviceInfoHelper.getDeviceInfo(mContext);
         assertEquals(screenSizePortrait, device.getScreenSize());
 
         /* Make sure screen size is verified for all orientations. */
-        verify(displayMock, times(4)).getRotation();
+        verify(mDisplay, times(4)).getRotation();
 
         /* Set wrapper sdk information. */
         WrapperSdk wrapperSdk = new WrapperSdk();
@@ -200,7 +248,7 @@ public class DeviceInfoHelperTest {
         wrapperSdk.setLiveUpdateDeploymentKey("staging");
         wrapperSdk.setLiveUpdatePackageHash("aa896f791b26a7f464c0f62b0ba69f2b");
         DeviceInfoHelper.setWrapperSdk(wrapperSdk);
-        Device device2 = DeviceInfoHelper.getDeviceInfo(contextMock);
+        Device device2 = DeviceInfoHelper.getDeviceInfo(mContext);
         assertEquals(wrapperSdk.getWrapperSdkVersion(), device2.getWrapperSdkVersion());
         assertEquals(wrapperSdk.getWrapperSdkName(), device2.getWrapperSdkName());
         assertEquals(wrapperSdk.getWrapperRuntimeVersion(), device2.getWrapperRuntimeVersion());
@@ -219,56 +267,34 @@ public class DeviceInfoHelperTest {
 
         /* Remove wrapper SDK information. */
         DeviceInfoHelper.setWrapperSdk(null);
-        assertEquals(device, DeviceInfoHelper.getDeviceInfo(contextMock));
-
-        /* Verify the right API was called to get a screen size. */
-        VerificationMode calledIn17Api = osApiLevel >= 17 ? atLeastOnce() : never();
-        VerificationMode calledIn16Api = osApiLevel < 17 ? atLeastOnce() : never();
-        verify(contextMock, calledIn17Api).getSystemService(eq(Context.DISPLAY_SERVICE));
-        verify(contextMock, calledIn17Api).getResources();
-        verify(resourcesMock, calledIn17Api).getDisplayMetrics();
-        //noinspection deprecation
-        verify(displayMock, calledIn16Api).getSize(any(Point.class));
-        verify(contextMock, calledIn16Api).getSystemService(eq(Context.WINDOW_SERVICE));
-        //noinspection deprecation
-        verify(windowManagerMock, calledIn16Api).getDefaultDisplay();
+        assertEquals(device, DeviceInfoHelper.getDeviceInfo(mContext));
     }
 
     @Test(expected = DeviceInfoHelper.DeviceInfoException.class)
     public void getDeviceInfoWithException() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
 
-        /* Mocking instances. */
-        Context contextMock = mock(Context.class);
-        PackageManager packageManagerMock = mock(PackageManager.class);
-
         /* Delegates to mock instances. */
-        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
         //noinspection WrongConstant
-        when(packageManagerMock.getPackageInfo(anyString(), eq(0))).thenThrow(new PackageManager.NameNotFoundException());
-
-        DeviceInfoHelper.getDeviceInfo(contextMock);
+        when(mPackageManager.getPackageInfo(anyString(), eq(0))).thenThrow(new PackageManager.NameNotFoundException());
+        DeviceInfoHelper.getDeviceInfo(mContext);
     }
 
     @Test
     public void getDeviceInfoMissingCarrierInfo() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
 
         /* Mocking instances. */
-        Context contextMock = mock(Context.class);
-        PackageManager packageManagerMock = mock(PackageManager.class);
-        WindowManager windowManagerMock = mock(WindowManager.class);
         mockStatic(AppCenterLog.class);
 
         /* Delegates to mock instances. */
-        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
-        when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenThrow(new RuntimeException());
-        when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenReturn(windowManagerMock);
+        when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenThrow(new RuntimeException());
+        when(mContext.getSystemService(Context.WINDOW_SERVICE)).thenReturn(mWindowManager);
         //noinspection WrongConstant
-        when(packageManagerMock.getPackageInfo(anyString(), anyInt())).thenReturn(mock(PackageInfo.class));
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
         //noinspection deprecation
-        when(windowManagerMock.getDefaultDisplay()).thenReturn(mock(Display.class));
+        when(mWindowManager.getDefaultDisplay()).thenReturn(mDisplay);
 
         /* Verify. */
-        Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        Device device = DeviceInfoHelper.getDeviceInfo(mContext);
         assertNull(device.getCarrierCountry());
         assertNull(device.getCarrierName());
         verifyStatic();
@@ -278,23 +304,17 @@ public class DeviceInfoHelperTest {
     @Test
     public void getDeviceInfoEmptyCarrierInfo() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
 
-        /* Mocking instances. */
-        Context contextMock = mock(Context.class);
-        PackageManager packageManagerMock = mock(PackageManager.class);
-
         /* Delegates to mock instances. */
-        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
         //noinspection WrongConstant
-        when(packageManagerMock.getPackageInfo(anyString(), anyInt())).thenReturn(mock(PackageInfo.class));
-        TelephonyManager telephonyManager = mock(TelephonyManager.class);
-        when(telephonyManager.getNetworkCountryIso()).thenReturn("");
-        when(telephonyManager.getNetworkOperatorName()).thenReturn("");
-        when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(telephonyManager);
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
+        when(mTelephonyManager.getNetworkCountryIso()).thenReturn("");
+        when(mTelephonyManager.getNetworkOperatorName()).thenReturn("");
+        when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mTelephonyManager);
         mockStatic(TextUtils.class);
         when(TextUtils.isEmpty(anyString())).thenReturn(true);
 
         /* Verify. */
-        Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        Device device = DeviceInfoHelper.getDeviceInfo(mContext);
         assertNull(device.getCarrierCountry());
         assertNull(device.getCarrierName());
     }
@@ -303,19 +323,16 @@ public class DeviceInfoHelperTest {
     public void getDeviceInfoMissingScreenSize() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
 
         /* Mocking instances. */
-        Context contextMock = mock(Context.class);
-        PackageManager packageManagerMock = mock(PackageManager.class);
         mockStatic(AppCenterLog.class);
 
         /* Delegates to mock instances. */
-        when(contextMock.getPackageManager()).thenReturn(packageManagerMock);
-        when(contextMock.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mock(TelephonyManager.class));
-        when(contextMock.getSystemService(Context.WINDOW_SERVICE)).thenThrow(new RuntimeException());
+        when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mTelephonyManager);
+        when(mContext.getSystemService(Context.WINDOW_SERVICE)).thenThrow(new RuntimeException());
         //noinspection WrongConstant
-        when(packageManagerMock.getPackageInfo(anyString(), anyInt())).thenReturn(mock(PackageInfo.class));
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
 
         /* Verify. */
-        Device device = DeviceInfoHelper.getDeviceInfo(contextMock);
+        Device device = DeviceInfoHelper.getDeviceInfo(mContext);
         assertNull(device.getScreenSize());
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(Exception.class));
