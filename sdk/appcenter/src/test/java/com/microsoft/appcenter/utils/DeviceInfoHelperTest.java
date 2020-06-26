@@ -138,10 +138,12 @@ public class DeviceInfoHelperTest {
         when(mWindowManager.getDefaultDisplay()).thenReturn(mDisplay);
         //noinspection deprecation
         doAnswer(new Answer<Void>() {
+
             @Override
             public Void answer(InvocationOnMock invocationOnMock) {
+
+                /* Do not call set method and assign values directly to variables. */
                 Object[] args = invocationOnMock.getArguments();
-                /* DO NOT call set method and assign values directly to variables. */
                 ((Point) args[0]).x = SCREEN_WIDTH;
                 ((Point) args[0]).y = SCREEN_HEIGHT;
                 return null;
