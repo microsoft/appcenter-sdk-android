@@ -10,9 +10,11 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
+import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -67,8 +69,6 @@ public class DeviceInfoHelper {
         /* Carrier info. */
         try {
             TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-
-            @SuppressWarnings("ConstantConditions")
             String networkCountryIso = telephonyManager.getNetworkCountryIso();
             if (!TextUtils.isEmpty(networkCountryIso)) {
                 device.setCarrierCountry(networkCountryIso);
@@ -147,12 +147,23 @@ public class DeviceInfoHelper {
         /* Guess resolution based on the natural device orientation */
         int screenWidth;
         int screenHeight;
-
-        //noinspection ConstantConditions
-        Display defaultDisplay = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
-                .getDefaultDisplay();
+        Display defaultDisplay;
         Point size = new Point();
-        defaultDisplay.getSize(size);
+
+        /* Use DeviceManager to avoid android.os.strictmode.IncorrectContextUseViolation when StrictMode is enabled on API 30. */
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            DisplayManager displayManager = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
+            defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+            DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+            size.x = displayMetrics.widthPixels;
+            size.y = displayMetrics.heightPixels;
+        } else {
+            //noinspection deprecation
+            defaultDisplay = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
+                    .getDefaultDisplay();
+            //noinspection deprecation
+            defaultDisplay.getSize(size);
+        }
         switch (defaultDisplay.getRotation()) {
             case Surface.ROTATION_90:
             case Surface.ROTATION_270:
