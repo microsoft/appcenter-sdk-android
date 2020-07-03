@@ -8,6 +8,7 @@ package com.microsoft.appcenter.utils.storage;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
+import android.database.sqlite.SQLiteStatement;
 import android.support.annotation.NonNull;
 
 import java.util.Map;
@@ -39,10 +40,12 @@ public class SQLiteUtils {
             }
         }
         sql.append(");");
-        db.execSQL(sql.toString());
+        SQLiteStatement statement = db.compileStatement(sql.toString());
+        statement.execute();
     }
 
     public static void dropTable(@NonNull SQLiteDatabase db, @NonNull String table) {
-        db.execSQL(String.format("DROP TABLE `%s`", table));
+        SQLiteStatement statement = db.compileStatement(String.format("DROP TABLE `%s`", table));
+        statement.execute();
     }
 }
