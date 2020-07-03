@@ -16,6 +16,7 @@ import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -68,13 +69,19 @@ public class SQLiteUtilsAndroidTest {
     @Test
     public void testTableMethods() {
         DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "test.setMaximumSize", 1, mSchema, mock(DatabaseManager.Listener.class));
-
-        String tableName = java.util.UUID.randomUUID().toString();
+        String tableName = "someTableName";
+        String columnName = "someColumnName";
+        String objectForColumnStringType = "someTextType";
         ContentValues contentValues = new ContentValues();
-        contentValues.put("someKey", "someValue");
+        contentValues.put(columnName, objectForColumnStringType);
         SQLiteUtils.createTable(databaseManager.getDatabase(), tableName, contentValues);
         assertTrue(checkTableExists(databaseManager, tableName));
-
+        Cursor cursor = databaseManager.getCursor(tableName, SQLiteUtils.newSQLiteQueryBuilder(), new String[]{columnName}, null, null);
+        try {
+            assertTrue(cursor.getColumnCount() > 0);
+        } finally {
+            cursor.close();
+        }
         SQLiteUtils.dropTable(databaseManager.getDatabase(), tableName);
         assertFalse(checkTableExists(databaseManager, tableName));
     }
