@@ -34,7 +34,7 @@ public class SQLiteUtilsAndroidTest {
     /**
      * Database schema.
      */
-    private static ContentValues mSchema;
+    private static ContentValues sSchema;
 
     /**
      * Test database name.
@@ -46,7 +46,7 @@ public class SQLiteUtilsAndroidTest {
         sContext = InstrumentationRegistry.getTargetContext();
 
         /* Create a test schema. */
-        mSchema = generateContentValues();
+        sSchema = generateContentValues();
     }
 
     @After
@@ -56,7 +56,7 @@ public class SQLiteUtilsAndroidTest {
 
     private static ContentValues generateContentValues() {
         ContentValues values = new ContentValues();
-        values.put("COL_STRING_NULL", (String) null);
+        values.put("COL_STRING", "some_column_string");
         return values;
     }
 
@@ -68,7 +68,7 @@ public class SQLiteUtilsAndroidTest {
 
     @Test
     public void testTableMethods() {
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "test.setMaximumSize", 1, mSchema, mock(DatabaseManager.Listener.class));
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "test.setMaximumSize", 1, sSchema, mock(DatabaseManager.Listener.class));
         String tableName = "someTableName";
         String columnName = "someColumnName";
         String objectForColumnStringType = "someTextType";
@@ -77,10 +77,12 @@ public class SQLiteUtilsAndroidTest {
         SQLiteUtils.createTable(databaseManager.getDatabase(), tableName, contentValues);
         assertTrue(checkTableExists(databaseManager, tableName));
         Cursor cursor = databaseManager.getCursor(tableName, SQLiteUtils.newSQLiteQueryBuilder(), new String[]{columnName}, null, null);
-        try {
-            assertTrue(cursor.getColumnCount() > 0);
-        } finally {
-            cursor.close();
+        if (cursor != null) {
+            try {
+                assertTrue(cursor.getColumnCount() > 0);
+            } finally {
+                cursor.close();
+            }
         }
         SQLiteUtils.dropTable(databaseManager.getDatabase(), tableName);
         assertFalse(checkTableExists(databaseManager, tableName));
@@ -90,10 +92,13 @@ public class SQLiteUtilsAndroidTest {
         SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
         builder.appendWhere("tbl_name = ?");
         Cursor cursor = databaseManager.getCursor("sqlite_master", builder, new String[]{"tbl_name"}, new String[]{tableName}, null);
-        try {
-            return cursor.getCount() > 0;
-        } finally {
-            cursor.close();
+        if (cursor != null) {
+            try {
+                return cursor.getCount() > 0;
+            } finally {
+                cursor.close();
+            }
         }
+        return false;
     }
 }
