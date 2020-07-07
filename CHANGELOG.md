@@ -5,7 +5,7 @@
 ### App Center
 
 * **[Fix]** Fix an `IncorrectContextUseViolation` warning when calculating screen size on Android 11.
-* **[Fix]** `SQLiteUtils` now executes sql through `SQLiteStatement`.
+* **[Feature]** `SQLiteUtils` now executes sql through `SQLiteStatement`.
 
 ___
 
