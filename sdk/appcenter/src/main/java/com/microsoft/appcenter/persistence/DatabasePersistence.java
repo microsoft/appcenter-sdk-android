@@ -190,13 +190,10 @@ public class DatabasePersistence extends Persistence {
         mPendingDbIdentifiers = new HashSet<>();
         mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, version, schema, new DatabaseManager.Listener() {
 
-            private void createPriorityIndex(SQLiteDatabase db) {
-                db.execSQL("CREATE INDEX `" + INDEX_PRIORITY + "` ON " + TABLE + " (`" + COLUMN_PRIORITY + "`)");
-            }
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                createPriorityIndex(db);
+                SQLiteUtils.createPriorityIndex(db);
             }
 
             @Override
@@ -208,9 +205,9 @@ public class DatabasePersistence extends Persistence {
                  * When adding a new column in a future version, update this code by something like
                  * if (oldVersion <= VERSION_TIMESTAMP_COLUMN) {drop/create} else {add missing columns}
                  */
-                SQLiteUtils.dropTable(db, TABLE);
-                SQLiteUtils.createTable(db, TABLE, schema);
-                createPriorityIndex(db);
+                SQLiteUtils.dropLogsTable(db);
+                SQLiteUtils.createLogsTable(db);
+                SQLiteUtils.createPriorityIndex(db);
             }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);

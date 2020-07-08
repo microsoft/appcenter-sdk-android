@@ -91,7 +91,7 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                SQLiteUtils.createTable(db, mDefaultTable, mSchema);
+                SQLiteUtils.createLogsTable(db);
                 mListener.onCreate(db);
             }
 
