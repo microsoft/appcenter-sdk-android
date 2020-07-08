@@ -53,6 +53,14 @@ public class DatabaseManagerAndroidTest {
     private static final String DATABASE_NAME = "test-database";
 
     /**
+     * Test database creation command.
+     */
+    private static final String CREATE_TEST_SQL = "CREATE TABLE IF NOT EXISTS `databaseManager`" +
+            " (oid INTEGER PRIMARY KEY AUTOINCREMENT, `COL_BYTE` INTEGER, `COL_SHORT` INTEGER, `COL_LONG` INTEGER," +
+            " `COL_BOOLEAN` INTEGER, `COL_BYTE_ARRAY` BLOB, `COL_FLOAT` REAL, `COL_STRING` TEXT, " +
+            "`COL_STRING_NULL` TEXT, `COL_INTEGER` INTEGER, `COL_DOUBLE` REAL)";
+
+    /**
      * Context instance.
      */
     @SuppressLint("StaticFieldLeak")
@@ -219,7 +227,7 @@ public class DatabaseManagerAndroidTest {
 
         /* Get instance to access database. */
         DatabaseManager.Listener listener = mock(DatabaseManager.Listener.class);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManager", 1, mSchema, listener);
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManager", 1, mSchema, CREATE_TEST_SQL, listener);
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {
@@ -236,7 +244,7 @@ public class DatabaseManagerAndroidTest {
     public void setMaximumSize() {
 
         /* Get instance to access database. */
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "test.setMaximumSize", 1, mSchema, mock(DatabaseManager.Listener.class));
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DATABASE_NAME, "databaseManager", 1, mSchema, CREATE_TEST_SQL, mock(DatabaseManager.Listener.class));
 
         //noinspection TryFinallyCanBeTryWithResources (try with resources statement is API >= 19)
         try {

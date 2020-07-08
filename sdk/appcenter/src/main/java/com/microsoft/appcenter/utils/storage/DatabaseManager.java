@@ -81,7 +81,7 @@ public class DatabaseManager implements Closeable {
      * @param listener     The error listener.
      */
     public DatabaseManager(Context context, String database, String defaultTable, int version,
-                           ContentValues schema, @NonNull Listener listener) {
+                           ContentValues schema, final String sqlCreateCommand, @NonNull Listener listener) {
         mContext = context;
         mDatabase = database;
         mDefaultTable = defaultTable;
@@ -91,7 +91,7 @@ public class DatabaseManager implements Closeable {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                SQLiteUtils.createLogsTable(db);
+                SQLiteUtils.executeSQL(db, sqlCreateCommand);
                 mListener.onCreate(db);
             }
 

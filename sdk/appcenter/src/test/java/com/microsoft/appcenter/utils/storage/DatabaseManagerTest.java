@@ -46,7 +46,7 @@ public class DatabaseManagerTest {
     private static DatabaseManager getDatabaseManagerMock() {
 
         /* Mocking(spying) instance. */
-        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(null, "database", "table", 1, null, null, null);
         DatabaseManager databaseManagerMock = spy(databaseManager);
         when(databaseManagerMock.getDatabase()).thenThrow(new RuntimeException());
         return databaseManagerMock;
@@ -126,7 +126,7 @@ public class DatabaseManagerTest {
         when(contextMock.deleteDatabase("database")).thenReturn(false);
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
@@ -147,7 +147,7 @@ public class DatabaseManagerTest {
         when(contextMock.deleteDatabase("database")).thenReturn(true);
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
@@ -167,7 +167,7 @@ public class DatabaseManagerTest {
         when(helperMock.getWritableDatabase()).thenThrow(new RuntimeException()).thenThrow(new RuntimeException());
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* Get database. */
@@ -195,7 +195,7 @@ public class DatabaseManagerTest {
         when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException());
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* When we put a log, it will fail to purge. */
@@ -224,7 +224,7 @@ public class DatabaseManagerTest {
         when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException()).thenReturn(1L);
 
         /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null);
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
         /* When we put a log, it succeeds even if a problem occurred while closing purge cursor. */
