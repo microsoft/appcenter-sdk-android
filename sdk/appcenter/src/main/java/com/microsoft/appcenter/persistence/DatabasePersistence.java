@@ -139,12 +139,20 @@ public class DatabasePersistence extends Persistence {
      * SQL command to create logs table
      */
     @VisibleForTesting
-    static final String CREATE_LOGS_SQL = "CREATE TABLE IF NOT EXISTS `logs` (oid INTEGER PRIMARY KEY AUTOINCREMENT," +
-            " `target_token` TEXT, `type` TEXT, `priority` INTEGER, `log` TEXT, `persistence_group` TEXT, `target_key` TEXT);";
+    static final String CREATE_LOGS_SQL = "CREATE TABLE IF NOT EXISTS `logs`" +
+            "(oid INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "`target_token` TEXT," +
+            "`type` TEXT," +
+            "`priority` INTEGER," +
+            "`log` TEXT," +
+            "`persistence_group` TEXT," +
+            "`target_key` TEXT);";
+
     /**
      * SQL command to drop logs table
      */
     private static final String DROP_LOGS_SQL = "DROP TABLE `logs`";
+    
     /**
      * SQL command to create index for logs
      */
@@ -203,7 +211,7 @@ public class DatabasePersistence extends Persistence {
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                SQLiteUtils.executeSQL(db, CREATE_PRIORITY_INDEX_LOGS);
+                db.execSQL(CREATE_PRIORITY_INDEX_LOGS);
             }
 
             @Override
@@ -215,9 +223,9 @@ public class DatabasePersistence extends Persistence {
                  * When adding a new column in a future version, update this code by something like
                  * if (oldVersion <= VERSION_TIMESTAMP_COLUMN) {drop/create} else {add missing columns}
                  */
-                SQLiteUtils.executeSQL(db, DROP_LOGS_SQL);
-                SQLiteUtils.executeSQL(db,CREATE_LOGS_SQL);
-                SQLiteUtils.executeSQL(db, CREATE_PRIORITY_INDEX_LOGS);
+                db.execSQL(DROP_LOGS_SQL);
+                db.execSQL(CREATE_LOGS_SQL);
+                db.execSQL(CREATE_PRIORITY_INDEX_LOGS);
             }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);

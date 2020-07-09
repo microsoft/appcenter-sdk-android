@@ -56,9 +56,16 @@ public class DatabaseManagerAndroidTest {
      * Test database creation command.
      */
     private static final String CREATE_TEST_SQL = "CREATE TABLE IF NOT EXISTS `databaseManager`" +
-            " (oid INTEGER PRIMARY KEY AUTOINCREMENT, `COL_BYTE` INTEGER, `COL_SHORT` INTEGER, `COL_LONG` INTEGER," +
-            " `COL_BOOLEAN` INTEGER, `COL_BYTE_ARRAY` BLOB, `COL_FLOAT` REAL, `COL_STRING` TEXT, " +
-            "`COL_STRING_NULL` TEXT, `COL_INTEGER` INTEGER, `COL_DOUBLE` REAL)";
+            " (oid INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "`COL_BYTE` INTEGER, `COL_SHORT` INTEGER," +
+            "`COL_LONG` INTEGER," +
+            "`COL_BOOLEAN` INTEGER," +
+            "`COL_BYTE_ARRAY` BLOB," +
+            "`COL_FLOAT` REAL," +
+            "`COL_STRING` TEXT," +
+            "`COL_STRING_NULL` TEXT," +
+            "`COL_INTEGER` INTEGER," +
+            "`COL_DOUBLE` REAL)";
 
     /**
      * Context instance.
