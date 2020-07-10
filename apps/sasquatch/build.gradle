@@ -31,6 +31,14 @@ android {
             dimension "dependency"
             applicationIdSuffix ".jcenter"
         }
+        projectGooglePlay {
+            dimension "dependency"
+            applicationIdSuffix ".project"
+        }
+        jcenterGooglePlay {
+            dimension "dependency"
+            applicationIdSuffix ".jcenter"
+        }
         vanilla {
             dimension "pushLibrary"
         }
@@ -76,6 +84,16 @@ dependencies {
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
+
+    projectGooglePlayImplementation project(':sdk:appcenter-analytics')
+    projectGooglePlayImplementation project(':sdk:appcenter-crashes')
+    projectGooglePlayImplementation project(':sdk:appcenter-push')
+    projectGooglePlayImplementation project(':sdk:appcenter-distribute-play')
+
+    jcenterGooglePlayImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
+    jcenterGooglePlayImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
+    jcenterGooglePlayImplementation "com.microsoft.appcenter:appcenter-distribute-play:${appCenterSdkVersion}"
+    jcenterGooglePlayImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
