@@ -50,7 +50,6 @@ public class Distribute extends AbstractAppCenterService {
      * @see AppCenterFuture
      */
     public static AppCenterFuture<Boolean> isEnabled() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'isEnabled'");
         DefaultAppCenterFuture appCenterFuture = new DefaultAppCenterFuture<>();
         appCenterFuture.complete(true);
         return appCenterFuture;
@@ -65,7 +64,6 @@ public class Distribute extends AbstractAppCenterService {
      * @return future with null result to monitor when the operation completes.
      */
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'setEnabled'");
         DefaultAppCenterFuture appCenterFuture = new DefaultAppCenterFuture<>();
         appCenterFuture.complete(true);
         return appCenterFuture;
@@ -75,21 +73,18 @@ public class Distribute extends AbstractAppCenterService {
      * Implements {@link #setInstallUrl(String)}.
      */
     public static void setInstallUrl(String installUrl) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'setInstallUrl'");
     }
 
     /**
      * Implements {@link #setApiUrl(String)}}.
      */
     public static void setApiUrl(String apiUrl) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'setApiUrl'");
     }
 
     /**
      * Get the current update track (public vs private).
      */
     public static int getUpdateTrack() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'getUpdateTrack'");
         return UpdateTrack.PUBLIC;
     }
 
@@ -99,7 +94,6 @@ public class Distribute extends AbstractAppCenterService {
      * @param updateTrack update track.
      */
     public static void setUpdateTrack(@UpdateTrack int updateTrack) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'setUpdateTrack'");
     }
 
     /**
@@ -108,14 +102,12 @@ public class Distribute extends AbstractAppCenterService {
      * @param listener The custom distribute listener.
      */
     public static void setListener(DistributeListener listener) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'setListener'");
     }
 
     /**
      * Implements {@link #setEnabledForDebuggableBuild(boolean)}.
      */
     public static void setEnabledForDebuggableBuild(boolean enabled) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'setEnabledForDebuggableBuild'");
     }
 
     /**
@@ -126,75 +118,62 @@ public class Distribute extends AbstractAppCenterService {
      *                     For mandatory updates, only {@link UpdateAction#UPDATE} is allowed.
      */
     public static void notifyUpdateAction(@UpdateAction int updateAction) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'notifyUpdateAction'");
     }
 
     /**
      * Implements {@link #checkForUpdate()}.
      */
     public static void checkForUpdate() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'checkForUpdate'");
     }
 
     /**
      * Disable automatic check for update before the service starts.
      */
     public static void disableAutomaticCheckForUpdate() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'disableAutomaticCheckForUpdate'");
     }
 
     @Override
     protected String getGroupName() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'getGroupName'");
         return DISTRIBUTE_GROUP;
     }
 
     @Override
     public String getServiceName() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'getServiceName'");
         return SERVICE_NAME;
     }
 
     @Override
     protected String getLoggerTag() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'getLoggerTag'");
         return LOG_TAG;
     }
 
     @Override
     protected int getTriggerCount() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'getTriggerCount'");
         return 1;
     }
 
     @Override
     public Map<String, LogFactory> getLogFactories() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'getLogFactories'");
         return new HashMap<>();
     }
 
     @Override
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'onStarted'");
     }
 
     @Override
     public synchronized void onActivityResumed(Activity activity) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'onActivityResumed'");
     }
 
     @Override
     public synchronized void onActivityPaused(Activity activity) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'onActivityPaused'");
     }
 
     @Override
     public void onApplicationEnterForeground() {
-        AppCenterLog.debug(LOG_TAG, "Called method 'onApplicationEnterForeground'");
     }
 
     @Override
     protected synchronized void applyEnabledState(boolean enabled) {
-        AppCenterLog.debug(LOG_TAG, "Called method 'applyEnabledState'");
     }
 }
