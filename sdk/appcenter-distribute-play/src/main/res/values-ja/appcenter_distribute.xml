@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources>
+  <string name="appcenter_distribute_update_dialog_title">アプリの更新プログラムが利用可能です</string>
+  <string name="appcenter_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) をダウンロードしてインストールできます。</string>
+  <string name="appcenter_distribute_update_dialog_message_mandatory">このアプリの開発者から、%1$s %2$s (%3$d) に更新するよう求められています。</string>
+  <string name="appcenter_distribute_update_dialog_download">ダウンロード</string>
+  <string name="appcenter_distribute_update_dialog_postpone">明日また知らせる</string>
+  <string name="appcenter_distribute_update_dialog_view_release_notes">リリース ノートの表示</string>
+  <string name="appcenter_distribute_dialog_actioned_on_disabled_toast">配布は無効でした</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_message">セキュリティ上の理由から、お使いのデバイスは不明なソースから取得したアプリのインストールをブロックするように設定されています。</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_settings">設定</string>
+  <string name="appcenter_distribute_downloading_mandatory_update">更新プログラムをダウンロードしています</string>
+  <string name="appcenter_distribute_download_progress_number_format">%1$d MB / %2$d MB</string>
+  <string name="appcenter_distribute_install_ready_title">アプリの更新プログラムがダウンロードされました</string>
+  <string name="appcenter_distribute_install_ready_message">%1$s %2$s (%3$d) のダウンロードが完了し、インストールする準備が整いました。</string>
+  <string name="appcenter_distribute_install">インストール</string>
+  <string name="appcenter_distribute_notification_category">アプリの更新プログラム</string>
+  <string name="appcenter_distribute_update_failed_dialog_title">アプリ内更新の無効化</string>
+  <string name="appcenter_distribute_update_failed_dialog_ignore">無視</string>
+  <string name="appcenter_distribute_update_failed_dialog_reinstall">アプリの再インストール</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">このリリースは、プライベートモードでブラウザを使用してサイドローディングまたはダウンロードされました。</string>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources>
+  <string name="appcenter_distribute_update_dialog_title">Uygulama güncelleştirmesi kullanılabilir</string>
+  <string name="appcenter_distribute_update_dialog_message_optional">%1$s %2$s (%3$d), indirme ve yükleme için hazır.</string>
+  <string name="appcenter_distribute_update_dialog_message_mandatory">Bu uygulamanın geliştiricileri %1$s %2$s (%3$d) sürümüne güncelleştirmenizi gerektiriyor.</string>
+  <string name="appcenter_distribute_update_dialog_download">İndir</string>
+  <string name="appcenter_distribute_update_dialog_postpone">Bir gün içinde sor</string>
+  <string name="appcenter_distribute_update_dialog_view_release_notes">Sürüm notlarını görüntüle</string>
+  <string name="appcenter_distribute_dialog_actioned_on_disabled_toast">Dağıtım devre dışı bırakıldı</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_message">Güvenlik nedenleriyle, cihazınız bilinmeyen kaynaklardan gelen uygulamaların yüklenmesini engelleyecek şekilde ayarlandı.</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_settings">Ayarlar</string>
+  <string name="appcenter_distribute_downloading_mandatory_update">Güncelleştirme indiriliyor</string>
+  <string name="appcenter_distribute_download_progress_number_format">%1$d MB / %2$d MB</string>
+  <string name="appcenter_distribute_install_ready_title">Uygulama güncelleştirmesi indirildi</string>
+  <string name="appcenter_distribute_install_ready_message">%1$s %2$s (%3$d) indirildi ve yükleme için hazır.</string>
+  <string name="appcenter_distribute_install">Yükle</string>
+  <string name="appcenter_distribute_notification_category">Uygulama güncelleştirmeleri</string>
+  <string name="appcenter_distribute_update_failed_dialog_title">Uygulama içi güncelleştirmeler devre dışı</string>
+  <string name="appcenter_distribute_update_failed_dialog_ignore">Görmezden</string>
+  <string name="appcenter_distribute_update_failed_dialog_reinstall">Uygulamayı yeniden yükle</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Bu sürüm ya yan yüklenen veya özel modda bir tarayıcı kullanılarak indirilmiş.</string>
+</resources>

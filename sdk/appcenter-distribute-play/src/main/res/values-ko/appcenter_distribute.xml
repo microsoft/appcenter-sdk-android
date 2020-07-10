@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources>
+  <string name="appcenter_distribute_update_dialog_title">앱 업데이트 사용 가능</string>
+  <string name="appcenter_distribute_update_dialog_message_optional">%1$s %2$s(%3$d)을(를) 다운로드하여 설치할 수 있습니다.</string>
+  <string name="appcenter_distribute_update_dialog_message_mandatory">이 앱의 개발자가 %1$s %2$s(%3$d)(으)로 업데이트를 요구합니다.</string>
+  <string name="appcenter_distribute_update_dialog_download">다운로드</string>
+  <string name="appcenter_distribute_update_dialog_postpone">하루동안 열지 않기</string>
+  <string name="appcenter_distribute_update_dialog_view_release_notes">릴리스 정보 보기</string>
+  <string name="appcenter_distribute_dialog_actioned_on_disabled_toast">배포를 사용할 수 없음</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_message">보안상의 이유로 알 수 없는 원본에서 가져온 앱의 설치를 차단하도록 장치가 설정되어 있습니다.</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_settings">설정</string>
+  <string name="appcenter_distribute_downloading_mandatory_update">업데이트 다운로드 중</string>
+  <string name="appcenter_distribute_download_progress_number_format">%1$dMB/%2$dMB</string>
+  <string name="appcenter_distribute_install_ready_title">앱 업데이트 다운로드됨</string>
+  <string name="appcenter_distribute_install_ready_message">%1$s %2$s(%3$d)이(가) 다운로드되어 설치할 준비가 되었습니다.</string>
+  <string name="appcenter_distribute_install">설치</string>
+  <string name="appcenter_distribute_notification_category">앱 업데이트</string>
+  <string name="appcenter_distribute_update_failed_dialog_title">인앱 업데이트 비활성</string>
+  <string name="appcenter_distribute_update_failed_dialog_ignore">무시</string>
+  <string name="appcenter_distribute_update_failed_dialog_reinstall">앱 재설치</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">이 릴리스는 사이드 로딩 또는 개인정보 보호 브라우징 모드에서 다운로드 되었습니다.</string>
+</resources>

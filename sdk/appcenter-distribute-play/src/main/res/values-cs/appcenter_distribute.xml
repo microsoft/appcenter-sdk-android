@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources>
+  <string name="appcenter_distribute_update_dialog_title">K dispozici je aktualizace aplikace</string>
+  <string name="appcenter_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) je k dispozici ke stažení a instalaci.</string>
+  <string name="appcenter_distribute_update_dialog_message_mandatory">Vývojáři této aplikace vyžadují, abyste si nainstalovali aktualizaci %1$s %2$s (%3$d).</string>
+  <string name="appcenter_distribute_update_dialog_download">Stáhnout</string>
+  <string name="appcenter_distribute_update_dialog_postpone">Zeptat se za den</string>
+  <string name="appcenter_distribute_update_dialog_view_release_notes">Zobrazit zprávu k vydání verze</string>
+  <string name="appcenter_distribute_dialog_actioned_on_disabled_toast">Distribuce byla zakázána</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_message">Z bezpečnostních důvodů je vaše zařízení nastaveno tak, aby blokovalo instalaci aplikací získaných z neznámých zdrojů.</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_settings">Nastavení</string>
+  <string name="appcenter_distribute_downloading_mandatory_update">Stahuje se aktualizace</string>
+  <string name="appcenter_distribute_download_progress_number_format">%1$d MB z %2$d MB</string>
+  <string name="appcenter_distribute_install_ready_title">Aktualizace aplikace se stáhla</string>
+  <string name="appcenter_distribute_install_ready_message">Aktualizace %1$s %2$s (%3$d) se stáhla a je připravena k instalaci.</string>
+  <string name="appcenter_distribute_install">Instalovat</string>
+  <string name="appcenter_distribute_notification_category">Aktualizace aplikací</string>
+  <string name="appcenter_distribute_update_failed_dialog_title">Neaktivní aktualizace v aplikacích</string>
+  <string name="appcenter_distribute_update_failed_dialog_ignore">Ignorovat</string>
+  <string name="appcenter_distribute_update_failed_dialog_reinstall">Znovu nainstalujte aplikaci</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Tato verze byla buď strana-naložený nebo stáhnout pomocí prohlížeče v soukromém režimu.</string>
+</resources>

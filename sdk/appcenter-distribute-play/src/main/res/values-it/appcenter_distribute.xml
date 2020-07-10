@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources>
+  <string name="appcenter_distribute_update_dialog_title">Aggiornamento app disponibile</string>
+  <string name="appcenter_distribute_update_dialog_message_optional">%1$s %2$s (%3$d) è disponibile per il download e l\'installazione.</string>
+  <string name="appcenter_distribute_update_dialog_message_mandatory">Gli sviluppatori di questa app richiedono che venga eseguito l\'aggiornamento a %1$s %2$s (%3$d).</string>
+  <string name="appcenter_distribute_update_dialog_download">Scarica</string>
+  <string name="appcenter_distribute_update_dialog_postpone">Visualizza richiesta tra un giorno</string>
+  <string name="appcenter_distribute_update_dialog_view_release_notes">Visualizza note sulla versione</string>
+  <string name="appcenter_distribute_dialog_actioned_on_disabled_toast">La distribuzione è stata disabilitata</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_message">Per motivi di sicurezza il dispositivo è impostato in modo da bloccare l\'installazione di app ottenute da origini sconosciute.</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_settings">Impostazioni</string>
+  <string name="appcenter_distribute_downloading_mandatory_update">Download di aggiornamento</string>
+  <string name="appcenter_distribute_download_progress_number_format">%1$d MB di %2$d MB</string>
+  <string name="appcenter_distribute_install_ready_title">Aggiornamento app scaricato</string>
+  <string name="appcenter_distribute_install_ready_message">%1$s %2$s (%3$d) è stato scaricato ed è pronto per l\'installazione.</string>
+  <string name="appcenter_distribute_install">Installa</string>
+  <string name="appcenter_distribute_notification_category">Aggiornamenti app</string>
+  <string name="appcenter_distribute_update_failed_dialog_title">Aggiornamenti in-app disabilitati</string>
+  <string name="appcenter_distribute_update_failed_dialog_ignore">Ignorare</string>
+  <string name="appcenter_distribute_update_failed_dialog_reinstall">Reinstallare app</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">Questa versione è stata caricata a lato o scaricata utilizzando un browser in modalità privata.</string>
+</resources>

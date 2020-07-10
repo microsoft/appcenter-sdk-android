@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources>
+  <string name="appcenter_distribute_update_dialog_title">Dostępna jest aktualizacja aplikacji</string>
+  <string name="appcenter_distribute_update_dialog_message_optional">Aplikacja %1$s %2$s (%3$d) jest dostępna do pobrania i zainstalowania.</string>
+  <string name="appcenter_distribute_update_dialog_message_mandatory">Deweloperzy tej aplikacji wymagają przeprowadzenia aktualizacji do: %1$s %2$s (%3$d).</string>
+  <string name="appcenter_distribute_update_dialog_download">Pobierz</string>
+  <string name="appcenter_distribute_update_dialog_postpone">Zapytaj mnie jutro</string>
+  <string name="appcenter_distribute_update_dialog_view_release_notes">Wyświetl informacje o wersji</string>
+  <string name="appcenter_distribute_dialog_actioned_on_disabled_toast">Dystrybuowanie zostało wyłączone</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_message">Ze względów bezpieczeństwa Twoje urządzenie jest ustawione do blokowania instalowania aplikacji uzyskanych z nieznanych źródeł.</string>
+  <string name="appcenter_distribute_unknown_sources_dialog_settings">Ustawienia</string>
+  <string name="appcenter_distribute_downloading_mandatory_update">Pobieranie aktualizacji</string>
+  <string name="appcenter_distribute_download_progress_number_format">%1$d MB z %2$d MB</string>
+  <string name="appcenter_distribute_install_ready_title">Aktualizacja aplikacji została pobrana</string>
+  <string name="appcenter_distribute_install_ready_message">Aplikacja %1$s %2$s (%3$d) została pobrana i jest gotowa do zainstalowania.</string>
+  <string name="appcenter_distribute_install">Zainstaluj</string>
+  <string name="appcenter_distribute_notification_category">Aktualizacje aplikacji</string>
+  <string name="appcenter_distribute_update_failed_dialog_title">Aktualizacje w aplikacji wyłączone</string>
+  <string name="appcenter_distribute_update_failed_dialog_ignore">Zignorować</string>
+  <string name="appcenter_distribute_update_failed_dialog_reinstall">Zainstaluj ponownie aplikację</string>
+  <string name="appcenter_distribute_update_failed_dialog_message">To wydanie zostało albo po stronie-załadowany lub pobrany za pomocą przeglądarki w trybie prywatnym.</string>
+</resources>
