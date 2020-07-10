@@ -51,14 +51,14 @@ public class Distribute extends AbstractAppCenterService {
      */
     public static AppCenterFuture<Boolean> isEnabled() {
         AppCenterLog.debug(LOG_TAG, "Called method 'isEnabled'");
-        DefaultAppCenterFuture tt = new DefaultAppCenterFuture<>();
-        tt.complete(true);
-        return tt;
+        DefaultAppCenterFuture appCenterFuture = new DefaultAppCenterFuture<>();
+        appCenterFuture.complete(true);
+        return appCenterFuture;
     }
 
     /**
      * Enable or disable Distribute service.
-     * <p>
+     * 
      * The state is persisted in the device's storage across application launches.
      *
      * @param enabled <code>true</code> to enable, <code>false</code> to disable.
@@ -66,9 +66,9 @@ public class Distribute extends AbstractAppCenterService {
      */
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         AppCenterLog.debug(LOG_TAG, "Called method 'setEnabled'");
-        DefaultAppCenterFuture tt = new DefaultAppCenterFuture<>();
-        tt.complete(true);
-        return tt;
+        DefaultAppCenterFuture appCenterFuture = new DefaultAppCenterFuture<>();
+        appCenterFuture.complete(true);
+        return appCenterFuture;
     }
 
     /**
