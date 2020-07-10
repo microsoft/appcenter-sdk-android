@@ -11,7 +11,7 @@ evaluationDependsOn(':apps')
 
 android {
 
-    flavorDimensions "dependency", "pushLibrary"
+    flavorDimensions "dependency", "pushLibrary", "distribute"
 
     defaultConfig {
         externalNativeBuild {
@@ -31,13 +31,11 @@ android {
             dimension "dependency"
             applicationIdSuffix ".jcenter"
         }
-        projectGooglePlay {
-            dimension "dependency"
-            applicationIdSuffix ".project"
+        appCenter {
+            dimension "distribute"
         }
-        jcenterGooglePlay {
-            dimension "dependency"
-            applicationIdSuffix ".jcenter"
+        googlePlay {
+            dimension "distribute"
         }
         vanilla {
             dimension "pushLibrary"
@@ -76,24 +74,21 @@ dependencies {
 
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
-    projectDependencyImplementation project(':sdk:appcenter-distribute')
     projectDependencyImplementation project(':sdk:appcenter-push')
 
     def appCenterSdkVersion = "3.2.2"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
-    projectGooglePlayImplementation project(':sdk:appcenter-analytics')
-    projectGooglePlayImplementation project(':sdk:appcenter-crashes')
-    projectGooglePlayImplementation project(':sdk:appcenter-push')
-    projectGooglePlayImplementation project(':sdk:appcenter-distribute-play')
-
-    jcenterGooglePlayImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
-    jcenterGooglePlayImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
-    jcenterGooglePlayImplementation "com.microsoft.appcenter:appcenter-distribute-play:${appCenterSdkVersion}"
-    jcenterGooglePlayImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
+    def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
+    if (taskRequests.contains("GooglePlay")) {
+        projectDependencyImplementation project(':sdk:appcenter-distribute-play')
+        jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute-play:${appCenterSdkVersion}"
+    } else {
+        projectDependencyImplementation project(':sdk:appcenter-distribute')
+        jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
+    }
 
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
