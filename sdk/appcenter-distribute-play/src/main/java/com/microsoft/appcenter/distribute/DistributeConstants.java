@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.distribute;
 
-import android.app.DownloadManager;
 import android.support.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
@@ -18,7 +17,7 @@ public final class DistributeConstants {
     /**
      * Distribute service name.
      */
-    static final String SERVICE_NAME = "Distribute";
+    static final String SERVICE_NAME = "DistributePlay";
 
     /**
      * Log tag for this service.
@@ -65,4 +64,10 @@ public final class DistributeConstants {
      * Preference key to store the downloading release file path.
      */
     public static final String PREFERENCE_KEY_DOWNLOADED_RELEASE_FILE = PREFERENCE_PREFIX + "downloaded_release_file";
+
+    @VisibleForTesting
+    DistributeConstants() {
+
+        /* Hide constructor as it's just a constant class. */
+    }
 }

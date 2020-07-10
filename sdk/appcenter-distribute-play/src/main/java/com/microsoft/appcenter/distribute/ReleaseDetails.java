@@ -50,7 +50,7 @@ public class ReleaseDetails {
      */
     @NonNull
     public String getShortVersion() {
-        return "getShortVersion";
+        return "shortVersion";
     }
 
     /**
@@ -71,7 +71,7 @@ public class ReleaseDetails {
     @Nullable
     @SuppressWarnings("WeakerAccess")
     public Uri getReleaseNotesUrl() {
-        return Uri.parse("getReleaseNotesUrl");
+        return Uri.parse("releaseNotesUrl");
     }
 
     /**
@@ -109,7 +109,7 @@ public class ReleaseDetails {
      */
     @NonNull
     public String getReleaseHash() {
-        return "getReleaseHash";
+        return "releaseHash";
     }
 
     /**
@@ -118,6 +118,6 @@ public class ReleaseDetails {
      * @return the distributionGroupId value.
      */
     public String getDistributionGroupId() {
-        return "getDistributionGroupId";
+        return "distributionGroupId";
     }
 }
