@@ -17,7 +17,7 @@ public class ReleaseDetailsTest {
         assertEquals(releaseDetails.getDistributionGroupId(), "distributionGroupId");
         assertEquals(releaseDetails.getDownloadUrl(), null);
         assertEquals(releaseDetails.getId(), 1);
-        assertEquals(releaseDetails.getMinApiLevel(), 16);
+        assertEquals(releaseDetails.getMinApiLevel(), 0);
         assertEquals(releaseDetails.getReleaseHash(), "releaseHash");
         assertEquals(releaseDetails.getReleaseNotes(), "releaseNotes");
         assertEquals(releaseDetails.getReleaseNotesUrl(), null);

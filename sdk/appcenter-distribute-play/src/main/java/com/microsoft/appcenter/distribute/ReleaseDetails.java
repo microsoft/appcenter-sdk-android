@@ -71,7 +71,7 @@ public class ReleaseDetails {
     @Nullable
     @SuppressWarnings("WeakerAccess")
     public Uri getReleaseNotesUrl() {
-        return Uri.parse("releaseNotesUrl");
+        return null;
     }
 
     /**
@@ -80,7 +80,7 @@ public class ReleaseDetails {
      * @return the minApiLevel value
      */
     int getMinApiLevel() {
-        return 16;
+        return 0;
     }
 
     /**
@@ -90,7 +90,7 @@ public class ReleaseDetails {
      */
     @NonNull
     public Uri getDownloadUrl() {
-        return Uri.parse("");
+        return null;
     }
 
     /**

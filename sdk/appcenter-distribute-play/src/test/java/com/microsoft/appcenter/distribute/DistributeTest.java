@@ -36,37 +36,31 @@ public class DistributeTest {
     @Test
     public void isEnabledTest() {
         Distribute.isEnabled();
-        verifyCallAppCenterLog("Called method 'isEnabled'");
     }
 
     @Test
     public void setEnabledTest() {
         Distribute.setEnabled(true);
-        verifyCallAppCenterLog("Called method 'setEnabled'");
     }
 
     @Test
     public void setInstallUrlTest() {
         Distribute.setInstallUrl("");
-        verifyCallAppCenterLog("Called method 'setInstallUrl'");
     }
 
     @Test
     public void setApiUrlTest() {
         Distribute.setApiUrl("");
-        verifyCallAppCenterLog("Called method 'setApiUrl'");
     }
 
     @Test
     public void getUpdateTrackTest() {
         Distribute.getUpdateTrack();
-        verifyCallAppCenterLog("Called method 'getUpdateTrack'");
     }
 
     @Test
     public void setUpdateTrackTest() {
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
-        verifyCallAppCenterLog("Called method 'setUpdateTrack'");
     }
 
     @Test
@@ -81,55 +75,46 @@ public class DistributeTest {
     @Test
     public void setEnabledForDebuggableBuildTest() {
         Distribute.setEnabledForDebuggableBuild(true);
-        verifyCallAppCenterLog("Called method 'setEnabledForDebuggableBuild'");
     }
 
     @Test
     public void notifyUpdateActionTest() {
         Distribute.notifyUpdateAction(UpdateAction.UPDATE);
-        verifyCallAppCenterLog("Called method 'notifyUpdateAction'");
     }
 
     @Test
     public void checkForUpdateTest() {
        Distribute.checkForUpdate();
-       verifyCallAppCenterLog("Called method 'checkForUpdate'");
     }
 
     @Test
     public void disableAutomaticCheckForUpdateTest() {
         Distribute.disableAutomaticCheckForUpdate();
-        verifyCallAppCenterLog("Called method 'disableAutomaticCheckForUpdate'");
     }
 
     @Test
     public void getGroupNameTest() {
         Distribute.getInstance().getGroupName();
-        verifyCallAppCenterLog("Called method 'getGroupName'");
     }
 
     @Test
     public void getServiceNameTest() {
         Distribute.getInstance().getServiceName();
-        verifyCallAppCenterLog("Called method 'getServiceName'");
     }
 
     @Test
     public void getLoggerTagTest() {
         Distribute.getInstance().getLoggerTag();
-        verifyCallAppCenterLog("Called method 'getLoggerTag'");
     }
 
     @Test
     public void getTriggerCountTest() {
         Distribute.getInstance().getTriggerCount();
-        verifyCallAppCenterLog("Called method 'getTriggerCount'");
     }
 
     @Test
     public void getLogFactoriesTest() {
         Distribute.getInstance().getLogFactories();
-        verifyCallAppCenterLog("Called method 'getLogFactories'");
     }
 
     @Test
@@ -137,37 +122,28 @@ public class DistributeTest {
         Context mockContext = mock(Context.class);
         Channel mockChannel = mock(Channel.class);
         Distribute.getInstance().onStarted(mockContext, mockChannel, "app-secret", "token", true);
-        verifyCallAppCenterLog("Called method 'onStarted'");
     }
 
     @Test
     public void onActivityResumedTest() {
         Activity mockActivity = mock(Activity.class);
         Distribute.getInstance().onActivityResumed(mockActivity);
-        verifyCallAppCenterLog("Called method 'onActivityResumed'");
     }
 
     @Test
     public void onActivityPausedTest() {
         Activity mockActivity = mock(Activity.class);
         Distribute.getInstance().onActivityPaused(mockActivity);
-        verifyCallAppCenterLog("Called method 'onActivityPaused'");
     }
 
     @Test
     public void onApplicationEnterForegroundTest() {
         Distribute.getInstance().onApplicationEnterForeground();
-        verifyCallAppCenterLog("Called method 'onApplicationEnterForeground'");
     }
 
     @Test
     public void applyEnabledStateTest() {
         Distribute.getInstance().applyEnabledState(true);
-        verifyCallAppCenterLog("Called method 'applyEnabledState'");
     }
 
-    private void verifyCallAppCenterLog(String str) {
-        verifyStatic();
-        AppCenterLog.debug(anyString(), eq(str));
-    }
 }
