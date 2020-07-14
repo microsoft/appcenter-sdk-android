@@ -70,13 +70,17 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #setInstallUrl(String)}.
+     * Change the base URL opened in the browser to get update token from user login information.
+     *
+     * @param installUrl install base URL.
      */
     public static void setInstallUrl(String installUrl) {
     }
 
     /**
-     * Implements {@link #setApiUrl(String)}}.
+     * Change the base URL used to make API calls.
+     *
+     * @param apiUrl API base URL.
      */
     public static void setApiUrl(String apiUrl) {
     }
@@ -105,7 +109,9 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #setEnabledForDebuggableBuild(boolean)}.
+     * Set whether the distribute service can be used within a debuggable build.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
      */
     public static void setEnabledForDebuggableBuild(boolean enabled) {
     }
@@ -121,7 +127,9 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #checkForUpdate()}.
+     * Trigger a check for update.
+     * If the application is in background, it will delay the check for update until the application is in foreground.
+     * This call has no effect if there is already an ongoing check.
      */
     public static void checkForUpdate() {
     }
