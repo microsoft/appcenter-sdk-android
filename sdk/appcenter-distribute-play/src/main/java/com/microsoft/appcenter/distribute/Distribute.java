@@ -127,6 +127,12 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Implements {@link #notifyUpdateAction(int)}.
+     */
+    synchronized void handleUpdateAction(final int updateAction) {
+    }
+
+    /**
      * Trigger a check for update.
      * If the application is in background, it will delay the check for update until the application is in foreground.
      * This call has no effect if there is already an ongoing check.
