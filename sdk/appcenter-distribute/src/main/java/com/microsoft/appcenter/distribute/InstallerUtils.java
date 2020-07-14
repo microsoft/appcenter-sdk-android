@@ -47,6 +47,7 @@ public class InstallerUtils {
         LOCAL_STORES.add("com.android.managedprovisioning");
         LOCAL_STORES.add("com.miui.packageinstaller");
         LOCAL_STORES.add("com.samsung.android.packageinstaller");
+        LOCAL_STORES.add("pc");
     }
 
     @VisibleForTesting

@@ -5,6 +5,7 @@
 ### App Center
 
 * **[Fix]** Fix an `IncorrectContextUseViolation` warning when calculating screen size on Android 11.
+* **[Fix]** Fix distribute update check wrong result possible for several devices.
 
 ___
 
