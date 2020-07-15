@@ -56,7 +56,7 @@ public class DatabaseManagerAndroidTest {
      * Test database creation command.
      */
     private static final String CREATE_TEST_SQL = "CREATE TABLE IF NOT EXISTS `databaseManager`" +
-            " (oid INTEGER PRIMARY KEY AUTOINCREMENT," +
+            " (`oid` INTEGER PRIMARY KEY AUTOINCREMENT," +
             "`COL_BYTE` INTEGER, `COL_SHORT` INTEGER," +
             "`COL_LONG` INTEGER," +
             "`COL_BOOLEAN` INTEGER," +

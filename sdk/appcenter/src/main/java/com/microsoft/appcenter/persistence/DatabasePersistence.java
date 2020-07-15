@@ -140,7 +140,7 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final String CREATE_LOGS_SQL = "CREATE TABLE IF NOT EXISTS `logs`" +
-            "(oid INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "(`oid` INTEGER PRIMARY KEY AUTOINCREMENT," +
             "`target_token` TEXT," +
             "`type` TEXT," +
             "`priority` INTEGER," +
