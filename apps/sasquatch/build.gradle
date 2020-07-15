@@ -11,7 +11,7 @@ evaluationDependsOn(':apps')
 
 android {
 
-    flavorDimensions "dependency", "pushLibrary", "distribute"
+    flavorDimensions "dependency", "distribute"
 
     defaultConfig {
         externalNativeBuild {
@@ -36,12 +36,6 @@ android {
         }
         googlePlay {
             dimension "distribute"
-        }
-        vanilla {
-            dimension "pushLibrary"
-        }
-        firebase {
-            dimension "pushLibrary"
         }
     }
 
@@ -95,11 +89,7 @@ dependencies {
     implementation 'com.android.support.test.espresso:espresso-idling-resource:3.0.2'
 }
 
-// We are interested in excluding the plugin only for the vanilla sasquatch build variant.
-def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
-if (!taskRequests.contains("sasquatch") || taskRequests.contains("Firebase")) {
-    apply plugin: 'com.google.gms.google-services'
-}
+apply plugin: 'com.google.gms.google-services'
 
 /*
  * Project and jcenter conflict since they are not using same version of Push and
