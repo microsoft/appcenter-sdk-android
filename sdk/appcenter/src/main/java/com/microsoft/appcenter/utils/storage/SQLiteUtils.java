@@ -5,44 +5,13 @@
 
 package com.microsoft.appcenter.utils.storage;
 
-import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.support.annotation.NonNull;
-
-import java.util.Map;
 
 public class SQLiteUtils {
 
     @NonNull
     public static SQLiteQueryBuilder newSQLiteQueryBuilder() {
         return new SQLiteQueryBuilder();
-    }
-
-    public static void createTable(SQLiteDatabase db, String table, ContentValues schema) {
-
-        /* Generate a schema from specimen. */
-        StringBuilder sql = new StringBuilder("CREATE TABLE IF NOT EXISTS `");
-        sql.append(table);
-        sql.append("` (oid INTEGER PRIMARY KEY AUTOINCREMENT");
-        for (Map.Entry<String, Object> col : schema.valueSet()) {
-            sql.append(", `").append(col.getKey()).append("` ");
-            Object val = col.getValue();
-            if (val instanceof Double || val instanceof Float) {
-                sql.append("REAL");
-            } else if (val instanceof Number || val instanceof Boolean) {
-                sql.append("INTEGER");
-            } else if (val instanceof byte[]) {
-                sql.append("BLOB");
-            } else {
-                sql.append("TEXT");
-            }
-        }
-        sql.append(");");
-        db.execSQL(sql.toString());
-    }
-
-    public static void dropTable(@NonNull SQLiteDatabase db, @NonNull String table) {
-        db.execSQL(String.format("DROP TABLE `%s`", table));
     }
 }
