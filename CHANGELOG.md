@@ -22,6 +22,10 @@ ___
 
 * **[Fix]** Fix checking updates when application switches from background to foreground if the SDK was started after `onCreate` callback.
 
+### App Center Distribute Play
+
+App Center Distribute Play is a package with stubbed APIs for Distribute module to avoid violating Google's guidelines by publishing the applications. It must be used only for assemblies which are going to be published on Google Play.
+
 ___
 
 ## Version 3.2.0
