@@ -14,9 +14,7 @@
     <string name="appcenter_distribute_unknown_sources_dialog_message"></string>
     <string name="appcenter_distribute_unknown_sources_dialog_settings"></string>
     <string name="appcenter_distribute_downloading_update" tools:ignore="MissingTranslation"></string>
-    <!-- TODO: Deprecated. Remove this key and move the translated strings to appcenter_distribute_downloading_update. -->
     <string name="appcenter_distribute_downloading_mandatory_update"></string>
-    <!-- TODO: Add translations. -->
     <string name="appcenter_distribute_downloading_error" tools:ignore="MissingTranslation"></string>
     <string name="appcenter_distribute_download_progress_number_format"></string>
     <string name="appcenter_distribute_install_ready_title"></string>
