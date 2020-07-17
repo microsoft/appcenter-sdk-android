@@ -122,6 +122,38 @@ public class AppStoreDetectionTest {
         verifyNotFromAppStore();
     }
 
+    @Test
+    public void pcLocalInstallerIsNotStore() {
+        setInstallerPackageName("pc");
+
+        /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
+    @Test
+    public void firefoxLocalInstallerIsNotStore() {
+        setInstallerPackageName("org.mozilla.firefox");
+
+        /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
+    @Test
+    public void chromeLocalInstallerIsNotStore() {
+        setInstallerPackageName("com.android.chrome");
+
+        /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
+    @Test
+    public void googleFilesLocalInstallerIsNotStore() {
+        setInstallerPackageName("com.google.android.apps.nbu.files");
+
+        /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
     private void setInstallerPackageName(String packageName) {
         when(mPackageManager.getInstallerPackageName(anyString())).thenReturn(packageName);
     }
