@@ -112,6 +112,13 @@ subprojects {
                 'jacoco/testDebugUnitTest.exec',
                 'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec'
         ])
+
+        /* Exclude coverage report result for appcenter-distribute-play module from the main coverage report. */
+        if ("$projectDir".contains('appcenter-distribute-play')) {
+            executionData.from = []
+            classDirectories.from = []
+            sourceDirectories.from = []
+        }
     }
 
     task sourcesJar(type: Jar) {
