@@ -56,6 +56,7 @@ import java.util.Map;
 import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.CREATE_LOGS_SQL;
 import static com.microsoft.appcenter.persistence.DatabasePersistence.SCHEMA;
 import static com.microsoft.appcenter.test.TestUtils.generateString;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -1105,7 +1106,7 @@ public class DatabasePersistenceAndroidTest {
 
         /* Initialize database persistence with old version. */
         ContentValues schema = new ContentValues(SCHEMA);
-        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TIMESTAMP_COLUMN, schema, mock(DatabaseManager.Listener.class));
+        DatabaseManager databaseManager = new DatabaseManager(sContext, DatabasePersistence.DATABASE, DatabasePersistence.TABLE, DatabasePersistence.VERSION_TIMESTAMP_COLUMN, schema, CREATE_LOGS_SQL, mock(DatabaseManager.Listener.class));
 
         /* Init log serializer. */
         LogSerializer logSerializer = new DefaultLogSerializer();

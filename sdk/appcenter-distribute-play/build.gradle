@@ -1,0 +1,11 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+project.description = 'This package contains functionalities to get in-app updates for your application.'
+evaluationDependsOn(':sdk')
+
+dependencies {
+    api project(':sdk:appcenter')
+}

@@ -115,11 +115,6 @@ public class DatabasePersistence extends Persistence {
     static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0);
 
     /**
-     * Priority index.
-     */
-    private static final String INDEX_PRIORITY = "ix_" + TABLE + "_" + COLUMN_PRIORITY;
-
-    /**
      * Order by clause to select logs.
      */
     private static final String GET_SORT_ORDER = COLUMN_PRIORITY + " DESC, " + PRIMARY_KEY;
@@ -139,6 +134,29 @@ public class DatabasePersistence extends Persistence {
      * Large payload file extension.
      */
     private static final String PAYLOAD_FILE_EXTENSION = ".json";
+
+    /**
+     * SQL command to create logs table
+     */
+    @VisibleForTesting
+    static final String CREATE_LOGS_SQL = "CREATE TABLE IF NOT EXISTS `logs`" +
+            "(`oid` INTEGER PRIMARY KEY AUTOINCREMENT," +
+            "`target_token` TEXT," +
+            "`type` TEXT," +
+            "`priority` INTEGER," +
+            "`log` TEXT," +
+            "`persistence_group` TEXT," +
+            "`target_key` TEXT);";
+
+    /**
+     * SQL command to drop logs table
+     */
+    private static final String DROP_LOGS_SQL = "DROP TABLE `logs`";
+    
+    /**
+     * SQL command to create index for logs
+     */
+    private static final String CREATE_PRIORITY_INDEX_LOGS = "CREATE INDEX `ix_logs_priority` ON logs (`priority`)";
 
     /**
      * Database manager instance to access Persistence database.
@@ -188,15 +206,12 @@ public class DatabasePersistence extends Persistence {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
-        mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, version, schema, new DatabaseManager.Listener() {
+        mDatabaseManager = new DatabaseManager(context, DATABASE, TABLE, version, schema, CREATE_LOGS_SQL, new DatabaseManager.Listener() {
 
-            private void createPriorityIndex(SQLiteDatabase db) {
-                db.execSQL("CREATE INDEX `" + INDEX_PRIORITY + "` ON " + TABLE + " (`" + COLUMN_PRIORITY + "`)");
-            }
 
             @Override
             public void onCreate(SQLiteDatabase db) {
-                createPriorityIndex(db);
+                db.execSQL(CREATE_PRIORITY_INDEX_LOGS);
             }
 
             @Override
@@ -208,9 +223,9 @@ public class DatabasePersistence extends Persistence {
                  * When adding a new column in a future version, update this code by something like
                  * if (oldVersion <= VERSION_TIMESTAMP_COLUMN) {drop/create} else {add missing columns}
                  */
-                SQLiteUtils.dropTable(db, TABLE);
-                SQLiteUtils.createTable(db, TABLE, schema);
-                createPriorityIndex(db);
+                db.execSQL(DROP_LOGS_SQL);
+                db.execSQL(CREATE_LOGS_SQL);
+                db.execSQL(CREATE_PRIORITY_INDEX_LOGS);
             }
         });
         mLargePayloadDirectory = new File(Constants.FILES_PATH + PAYLOAD_LARGE_DIRECTORY);

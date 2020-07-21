@@ -47,6 +47,10 @@ public class InstallerUtils {
         LOCAL_STORES.add("com.android.managedprovisioning");
         LOCAL_STORES.add("com.miui.packageinstaller");
         LOCAL_STORES.add("com.samsung.android.packageinstaller");
+        LOCAL_STORES.add("pc");
+        LOCAL_STORES.add("com.google.android.apps.nbu.files");
+        LOCAL_STORES.add("org.mozilla.firefox");
+        LOCAL_STORES.add("com.android.chrome");
     }
 
     @VisibleForTesting
