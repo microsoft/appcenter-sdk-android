@@ -1,6 +1,6 @@
 # App Center SDK for Android Change Log
 
-## Version 3.2.3
+## Version 3.3.0
 
 ### App Center
 
