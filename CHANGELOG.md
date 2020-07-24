@@ -10,6 +10,9 @@ ___
 
 * **[Fix]** Fix an `IncorrectContextUseViolation` warning when calculating screen size on Android 11.
 * **[Fix]** All SQL commands used in SDK are presented as raw strings to avoid any possible static analyzer's SQL injection false alarms.
+
+### App Center Distribute
+
 * **[Fix]** Fix Distribute can't get updates for Realme devices which use Realme UI.
 
 ### App Center Distribute Play
