@@ -1,17 +1,15 @@
-#!/bin/bash
-set -e
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
 
-function getProperty {
-   PROP_KEY=$1
-   PROP_VALUE=`cat $PROPERTY_FILE | sed 's/ //g' | grep "$PROP_KEY" | cut -d'=' -f2`
-   echo $PROP_VALUE
+function get_property {
+   echo `cat $PROPERTY_FILE | sed 's/ //g' | grep "$1" | cut -d'=' -f2`
 }
 
 PROJECT_DIR="$(dirname "$0")/.."
 PROPERTY_FILE="$HOME/Library/Android/sdk/ndk-bundle/source.properties"
 
 echo "Reading ndk version from source.properties file..."
-VERSION=$(getProperty "Pkg.Revision")
+VERSION=$(get_property "Pkg.Revision")
 echo $VERSION
 GRADLE_FILE="$PROJECT_DIR/apps/sasquatch/build.gradle"
 
