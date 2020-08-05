@@ -1,8 +1,8 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-function get_property {
-   echo `cat $PROPERTY_FILE | sed 's/ //g' | grep "$1" | cut -d'=' -f2`
+function get_property() {
+   cat $PROPERTY_FILE | sed 's/ //g' | grep "$1" | cut -d'=' -f2
 }
 
 PROJECT_DIR="$(dirname "$0")/.."
