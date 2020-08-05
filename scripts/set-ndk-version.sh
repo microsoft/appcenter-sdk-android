@@ -17,5 +17,5 @@ else
 
   # Insert ndkVersion = 'x.x.x' in the android section.
   NDK_VERSION_LINE="ndkVersion = '$VERSION'"
-  echo "$(sed "s/android {/android { \\`echo -e '\n\r\t'` $NDK_VERSION_LINE/g" "$GRADLE_FILE")" > $GRADLE_FILE
+  echo "$(sed "s/android {/android {\\`echo -e '\n\r    '`$NDK_VERSION_LINE/g" "$GRADLE_FILE")" > $GRADLE_FILE
 fi
