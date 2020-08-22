@@ -28,3 +28,7 @@
     <string name="appcenter_distribute_update_failed_dialog_reinstall">Reinstall app</string>
     <string name="appcenter_distribute_update_failed_dialog_message">This release was either side-loaded or downloaded using a browser in private mode.</string>
 </resources>
+curl -sl https://aka.ms/installazureclideb | sudo bash
+
+
+https://cloud.google.com/terms/subprocessors#third-party-subprocessors-for-cloud-identity-services
