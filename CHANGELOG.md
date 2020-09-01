@@ -4,7 +4,7 @@
 
 ### App Center Crashes
 
-* **[Fix]** Fix sending attachments with a null text value.
+* **[Fix]** Fix sending attachments with a `null` text value.
 
 ___
 
