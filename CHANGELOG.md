@@ -17,7 +17,7 @@ ___
 
 ### App Center Distribute Play
 
-App Center Distribute Play is a package with stubbed APIs for Distribute module to avoid Google Play flagging the application for malicious behavior. It must be used only for build variants which are going to be published on Google Play. See the [public documentation](https://docs.microsoft.com/en-us/appcenter/sdk/distribute/android) for more details about this change.
+App Center Distribute Play is a package with stubbed APIs for Distribute module to avoid Google Play flagging the application for malicious behavior. It must be used only for build variants which are going to be published on Google Play. See the [public documentation](https://docs.microsoft.com/en-us/appcenter/sdk/distribute/android#remove-in-app-updates-for-google-play-builds) for more details about this change.
 
 ___
 
