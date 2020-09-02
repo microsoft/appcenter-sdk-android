@@ -16,10 +16,10 @@ The App Center SDK uses a modular architecture so you can use any or all of the 
 
 3. **App Center Distribute**: App Center Distribute will let your users install a new version of the app when you distribute it via the App Center. With a new version of the app available, the SDK will present an update dialog to the users to either download or postpone the new version. Once they choose to update, the SDK will start to update your application.
 
-    > **Google can consider in-app update code as malicious behavior even if it isn't used at runtime. We recommend you to strip this code from your application before submitting it to Google Play.**
+    > **Google Play considers the in-app update code as malicious behavior even if it isn’t used at runtime. Please use App Center Distribute Play instead before submitting your app to Google Play. Failure to not remove the in-app update code can lead to noncompliance and removal of the app from Google Play.**
     > See [Remove in-app updates for Google Play builds](#remove-in-app-updates-for-google-play-builds) section for details.
 
-4. **App Center Distribute Play**: App Center Distribute Play is a package with stubbed APIs for Distribute module to avoid Google Play flagging the application for malicious behavior. It must be used only for build variants which are going to be published on Google Play.
+4. **App Center Distribute Play**: App Center Distribute Play is stubbing the Distribute package's APIs to avoid Google Play rejecting the application for malicious behavior. It must be used only for build variants which are going to be published on Google Play.
 
 5. **App Center Push**: App Center Push enables you to send push notifications to users of your app from the App Center portal. To do that, the App Center SDK and portal integrate with [Firebase Cloud Messaging](https://firebase.google.com/docs/cloud-messaging/). You can also segment your user base based on a set of properties and send them targeted notifications.
 
