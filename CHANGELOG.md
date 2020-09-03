@@ -2,6 +2,10 @@
 
 ## Version 3.3.1 (Under development)
 
+### App Center Crashes
+
+* **[Fix]** Fix sending attachments with a `null` text value.
+
 ___
 
 ## Version 3.3.0

@@ -79,6 +79,9 @@ public class ErrorAttachmentLog extends AbstractLog {
      * @return ErrorAttachmentLog built attachment.
      */
     public static ErrorAttachmentLog attachmentWithText(String text, String fileName) {
+        if (text == null) {
+            text = "";
+        }
         return attachmentWithBinary(text.getBytes(CHARSET), fileName, CONTENT_TYPE_TEXT_PLAIN);
     }
 
