@@ -229,6 +229,12 @@ public class ErrorLogHelper {
         }
     }
 
+    /**
+     * Setter for sCustomErrorDirectory, must be non null and non empty to be setted.
+     *
+     * @param pDirectoryName
+     */
+
     public static void setCustomErrorDirectory(@NonNull String pDirectoryName) {
         if(!pDirectoryName.isEmpty()) {
             sCustomErrorDirectory = pDirectoryName;

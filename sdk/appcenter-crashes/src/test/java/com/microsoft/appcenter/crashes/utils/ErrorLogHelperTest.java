@@ -180,6 +180,38 @@ public class ErrorLogHelperTest {
         }
     }
 
+    @Test
+    public void createErrorLogWithCustomErrorFolder() throws java.lang.Exception {
+
+        /* Dummy coverage of utils class. */
+        new ErrorLogHelper();
+
+        /* Custom Name Directory. */
+        String customNameDirectory = "CUSTOM_ERROR_LOG_DIRECTORY";
+
+        /* Mock base. */
+        Context mockContext = mock(Context.class);
+        when(Process.myPid()).thenReturn(123);
+        Date logTimestamp = new Date(1000L);
+        whenNew(Date.class).withNoArguments().thenReturn(logTimestamp);
+        whenNew(Date.class).withArguments(anyLong()).thenAnswer(new Answer<Date>() {
+
+            @Override
+            public Date answer(InvocationOnMock invocation) {
+                return new Date((Long) invocation.getArguments()[0]);
+            }
+        });
+
+        /* Set up Custom Error Folder. */
+        ErrorLogHelper.setCustomErrorDirectory(customNameDirectory);
+        File errorLogFolder = mTemporaryFolder.newFolder(customNameDirectory);
+        ErrorLogHelper.setErrorLogDirectory(errorLogFolder);
+        String folderName = ErrorLogHelper.getErrorStorageDirectory().getName();
+
+        assertEquals(customNameDirectory,folderName);
+
+    }
+
     private void sanityCheck(Exception exception) {
         assertNotNull(exception);
         assertNotNull(exception.getType());
