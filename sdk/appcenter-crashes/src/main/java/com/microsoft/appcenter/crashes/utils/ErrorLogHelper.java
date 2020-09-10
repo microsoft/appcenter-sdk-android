@@ -138,6 +138,11 @@ public class ErrorLogHelper {
      */
     private static File sPendingMinidumpDirectory;
 
+    /**
+     * Custom error directory file name.
+     */
+    private static String sCustomErrorDirectory = "";
+
     @NonNull
     public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
         return createErrorLog(context, thread, getModelExceptionFromThrowable(throwable), allStackTraces, initializeTimestamp, true);
@@ -224,10 +229,20 @@ public class ErrorLogHelper {
         }
     }
 
+    public static void setCustomErrorDirectory(@NonNull String pDirectoryName) {
+        if(!pDirectoryName.isEmpty()) {
+            sCustomErrorDirectory = pDirectoryName;
+        }
+    }
+
     @NonNull
     public static synchronized File getErrorStorageDirectory() {
         if (sErrorLogDirectory == null) {
-            sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
+            if(!sCustomErrorDirectory.isEmpty()) {
+                sErrorLogDirectory = new File(Constants.FILES_PATH, sCustomErrorDirectory);
+            } else {
+                sErrorLogDirectory = new File(Constants.FILES_PATH, ERROR_DIRECTORY);
+            }
             FileManager.mkdir(sErrorLogDirectory.getAbsolutePath());
         }
         return sErrorLogDirectory;
