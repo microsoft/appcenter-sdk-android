@@ -189,19 +189,6 @@ public class ErrorLogHelperTest {
         /* Custom Name Directory. */
         String customNameDirectory = "CUSTOM_ERROR_LOG_DIRECTORY";
 
-        /* Mock base. */
-        Context mockContext = mock(Context.class);
-        when(Process.myPid()).thenReturn(123);
-        Date logTimestamp = new Date(1000L);
-        whenNew(Date.class).withNoArguments().thenReturn(logTimestamp);
-        whenNew(Date.class).withArguments(anyLong()).thenAnswer(new Answer<Date>() {
-
-            @Override
-            public Date answer(InvocationOnMock invocation) {
-                return new Date((Long) invocation.getArguments()[0]);
-            }
-        });
-
         /* Set up Custom Error Folder. */
         ErrorLogHelper.setCustomErrorDirectory(customNameDirectory);
         File errorLogFolder = mTemporaryFolder.newFolder(customNameDirectory);
