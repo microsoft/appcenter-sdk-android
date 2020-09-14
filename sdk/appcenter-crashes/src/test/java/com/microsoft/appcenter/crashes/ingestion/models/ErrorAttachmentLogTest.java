@@ -31,6 +31,17 @@ public class ErrorAttachmentLogTest {
     }
 
     @Test
+    public void attachmentWithNullText() {
+        String text = null;
+        String fileName = "1";
+        ErrorAttachmentLog attachment = ErrorAttachmentLog.attachmentWithText(text, fileName);
+        assertNotNull(attachment);
+        assertEquals("", new String(attachment.getData(), CHARSET));
+        assertEquals(fileName, attachment.getFileName());
+        assertEquals(ErrorAttachmentLog.CONTENT_TYPE_TEXT_PLAIN, attachment.getContentType());
+    }
+
+    @Test
     public void attachmentWithBinary() {
         byte[] data = "Hello Binary!".getBytes();
         String fileName = "binary.txt";
