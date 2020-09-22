@@ -62,4 +62,7 @@ public interface CrashesListener {
      * @param report The crash report that was sent successfully.
      */
     void onSendingSucceeded(ErrorReport report);
+
+
+    String getDescription();
 }

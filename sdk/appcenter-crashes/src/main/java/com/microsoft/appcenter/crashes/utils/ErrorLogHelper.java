@@ -61,6 +61,11 @@ public class ErrorLogHelper {
     public static final String ERROR_LOG_FILE_EXTENSION = ".json";
 
     /**
+     * Extension for logcat log file
+     */
+    public static final String DESCRIPTION_FILE_EXTENSION = ".desc";
+
+    /**
      * Error log file extension for the serialized throwable for client side inspection.
      */
     public static final String THROWABLE_FILE_EXTENSION = ".throwable";
@@ -438,6 +443,19 @@ public class ErrorLogHelper {
         }
     }
 
+
+    @Nullable
+    static File getStoredDescriptionFile(@NonNull UUID id) {
+        return getStoredFile(id, DESCRIPTION_FILE_EXTENSION);
+    }
+
+    public static void removeStoredDescriptionFile(@NonNull UUID id) {
+        File file = getStoredDescriptionFile(id);
+        if (file != null) {
+            AppCenterLog.info(Crashes.LOG_TAG, "Deleting logcat log file " + file.getName());
+            FileManager.delete(file);
+        }
+    }
     @NonNull
     public static ErrorReport getErrorReportFromErrorLog(@NonNull ManagedErrorLog log, String stackTrace) {
         ErrorReport report = new ErrorReport();

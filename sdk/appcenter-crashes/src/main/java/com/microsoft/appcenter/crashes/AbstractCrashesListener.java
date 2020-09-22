@@ -42,4 +42,9 @@ public abstract class AbstractCrashesListener implements CrashesListener {
     @Override
     public void onSendingSucceeded(ErrorReport report) {
     }
+
+    @Override
+    public String getDescription() {
+        return null;
+    }
 }

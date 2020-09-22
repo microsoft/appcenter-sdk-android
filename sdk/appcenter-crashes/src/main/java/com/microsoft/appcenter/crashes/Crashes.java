@@ -341,6 +341,7 @@ public class Crashes extends AbstractAppCenterService {
         return getInstance().getInstanceLastSessionCrashReport();
     }
 
+
     /**
      * Check whether there was a memory warning in the last session.
      *
@@ -911,6 +912,7 @@ public class Crashes extends AbstractAppCenterService {
 
     private void removeAllStoredErrorLogFiles(UUID id) {
         ErrorLogHelper.removeStoredErrorLogFile(id);
+        ErrorLogHelper.removeStoredDescriptionFile(id);
         removeStoredThrowable(id);
     }
 
@@ -918,6 +920,7 @@ public class Crashes extends AbstractAppCenterService {
         mErrorReportCache.remove(id);
         WrapperSdkExceptionManager.deleteWrapperExceptionData(id);
         ErrorLogHelper.removeStoredThrowableFile(id);
+        ErrorLogHelper.removeStoredDescriptionFile(id);
     }
 
     @VisibleForTesting
@@ -1172,6 +1175,14 @@ public class Crashes extends AbstractAppCenterService {
                 throw new IOException(throwableFile.getName());
             }
             AppCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
+        }
+        //TODO: save logcat logs here
+        String descriptionString = mCrashesListener.getDescription(); //getLogcatLogs("800");
+        if(descriptionString != null)
+        {
+            File descriptionFile = new File(errorStorageDirectory, filename + ErrorLogHelper.DESCRIPTION_FILE_EXTENSION);
+            FileManager.write(descriptionFile, descriptionString);
+            AppCenterLog.debug(Crashes.LOG_TAG, "Saved description file for ingestion into " + descriptionFile);
         }
         return errorLogId;
     }
