@@ -61,7 +61,7 @@ public class ErrorLogHelper {
     public static final String ERROR_LOG_FILE_EXTENSION = ".json";
 
     /**
-     * Extension for logcat log file
+     * Extension for crash description file i.e. information captured at the moment of the crash
      */
     public static final String DESCRIPTION_FILE_EXTENSION = ".desc";
 
@@ -452,7 +452,7 @@ public class ErrorLogHelper {
     public static void removeStoredDescriptionFile(@NonNull UUID id) {
         File file = getStoredDescriptionFile(id);
         if (file != null) {
-            AppCenterLog.info(Crashes.LOG_TAG, "Deleting logcat log file " + file.getName());
+            AppCenterLog.info(Crashes.LOG_TAG, "Deleting description file " + file.getName());
             FileManager.delete(file);
         }
     }
