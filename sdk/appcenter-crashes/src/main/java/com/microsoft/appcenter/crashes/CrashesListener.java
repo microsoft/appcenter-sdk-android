@@ -63,10 +63,4 @@ public interface CrashesListener {
      */
     void onSendingSucceeded(ErrorReport report);
 
-    /**
-     * Function to supply string to capture at the moment of the crash
-     *
-     * @return String that will get written to .desc file
-     */
-    String getDescription();
 }

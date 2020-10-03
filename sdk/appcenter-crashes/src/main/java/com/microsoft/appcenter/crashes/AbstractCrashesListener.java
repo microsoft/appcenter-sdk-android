@@ -7,7 +7,6 @@ package com.microsoft.appcenter.crashes;
 
 import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
-
 /**
  * Abstract class with default behaviors for the crashes listener.
  */
@@ -41,10 +40,5 @@ public abstract class AbstractCrashesListener implements CrashesListener {
     @SuppressWarnings("EmptyMethod")
     @Override
     public void onSendingSucceeded(ErrorReport report) {
-    }
-
-    @Override
-    public String getDescription() {
-        return null;
     }
 }

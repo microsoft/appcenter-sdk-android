@@ -840,7 +840,6 @@ public class Crashes extends AbstractAppCenterService {
                     }
                 } catch (JSONException e) {
                     AppCenterLog.error(LOG_TAG, "Error parsing error log. Deleting invalid file: " + logFile, e);
-
                     //noinspection ResultOfMethodCallIgnored
                     logFile.delete();
                 }
@@ -912,7 +911,6 @@ public class Crashes extends AbstractAppCenterService {
 
     private void removeAllStoredErrorLogFiles(UUID id) {
         ErrorLogHelper.removeStoredErrorLogFile(id);
-        ErrorLogHelper.removeStoredDescriptionFile(id);
         removeStoredThrowable(id);
     }
 
@@ -920,7 +918,6 @@ public class Crashes extends AbstractAppCenterService {
         mErrorReportCache.remove(id);
         WrapperSdkExceptionManager.deleteWrapperExceptionData(id);
         ErrorLogHelper.removeStoredThrowableFile(id);
-        ErrorLogHelper.removeStoredDescriptionFile(id);
     }
 
     @VisibleForTesting
@@ -1100,14 +1097,16 @@ public class Crashes extends AbstractAppCenterService {
      * @param thread    thread where crash occurred.
      * @param throwable uncaught exception or error.
      */
-    void saveUncaughtException(Thread thread, Throwable throwable) {
+    public UUID saveUncaughtException(Thread thread, Throwable throwable) {
+        UUID reportUUID = null;
         try {
-            saveUncaughtException(thread, throwable, ErrorLogHelper.getModelExceptionFromThrowable(throwable));
+            reportUUID = saveUncaughtException(thread, throwable, ErrorLogHelper.getModelExceptionFromThrowable(throwable));
         } catch (JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
         } catch (IOException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
         }
+        return reportUUID;
     }
 
     /**
@@ -1175,14 +1174,6 @@ public class Crashes extends AbstractAppCenterService {
                 throw new IOException(throwableFile.getName());
             }
             AppCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
-        }
-        //TODO: save logcat logs here
-        String descriptionString = mCrashesListener.getDescription(); //getLogcatLogs("800");
-        if(descriptionString != null)
-        {
-            File descriptionFile = new File(errorStorageDirectory, filename + ErrorLogHelper.DESCRIPTION_FILE_EXTENSION);
-            FileManager.write(descriptionFile, descriptionString);
-            AppCenterLog.debug(Crashes.LOG_TAG, "Saved description file for ingestion into " + descriptionFile);
         }
         return errorLogId;
     }
