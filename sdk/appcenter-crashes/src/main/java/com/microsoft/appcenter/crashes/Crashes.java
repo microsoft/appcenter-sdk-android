@@ -840,6 +840,7 @@ public class Crashes extends AbstractAppCenterService {
                     }
                 } catch (JSONException e) {
                     AppCenterLog.error(LOG_TAG, "Error parsing error log. Deleting invalid file: " + logFile, e);
+
                     //noinspection ResultOfMethodCallIgnored
                     logFile.delete();
                 }
