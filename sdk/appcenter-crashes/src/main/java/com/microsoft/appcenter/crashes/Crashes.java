@@ -341,7 +341,6 @@ public class Crashes extends AbstractAppCenterService {
         return getInstance().getInstanceLastSessionCrashReport();
     }
 
-
     /**
      * Check whether there was a memory warning in the last session.
      *
