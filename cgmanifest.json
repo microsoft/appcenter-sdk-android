@@ -34,16 +34,6 @@
             "component": {
                 "type": "Maven",
                 "maven": {
-                    "artifactId": "google-services",
-                    "groupId": "com.google.gms",
-                    "version": "4.0.1"
-                }
-            }
-        },
-        {
-            "component": {
-                "type": "Maven",
-                "maven": {
                     "artifactId": "coveralls-gradle-plugin",
                     "groupId": "org.kt3k.gradle.plugin",
                     "version": "2.8.2"
