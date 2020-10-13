@@ -10,7 +10,6 @@ include ':sdk:appcenter-crashes'
 include ':sdk:appcenter-analytics'
 include ':sdk:appcenter-distribute'
 include ':sdk:appcenter-distribute-play'
-include ':sdk:appcenter-push'
 
 // common test code
 include ':test'
