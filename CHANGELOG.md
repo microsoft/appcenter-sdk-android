@@ -2,6 +2,10 @@
 
 ## Version 3.3.2 (Under development)
 
+### App Center Push
+
+* App Center Push is [retired](https://aka.ms/MBaaS-retirement-blog-post) and has been removed from the SDK.
+
 ___
 
 ## Version 3.3.1
