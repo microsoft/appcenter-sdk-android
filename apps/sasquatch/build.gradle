@@ -68,12 +68,10 @@ dependencies {
 
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
-    projectDependencyImplementation project(':sdk:appcenter-push')
 
     def appCenterSdkVersion = "3.3.1"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-push:${appCenterSdkVersion}"
 
     def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
     if (taskRequests.contains("GooglePlay")) {
