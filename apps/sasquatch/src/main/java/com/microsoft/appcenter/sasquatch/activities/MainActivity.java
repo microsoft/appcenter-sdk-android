@@ -35,8 +35,6 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.distribute.Distribute;
-import com.microsoft.appcenter.push.Push;
-import com.microsoft.appcenter.push.PushListener;
 import com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
@@ -44,7 +42,6 @@ import com.microsoft.appcenter.sasquatch.features.TestFeaturesListAdapter;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
-import com.microsoft.appcenter.sasquatch.listeners.SasquatchPushListener;
 import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
@@ -67,8 +64,6 @@ public class MainActivity extends AppCompatActivity {
 
     static final String LOG_URL_KEY = "logUrl";
 
-    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
-
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
 
     public static final String MSA_TOKEN_KEY = "MSAToken";
@@ -90,8 +85,6 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("StaticFieldLeak")
     static SasquatchCrashesListener sCrashesListener;
-
-    static SasquatchPushListener sPushListener;
 
     static {
         System.loadLibrary("SasquatchBreakpad");
@@ -160,19 +153,14 @@ public class MainActivity extends AppCompatActivity {
                 appIdArg = String.format("appsecret=%s;target=%s", appId, targetId);
                 break;
             case NO_SECRET:
-                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class, Push.class);
+                AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class);
                 return;
         }
-        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class, Push.class);
+        AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class);
     }
 
     public static void setUserId(String userId) {
         AppCenter.setUserId(userId);
-    }
-
-    @SuppressWarnings("deprecation")
-    private void setSenderId() {
-        Push.setSenderId(SENDER_ID);
     }
 
     private void setMaxStorageSize() {
@@ -225,7 +213,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         Log.d(LOG_TAG, "onNewIntent triggered");
-        Push.checkLaunchedFromNotification(this, intent);
     }
 
     @NonNull
@@ -242,14 +229,6 @@ public class MainActivity extends AppCompatActivity {
             sCrashesListener = new SasquatchCrashesListener(this);
         }
         return sCrashesListener;
-    }
-
-    @NonNull
-    private PushListener getPushListener() {
-        if (sPushListener == null) {
-            sPushListener = new SasquatchPushListener();
-        }
-        return sPushListener;
     }
 
     @Override
@@ -272,7 +251,6 @@ public class MainActivity extends AppCompatActivity {
         AnalyticsPrivateHelper.setListener(getAnalyticsListener());
         Crashes.setListener(getCrashesListener());
         Distribute.setListener(new SasquatchDistributeListener());
-        Push.setListener(getPushListener());
 
         /* Set distribute urls. */
         String installUrl = getString(R.string.install_url);
@@ -284,16 +262,8 @@ public class MainActivity extends AppCompatActivity {
             Distribute.setApiUrl(apiUrl);
         }
 
-        /* Set push sender ID the old way for testing without firebase lib. */
-        setSenderId();
-
         /* Set crash attachments. */
         AttachmentsUtil.getInstance();
-
-        /* Enable Firebase analytics if we enabled the setting previously. */
-        if (sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false)) {
-            Push.enableFirebaseAnalytics(this);
-        }
 
         /* Set max storage size. */
         setMaxStorageSize();

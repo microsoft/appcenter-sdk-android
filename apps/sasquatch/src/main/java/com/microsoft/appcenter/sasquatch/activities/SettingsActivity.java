@@ -36,7 +36,6 @@ import com.microsoft.appcenter.analytics.AnalyticsPrivateHelper;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.UpdateTrack;
-import com.microsoft.appcenter.push.Push;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.activities.MainActivity.StartType;
 import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
@@ -55,7 +54,6 @@ import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANA
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APPCENTER_START_TYPE;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_URL_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MAX_STORAGE_SIZE_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TARGET_KEY;
@@ -348,53 +346,6 @@ public class SettingsActivity extends AppCompatActivity {
                     preference.setSummary(updateTrackHasSummary.getSummary());
                     Toast.makeText(getActivity(), R.string.appcenter_distribute_track_state_updated, Toast.LENGTH_SHORT).show();
                     return true;
-                }
-            });
-
-            /* Push. */
-            initCheckBoxSetting(R.string.appcenter_push_state_key, R.string.appcenter_push_state_summary_enabled, R.string.appcenter_push_state_summary_disabled, new HasEnabled() {
-
-                @Override
-                public void setEnabled(boolean enabled) {
-                    Push.setEnabled(enabled);
-                }
-
-                @Override
-                public boolean isEnabled() {
-                    return Push.isEnabled().get();
-                }
-            });
-
-            /* Push. */
-            initCheckBoxSetting(R.string.appcenter_push_firebase_state_key, R.string.appcenter_push_firebase_summary_enabled, R.string.appcenter_push_firebase_summary_disabled, new HasEnabled() {
-
-                @Override
-                @SuppressWarnings("unchecked")
-                public void setEnabled(boolean enabled) {
-                    try {
-                        if (enabled) {
-                            Push.enableFirebaseAnalytics(getActivity());
-                        } else {
-
-                            /* Remove reflection once vanilla build variant is removed and merged with firebase build variant. */
-                            try {
-                                Class firebaseAnalyticsClass = Class.forName("com.google.firebase.analytics.FirebaseAnalytics");
-                                Object analyticsInstance = firebaseAnalyticsClass.getMethod("getInstance", Context.class).invoke(null, getActivity());
-                                firebaseAnalyticsClass.getMethod("setAnalyticsCollectionEnabled", boolean.class).invoke(analyticsInstance, false);
-                            } catch (Exception ignored) {
-
-                                /* Nothing to handle; this is reached if Firebase isn't being used. */
-                            }
-                        }
-                        MainActivity.sSharedPreferences.edit().putBoolean(FIREBASE_ENABLED_KEY, enabled).apply();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-
-                @Override
-                public boolean isEnabled() {
-                    return isFirebaseEnabled();
                 }
             });
 
@@ -850,10 +801,6 @@ public class SettingsActivity extends AppCompatActivity {
                 formattedInterval = days + "." + formattedInterval;
             }
             return interval + getString(R.string.appcenter_analytics_transmission_interval_summary_format) + formattedInterval;
-        }
-
-        private boolean isFirebaseEnabled() {
-            return MainActivity.sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false);
         }
 
         private String getCrashesTextAttachmentSummary() {
