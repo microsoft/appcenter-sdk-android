@@ -54,7 +54,6 @@ import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.ANA
 import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APPCENTER_START_TYPE;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.APP_SECRET_KEY;
-import static com.microsoft.appcenter.sasquatch.activities.MainActivity.FIREBASE_ENABLED_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.LOG_URL_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.MAX_STORAGE_SIZE_KEY;
 import static com.microsoft.appcenter.sasquatch.activities.MainActivity.TARGET_KEY;
@@ -802,10 +801,6 @@ public class SettingsActivity extends AppCompatActivity {
                 formattedInterval = days + "." + formattedInterval;
             }
             return interval + getString(R.string.appcenter_analytics_transmission_interval_summary_format) + formattedInterval;
-        }
-
-        private boolean isFirebaseEnabled() {
-            return MainActivity.sSharedPreferences.getBoolean(FIREBASE_ENABLED_KEY, false);
         }
 
         private String getCrashesTextAttachmentSummary() {

@@ -44,26 +44,6 @@
             "component": {
                 "type": "Maven",
                 "maven": {
-                    "artifactId": "firebase-core",
-                    "groupId": "com.google.firebase",
-                    "version": "16.0.9"
-                }
-            }
-        },
-        {
-            "component": {
-                "type": "Maven",
-                "maven": {
-                    "artifactId": "firebase-messaging",
-                    "groupId": "com.google.firebase",
-                    "version": "18.0.0"
-                }
-            }
-        },
-        {
-            "component": {
-                "type": "Maven",
-                "maven": {
                     "artifactId": "espresso-core",
                     "groupId": "com.android.support.test.espresso",
                     "version": "3.0.2"

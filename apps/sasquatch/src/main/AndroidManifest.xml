@@ -68,14 +68,6 @@
         <activity
             android:name=".activities.MSALoginActivity"
             android:label="@string/msa_title" />
-
-        <!-- Set default notification icon and color. -->
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_appcenter_logo" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/appcenter_logo" />
     </application>
 
 </manifest>

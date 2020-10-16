@@ -64,8 +64,6 @@ public class MainActivity extends AppCompatActivity {
 
     static final String LOG_URL_KEY = "logUrl";
 
-    static final String FIREBASE_ENABLED_KEY = "firebaseEnabled";
-
     static final String MAX_STORAGE_SIZE_KEY = "maxStorageSize";
 
     public static final String MSA_TOKEN_KEY = "MSAToken";
