@@ -1096,6 +1096,7 @@ public class Crashes extends AbstractAppCenterService {
      *
      * @param thread    thread where crash occurred.
      * @param throwable uncaught exception or error.
+     * @return UUID uncaught exception's UUID.
      */
     public UUID saveUncaughtException(Thread thread, Throwable throwable) {
         UUID reportUUID = null;
