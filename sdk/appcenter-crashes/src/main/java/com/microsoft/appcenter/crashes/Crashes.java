@@ -1096,15 +1096,18 @@ public class Crashes extends AbstractAppCenterService {
      *
      * @param thread    thread where crash occurred.
      * @param throwable uncaught exception or error.
+     * @return UUID uncaught exception's UUID.
      */
-    void saveUncaughtException(Thread thread, Throwable throwable) {
+    public UUID saveUncaughtException(Thread thread, Throwable throwable) {
+        UUID reportUUID = null;
         try {
-            saveUncaughtException(thread, throwable, ErrorLogHelper.getModelExceptionFromThrowable(throwable));
+            reportUUID = saveUncaughtException(thread, throwable, ErrorLogHelper.getModelExceptionFromThrowable(throwable));
         } catch (JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Error serializing error log to JSON", e);
         } catch (IOException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Error writing error log to file", e);
         }
+        return reportUUID;
     }
 
     /**
