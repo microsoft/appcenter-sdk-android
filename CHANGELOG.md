@@ -4,7 +4,7 @@
 
 ### App Center Crashes
 
-* **[Feature]** Return error log identifier when calling `saveUncaughtException` method.
+* **[Feature]** Convert the `saveUncaughtException` method to public and return error log identifier when calling it.
 
 ### App Center Push
 
