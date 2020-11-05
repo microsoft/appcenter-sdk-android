@@ -31,7 +31,6 @@ import static com.microsoft.appcenter.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
 import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 
-@RequiresApi(Build.VERSION_CODES.KITKAT)
 class CryptoRsaHandler implements CryptoHandler {
 
     @Override

@@ -100,70 +100,6 @@ public class DeviceInfoHelperTest {
         DeviceInfoHelper.setWrapperSdk(null);
     }
 
-    @Test
-    public void getDeviceInfoApi17() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
-
-        /* Mock system calls. */
-        //noinspection WrongConstant
-        when(mContext.getSystemService(eq(Context.DISPLAY_SERVICE))).thenReturn(mDisplayManager);
-        when(mDisplayManager.getDisplay(anyInt())).thenReturn(mDisplay);
-        //noinspection WrongConstant
-        when(mContext.getResources()).thenReturn(mResources);
-        //noinspection WrongConstant
-        when(mResources.getDisplayMetrics()).thenReturn(mDisplayMetrics);
-        mDisplayMetrics.widthPixels = SCREEN_WIDTH;
-        mDisplayMetrics.heightPixels = SCREEN_HEIGHT;
-
-        /* Call getDeviceInfo for Android API 17. */
-        getDeviceInfo(17);
-
-        /* Verify the right API was called to get a screen size. */
-        verify(mContext, atLeastOnce()).getSystemService(eq(Context.DISPLAY_SERVICE));
-        verify(mContext, atLeastOnce()).getResources();
-        verify(mResources, atLeastOnce()).getDisplayMetrics();
-        //noinspection deprecation
-        verify(mDisplay, never()).getSize(any(Point.class));
-        verify(mContext, never()).getSystemService(eq(Context.WINDOW_SERVICE));
-        //noinspection deprecation
-        verify(mWindowManager, never()).getDefaultDisplay();
-    }
-
-    @Test
-    public void getDeviceInfoApi16() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
-
-        /* Mock system calls. */
-        //noinspection WrongConstant
-        when(mContext.getSystemService(eq(Context.WINDOW_SERVICE))).thenReturn(mWindowManager);
-        //noinspection deprecation
-        when(mWindowManager.getDefaultDisplay()).thenReturn(mDisplay);
-        //noinspection deprecation
-        doAnswer(new Answer<Void>() {
-
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) {
-
-                /* Do not call set method and assign values directly to variables. */
-                Object[] args = invocationOnMock.getArguments();
-                ((Point) args[0]).x = SCREEN_WIDTH;
-                ((Point) args[0]).y = SCREEN_HEIGHT;
-                return null;
-            }
-        }).when(mDisplay).getSize(any(Point.class));
-
-        /* Call getDeviceInfo for Android API 16. */
-        getDeviceInfo(16);
-
-        /* Verify the right API was called to get a screen size. */
-        verify(mContext, never()).getSystemService(eq(Context.DISPLAY_SERVICE));
-        verify(mContext, never()).getResources();
-        verify(mResources, never()).getDisplayMetrics();
-        //noinspection deprecation
-        verify(mDisplay, atLeastOnce()).getSize(any(Point.class));
-        verify(mContext, atLeastOnce()).getSystemService(eq(Context.WINDOW_SERVICE));
-        //noinspection deprecation
-        verify(mWindowManager, atLeastOnce()).getDefaultDisplay();
-    }
-
     public void getDeviceInfo(Integer osApiLevel) throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
 
         /* Mock data. */
@@ -292,8 +228,6 @@ public class DeviceInfoHelperTest {
         when(mContext.getSystemService(Context.WINDOW_SERVICE)).thenReturn(mWindowManager);
         //noinspection WrongConstant
         when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
-        //noinspection deprecation
-        when(mWindowManager.getDefaultDisplay()).thenReturn(mDisplay);
 
         /* Verify. */
         Device device = DeviceInfoHelper.getDeviceInfo(mContext);

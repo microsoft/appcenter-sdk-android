@@ -151,19 +151,11 @@ public class DeviceInfoHelper {
         Point size = new Point();
 
         /* Use DeviceManager to avoid android.os.strictmode.IncorrectContextUseViolation when StrictMode is enabled on API 30. */
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            DisplayManager displayManager = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
-            defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
-            DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
-            size.x = displayMetrics.widthPixels;
-            size.y = displayMetrics.heightPixels;
-        } else {
-            //noinspection deprecation
-            defaultDisplay = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE))
-                    .getDefaultDisplay();
-            //noinspection deprecation
-            defaultDisplay.getSize(size);
-        }
+        DisplayManager displayManager = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
+        defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+        size.x = displayMetrics.widthPixels;
+        size.y = displayMetrics.heightPixels;
         switch (defaultDisplay.getRotation()) {
             case Surface.ROTATION_90:
             case Surface.ROTATION_270:
