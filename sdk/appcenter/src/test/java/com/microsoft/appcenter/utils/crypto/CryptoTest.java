@@ -217,13 +217,6 @@ public class CryptoTest {
     }
 
     @Test
-    public void noCryptoInIceCreamSandwich() throws Exception {
-        verifyNoCrypto(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
-        verifyStatic(never());
-        KeyStore.getInstance(anyString());
-    }
-
-    @Test
     public void keyStoreNotFound() throws Exception {
         when(KeyStore.getInstance(ANDROID_KEY_STORE)).thenThrow(new KeyStoreException());
         verifyNoCrypto(Build.VERSION_CODES.LOLLIPOP);

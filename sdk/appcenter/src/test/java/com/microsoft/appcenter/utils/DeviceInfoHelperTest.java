@@ -72,9 +72,6 @@ public class DeviceInfoHelperTest {
     PackageInfo mPackageInfo;
 
     @Mock
-    WindowManager mWindowManager;
-
-    @Mock
     DisplayManager mDisplayManager;
 
     @Mock
@@ -225,7 +222,11 @@ public class DeviceInfoHelperTest {
 
         /* Delegates to mock instances. */
         when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenThrow(new RuntimeException());
-        when(mContext.getSystemService(Context.WINDOW_SERVICE)).thenReturn(mWindowManager);
+        when(mContext.getSystemService(Context.DISPLAY_SERVICE)).thenReturn(mDisplayManager);
+        when(mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY)).thenReturn(mDisplay);
+        when(mContext.getResources()).thenReturn(mResources);
+        when(mResources.getDisplayMetrics()).thenReturn(mDisplayMetrics);
+        
         //noinspection WrongConstant
         when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
 
@@ -263,7 +264,7 @@ public class DeviceInfoHelperTest {
 
         /* Delegates to mock instances. */
         when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mTelephonyManager);
-        when(mContext.getSystemService(Context.WINDOW_SERVICE)).thenThrow(new RuntimeException());
+        when(mContext.getSystemService(Context.DISPLAY_SERVICE)).thenThrow(new RuntimeException());
         //noinspection WrongConstant
         when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
 
