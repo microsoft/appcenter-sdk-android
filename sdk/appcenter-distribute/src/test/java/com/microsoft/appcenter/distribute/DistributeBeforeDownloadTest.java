@@ -90,7 +90,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void moreRecentWithIncompatibleMinApiLevel() throws Exception {
         mockSessionContext();
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN_MR2);
+        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -103,7 +103,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
         when(releaseDetails.getId()).thenReturn(4);
         when(releaseDetails.getVersion()).thenReturn(7);
-        when(releaseDetails.getMinApiLevel()).thenReturn(Build.VERSION_CODES.KITKAT);
+        when(releaseDetails.getMinApiLevel()).thenReturn(Build.VERSION_CODES.M);
         String distributionGroupId = UUID.randomUUID().toString();
         when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
