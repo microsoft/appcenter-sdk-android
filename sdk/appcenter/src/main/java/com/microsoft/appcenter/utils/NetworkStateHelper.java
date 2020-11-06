@@ -6,18 +6,12 @@
 package com.microsoft.appcenter.utils;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
-import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
 import android.support.annotation.VisibleForTesting;
 
 import java.io.Closeable;
@@ -41,11 +35,6 @@ public class NetworkStateHelper implements Closeable {
     private static NetworkStateHelper sSharedInstance;
 
     /**
-     * Android context.
-     */
-    private final Context mContext;
-
-    /**
      * Android connectivity manager.
      */
     private final ConnectivityManager mConnectivityManager;
@@ -56,14 +45,10 @@ public class NetworkStateHelper implements Closeable {
     private final Set<Listener> mListeners = new CopyOnWriteArraySet<>();
 
     /**
-     * Network callback, null on API level < 21.
+     * Network callback.
      */
     private ConnectivityManager.NetworkCallback mNetworkCallback;
 
-    /**
-     * Our connectivity event receiver, null on API level >= 21.
-     */
-    private ConnectivityReceiver mConnectivityReceiver;
 
     /**
      * Current network state.
@@ -77,7 +62,6 @@ public class NetworkStateHelper implements Closeable {
      */
     @VisibleForTesting
     public NetworkStateHelper(Context context) {
-        mContext = context.getApplicationContext();
         mConnectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);
         reopen();
     }
@@ -104,35 +88,28 @@ public class NetworkStateHelper implements Closeable {
      */
     public void reopen() {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            /*
+             * Build query to get a working network listener.
+             *
+             * NetworkCapabilities.NET_CAPABILITY_VALIDATED (that indicates that connectivity
+             * on this network was successfully validated) shouldn't be applied here because it
+             * might miss networks with partial internet availability.
+             */
+            NetworkRequest.Builder request = new NetworkRequest.Builder();
+            request.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+            mNetworkCallback = new ConnectivityManager.NetworkCallback() {
 
-                /*
-                 * Build query to get a working network listener.
-                 *
-                 * NetworkCapabilities.NET_CAPABILITY_VALIDATED (that indicates that connectivity
-                 * on this network was successfully validated) shouldn't be applied here because it
-                 * might miss networks with partial internet availability.
-                 */
-                NetworkRequest.Builder request = new NetworkRequest.Builder();
-                request.addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
-                mNetworkCallback = new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(Network network) {
+                    onNetworkAvailable(network);
+                }
 
-                    @Override
-                    public void onAvailable(Network network) {
-                        onNetworkAvailable(network);
-                    }
-
-                    @Override
-                    public void onLost(Network network) {
-                        onNetworkLost(network);
-                    }
-                };
-                mConnectivityManager.registerNetworkCallback(request.build(), mNetworkCallback);
-            } else {
-                mConnectivityReceiver = new ConnectivityReceiver();
-                mContext.registerReceiver(mConnectivityReceiver, getOldIntentFilter());
-                handleNetworkStateUpdate();
-            }
+                @Override
+                public void onLost(Network network) {
+                    onNetworkLost(network);
+                }
+            };
+            mConnectivityManager.registerNetworkCallback(request.build(), mNetworkCallback);
         } catch (RuntimeException e) {
 
             /*
@@ -144,12 +121,6 @@ public class NetworkStateHelper implements Closeable {
             /* We should try to send the data, even if we can't get the current network state. */
             mConnected.set(true);
         }
-    }
-
-    @NonNull
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private IntentFilter getOldIntentFilter() {
-        return new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
     }
 
     /**
@@ -167,37 +138,22 @@ public class NetworkStateHelper implements Closeable {
      * @return true for connected, false for disconnected.
      */
     private boolean isAnyNetworkConnected() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Network[] networks = mConnectivityManager.getAllNetworks();
-            if (networks == null) {
-                return false;
-            }
-            for (Network network : networks) {
-                NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
-                if (info != null && info.isConnected()) {
-                    return true;
-                }
-            }
-        } else {
-
-            @SuppressWarnings({"deprecation", "RedundantSuppression"})
-            NetworkInfo[] networks = mConnectivityManager.getAllNetworkInfo();
-            if (networks == null) {
-                return false;
-            }
-            for (NetworkInfo info : networks) {
-                if (info != null && info.isConnected()) {
-                    return true;
-                }
+        Network[] networks = mConnectivityManager.getAllNetworks();
+        if (networks == null) {
+            return false;
+        }
+        for (Network network : networks) {
+            NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
+            if (info != null && info.isConnected()) {
+                return true;
             }
         }
         return false;
     }
 
     /**
-     * Handle network available update on API level >= 21.
+     * Handle network available.
      */
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void onNetworkAvailable(Network network) {
         AppCenterLog.debug(LOG_TAG, "Network " + network + " is available.");
         if (mConnected.compareAndSet(false, true)) {
@@ -206,9 +162,8 @@ public class NetworkStateHelper implements Closeable {
     }
 
     /**
-     * Handle network lost update on API level >= 21.
+     * Handle network lost update.
      */
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void onNetworkLost(Network network) {
         AppCenterLog.debug(LOG_TAG, "Network " + network + " is lost.");
         Network[] networks = mConnectivityManager.getAllNetworks();
@@ -216,16 +171,6 @@ public class NetworkStateHelper implements Closeable {
                 Arrays.equals(networks, new Network[]{network});
         if (noNetwork && mConnected.compareAndSet(true, false)) {
             notifyNetworkStateUpdated(false);
-        }
-    }
-
-    /**
-     * Handle network state update on API level < 21.
-     */
-    private void handleNetworkStateUpdate() {
-        boolean connected = isAnyNetworkConnected();
-        if (mConnected.compareAndSet(!connected, connected)) {
-            notifyNetworkStateUpdated(connected);
         }
     }
 
@@ -244,11 +189,7 @@ public class NetworkStateHelper implements Closeable {
     @Override
     public void close() {
         mConnected.set(false);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
-        } else {
-            mContext.unregisterReceiver(mConnectivityReceiver);
-        }
+        mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
     }
 
     /**
@@ -280,16 +221,5 @@ public class NetworkStateHelper implements Closeable {
          * @param connected true if connected, false otherwise.
          */
         void onNetworkStateUpdated(boolean connected);
-    }
-
-    /**
-     * Class receiving connectivity changes.
-     */
-    private class ConnectivityReceiver extends BroadcastReceiver {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            handleNetworkStateUpdate();
-        }
     }
 }

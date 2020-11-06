@@ -165,13 +165,11 @@ public class CryptoUtils {
 
         /* Load Android secure key store if available. */
         KeyStore keyStore = null;
-        if (apiLevel >= Build.VERSION_CODES.KITKAT) {
-            try {
-                keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
-                keyStore.load(null);
-            } catch (Exception e) {
-                AppCenterLog.error(LOG_TAG, "Cannot use secure keystore on this device.");
-            }
+        try {
+            keyStore = KeyStore.getInstance(ANDROID_KEY_STORE);
+            keyStore.load(null);
+        } catch (Exception e) {
+            AppCenterLog.error(LOG_TAG, "Cannot use secure keystore on this device.");
         }
         mKeyStore = keyStore;
 
