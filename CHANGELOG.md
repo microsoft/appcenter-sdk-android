@@ -4,7 +4,11 @@
 
 ### App Center
 
- * **[Breaking change]** Bump the minimum Android SDK version to 21 API level.
+* **[Breaking change]** Bump the minimum Android SDK version to 21 API level.
+
+### App Center Crashes
+
+* **[Feature]** Convert the `saveUncaughtException` method to public and return error log identifier when calling it.
 
 ### App Center Push
 
