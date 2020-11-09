@@ -328,8 +328,8 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void firstDownloadNotificationApi19() throws Exception {
-        firstDownloadNotification(Build.VERSION_CODES.KITKAT);
+    public void firstDownloadNotificationApi21() throws Exception {
+        firstDownloadNotification(Build.VERSION_CODES.LOLLIPOP);
     }
 
     @Test

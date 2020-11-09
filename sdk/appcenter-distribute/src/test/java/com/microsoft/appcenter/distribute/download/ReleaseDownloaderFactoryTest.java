@@ -9,7 +9,6 @@ import android.content.Context;
 import android.os.Build;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.download.http.HttpConnectionReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader;
 import com.microsoft.appcenter.test.TestUtils;
 
@@ -53,12 +52,5 @@ public class ReleaseDownloaderFactoryTest {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
         ReleaseDownloader releaseDownloader = ReleaseDownloaderFactory.create(mockContext, mockReleaseDetails, mockReleaseDownloaderListener);
         assertThat(releaseDownloader, instanceOf(DownloadManagerReleaseDownloader.class));
-    }
-
-    @Test
-    public void createOnJellyBean() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.JELLY_BEAN);
-        ReleaseDownloader releaseDownloader = ReleaseDownloaderFactory.create(mockContext, mockReleaseDetails, mockReleaseDownloaderListener);
-        assertThat(releaseDownloader, instanceOf(HttpConnectionReleaseDownloader.class));
     }
 }

@@ -1,6 +1,10 @@
 # App Center SDK for Android Change Log
 
-## Version 3.3.2 (Under development)
+## Version 4.0.0 (Under development)
+
+### App Center
+
+* **[Breaking change]** Bumping the minimum Android SDK version to 21 API level (Android 5.0), because old Android versions do not support root certificate authority used by App Center and would not get CA certificates updates anymore.
 
 ### App Center Crashes
 

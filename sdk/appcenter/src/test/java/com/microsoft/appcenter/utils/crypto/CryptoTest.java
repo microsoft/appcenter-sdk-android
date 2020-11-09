@@ -217,16 +217,9 @@ public class CryptoTest {
     }
 
     @Test
-    public void noCryptoInIceCreamSandwich() throws Exception {
-        verifyNoCrypto(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1);
-        verifyStatic(never());
-        KeyStore.getInstance(anyString());
-    }
-
-    @Test
     public void keyStoreNotFound() throws Exception {
         when(KeyStore.getInstance(ANDROID_KEY_STORE)).thenThrow(new KeyStoreException());
-        verifyNoCrypto(Build.VERSION_CODES.KITKAT);
+        verifyNoCrypto(Build.VERSION_CODES.LOLLIPOP);
         verifyStatic();
         KeyStore.getInstance(anyString());
     }
@@ -234,7 +227,7 @@ public class CryptoTest {
     @Test
     public void rsaFailsToLoadWhenPreferred() throws Exception {
         when(KeyPairGenerator.getInstance(anyString(), anyString())).thenThrow(new NoSuchAlgorithmException());
-        verifyNoCrypto(Build.VERSION_CODES.KITKAT);
+        verifyNoCrypto(Build.VERSION_CODES.LOLLIPOP);
         verifyStatic();
         KeyStore.getInstance(anyString());
     }
@@ -264,7 +257,7 @@ public class CryptoTest {
 
     @Test
     public void failsToEncryptWithBadPadding() throws Exception {
-        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.LOLLIPOP);
         when(mCipher.doFinal(any(byte[].class))).thenThrow(new BadPaddingException());
         String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
         String encryptedData = cryptoUtils.encrypt(data);
@@ -364,7 +357,7 @@ public class CryptoTest {
     public void readExpiredDataOnBeforeAndroidM() throws Exception {
 
         /* Encrypt test data. */
-        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.KITKAT);
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.LOLLIPOP);
         String data = "oldData";
         String encryptedData = cryptoUtils.encrypt(data);
 
@@ -499,8 +492,8 @@ public class CryptoTest {
     }
 
     @Test
-    public void rsaPreferredInKitKat() throws Exception {
-        verifyRsaPreferred(Build.VERSION_CODES.KITKAT);
+    public void rsaPreferredInLolipop() throws Exception {
+        verifyRsaPreferred(Build.VERSION_CODES.LOLLIPOP);
     }
 
     @Test
