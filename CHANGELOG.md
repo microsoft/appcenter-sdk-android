@@ -2,6 +2,10 @@
 
 ## Version 3.3.2 (Under development)
 
+### App Center
+
+ * **[Breaking change]** Bump the minimum Android SDK version to 21 API level.
+
 ### App Center Push
 
 App Center Push has been removed from the SDK and will be [retired on December 31st, 2020](https://devblogs.microsoft.com/appcenter/migrating-off-app-center-push/). 
