@@ -193,8 +193,17 @@ public class MSALoginActivity extends AppCompatActivity {
 
     private void clearCookies() {
         CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.removeAllCookies(null);
-        cookieManager.flush();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            cookieManager.removeAllCookies(null);
+            cookieManager.flush();
+        } else {
+            android.webkit.CookieSyncManager cookieSyncManager = android.webkit.CookieSyncManager.createInstance(this);
+            cookieSyncManager.startSync();
+            cookieManager.removeAllCookie();
+            cookieManager.removeSessionCookie();
+            cookieSyncManager.stopSync();
+            cookieSyncManager.sync();
+        }
     }
 
     /**
