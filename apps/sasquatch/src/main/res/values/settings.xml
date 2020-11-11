@@ -83,18 +83,6 @@
     <string name="appcenter_distribute_check_for_update_key" tools:ignore="MissingTranslation">appcenter_distribute_check_for_update_key</string>
     <string name="appcenter_distribute_check_for_update_title" tools:ignore="MissingTranslation">Check for updates</string>
 
-    <string name="push_key" tools:ignore="MissingTranslation">appcenter_push</string>
-    <string name="push_title" tools:ignore="MissingTranslation">Push</string>
-
-    <string name="appcenter_push_firebase_state_key" tools:ignore="MissingTranslation">appcenter_push_firebase_state_key</string>
-    <string name="appcenter_push_firebase_state_title" tools:ignore="MissingTranslation">Firebase analytics state</string>
-    <string name="appcenter_push_firebase_summary_enabled" tools:ignore="MissingTranslation">Firebase analytics is enabled</string>
-    <string name="appcenter_push_firebase_summary_disabled" tools:ignore="MissingTranslation">Firebase analytics is disabled</string>
-    <string name="appcenter_push_state_key" tools:ignore="MissingTranslation">appcenter_push_state_key</string>
-    <string name="appcenter_push_state_title" tools:ignore="MissingTranslation">Push state</string>
-    <string name="appcenter_push_state_summary_enabled" tools:ignore="MissingTranslation">Push is enabled</string>
-    <string name="appcenter_push_state_summary_disabled" tools:ignore="MissingTranslation">Push is disabled</string>
-
     <string name="event_filter" tools:ignore="MissingTranslation">appcenter_event_filter</string>
     <string name="event_filter_title" tools:ignore="MissingTranslation">Event Filter</string>
 

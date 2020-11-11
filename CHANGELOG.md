@@ -1,5 +1,22 @@
 # App Center SDK for Android Change Log
 
+## Version 4.0.0
+
+### App Center
+
+* **[Breaking change]** Bumping the minimum Android SDK version to 21 API level (Android 5.0), because old Android versions do not support root certificate authority used by App Center and would not get CA certificates updates anymore.
+
+### App Center Crashes
+
+* **[Feature]** Convert the `saveUncaughtException` method to public and return error log identifier when calling it.
+
+### App Center Push
+
+App Center Push has been removed from the SDK and will be [retired on December 31st, 2020](https://devblogs.microsoft.com/appcenter/migrating-off-app-center-push/). 
+As an alternative to App Center Push, we recommend you migrate to [Azure Notification Hubs](https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-push-notification-overview) by following the [Push Migration Guide](https://docs.microsoft.com/en-us/appcenter/migration/push/).
+
+___
+
 ## Version 3.3.1
 
 ### App Center Crashes

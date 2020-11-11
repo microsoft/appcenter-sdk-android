@@ -106,7 +106,6 @@ public class CrashesTest {
         /* Clear listeners. */
         MainActivity.sAnalyticsListener = null;
         MainActivity.sCrashesListener = null;
-        MainActivity.sPushListener = null;
 
         /* Launch main activity and go to setting page. Required to properly initialize. */
         mActivityTestRule.launchActivity(new Intent());
@@ -232,7 +231,6 @@ public class CrashesTest {
             /* Clear listeners. */
             MainActivity.sAnalyticsListener = null;
             MainActivity.sCrashesListener = null;
-            MainActivity.sPushListener = null;
 
             /* Launch activity again. */
             Intent intent = new Intent();

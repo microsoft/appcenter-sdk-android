@@ -169,9 +169,7 @@ public class DefaultHttpClientTest {
 
         /* Configure mock HTTPS. */
         mockCall();
-        for (int apiLevel = Build.VERSION_CODES.JELLY_BEAN; apiLevel <= Build.VERSION_CODES.LOLLIPOP; apiLevel++) {
-            testTls1_2Setting(apiLevel, 1);
-        }
+        testTls1_2Setting(Build.VERSION_CODES.LOLLIPOP, 1);
         for (int apiLevel = Build.VERSION_CODES.LOLLIPOP_MR1; apiLevel <= Build.VERSION_CODES.O_MR1; apiLevel++) {
             testTls1_2Setting(apiLevel, 0);
         }
