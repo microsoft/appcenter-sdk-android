@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 4.0.1 (Under development)
+
+### App Center Distribute
+
+* **[Fix]** Fix opening browser when use private distribute group on Android 11.
+
+__
+
 ## Version 4.0.0
 
 ### App Center
