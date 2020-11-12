@@ -6,7 +6,7 @@
 
 * **[Fix]** Fix browser opening when using a private distribute group on Android 11.
 
-__
+___
 
 ## Version 4.0.0
 
