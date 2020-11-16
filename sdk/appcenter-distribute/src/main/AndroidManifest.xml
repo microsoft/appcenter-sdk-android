@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
 
     <!--
-     In Android 11 there were added a lot of updates that improve privacy. Now the list of installed apps on user devices is hidden by default.
+     Android 11 added a lot of improving privacy updates. The list of installed apps on user devices is hidden by default now.
      These changes make available browsers on user devices visible during checking updates for private distribution groups.
      See more about managing package visibility: https://developer.android.com/training/basics/intents/package-visibility
      -->
