@@ -4,7 +4,7 @@
 
 ### App Center Distribute
 
-* **[Fix]** Fix browser opening when using a private distribute group on Android 11.
+* **[Fix]** Fix browser opening when using a private distribution group on Android 11.
 
 ___
 
