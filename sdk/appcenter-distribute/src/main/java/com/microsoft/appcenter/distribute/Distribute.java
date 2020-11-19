@@ -1648,6 +1648,11 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void goToUnknownAppsSettings(ReleaseDetails releaseDetails) {
         Intent intent;
+        if (mForegroundActivity == null) {
+
+            //We should now open settings screen if app is in background now.
+            return;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
             intent.setData(Uri.parse("package:" + mForegroundActivity.getPackageName()));
