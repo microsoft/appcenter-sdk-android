@@ -2,6 +2,10 @@
 
 ## Version 4.0.1 (Under development)
 
+### App Center Distribute
+
+* **[Fix]** Fix crush when app is trying to open a settings screen from a background.
+
 ___
 
 ## Version 4.0.0
