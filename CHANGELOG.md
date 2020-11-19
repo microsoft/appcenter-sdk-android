@@ -2,6 +2,10 @@
 
 ## Version 4.0.1 (Under development)
 
+### App Center Distribute
+
+* **[Fix]** Fix browser opening when using a private distribution group on Android 11.
+
 ___
 
 ## Version 4.0.0
