@@ -10,15 +10,16 @@
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
 
     <!--
-        Do not add the WRITE_EXTERNAL_STORAGE permission with custom attributes to library's manifest file
-        to avoid manifest merging issues. If an application requires this permission for all versions this
-        will lead to silently removing it for versions bigger than 18.
-        It should be added manually by developers to support old Android devices.
-
-        <uses-permission
-            android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-            android:maxSdkVersion="18" />
-    -->
+     Android 11 brings in a lot of changes regarding privacy. By default, list of installed apps is now hidden.
+     Manifest block below make browsers on user devices acessible in order to let SDK check for updates in private update track.
+     See more about managing package visibility: https://developer.android.com/training/basics/intents/package-visibility
+     -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https"/>
+        </intent>
+    </queries>
 
     <application>
         <activity

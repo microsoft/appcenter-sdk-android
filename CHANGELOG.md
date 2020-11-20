@@ -5,6 +5,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix a crash when the app is trying to open the system settings screen from the background.
+* **[Fix]** Fix browser opening when using a private distribution group on Android 11.
 
 ___
 
