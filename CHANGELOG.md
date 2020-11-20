@@ -4,7 +4,7 @@
 
 ### App Center Distribute
 
-* **[Fix]** Fix crush when app is trying to open a settings screen from a background.
+* **[Fix]** Fix a crash when the app is trying to open the system settings screen from the background.
 
 ___
 

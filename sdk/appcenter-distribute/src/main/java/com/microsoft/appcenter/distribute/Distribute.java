@@ -1650,7 +1650,7 @@ public class Distribute extends AbstractAppCenterService {
         Intent intent;
         if (mForegroundActivity == null) {
 
-            //We should now open settings screen if app is in background now.
+            /* We should not open settings screen if app is in background now. */
             return;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
