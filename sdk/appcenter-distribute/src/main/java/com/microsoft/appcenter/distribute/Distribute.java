@@ -1651,7 +1651,7 @@ public class Distribute extends AbstractAppCenterService {
         if (mForegroundActivity == null) {
 
             /* We should not open settings screen if app is in background now. */
-            AppCenterLog.warn(LOG_TAG, "App is in background mode, we could not open setting screen");
+            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the settings screen could not be opened.");
             return;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
