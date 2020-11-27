@@ -299,7 +299,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report);
         when(FileManager.read(any(File.class))).thenReturn("");
         CrashesListener mockListener = mock(CrashesListener.class);
@@ -347,7 +346,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report);
         when(FileManager.read(any(File.class))).thenReturn("");
 
@@ -389,7 +387,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report);
         when(FileManager.read(any(File.class))).thenReturn("");
         when(SharedPreferencesManager.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
@@ -519,17 +516,19 @@ public class CrashesTest extends AbstractCrashesTest {
 
     @Test
     public void getChannelListener() throws JSONException {
-        ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
 
+        /* Mock and set exception data. */
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
+        mErrorLog.setException(mockException);
+
+        ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
         mockStatic(ErrorLogHelper.class);
         File errorLogFile = mock(File.class);
         when(errorLogFile.length()).thenReturn(1L);
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(errorLogFile);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        File throwableFile = mock(File.class);
-        when(throwableFile.length()).thenReturn(1L);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
         when(ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE)).thenReturn(errorReport);
         when(FileManager.read(any(File.class))).thenReturn("");
         when(FileManager.read(any(File.class))).thenReturn(STACK_TRACE);
@@ -584,7 +583,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(FileManager.read(any(File.class))).thenReturn(null);
 
         CrashesListener mockListener = mock(CrashesListener.class);
@@ -613,7 +611,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(new ErrorReport());
         File pendingFolder = mock(File.class);
         when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingFolder);
@@ -638,8 +635,6 @@ public class CrashesTest extends AbstractCrashesTest {
         ErrorLogHelper.cleanPendingMinidumps();
         verifyStatic();
         ErrorLogHelper.removeStoredErrorLogFile(mErrorLog.getId());
-        verifyStatic();
-        ErrorLogHelper.removeStoredThrowableFile(mErrorLog.getId());
     }
 
     @Test
@@ -653,7 +648,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(FileManager.read(any(File.class))).thenReturn(null);
 
         CrashesListener mockListener = mock(CrashesListener.class);
@@ -676,13 +670,17 @@ public class CrashesTest extends AbstractCrashesTest {
 
     @Test
     public void buildErrorReport() {
+
+        /* Mock and set exception data. */
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
+        mErrorLog.setException(mockException);
         mErrorLog.setDevice(mock(Device.class));
         ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
 
         mockStatic(ErrorLogHelper.class);
         File throwableFile = mock(File.class);
         when(throwableFile.length()).thenReturn(1L);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile).thenReturn(null);
         when(ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE)).thenReturn(errorReport);
         when(FileManager.read(any(File.class))).thenReturn(STACK_TRACE);
 
@@ -699,7 +697,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         mErrorLog.setId(UUID.randomUUID());
         report = crashes.buildErrorReport(mErrorLog);
-        assertNull(report);
+        assertNotNull(report);
     }
 
     @Test
@@ -768,9 +766,14 @@ public class CrashesTest extends AbstractCrashesTest {
     @Test
     public void crashInLastSession() throws JSONException, IOException {
 
+        /* Mock and set exception data. */
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
+
         final ManagedErrorLog errorLog = new ManagedErrorLog();
         errorLog.setId(UUID.randomUUID());
         errorLog.setErrorThreadName(Thread.currentThread().getName());
+        errorLog.setException(mockException);
         Date logTimestamp = new Date(10);
         errorLog.setTimestamp(logTimestamp);
 
@@ -789,7 +792,6 @@ public class CrashesTest extends AbstractCrashesTest {
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         File throwableFile = errorStorageDirectory.newFile();
         new FileWriter(throwableFile).append(STACK_TRACE).close();
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(throwableFile);
         when(ErrorLogHelper.getErrorReportFromErrorLog(errorLog, STACK_TRACE)).thenReturn(errorReport);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
@@ -952,7 +954,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(new ErrorReport());
         when(FileManager.read(any(File.class))).thenReturn("");
 
@@ -981,7 +982,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report1).thenReturn(report2);
         when(FileManager.read(any(File.class))).thenReturn("");
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -1088,7 +1088,6 @@ public class CrashesTest extends AbstractCrashesTest {
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report1).thenReturn(report2);
         when(FileManager.read(any(File.class))).thenReturn("");
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -1170,7 +1169,6 @@ public class CrashesTest extends AbstractCrashesTest {
         File pendingDir = mock(File.class);
         Whitebox.setInternalState(pendingDir, "path", "");
         when(ErrorLogHelper.getPendingMinidumpDirectory()).thenReturn(pendingDir);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report);
         when(ErrorLogHelper.parseLogFolderUuid(any(File.class))).thenReturn(UUID.randomUUID());
         when(FileManager.read(any(File.class))).thenReturn("");
@@ -1264,7 +1262,6 @@ public class CrashesTest extends AbstractCrashesTest {
         when(exception.getMinidumpFilePath()).thenReturn(null);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class), mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(FileManager.read(any(File.class))).thenReturn("");
         String jsonCrash = "{}";
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -1318,7 +1315,6 @@ public class CrashesTest extends AbstractCrashesTest {
         /* This mocks we already processed minidump to convert to pending regular crash report as that would be the case if migrating data from older SDK. */
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(ErrorLogHelper.getStoredThrowableFile(any(UUID.class))).thenReturn(mock(File.class));
         when(FileManager.read(any(File.class))).thenReturn("");
         String jsonCrash = "{}";
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -1388,18 +1384,6 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Simulate crash. */
         Crashes.getInstance().saveUncaughtException(Thread.currentThread(), throwable);
-
-        /* Verify we gracefully abort saving throwable (no exception) and we created an empty file instead. */
-        verifyStatic();
-        FileManager.write(throwableFile, STACK_TRACE);
-        assertNotNull(throwableFile);
-        InOrder inOrder = inOrder(throwableFile);
-
-        //noinspection ResultOfMethodCallIgnored
-        inOrder.verify(throwableFile).delete();
-
-        //noinspection ResultOfMethodCallIgnored
-        inOrder.verify(throwableFile).createNewFile();
 
         /* Verify it didn't prevent saving the JSON file. */
         verifyStatic();

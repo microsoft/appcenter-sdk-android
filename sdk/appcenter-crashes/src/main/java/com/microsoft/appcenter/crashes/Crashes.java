@@ -738,6 +738,9 @@ public class Crashes extends AbstractAppCenterService {
 
         /* Remove the minidump subfolders from previous sessions. */
         ErrorLogHelper.removeStaleMinidumpSubfolders();
+
+        /* Remove throwable files. */
+        ErrorLogHelper.removeLostThrowableFiles();
     }
 
     /**
@@ -917,7 +920,6 @@ public class Crashes extends AbstractAppCenterService {
     private void removeStoredThrowable(UUID id) {
         mErrorReportCache.remove(id);
         WrapperSdkExceptionManager.deleteWrapperExceptionData(id);
-        ErrorLogHelper.removeStoredThrowableFile(id);
     }
 
     @VisibleForTesting
@@ -931,7 +933,6 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     @VisibleForTesting
-    @Nullable
     ErrorReport buildErrorReport(ManagedErrorLog log) {
         UUID id = log.getId();
         if (mErrorReportCache.containsKey(id)) {
@@ -939,18 +940,11 @@ public class Crashes extends AbstractAppCenterService {
             report.setDevice(log.getDevice());
             return report;
         } else {
-            File file = ErrorLogHelper.getStoredThrowableFile(id);
-            if (file != null) {
-                String stackTrace = null;
-                if (file.length() > 0) {
-                    stackTrace = FileManager.read(file);
-                }
-                ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, stackTrace);
-                mErrorReportCache.put(id, new ErrorLogReport(log, report));
-                return report;
-            }
+            String stackTrace = log.getException() == null ? null : log.getException().getStackTrace();
+            ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, stackTrace);
+            mErrorReportCache.put(id, new ErrorLogReport(log, report));
+            return report;
         }
-        return null;
     }
 
     @VisibleForTesting
@@ -1148,34 +1142,16 @@ public class Crashes extends AbstractAppCenterService {
         String filename = errorLogId.toString();
         AppCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception.");
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+
+        /* Set stacktrace to error log. */
+        if (errorLog.getException() != null) {
+            errorLog.getException().setStackTrace(getStackTraceString(throwable));
+        }
+
+        /* Save stacktrace log to file. */
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         FileManager.write(errorLogFile, errorLogString);
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
-        File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
-        if (throwable != null) {
-            try {
-                String stackTrace = getStackTraceString(throwable);
-                FileManager.write(throwableFile, stackTrace);
-                AppCenterLog.debug(LOG_TAG, "Saved stack trace as is for client side inspection in " + throwableFile + " stack trace:" + stackTrace);
-            } catch (StackOverflowError e) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store stack trace.", e);
-                throwable = null;
-
-                //noinspection ResultOfMethodCallIgnored
-                throwableFile.delete();
-            }
-        }
-        if (throwable == null) {
-
-            /*
-             * If there is no Java Throwable to save as is (typical in wrapper SDKs),
-             * use file placeholder as we also use this file to manage state.
-             */
-            if (!throwableFile.createNewFile()) {
-                throw new IOException(throwableFile.getName());
-            }
-            AppCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
-        }
         return errorLogId;
     }
 

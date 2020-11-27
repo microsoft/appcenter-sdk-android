@@ -22,6 +22,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.ingestion.models.Device;
+import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.context.UserIdContext;
@@ -435,6 +436,23 @@ public class ErrorLogHelper {
         if (file != null) {
             AppCenterLog.info(Crashes.LOG_TAG, "Deleting error log file " + file.getName());
             FileManager.delete(file);
+        }
+    }
+
+    /**
+     * Remove throwable files.
+     */
+    public static void removeLostThrowableFiles() {
+        File[] throwableFiles = getErrorStorageDirectory().listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String filename) {
+                return filename.endsWith(THROWABLE_FILE_EXTENSION);
+            }
+        });
+        if (throwableFiles != null && throwableFiles.length > 0) {
+            for (File file : throwableFiles) {
+                removeStoredThrowableFile(UUID.fromString(file.getName().replaceFirst("[.][^.]+$", "")));
+            }
         }
     }
 
