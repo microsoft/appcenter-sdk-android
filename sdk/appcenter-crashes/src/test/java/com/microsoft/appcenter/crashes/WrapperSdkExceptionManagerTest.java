@@ -88,6 +88,7 @@ public class WrapperSdkExceptionManagerTest {
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
         ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
         when(errorLogMock.getId()).thenReturn(UUID.randomUUID());
+        when(errorLogMock.getException()).thenReturn(new com.microsoft.appcenter.crashes.ingestion.models.Exception());
         when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Exception.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean()))
                 .thenReturn(errorLogMock);
 

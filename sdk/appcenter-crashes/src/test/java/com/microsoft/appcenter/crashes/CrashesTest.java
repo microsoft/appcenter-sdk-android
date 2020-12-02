@@ -572,7 +572,7 @@ public class CrashesTest extends AbstractCrashesTest {
         assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
 
         /* onSuccess and onFailure invalidate the cache, so one more call is expected. */
-        verifyStatic(times(2));
+        verifyStatic();
         ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
     }
 
@@ -1514,20 +1514,11 @@ public class CrashesTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void setStacktraceToErrorLogFileWithNullException() throws Exception {
-        setStacktraceToErrorLogFile(null, 0);
-    }
-
-    @Test
-    public void setStacktraceToErrorLogFileWithNCorrectException() throws Exception {
+    public void setStacktraceToErrorLogFile() throws Exception {
 
         /* Mock exception. */
         com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
         when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
-        setStacktraceToErrorLogFile(mockException, 1);
-    }
-
-    private void setStacktraceToErrorLogFile(com.microsoft.appcenter.crashes.ingestion.models.Exception mockException, int times) throws Exception {
 
         /* Mock variables. */
         Context mockContext = mock(Context.class);
@@ -1560,7 +1551,7 @@ public class CrashesTest extends AbstractCrashesTest {
         Crashes.getInstance().saveUncaughtException(mockThread, mockThrowable, mockModelException);
 
         /* Check result. */
-        verifyStatic(times(times));
+        verifyStatic();
         getStackTraceString(any(Throwable.class));
     }
 

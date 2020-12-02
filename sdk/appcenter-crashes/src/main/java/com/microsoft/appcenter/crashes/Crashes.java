@@ -516,11 +516,6 @@ public class Crashes extends AbstractAppCenterService {
                             UUID id = errorLog.getId();
                             if (report != null) {
 
-                                /* Clean up before calling callbacks if requested. */
-                                if (callbackProcessor.shouldDeleteThrowable()) {
-                                    removeStoredThrowable(id);
-                                }
-
                                 /* Call back. */
                                 HandlerUtils.runOnUiThread(new Runnable() {
 
@@ -544,11 +539,6 @@ public class Crashes extends AbstractAppCenterService {
                 processCallback(log, new CallbackProcessor() {
 
                     @Override
-                    public boolean shouldDeleteThrowable() {
-                        return false;
-                    }
-
-                    @Override
                     public void onCallBack(ErrorReport report) {
                         mCrashesListener.onBeforeSending(report);
                     }
@@ -560,11 +550,6 @@ public class Crashes extends AbstractAppCenterService {
                 processCallback(log, new CallbackProcessor() {
 
                     @Override
-                    public boolean shouldDeleteThrowable() {
-                        return true;
-                    }
-
-                    @Override
                     public void onCallBack(ErrorReport report) {
                         mCrashesListener.onSendingSucceeded(report);
                     }
@@ -574,11 +559,6 @@ public class Crashes extends AbstractAppCenterService {
             @Override
             public void onFailure(Log log, final java.lang.Exception e) {
                 processCallback(log, new CallbackProcessor() {
-
-                    @Override
-                    public boolean shouldDeleteThrowable() {
-                        return true;
-                    }
 
                     @Override
                     public void onCallBack(ErrorReport report) {
@@ -1144,9 +1124,7 @@ public class Crashes extends AbstractAppCenterService {
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
 
         /* Set stacktrace to error log. */
-        if (errorLog.getException() != null) {
-            errorLog.getException().setStackTrace(getStackTraceString(throwable));
-        }
+        errorLog.getException().setStackTrace(getStackTraceString(throwable));
 
         /* Save stacktrace log to file. */
         String errorLogString = mLogSerializer.serializeLog(errorLog);
@@ -1262,11 +1240,6 @@ public class Crashes extends AbstractAppCenterService {
      * Callback template method.
      */
     private interface CallbackProcessor {
-
-        /**
-         * @return true to delete the stored serialized throwable file.
-         */
-        boolean shouldDeleteThrowable();
 
         /**
          * Execute call back.

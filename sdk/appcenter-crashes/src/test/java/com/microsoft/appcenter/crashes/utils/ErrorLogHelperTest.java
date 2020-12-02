@@ -545,7 +545,6 @@ public class ErrorLogHelperTest {
         FileManager.delete(any(File.class));
     }
 
-
     @Test
     public void removeLostThrowableFilesWhenListOfFilesIsEmpty() throws java.lang.Exception {
 
