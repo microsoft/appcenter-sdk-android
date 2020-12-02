@@ -2,6 +2,10 @@
 
 ## Version 4.0.1 (Under development)
 
+### App Center Crashes
+
+* **[Fix]** Fix removing throwable files after rewritten error logs due to small database size.
+
 ### App Center Distribute
 
 * **[Fix]** Fix browser opening when using a private distribution group on Android 11.
