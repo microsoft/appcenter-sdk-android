@@ -45,7 +45,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -97,7 +96,6 @@ import static org.mockito.Matchers.isA;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -1481,6 +1479,89 @@ public class CrashesTest extends AbstractCrashesTest {
         when(SharedPreferencesManager.getInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), anyInt()))
                 .thenReturn(TRIM_MEMORY_RUNNING_MODERATE);
         checkHasReceivedMemoryWarningInLastSession(true);
+    }
+
+    @Test
+    public void buildErrorReportWithStacktrace() {
+
+        /* Mock exception value. */
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
+
+        /* Mock log. */
+        ManagedErrorLog mockLog = new ManagedErrorLog();
+        mockLog.setId(UUID.randomUUID());
+        mockLog.setErrorThreadName("Thread name");
+        mockLog.setAppLaunchTimestamp(new Date());
+        mockLog.setTimestamp(new Date());
+        mockLog.setDevice(new Device());
+
+        /* Build error report. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.buildErrorReport(mockLog);
+
+        /* Verify that stacktrace is null. */
+        ErrorReport report = crashes.buildErrorReport(mockLog);
+        assertNull(report.getStackTrace());
+
+        /* Set exception to log. */
+        mockLog.setId(UUID.randomUUID());
+        mockLog.setException(mockException);
+
+        /* Verify that stacktrace is not null. */
+        report = crashes.buildErrorReport(mockLog);
+        assertEquals(STACK_TRACE, report.getStackTrace());
+    }
+
+    @Test
+    public void setStacktraceToErrorLogFileWithNullException() throws Exception {
+        setStacktraceToErrorLogFile(null, 0);
+    }
+
+    @Test
+    public void setStacktraceToErrorLogFileWithNCorrectException() throws Exception {
+
+        /* Mock exception. */
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
+        setStacktraceToErrorLogFile(mockException, 1);
+    }
+
+    private void setStacktraceToErrorLogFile(com.microsoft.appcenter.crashes.ingestion.models.Exception mockException, int times) throws Exception {
+
+        /* Mock variables. */
+        Context mockContext = mock(Context.class);
+        Channel mockChannel = mock(Channel.class);
+        Thread mockThread = mock(Thread.class);
+        Throwable mockThrowable = mock(Throwable.class);
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockModelException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+
+        /* Mock error log. */
+        ManagedErrorLog mockLog = mock(ManagedErrorLog.class);
+        when(mockLog.getId()).thenReturn(UUID.randomUUID());
+        when(mockLog.getException()).thenReturn(mockException);
+
+        /* Mock ErrorLogHelper class. */
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.createErrorLog(any(Context.class), eq(mockThread), eq(mockModelException), anyMapOf(Thread.class, StackTraceElement[].class), anyLong(), anyBoolean()))
+                .thenReturn(mockLog);
+
+        /* Mock methods in Log class. */
+        mockStatic(android.util.Log.class);
+
+        /* Verify that stacktrace wasn't set when exception is null in error report. */
+        Crashes crashes = Crashes.getInstance();
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mockContext, mockChannel, "", null, true);
+        Crashes.setEnabled(true);
+        Crashes.getInstance().saveUncaughtException(mockThread, mockThrowable, mockModelException);
+
+        /* Check result. */
+        verifyStatic(times(times));
+        getStackTraceString(any(Throwable.class));
     }
 
     private void checkHasReceivedMemoryWarningInLastSession(boolean expected) {
