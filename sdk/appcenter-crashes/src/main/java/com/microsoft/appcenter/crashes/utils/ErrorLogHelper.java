@@ -413,13 +413,8 @@ public class ErrorLogHelper {
         });
     }
 
-    @Nullable
-    public static File getStoredThrowableFile(@NonNull UUID id) {
-        return getStoredFile(id, THROWABLE_FILE_EXTENSION);
-    }
-
     public static void removeStoredThrowableFile(@NonNull UUID id) {
-        File file = getStoredThrowableFile(id);
+        File file = getStoredFile(id, THROWABLE_FILE_EXTENSION);
         if (file != null) {
             AppCenterLog.info(Crashes.LOG_TAG, "Deleting throwable file " + file.getName());
             FileManager.delete(file);
@@ -444,6 +439,7 @@ public class ErrorLogHelper {
      */
     public static void removeLostThrowableFiles() {
         File[] throwableFiles = getErrorStorageDirectory().listFiles(new FilenameFilter() {
+
             @Override
             public boolean accept(File dir, String filename) {
                 return filename.endsWith(THROWABLE_FILE_EXTENSION);

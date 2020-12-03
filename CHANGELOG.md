@@ -4,7 +4,7 @@
 
 ### App Center Crashes
 
-* **[Fix]** Fix removing throwable files after rewritten error logs due to small database size.
+* **[Fix]** Fix removing throwable files after rewriting error logs due to small database size.
 
 ### App Center Distribute
 
