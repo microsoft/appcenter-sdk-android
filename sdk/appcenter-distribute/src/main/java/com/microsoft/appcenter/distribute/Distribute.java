@@ -1649,8 +1649,6 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void goToUnknownAppsSettings(ReleaseDetails releaseDetails) {
         Intent intent;
         if (mForegroundActivity == null) {
-
-            /* We should not open settings screen if app is in background now. */
             AppCenterLog.warn(LOG_TAG, "The application is in background mode, the settings screen could not be opened.");
             return;
         }
