@@ -447,7 +447,7 @@ public class ErrorLogHelper {
         });
         if (throwableFiles != null && throwableFiles.length > 0) {
             for (File file : throwableFiles) {
-                removeStoredThrowableFile(UUID.fromString(file.getName().replaceFirst("[.][^.]+$", "")));
+                removeStoredThrowableFile(UUID.fromString(file.getName().replaceFirst("\\.[^.]+$", "")));
             }
         }
     }

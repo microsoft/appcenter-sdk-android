@@ -530,8 +530,8 @@ public class ErrorLogHelperTest {
         /* Mock files. */
         File mockFile1 = mock(File.class);
         File mockFile2 = mock(File.class);
-        when(mockFile1.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120002");
-        when(mockFile2.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120003");
+        when(mockFile1.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120002" + ErrorLogHelper.THROWABLE_FILE_EXTENSION );
+        when(mockFile2.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120003" + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
 
         /* Mock getting storage directory. */
         File mockDir = mock(File.class);
