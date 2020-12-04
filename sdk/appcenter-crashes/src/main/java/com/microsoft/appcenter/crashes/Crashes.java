@@ -472,6 +472,9 @@ public class Crashes extends AbstractAppCenterService {
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             processPendingErrors();
+
+            /* Remove throwable files. */
+            ErrorLogHelper.removeLostThrowableFiles();
         }
     }
 
@@ -718,9 +721,6 @@ public class Crashes extends AbstractAppCenterService {
 
         /* Remove the minidump subfolders from previous sessions. */
         ErrorLogHelper.removeStaleMinidumpSubfolders();
-
-        /* Remove throwable files. */
-        ErrorLogHelper.removeLostThrowableFiles();
     }
 
     /**
@@ -921,6 +921,16 @@ public class Crashes extends AbstractAppCenterService {
             return report;
         } else {
             String stackTrace = log.getException() == null ? null : log.getException().getStackTrace();
+
+            /* If exception in the log doesn't have stack trace try get it from the .throwable file. */
+            if (stackTrace == null) {
+                File file = ErrorLogHelper.getStoredThrowableFile(id);
+                if (file != null) {
+                    if (file.length() > 0) {
+                        stackTrace = FileManager.read(file);
+                    }
+                }
+            }
             ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, stackTrace);
             mErrorReportCache.put(id, new ErrorLogReport(log, report));
             return report;

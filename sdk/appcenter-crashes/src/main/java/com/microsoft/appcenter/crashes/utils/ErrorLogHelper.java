@@ -413,8 +413,13 @@ public class ErrorLogHelper {
         });
     }
 
+    @Nullable
+    public static File getStoredThrowableFile(@NonNull UUID id) {
+        return getStoredFile(id, THROWABLE_FILE_EXTENSION);
+    }
+
     public static void removeStoredThrowableFile(@NonNull UUID id) {
-        File file = getStoredFile(id, THROWABLE_FILE_EXTENSION);
+        File file = getStoredThrowableFile(id);
         if (file != null) {
             AppCenterLog.info(Crashes.LOG_TAG, "Deleting throwable file " + file.getName());
             FileManager.delete(file);

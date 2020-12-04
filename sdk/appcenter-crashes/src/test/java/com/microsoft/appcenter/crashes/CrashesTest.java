@@ -53,6 +53,7 @@ import org.powermock.reflect.Whitebox;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +103,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doCallRealMethod;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
@@ -1342,7 +1342,7 @@ public class CrashesTest extends AbstractCrashesTest {
         attachmentWithBinary(new byte[]{anyByte()}, anyString(), anyString());
 
         /* Verify temporary field erased. */
-        verify(exception).setStackTrace(null);
+        verify(exception, times(1)).setStackTrace(null);
     }
 
     @Test
@@ -1389,7 +1389,13 @@ public class CrashesTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void handlerMemoryWarning() {
+    public void handlerMemoryWarning() throws Exception {
+
+        /* Mock files. */
+        mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mock(File.class));
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{});
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
 
         /* Mock classes. */
         Context mockContext = mock(Context.class);
@@ -1511,6 +1517,114 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Verify that stacktrace is not null. */
         report = crashes.buildErrorReport(mockLog);
         assertEquals(STACK_TRACE, report.getStackTrace());
+    }
+
+    @Test
+    public void buildErrorReportWhenThrowableFileIsEmpty() throws Exception {
+
+        /* Mock file. */
+        File mockFile = mock(File.class);
+        when(mockFile.length()).thenReturn(0L);
+
+        /* Mock files. */
+        File mockDir = mock(File.class);
+        when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(new File[] {mockFile});
+        whenNew(File.class).withAnyArguments().thenReturn(mockDir);
+
+        /* Mock exception value. */
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        when(mockException.getStackTrace()).thenReturn(null);
+
+        /* Mock log. */
+        ManagedErrorLog mockLog = new ManagedErrorLog();
+        mockLog.setId(UUID.randomUUID());
+        mockLog.setErrorThreadName("Thread name");
+        mockLog.setAppLaunchTimestamp(new Date());
+        mockLog.setTimestamp(new Date());
+        mockLog.setDevice(new Device());
+        mockLog.setException(mockException);
+
+        /* Build error report. */
+        Crashes crashes = Crashes.getInstance();
+
+        /* Verify that stacktrace is null. */
+        ErrorReport report = crashes.buildErrorReport(mockLog);
+        assertNull(report.getStackTrace());
+        assertNull(mockLog.getException().getStackTrace());
+    }
+
+    @Test
+    public void buildErrorReportWhenThrowableFileIsNull() throws Exception {
+
+        /* Mock files. */
+        File mockDir = mock(File.class);
+        File mockFile = mock(File.class);
+        when(mockFile.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120002" + ErrorLogHelper.THROWABLE_FILE_EXTENSION );
+        when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(new File[] {mockFile});
+        whenNew(File.class).withAnyArguments().thenReturn(mockDir);
+
+        /* Mock exception value. */
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        when(mockException.getStackTrace()).thenReturn(null);
+
+        /* Mock log. */
+        ManagedErrorLog mockLog = new ManagedErrorLog();
+        mockLog.setId(UUID.randomUUID());
+        mockLog.setErrorThreadName("Thread name");
+        mockLog.setAppLaunchTimestamp(new Date());
+        mockLog.setTimestamp(new Date());
+        mockLog.setDevice(new Device());
+        mockLog.setException(mockException);
+
+        /* Build error report. */
+        Crashes crashes = Crashes.getInstance();
+
+        /* Verify that stacktrace is null. */
+        ErrorReport report = crashes.buildErrorReport(mockLog);
+        assertNull(report.getStackTrace());
+        assertNull(mockLog.getException().getStackTrace());
+    }
+
+    @Test
+    public void buildErrorReportWithNullStacktrace() throws Exception {
+
+        /* Clear static properties. */
+        ErrorLogHelper.clearStaticState();
+
+        /* Mock FileManager. */
+        when(FileManager.read(any(File.class))).thenReturn("STACK_TRACE");
+
+        /* Mock file. */
+        File mockFile = mock(File.class);
+        when(mockFile.length()).thenReturn(1L);
+
+        /* Mock files. */
+        File mockDir = mock(File.class);
+        when(mockDir.getName()).thenReturn("name-test-123");
+        when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(new File[] {mockFile});
+        whenNew(File.class).withAnyArguments().thenReturn(mockDir);
+
+        /* Mock exception value. */
+        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
+        when(mockException.getStackTrace()).thenReturn(null);
+
+        /* Mock log. */
+        ManagedErrorLog mockLog = new ManagedErrorLog();
+        mockLog.setId(UUID.randomUUID());
+        mockLog.setErrorThreadName("Thread name");
+        mockLog.setAppLaunchTimestamp(new Date());
+        mockLog.setTimestamp(new Date());
+        mockLog.setDevice(new Device());
+        mockLog.setException(mockException);
+
+        /* Build error report. */
+        Crashes crashes = Crashes.getInstance();
+
+        /* Verify that stacktrace is null. */
+        ErrorReport report = crashes.buildErrorReport(mockLog);
+        assertNotNull(report.getStackTrace());
+        assertEquals("STACK_TRACE", report.getStackTrace());
+        assertNull(mockLog.getException().getStackTrace());
     }
 
     @Test
