@@ -109,7 +109,10 @@ public class WrapperSdkExceptionManagerAndroidTest {
             startFresh();
 
             /* Save crash. */
-            error.id = WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), error.data);
+            Exception exception = new Exception();
+            exception.setType("type");
+            exception.setMessage("message");
+            error.id = WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, exception, error.data);
             String loadedData = WrapperSdkExceptionManager.loadWrapperExceptionData(error.id);
 
             if (error.data == null) {

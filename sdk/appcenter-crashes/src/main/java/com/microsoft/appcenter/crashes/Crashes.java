@@ -924,9 +924,6 @@ public class Crashes extends AbstractAppCenterService {
 
     @VisibleForTesting
     String buildStackTrace(Exception exception) {
-        if (exception.getType() == null || exception.getMessage() == null) {
-            return null;
-        }
         String stacktrace = String.format("%s: %s", exception.getType(), exception.getMessage());
         if (exception.getFrames() == null) {
             return stacktrace;

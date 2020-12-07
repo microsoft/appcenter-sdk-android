@@ -1560,17 +1560,6 @@ public class CrashesTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void checkBuildStacktraceWithWrongExceptionModel() {
-        com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = new com.microsoft.appcenter.crashes.ingestion.models.Exception();
-        String stacktrace = Crashes.getInstance().buildStackTrace(mockException);
-        assertNull(stacktrace);
-
-        mockException.setType("type");
-        stacktrace = Crashes.getInstance().buildStackTrace(mockException);
-        assertNull(stacktrace);
-    }
-
-    @Test
     public void checkBuildStacktrace() {
         String expectedStacktrace = "Type of exception: Message exception\n" +
                 " ClassName.MethodName(FileName:1)\n" +
