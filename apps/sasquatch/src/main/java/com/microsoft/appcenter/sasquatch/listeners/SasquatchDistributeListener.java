@@ -8,6 +8,7 @@ package com.microsoft.appcenter.sasquatch.listeners;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.distribute.Distribute;
 import com.microsoft.appcenter.distribute.DistributeListener;
@@ -45,5 +46,10 @@ public class SasquatchDistributeListener implements DistributeListener {
             dialogBuilder.create().show();
         }
         return custom;
+    }
+
+    @Override
+    public void onNoReleaseAvailable(Activity activity) {
+        Toast.makeText(activity, activity.getString(R.string.no_updates_available), Toast.LENGTH_LONG).show();
     }
 }

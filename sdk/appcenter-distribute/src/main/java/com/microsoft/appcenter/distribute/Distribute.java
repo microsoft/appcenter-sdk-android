@@ -1172,8 +1172,12 @@ public class Distribute extends AbstractAppCenterService {
                     } catch (JSONException je) {
                         AppCenterLog.verbose(LOG_TAG, "Cannot read the error as JSON", je);
                     }
-                    if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code)) {
+                    if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code) || ErrorDetails.NO_RELEASES_FOUND.equals(code)) {
                         AppCenterLog.info(LOG_TAG, "No release available to the current user.");
+                        if (mListener != null && mForegroundActivity != null) {
+                            AppCenterLog.debug(LOG_TAG, "Calling listener.onNoReleaseAvailable.");
+                            mListener.onNoReleaseAvailable(mForegroundActivity);
+                        }
                     } else {
                         AppCenterLog.error(LOG_TAG, "Failed to check latest release (delete setup state)", e);
                         SharedPreferencesManager.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
@@ -1225,7 +1229,13 @@ public class Distribute extends AbstractAppCenterService {
 
                 /* Check version code is equals or higher and hash is different. */
                 AppCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
-                if (isMoreRecent(releaseDetails) && canUpdateNow(releaseDetails)) {
+                boolean moreRecent = isMoreRecent(releaseDetails);
+                if (!moreRecent) {
+                    if (mListener != null && mForegroundActivity != null) {
+                        AppCenterLog.debug(LOG_TAG, "Calling listener.onNoReleaseAvailable.");
+                        mListener.onNoReleaseAvailable(mForegroundActivity);
+                    }
+                } else if (canUpdateNow(releaseDetails)) {
 
                     /* Load last known release to see if we need to prepare a cleanup. */
                     if (mReleaseDetails == null) {
