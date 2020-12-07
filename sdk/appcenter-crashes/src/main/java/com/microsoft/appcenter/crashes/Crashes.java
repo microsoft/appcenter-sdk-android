@@ -22,6 +22,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
+import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ManagedErrorLogFactory;
@@ -913,6 +914,18 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     @VisibleForTesting
+    String buildStackTrace(Exception exception) {
+        String stacktrace = String.format("%s: %s", exception.getType(), exception.getMessage());
+        if (exception.getFrames() == null) {
+            return stacktrace;
+        }
+        for (StackFrame frame : exception.getFrames()) {
+            stacktrace += String.format("\n %s.%s(%s:%s)", frame.getClassName(), frame.getMethodName(), frame.getFileName(), frame.getLineNumber());
+        }
+        return stacktrace;
+    }
+
+    @VisibleForTesting
     ErrorReport buildErrorReport(ManagedErrorLog log) {
         UUID id = log.getId();
         if (mErrorReportCache.containsKey(id)) {
@@ -920,7 +933,12 @@ public class Crashes extends AbstractAppCenterService {
             report.setDevice(log.getDevice());
             return report;
         } else {
-            String stackTrace = log.getException() == null ? null : log.getException().getStackTrace();
+            String stackTrace;
+            if (log.getException().getType().equals("minidump")) {
+                stackTrace = getStackTraceString(new NativeException());
+            } else {
+                stackTrace = buildStackTrace(log.getException());
+            }
 
             /* If exception in the log doesn't have stack trace try get it from the .throwable file. */
             if (stackTrace == null) {
@@ -1132,9 +1150,6 @@ public class Crashes extends AbstractAppCenterService {
         String filename = errorLogId.toString();
         AppCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception.");
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
-
-        /* Set stacktrace to error log. */
-        errorLog.getException().setStackTrace(getStackTraceString(throwable));
 
         /* Save stacktrace log to file. */
         String errorLogString = mLogSerializer.serializeLog(errorLog);
