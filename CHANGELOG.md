@@ -4,6 +4,7 @@
 
 ### App Center Distribute
 
+* **[Feature]** Add `onNoReleaseAvailable` callback to DistributeListener.
 * **[Fix]** Fix browser opening when using a private distribution group on Android 11.
 
 ___
