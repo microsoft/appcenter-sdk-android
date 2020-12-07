@@ -108,6 +108,12 @@ public class Crashes extends AbstractAppCenterService {
     static final String ERROR_GROUP = "groupErrors";
 
     /**
+     * Minidump file.
+     */
+    @VisibleForTesting
+    static final String MINIDUMP_FILE = "minidump";
+
+    /**
      * Name of the service.
      */
     private static final String SERVICE_NAME = "Crashes";
@@ -474,8 +480,11 @@ public class Crashes extends AbstractAppCenterService {
         if (isInstanceEnabled()) {
             processPendingErrors();
 
-            /* Remove throwable files. */
-            ErrorLogHelper.removeLostThrowableFiles();
+            if (mErrorReportCache.isEmpty()) {
+
+                /* Remove lost throwable files. */
+                ErrorLogHelper.removeLostThrowableFiles();
+            }
         }
     }
 
@@ -915,6 +924,9 @@ public class Crashes extends AbstractAppCenterService {
 
     @VisibleForTesting
     String buildStackTrace(Exception exception) {
+        if (exception.getType() == null || exception.getMessage() == null) {
+            return null;
+        }
         String stacktrace = String.format("%s: %s", exception.getType(), exception.getMessage());
         if (exception.getFrames() == null) {
             return stacktrace;
@@ -933,12 +945,7 @@ public class Crashes extends AbstractAppCenterService {
             report.setDevice(log.getDevice());
             return report;
         } else {
-            String stackTrace;
-            if (log.getException().getType().equals("minidump")) {
-                stackTrace = getStackTraceString(new NativeException());
-            } else {
-                stackTrace = buildStackTrace(log.getException());
-            }
+            String stackTrace = null;
 
             /* If exception in the log doesn't have stack trace try get it from the .throwable file. */
             if (stackTrace == null) {
@@ -948,6 +955,11 @@ public class Crashes extends AbstractAppCenterService {
                         stackTrace = FileManager.read(file);
                     }
                 }
+            }
+            if (log.getException().getType().equals(MINIDUMP_FILE)) {
+                stackTrace = getStackTraceString(new NativeException());
+            } else {
+                stackTrace = buildStackTrace(log.getException());
             }
             ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, stackTrace);
             mErrorReportCache.put(id, new ErrorLogReport(log, report));
