@@ -62,7 +62,38 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void distributeListenerVersionsEqual() throws Exception {
+
+        /* Mock hash. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
+
+        /* Set the package version equal to the portal's one. */
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(10);
+
+        /* Mock http call. */
+        mockForCustomizationTest(true);
+
+        /* Start Distribute service. */
+        restartProcessAndSdk();
+
+        /* Set Distribute listener and customize it. */
+        DistributeListener listener = mock(DistributeListener.class);
+        Distribute.setListener(listener);
+
+        /* Resume activity. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify the right listener gets called. */
+        verify(listener).onNoReleaseAvailable(mActivity);
+        verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+    }
+
+    @Test
     public void distributeListenerNotRecent() throws Exception {
+
+        /* Set the package version higher than the portal's one. */
         mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(11);
 
@@ -92,7 +123,34 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void distributeListenerNoRelease() throws Exception {
+    public void distributeListenerNoReleaseForUser() throws Exception {
+
+        /* Mock error parsing. */
+        ErrorDetails errorDetails = mock(ErrorDetails.class);
+        when(errorDetails.getCode()).thenReturn(ErrorDetails.NO_RELEASES_FOR_USER_CODE);
+        mockStatic(ErrorDetails.class);
+        when(ErrorDetails.parse(anyString())).thenReturn(errorDetails);
+
+        /* Mock http call. */
+        mockHtpCallFailed("{code:'no_releases_for_user'}");
+
+        /* Start Distribute service. */
+        restartProcessAndSdk();
+
+        /* Set Distribute listener and customize it. */
+        DistributeListener listener = mock(DistributeListener.class);
+        Distribute.setListener(listener);
+
+        /* Resume activity. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify the right listener gets called. */
+        verify(listener).onNoReleaseAvailable(mActivity);
+        verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+    }
+
+    @Test
+    public void distributeListenerNoReleaseFound() throws Exception {
 
         /* Mock error parsing. */
         ErrorDetails errorDetails = mock(ErrorDetails.class);
@@ -101,7 +159,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(ErrorDetails.parse(anyString())).thenReturn(errorDetails);
 
         /* Mock http call. */
-        mockHtpCallForNoReleaseAvailable();
+        mockHtpCallFailed("{code:'not_found'}");
 
         /* Start Distribute service. */
         restartProcessAndSdk();
@@ -125,7 +183,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verify(listener).onNoReleaseAvailable(mActivity);
         verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
     }
-
 
     @Test
     public void distributeListener() throws Exception {
@@ -560,6 +617,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(details.getVersion()).thenReturn(10);
         when(details.getShortVersion()).thenReturn("2.3.4");
         when(details.isMandatoryUpdate()).thenReturn(mandatory);
+        when(details.getReleaseHash()).thenReturn("some_hash");
         when(ReleaseDetails.parse(anyString())).thenReturn(details);
 
         /* Mock update token. */
@@ -567,9 +625,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         return details;
     }
 
-    private void mockHtpCallForNoReleaseAvailable() {
-
-        final HttpException httpException = new HttpException(new HttpResponse(404, "{code:'not_found'}"));
+    private void mockHtpCallFailed(String payload) {
+        final HttpException httpException = new HttpException(new HttpResponse(404, payload));
 
         /* Mock http call. */
         when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
