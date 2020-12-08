@@ -945,18 +945,18 @@ public class Crashes extends AbstractAppCenterService {
             String stackTrace = null;
 
             /* If exception in the log doesn't have stack trace try get it from the .throwable file. */
-            if (stackTrace == null) {
-                File file = ErrorLogHelper.getStoredThrowableFile(id);
-                if (file != null) {
-                    if (file.length() > 0) {
-                        stackTrace = FileManager.read(file);
-                    }
+            File file = ErrorLogHelper.getStoredThrowableFile(id);
+            if (file != null) {
+                if (file.length() > 0) {
+                    stackTrace = FileManager.read(file);
                 }
             }
-            if (log.getException().getType().equals(MINIDUMP_FILE)) {
-                stackTrace = getStackTraceString(new NativeException());
-            } else {
-                stackTrace = buildStackTrace(log.getException());
+            if (stackTrace == null) {
+                if (MINIDUMP_FILE.equals(log.getException().getType())) {
+                    stackTrace = getStackTraceString(new NativeException());
+                } else {
+                    stackTrace = buildStackTrace(log.getException());
+                }
             }
             ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, stackTrace);
             mErrorReportCache.put(id, new ErrorLogReport(log, report));

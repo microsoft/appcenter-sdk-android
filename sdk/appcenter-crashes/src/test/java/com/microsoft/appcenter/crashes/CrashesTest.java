@@ -524,7 +524,6 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Mock and set exception data. */
         com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
-        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
         when(mockException.getType()).thenReturn("type");
         when(mockException.getMessage()).thenReturn("message");
         mErrorLog.setException(mockException);
@@ -682,7 +681,6 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Mock and set exception data. */
         com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
-        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
         when(mockException.getType()).thenReturn("type");
         when(mockException.getMessage()).thenReturn("message");
         mErrorLog.setException(mockException);
@@ -779,7 +777,6 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Mock and set exception data. */
         com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
-        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
         when(mockException.getType()).thenReturn("type");
         when(mockException.getMessage()).thenReturn("message");
 
@@ -1524,6 +1521,8 @@ public class CrashesTest extends AbstractCrashesTest {
 
     @Test
     public void checkStacktraceWhenThrowableFileIsNull() throws Exception {
+        String expectedStacktrace = "type: message\n" +
+                " ClassName.MethodName(FileName:1)";
 
         /* Mock file. */
         File mockFile = mock(File.class);
@@ -1534,11 +1533,18 @@ public class CrashesTest extends AbstractCrashesTest {
         when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(new File[] {mockFile});
         whenNew(File.class).withAnyArguments().thenReturn(mockDir);
 
+        /* Prepare first frame. */
+        final StackFrame stackFrame1 = new StackFrame();
+        stackFrame1.setClassName("ClassName");
+        stackFrame1.setMethodName("MethodName");
+        stackFrame1.setFileName("FileName");
+        stackFrame1.setLineNumber(1);
+
         /* Mock exception value. */
         com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
-        when(mockException.getStackTrace()).thenReturn(STACK_TRACE);
         when(mockException.getType()).thenReturn("type");
         when(mockException.getMessage()).thenReturn("message");
+        when(mockException.getFrames()).thenReturn(Arrays.asList(stackFrame1));
 
         /* Mock log. */
         ManagedErrorLog mockLog = new ManagedErrorLog();
@@ -1554,7 +1560,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Verify that stacktrace is null. */
         ErrorReport report = crashes.buildErrorReport(mockLog);
-        assertEquals(STACK_TRACE, report.getStackTrace());
+        assertEquals(expectedStacktrace, report.getStackTrace());
         verifyStatic(never());
         FileManager.read(any(File.class));
     }
