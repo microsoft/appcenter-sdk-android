@@ -1658,6 +1658,10 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void goToUnknownAppsSettings(ReleaseDetails releaseDetails) {
         Intent intent;
+        if (mForegroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the settings screen could not be opened.");
+            return;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
             intent.setData(Uri.parse("package:" + mForegroundActivity.getPackageName()));
