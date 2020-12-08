@@ -48,7 +48,13 @@ public class SasquatchDistributeListener implements DistributeListener {
         return custom;
     }
 
-    @Override
+    /*
+     * TODO: uncomment the annotation after release.
+     *  The annotation conflicts with `gradlew assemble` command, because gradle runs through
+     *  all build variants including jcenter ones.
+     *
+     * @Override
+     */
     public void onNoReleaseAvailable(Activity activity) {
         Toast.makeText(activity, activity.getString(R.string.no_updates_available), Toast.LENGTH_LONG).show();
     }
