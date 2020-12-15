@@ -4,6 +4,7 @@
 
 ### App Center Distribute
 
+* **[Feature]** Add `onNoReleaseAvailable` callback to DistributeListener.
 * **[Fix]** Fix a crash when the app is trying to open the system settings screen from the background.
 * **[Fix]** Fix browser opening when using a private distribution group on Android 11.
 
