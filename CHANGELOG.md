@@ -2,6 +2,10 @@
 
 ## Version 4.0.1 (Under development)
 
+### App Center Crashes
+
+* **[Fix]** Fix removing throwable files after rewriting error logs due to small database size.
+
 ### App Center Distribute
 
 * **[Fix]** Fix a crash when the app is trying to open the system settings screen from the background.

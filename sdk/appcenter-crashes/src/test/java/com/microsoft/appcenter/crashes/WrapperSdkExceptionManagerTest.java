@@ -53,6 +53,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
@@ -87,6 +88,7 @@ public class WrapperSdkExceptionManagerTest {
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
         ManagedErrorLog errorLogMock = mock(ManagedErrorLog.class);
         when(errorLogMock.getId()).thenReturn(UUID.randomUUID());
+        when(errorLogMock.getException()).thenReturn(new com.microsoft.appcenter.crashes.ingestion.models.Exception());
         when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(Exception.class), Matchers.<Map<Thread, StackTraceElement[]>>any(), anyLong(), anyBoolean()))
                 .thenReturn(errorLogMock);
 
@@ -183,8 +185,9 @@ public class WrapperSdkExceptionManagerTest {
     @Test
     @PrepareForTest(android.util.Log.class)
     public void saveWrapperSdkCrashWithJavaThrowable() throws JSONException, IOException {
+        String mockData = "mock";
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
-        when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
+        when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn(mockData);
         Crashes.getInstance().setLogSerializer(logSerializer);
         String data = "d";
         Throwable throwable = new Throwable();
@@ -194,7 +197,7 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic();
         FileManager.write(any(File.class), eq(data));
         verifyStatic();
-        FileManager.write(any(File.class), eq(STACK_TRACE));
+        FileManager.write(any(File.class), eq(mockData));
 
         /* We can't do it twice in the same process. */
         data = "e";
@@ -202,14 +205,15 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic(never());
         FileManager.write(any(File.class), eq(data));
         verifyStatic();
-        FileManager.write(any(File.class), eq(STACK_TRACE));
+        FileManager.write(any(File.class), eq(mockData));
     }
 
     @Test
     @PrepareForTest({android.util.Log.class})
     public void saveWrapperSdkCrashWithOnlyJavaThrowable() throws JSONException, IOException {
+        String mockData = "mock";
         LogSerializer logSerializer = Mockito.mock(LogSerializer.class);
-        when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn("mock");
+        when(logSerializer.serializeLog(any(ManagedErrorLog.class))).thenReturn(mockData);
         Crashes.getInstance().setLogSerializer(logSerializer);
         Throwable throwable = new Throwable();
         mockStatic(android.util.Log.class);
@@ -218,12 +222,12 @@ public class WrapperSdkExceptionManagerTest {
         verifyStatic(never());
         FileManager.write(any(File.class), isNull(String.class));
         verifyStatic();
-        FileManager.write(any(File.class), eq(STACK_TRACE));
+        FileManager.write(any(File.class), eq(mockData));
 
         /* We can't do it twice in the same process. */
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), throwable, new Exception(), null);
         verifyStatic();
-        FileManager.write(any(File.class), eq(STACK_TRACE));
+        FileManager.write(any(File.class), eq(mockData));
     }
 
     @Test
@@ -242,28 +246,16 @@ public class WrapperSdkExceptionManagerTest {
         when(throwableFile.createNewFile()).thenReturn(false);
         String data = "d";
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
-        verifyStatic();
-        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof IOException;
-            }
-        }));
+        verifyStatic(times(3));
+        AppCenterLog.debug(anyString(), anyString());
 
         /* Second call is ignored. */
         data = "e";
         WrapperSdkExceptionManager.saveWrapperException(Thread.currentThread(), null, new Exception(), data);
 
         /* No more error. */
-        verifyStatic();
-        AppCenterLog.error(anyString(), anyString(), argThat(new ArgumentMatcher<Throwable>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof IOException;
-            }
-        }));
+        verifyStatic(times(3));
+        AppCenterLog.debug(anyString(), anyString());
     }
 
     @Test
