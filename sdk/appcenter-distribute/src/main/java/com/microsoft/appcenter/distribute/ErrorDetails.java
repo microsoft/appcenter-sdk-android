@@ -19,6 +19,11 @@ class ErrorDetails {
     static final String NO_RELEASES_FOR_USER_CODE = "no_releases_for_user";
 
     /**
+     * Error code when no releases were found for the application.
+     */
+    static final String NO_RELEASES_FOUND = "not_found";
+
+    /**
      * Code property.
      */
     private static final String CODE = "code";

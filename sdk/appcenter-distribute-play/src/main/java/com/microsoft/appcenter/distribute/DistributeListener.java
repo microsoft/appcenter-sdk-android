@@ -27,4 +27,17 @@ public interface DistributeListener {
      * @return the custom dialog whose visibility will be managed for you if not null.
      */
     boolean onReleaseAvailable(Activity activity, ReleaseDetails releaseDetails);
+
+    /**
+     * Called when no updates are available for the application.
+     * <p>
+     * This callback will repeat for every foreground/background state change if there are no updates.
+     * <p>
+     * It's easier to use Toast or Snackbar here, but if you prefer a dialog and you use custom
+     * dialogs for {@link DistributeListener#onReleaseAvailable(Activity, ReleaseDetails)},
+     * make sure to dismiss the previous onReleaseAvailable dialog if it is still showing.
+     *
+     * @param activity current activity.
+     */
+    boolean onNoReleaseAvailable(Activity activity);
 }
