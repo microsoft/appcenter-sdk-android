@@ -1,5 +1,19 @@
 # App Center SDK for Android Change Log
 
+## Version 4.1.0
+
+### App Center Crashes
+
+* **[Fix]** Fix removing throwable files after rewriting error logs due to small database size.
+
+### App Center Distribute
+
+* **[Feature]** Add `onNoReleaseAvailable` callback to DistributeListener.
+* **[Fix]** Fix a crash when the app is trying to open the system settings screen from the background.
+* **[Fix]** Fix browser opening when using a private distribution group on Android 11.
+
+___
+
 ## Version 4.0.0
 
 ### App Center

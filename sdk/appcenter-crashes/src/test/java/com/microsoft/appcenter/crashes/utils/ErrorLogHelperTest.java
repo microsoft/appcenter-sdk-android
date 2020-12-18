@@ -61,6 +61,8 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -517,5 +519,53 @@ public class ErrorLogHelperTest {
         File logFolder = mTemporaryFolder.newFolder("new", originalFolderName + ".dmp");
         UUID uuid = ErrorLogHelper.parseLogFolderUuid(logFolder);
         assertNotEquals(uuid.toString(), originalFolderName);
+    }
+
+    @Test
+    public void removeLostThrowableFiles() {
+
+        /* Mock FileManager class. */
+        mockStatic(FileManager.class);
+
+        /* Mock files. */
+        File mockFile1 = mock(File.class);
+        File mockFile2 = mock(File.class);
+        when(mockFile1.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120002" + ErrorLogHelper.THROWABLE_FILE_EXTENSION );
+        when(mockFile2.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120003" + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
+
+        /* Mock getting storage directory. */
+        File mockDir = mock(File.class);
+        File[] mockFiles = new File[] {mockFile1, mockFile2};
+        when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(mockFiles);
+        ErrorLogHelper.setErrorLogDirectory(mockDir);
+
+        /* Verify removing files when getErrorStorageDirectory return some files. */
+        ErrorLogHelper.removeLostThrowableFiles();
+        verifyStatic(times(2));
+        FileManager.delete(any(File.class));
+    }
+
+    @Test
+    public void removeLostThrowableFilesWhenListOfFilesIsEmpty() throws java.lang.Exception {
+
+        /* Mock FileManager class. */
+        mockStatic(FileManager.class);
+
+        /* Mock getting storage directory. */
+        File mockDir = mock(File.class);
+        when(mockDir.listFiles(any(FilenameFilter.class)))
+                .thenReturn(null)
+                .thenReturn(new File[0]);
+        ErrorLogHelper.setErrorLogDirectory(mockDir);
+
+        /* Verify removing files when getErrorStorageDirectory return null. */
+        ErrorLogHelper.removeLostThrowableFiles();
+        verifyStatic(never());
+        FileManager.delete(any(File.class));
+
+        /* Verify removing files when getErrorStorageDirectory return 0. */
+        ErrorLogHelper.removeLostThrowableFiles();
+        verifyStatic(never());
+        FileManager.delete(any(File.class));
     }
 }

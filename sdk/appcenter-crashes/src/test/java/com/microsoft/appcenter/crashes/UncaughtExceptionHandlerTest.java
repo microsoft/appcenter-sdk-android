@@ -109,6 +109,7 @@ public class UncaughtExceptionHandlerTest {
                 .thenReturn(errorLogMock);
 
         when(errorLogMock.getId()).thenReturn(UUID.randomUUID());
+        when(errorLogMock.getException()).thenReturn(new com.microsoft.appcenter.crashes.ingestion.models.Exception());
 
         mDefaultExceptionHandler = mock(Thread.UncaughtExceptionHandler.class);
         Thread.setDefaultUncaughtExceptionHandler(mDefaultExceptionHandler);

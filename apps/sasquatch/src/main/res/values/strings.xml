@@ -53,6 +53,7 @@
         <item>Date/Time</item>
         <item>Clear</item>
     </string-array>
+    <string name="no_updates_available" tools:ignore="MissingTranslation">No updates available</string>
     <string name="version_x_available" tools:ignore="MissingTranslation">Version %1$s available!</string>
     <string name="transmission_enabled" tools:ignore="MissingTranslation">Transmission target is enabled.</string>
     <string name="transmission_disabled" tools:ignore="MissingTranslation">Transmission target is disabled.</string>

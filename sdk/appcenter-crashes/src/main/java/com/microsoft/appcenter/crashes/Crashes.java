@@ -22,6 +22,7 @@ import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.ManagedErrorLog;
+import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ErrorAttachmentLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.HandledErrorLogFactory;
 import com.microsoft.appcenter.crashes.ingestion.models.json.ManagedErrorLogFactory;
@@ -105,6 +106,12 @@ public class Crashes extends AbstractAppCenterService {
      */
     @VisibleForTesting
     static final String ERROR_GROUP = "groupErrors";
+
+    /**
+     * Minidump file.
+     */
+    @VisibleForTesting
+    static final String MINIDUMP_FILE = "minidump";
 
     /**
      * Name of the service.
@@ -472,6 +479,12 @@ public class Crashes extends AbstractAppCenterService {
         super.onStarted(context, channel, appSecret, transmissionTargetToken, startedFromApp);
         if (isInstanceEnabled()) {
             processPendingErrors();
+
+            if (mErrorReportCache.isEmpty()) {
+
+                /* Remove lost throwable files. */
+                ErrorLogHelper.removeLostThrowableFiles();
+            }
         }
     }
 
@@ -516,11 +529,6 @@ public class Crashes extends AbstractAppCenterService {
                             UUID id = errorLog.getId();
                             if (report != null) {
 
-                                /* Clean up before calling callbacks if requested. */
-                                if (callbackProcessor.shouldDeleteThrowable()) {
-                                    removeStoredThrowable(id);
-                                }
-
                                 /* Call back. */
                                 HandlerUtils.runOnUiThread(new Runnable() {
 
@@ -544,11 +552,6 @@ public class Crashes extends AbstractAppCenterService {
                 processCallback(log, new CallbackProcessor() {
 
                     @Override
-                    public boolean shouldDeleteThrowable() {
-                        return false;
-                    }
-
-                    @Override
                     public void onCallBack(ErrorReport report) {
                         mCrashesListener.onBeforeSending(report);
                     }
@@ -560,11 +563,6 @@ public class Crashes extends AbstractAppCenterService {
                 processCallback(log, new CallbackProcessor() {
 
                     @Override
-                    public boolean shouldDeleteThrowable() {
-                        return true;
-                    }
-
-                    @Override
                     public void onCallBack(ErrorReport report) {
                         mCrashesListener.onSendingSucceeded(report);
                     }
@@ -574,11 +572,6 @@ public class Crashes extends AbstractAppCenterService {
             @Override
             public void onFailure(Log log, final java.lang.Exception e) {
                 processCallback(log, new CallbackProcessor() {
-
-                    @Override
-                    public boolean shouldDeleteThrowable() {
-                        return true;
-                    }
 
                     @Override
                     public void onCallBack(ErrorReport report) {
@@ -917,7 +910,6 @@ public class Crashes extends AbstractAppCenterService {
     private void removeStoredThrowable(UUID id) {
         mErrorReportCache.remove(id);
         WrapperSdkExceptionManager.deleteWrapperExceptionData(id);
-        ErrorLogHelper.removeStoredThrowableFile(id);
     }
 
     @VisibleForTesting
@@ -931,7 +923,18 @@ public class Crashes extends AbstractAppCenterService {
     }
 
     @VisibleForTesting
-    @Nullable
+    String buildStackTrace(Exception exception) {
+        String stacktrace = String.format("%s: %s", exception.getType(), exception.getMessage());
+        if (exception.getFrames() == null) {
+            return stacktrace;
+        }
+        for (StackFrame frame : exception.getFrames()) {
+            stacktrace += String.format("\n %s.%s(%s:%s)", frame.getClassName(), frame.getMethodName(), frame.getFileName(), frame.getLineNumber());
+        }
+        return stacktrace;
+    }
+
+    @VisibleForTesting
     ErrorReport buildErrorReport(ManagedErrorLog log) {
         UUID id = log.getId();
         if (mErrorReportCache.containsKey(id)) {
@@ -939,18 +942,26 @@ public class Crashes extends AbstractAppCenterService {
             report.setDevice(log.getDevice());
             return report;
         } else {
+            String stackTrace = null;
+
+            /* If exception in the log doesn't have stack trace try get it from the .throwable file. */
             File file = ErrorLogHelper.getStoredThrowableFile(id);
             if (file != null) {
-                String stackTrace = null;
                 if (file.length() > 0) {
                     stackTrace = FileManager.read(file);
                 }
-                ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, stackTrace);
-                mErrorReportCache.put(id, new ErrorLogReport(log, report));
-                return report;
             }
+            if (stackTrace == null) {
+                if (MINIDUMP_FILE.equals(log.getException().getType())) {
+                    stackTrace = getStackTraceString(new NativeException());
+                } else {
+                    stackTrace = buildStackTrace(log.getException());
+                }
+            }
+            ErrorReport report = ErrorLogHelper.getErrorReportFromErrorLog(log, stackTrace);
+            mErrorReportCache.put(id, new ErrorLogReport(log, report));
+            return report;
         }
-        return null;
     }
 
     @VisibleForTesting
@@ -1148,34 +1159,11 @@ public class Crashes extends AbstractAppCenterService {
         String filename = errorLogId.toString();
         AppCenterLog.debug(Crashes.LOG_TAG, "Saving uncaught exception.");
         File errorLogFile = new File(errorStorageDirectory, filename + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+
+        /* Save stacktrace log to file. */
         String errorLogString = mLogSerializer.serializeLog(errorLog);
         FileManager.write(errorLogFile, errorLogString);
         AppCenterLog.debug(Crashes.LOG_TAG, "Saved JSON content for ingestion into " + errorLogFile);
-        File throwableFile = new File(errorStorageDirectory, filename + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
-        if (throwable != null) {
-            try {
-                String stackTrace = getStackTraceString(throwable);
-                FileManager.write(throwableFile, stackTrace);
-                AppCenterLog.debug(LOG_TAG, "Saved stack trace as is for client side inspection in " + throwableFile + " stack trace:" + stackTrace);
-            } catch (StackOverflowError e) {
-                AppCenterLog.error(Crashes.LOG_TAG, "Failed to store stack trace.", e);
-                throwable = null;
-
-                //noinspection ResultOfMethodCallIgnored
-                throwableFile.delete();
-            }
-        }
-        if (throwable == null) {
-
-            /*
-             * If there is no Java Throwable to save as is (typical in wrapper SDKs),
-             * use file placeholder as we also use this file to manage state.
-             */
-            if (!throwableFile.createNewFile()) {
-                throw new IOException(throwableFile.getName());
-            }
-            AppCenterLog.debug(Crashes.LOG_TAG, "Saved empty Throwable file in " + throwableFile);
-        }
         return errorLogId;
     }
 
@@ -1286,11 +1274,6 @@ public class Crashes extends AbstractAppCenterService {
      * Callback template method.
      */
     private interface CallbackProcessor {
-
-        /**
-         * @return true to delete the stored serialized throwable file.
-         */
-        boolean shouldDeleteThrowable();
 
         /**
          * Execute call back.
