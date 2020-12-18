@@ -929,7 +929,7 @@ public class Crashes extends AbstractAppCenterService {
             return stacktrace;
         }
         for (StackFrame frame : exception.getFrames()) {
-            stacktrace += String.format("\n %s.%s(%s:%s)", frame.getClassName(), frame.getMethodName(), frame.getFileName(), frame.getLineNumber());
+            stacktrace += String.format("\n\t at %s.%s(%s:%s)", frame.getClassName(), frame.getMethodName(), frame.getFileName(), frame.getLineNumber());
         }
         return stacktrace;
     }
