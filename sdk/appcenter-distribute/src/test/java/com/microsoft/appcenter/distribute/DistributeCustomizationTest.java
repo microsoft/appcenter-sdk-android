@@ -24,6 +24,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -87,39 +88,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify the right listener gets called. */
         verify(listener).onNoReleaseAvailable(mActivity);
-        verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
-    }
-
-    @Test
-    public void distributeListenerNotRecent() throws Exception {
-
-        /* Set the package version higher than the portal's one. */
-        mockStatic(DeviceInfoHelper.class);
-        when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(11);
-
-        /* Mock http call. */
-        mockForCustomizationTest(true);
-
-        /* Start Distribute service. */
-        restartProcessAndSdk();
-
-        /* Set Distribute listener and customize it. */
-        DistributeListener listener = mock(DistributeListener.class);
-        Distribute.setListener(listener);
-
-        /* Resume activity. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Verify the right listener gets called. */
-        verify(listener).onNoReleaseAvailable(mActivity);
-        verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
-
-        /* Resume activity again to invoke update request. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Verify the right listener gets called again. */
-        verify(listener).onNoReleaseAvailable(mActivity);
-        verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+        verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
     }
 
     @Test
@@ -146,7 +115,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify the right listener gets called. */
         verify(listener).onNoReleaseAvailable(mActivity);
-        verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+        verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
     }
 
     @Test
@@ -173,7 +142,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify the right listener gets called. */
         verify(listener).onNoReleaseAvailable(mActivity);
-        verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+        verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
 
         /* Resume activity again to invoke update request. */
         Distribute.getInstance().onActivityPaused(mActivity);
@@ -181,7 +150,103 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify the right listener gets called again. */
         verify(listener).onNoReleaseAvailable(mActivity);
-        verify(listener, times(0)).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+        verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+    }
+
+    @Test
+    public void distributeNotRecent() throws Exception {
+
+        /* Set the package version higher than the portal's one. */
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(11);
+
+        /* Mock http call. */
+        mockForCustomizationTest(true);
+
+        /* Start Distribute service. */
+        restartProcessAndSdk();
+
+        /* Set Distribute listener and customize it. */
+        DistributeListener listener = mock(DistributeListener.class);
+        Distribute.setListener(listener);
+
+        /* Resume activity. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify the right listener gets called. */
+        verify(listener, times(1)).onNoReleaseAvailable(mActivity);
+        verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+
+        /* Resume activity again to invoke update request. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify the right listener gets called again. */
+        verify(listener, times(1)).onNoReleaseAvailable(mActivity);
+        verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+
+    }
+
+    @Test
+    public void distributeNoListener() throws Exception {
+        System.out.println("2");
+        DistributeListener listener = mock(DistributeListener.class);
+        distributeNoReleaseAvailableCoverage(null, listener, false);
+    }
+
+    @Test
+    public void distributeNoActivity() throws Exception {
+        System.out.println("3");
+        DistributeListener listener = mock(DistributeListener.class);
+        distributeNoReleaseAvailableCoverage(listener, listener, true);
+    }
+
+    @Test
+    public void distributeNoListenerNoActivity() throws Exception {
+        System.out.println("4");
+        DistributeListener listener = mock(DistributeListener.class);
+        distributeNoReleaseAvailableCoverage(null, listener, true);
+    }
+
+    ServiceCallback callback = null;
+
+    private void distributeNoReleaseAvailableCoverage(DistributeListener actualListener, DistributeListener verificationListener, boolean onPause) throws Exception {
+
+        /* Mock error parsing. */
+        ErrorDetails errorDetails = mock(ErrorDetails.class);
+        when(errorDetails.getCode()).thenReturn(ErrorDetails.NO_RELEASES_FOUND);
+        mockStatic(ErrorDetails.class);
+        when(ErrorDetails.parse(anyString())).thenReturn(errorDetails);
+
+        /* Mock http call. */
+        final HttpException httpException = new HttpException(new HttpResponse(404, "{code:'not_found'}"));
+
+        /* Mock http call. */
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+
+            @Override
+            public ServiceCall answer(InvocationOnMock invocation) {
+                callback = (ServiceCallback) invocation.getArguments()[4];
+                return mock(ServiceCall.class);
+            }
+        });
+
+        /* Start Distribute service. */
+        restartProcessAndSdk();
+
+        /* Set Distribute listener and customize it. */
+        Distribute.setListener(actualListener);
+
+        /* Resume activity. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        if (onPause){
+            Distribute.getInstance().onActivityPaused(mActivity);
+        }
+
+        callback.onCallFailed(httpException);
+
+        /* Verify the right listener gets called. */
+        verify(verificationListener, never()).onNoReleaseAvailable(any(Activity.class));
+        verify(verificationListener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
     }
 
     @Test
