@@ -105,8 +105,7 @@ subprojects {
         def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
         sourceDirectories.from = files(["$projectDir/src/main/java"])
         classDirectories.from = files([
-                fileTree(dir: "$buildDir/intermediates/classes/debug", excludes: fileFilter),
-                fileTree(dir: "$buildDir/intermediates/javac/debug/compileDebugJavaWithJavac/classes", excludes: fileFilter)
+                fileTree(dir: "$buildDir/intermediates/javac/debug/classes", excludes: fileFilter)
         ])
         executionData.from = fileTree(dir: buildDir, includes: [
                 'jacoco/testDebugUnitTest.exec',
