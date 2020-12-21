@@ -1,5 +1,11 @@
 # App Center SDK for Android Change Log
 
+## Version 4.1.1 (Under development)
+
+### App Center Distribute
+
+* **[Fix]** Fix show title in the push notification during downloading a new release.
+
 ## Version 4.1.0
 
 ### App Center Crashes
