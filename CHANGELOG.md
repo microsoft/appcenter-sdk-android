@@ -6,6 +6,8 @@
 
 * **[Fix]** Fix formatting of stack trace in the `ErrorReport`.
 
+___
+
 ## Version 4.1.0
 
 ### App Center Crashes
