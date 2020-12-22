@@ -127,6 +127,23 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mUnknownSourcesDialog).show();
     }
 
+    @Test
+    public void clickSettingsNotActivity() throws Exception {
+
+        /* Click settings. */
+        Intent intent = mock(Intent.class);
+        whenNew(Intent.class).withArguments(Settings.ACTION_SECURITY_SETTINGS).thenReturn(intent);
+        ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
+        verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_unknown_sources_dialog_settings), clickListener.capture());
+
+        /* Go to unknown sources without any activity in foreground. */
+        Distribute.getInstance().onActivityPaused(mock(Activity.class));
+        clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
+
+        /* Verify no navigation attempts. */
+        verify(mFirstActivity, never()).startActivity(intent);
+    }
+
     @After
     public void tearDown() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);

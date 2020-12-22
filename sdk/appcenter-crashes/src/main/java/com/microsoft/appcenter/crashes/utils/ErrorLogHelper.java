@@ -470,7 +470,7 @@ public class ErrorLogHelper {
     }
 
     @VisibleForTesting
-    static void setErrorLogDirectory(File file) {
+    public static void setErrorLogDirectory(File file) {
         sErrorLogDirectory = file;
     }
 

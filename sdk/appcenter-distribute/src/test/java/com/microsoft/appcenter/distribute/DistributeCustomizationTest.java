@@ -23,8 +23,8 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -183,31 +183,86 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Verify the right listener gets called again. */
         verify(listener, times(1)).onNoReleaseAvailable(mActivity);
         verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
-
     }
 
     @Test
-    public void distributeNoListener() throws Exception {
-        System.out.println("2");
+    public void distributeNotRecentNoListener() throws Exception {
+        DistributeListener listener = mock(DistributeListener.class);
+        distributeNotRecentCoverage(null, listener, false);
+    }
+
+    @Test
+    public void distributeNotRecentNoActivity() throws Exception {
+        DistributeListener listener = mock(DistributeListener.class);
+        distributeNotRecentCoverage(listener, listener, true);
+    }
+
+    @Test
+    public void distributeNotRecentNoListenerNoActivity() throws Exception {
+        DistributeListener listener = mock(DistributeListener.class);
+        distributeNotRecentCoverage(null, listener, true);
+    }
+
+    private void distributeNotRecentCoverage(DistributeListener actualListener, DistributeListener verificationListener, boolean onPause) throws Exception {
+
+        /* Set the package version higher than the portal's one. */
+        mockStatic(DeviceInfoHelper.class);
+        when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(11);
+
+        /* Mock http call. */
+        ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
+
+        /* Mock data model. */
+        mockStatic(ReleaseDetails.class);
+        ReleaseDetails details = mock(ReleaseDetails.class);
+        when(details.getId()).thenReturn(1);
+        when(details.getVersion()).thenReturn(10);
+        when(details.getShortVersion()).thenReturn("2.3.4");
+        when(details.isMandatoryUpdate()).thenReturn(false);
+        when(details.getReleaseHash()).thenReturn("some_hash");
+        when(ReleaseDetails.parse(anyString())).thenReturn(details);
+
+        /* Mock update token. */
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
+
+        /* Start Distribute service. */
+        restartProcessAndSdk();
+
+        /* Set Distribute listener and customize it. */
+        Distribute.setListener(actualListener);
+
+        /* Resume activity. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        if (onPause) {
+            Distribute.getInstance().onActivityPaused(mActivity);
+        }
+
+        /* Simulate network latency. */
+        httpCallback.getValue().onCallSucceeded(new HttpResponse(200, "mock"));
+
+        /* Verify the right listener gets called. */
+        verify(verificationListener, never()).onNoReleaseAvailable(any(Activity.class));
+        verify(verificationListener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
+    }
+
+    @Test
+    public void distributeNotFoundAvailableNoListener() throws Exception {
         DistributeListener listener = mock(DistributeListener.class);
         distributeNoReleaseAvailableCoverage(null, listener, false);
     }
 
     @Test
-    public void distributeNoActivity() throws Exception {
-        System.out.println("3");
+    public void distributeNotFoundNoActivity() throws Exception {
         DistributeListener listener = mock(DistributeListener.class);
         distributeNoReleaseAvailableCoverage(listener, listener, true);
     }
 
     @Test
-    public void distributeNoListenerNoActivity() throws Exception {
-        System.out.println("4");
+    public void distributeNotFoundNoListenerNoActivity() throws Exception {
         DistributeListener listener = mock(DistributeListener.class);
         distributeNoReleaseAvailableCoverage(null, listener, true);
     }
-
-    ServiceCallback callback = null;
 
     private void distributeNoReleaseAvailableCoverage(DistributeListener actualListener, DistributeListener verificationListener, boolean onPause) throws Exception {
 
@@ -221,14 +276,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         final HttpException httpException = new HttpException(new HttpResponse(404, "{code:'not_found'}"));
 
         /* Mock http call. */
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
-
-            @Override
-            public ServiceCall answer(InvocationOnMock invocation) {
-                callback = (ServiceCallback) invocation.getArguments()[4];
-                return mock(ServiceCall.class);
-            }
-        });
+        ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
 
         /* Start Distribute service. */
         restartProcessAndSdk();
@@ -238,11 +287,12 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Resume activity. */
         Distribute.getInstance().onActivityResumed(mActivity);
-        if (onPause){
+        if (onPause) {
             Distribute.getInstance().onActivityPaused(mActivity);
         }
 
-        callback.onCallFailed(httpException);
+        /* Simulate network latency. */
+        httpCallback.getValue().onCallFailed(httpException);
 
         /* Verify the right listener gets called. */
         verify(verificationListener, never()).onNoReleaseAvailable(any(Activity.class));

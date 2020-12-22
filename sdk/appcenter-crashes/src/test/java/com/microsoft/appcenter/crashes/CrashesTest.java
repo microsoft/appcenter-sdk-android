@@ -52,6 +52,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.reflect.Whitebox;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
@@ -1530,7 +1531,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Mock files. */
         File mockDir = mock(File.class);
-        when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(new File[] {mockFile});
+        when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{mockFile});
         whenNew(File.class).withAnyArguments().thenReturn(mockDir);
 
         /* Prepare first frame. */
@@ -1562,6 +1563,46 @@ public class CrashesTest extends AbstractCrashesTest {
         ErrorReport report = crashes.buildErrorReport(mockLog);
         assertEquals(expectedStacktrace, report.getStackTrace());
         verifyStatic(never());
+        FileManager.read(any(File.class));
+    }
+
+    @Test
+    public void checkStacktraceWithLegacyThrowableFile() throws Exception {
+        String expectedStacktrace = "type: message\n" +
+                " ClassName.MethodName(FileName:1)";
+
+        /* Mock FileManager call. */
+        when(FileManager.read(any(File.class))).thenReturn(expectedStacktrace);
+
+        /* Create throwable file. */
+        UUID logId = UUID.randomUUID();
+        String throwableFileName = logId + ErrorLogHelper.THROWABLE_FILE_EXTENSION;
+        File errorStorageDirectory = mTemporaryFolder.newFolder("error");
+        ErrorLogHelper.setErrorLogDirectory(errorStorageDirectory);
+        File throwableFile = new File(errorStorageDirectory, throwableFileName);
+        assertTrue(throwableFile.createNewFile());
+
+        /* Write file content. */
+        BufferedWriter writer = new BufferedWriter(new FileWriter(throwableFile));
+        writer.write(expectedStacktrace);
+        writer.close();
+
+        /* Mock log. */
+        ManagedErrorLog mockLog = new ManagedErrorLog();
+        mockLog.setId(logId);
+        mockLog.setErrorThreadName("Thread name");
+        mockLog.setAppLaunchTimestamp(new Date());
+        mockLog.setTimestamp(new Date());
+        mockLog.setDevice(new Device());
+
+        /* Build error report. */
+        Crashes crashes = Mockito.spy(Crashes.getInstance());
+        ErrorReport report = crashes.buildErrorReport(mockLog);
+
+        /* Verify. */
+        assertEquals(expectedStacktrace, report.getStackTrace());
+        verify(crashes, never()).buildStackTrace(any(com.microsoft.appcenter.crashes.ingestion.models.Exception.class));
+        verifyStatic(times(1));
         FileManager.read(any(File.class));
     }
 
