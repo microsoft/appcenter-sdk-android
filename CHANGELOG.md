@@ -6,6 +6,12 @@
 
 * **[Fix]** Fix showing the title in the push notification while downloading a new release.
 
+### App Center Crashes
+
+* **[Fix]** Fix formatting of stack trace in the `ErrorReport`.
+
+___
+
 ## Version 4.1.0
 
 ### App Center Crashes

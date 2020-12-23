@@ -23,6 +23,7 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesPrivateHelper;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
+import com.microsoft.appcenter.sasquatch.CrashTestHelper;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -72,10 +73,10 @@ public class CrashesTest {
     private Context mContext;
 
     private static Matcher<Object> withCrashTitle(@StringRes final int titleId) {
-        return new BoundedMatcher<Object, CrashActivity.Crash>(CrashActivity.Crash.class) {
+        return new BoundedMatcher<Object, CrashTestHelper.Crash>(CrashTestHelper.Crash.class) {
 
             @Override
-            public boolean matchesSafely(CrashActivity.Crash map) {
+            public boolean matchesSafely(CrashTestHelper.Crash map) {
                 return map.title == titleId;
             }
 
@@ -183,7 +184,7 @@ public class CrashesTest {
                 new Date().getTime() - errorReport.getAppErrorTime().getTime(),
                 lessThan(10000L));
         assertNotNull(errorReport.getDevice());
-        assertEquals(getStackTraceString(failureHandler.uncaughtException), errorReport.getStackTrace());
+        assertTrue(errorReport.getStackTrace().contains(failureHandler.uncaughtException.getMessage()));
 
         /* Send report. */
         waitFor(onView(withText(R.string.crash_confirmation_dialog_send_button))
@@ -202,7 +203,7 @@ public class CrashesTest {
     }
 
     private ViewInteraction onCrash(@StringRes int titleId) {
-        return onData(allOf(instanceOf(CrashActivity.Crash.class), withCrashTitle(titleId)))
+        return onData(allOf(instanceOf(CrashTestHelper.Crash.class), withCrashTitle(titleId)))
                 .perform();
     }
 

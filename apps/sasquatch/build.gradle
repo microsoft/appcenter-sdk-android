@@ -69,7 +69,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
 
-    def appCenterSdkVersion = "4.0.0"
+    def appCenterSdkVersion = "4.1.0"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
 
