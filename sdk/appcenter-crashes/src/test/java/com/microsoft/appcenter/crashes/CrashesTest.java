@@ -55,7 +55,6 @@ import org.powermock.reflect.Whitebox;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1521,18 +1520,17 @@ public class CrashesTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void checkStacktraceWhenThrowableFileIsNull() throws Exception {
+    public void checkStacktraceWhenThrowableFileIsEmpty() throws Exception {
         String expectedStacktrace = "type: message\n" +
                 " ClassName.MethodName(FileName:1)";
 
-        /* Mock file. */
-        File mockFile = mock(File.class);
-        when(mockFile.length()).thenReturn(0L);
-
-        /* Mock files. */
-        File mockDir = mock(File.class);
-        when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(new File[]{mockFile});
-        whenNew(File.class).withAnyArguments().thenReturn(mockDir);
+        /* Create empty throwable file. */
+        UUID logId = UUID.randomUUID();
+        String throwableFileName = logId + ErrorLogHelper.THROWABLE_FILE_EXTENSION;
+        File errorStorageDirectory = mTemporaryFolder.newFolder("error");
+        ErrorLogHelper.setErrorLogDirectory(errorStorageDirectory);
+        File throwableFile = new File(errorStorageDirectory, throwableFileName);
+        assertTrue(throwableFile.createNewFile());
 
         /* Prepare first frame. */
         final StackFrame stackFrame1 = new StackFrame();
@@ -1549,7 +1547,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Mock log. */
         ManagedErrorLog mockLog = new ManagedErrorLog();
-        mockLog.setId(UUID.randomUUID());
+        mockLog.setId(logId);
         mockLog.setErrorThreadName("Thread name");
         mockLog.setAppLaunchTimestamp(new Date());
         mockLog.setTimestamp(new Date());

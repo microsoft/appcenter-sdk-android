@@ -17,7 +17,6 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Surface;
-import android.view.WindowManager;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.BuildConfig;
@@ -29,8 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
@@ -44,7 +41,6 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -97,9 +93,22 @@ public class DeviceInfoHelperTest {
         DeviceInfoHelper.setWrapperSdk(null);
     }
 
-    public void getDeviceInfo(Integer osApiLevel) throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
+    @Test
+    public void deviceInfo() throws PackageManager.NameNotFoundException, DeviceInfoHelper.DeviceInfoException {
+
+        /* Mock system calls. */
+        //noinspection WrongConstant
+        when(mContext.getSystemService(eq(Context.DISPLAY_SERVICE))).thenReturn(mDisplayManager);
+        when(mDisplayManager.getDisplay(anyInt())).thenReturn(mDisplay);
+        //noinspection WrongConstant
+        when(mContext.getResources()).thenReturn(mResources);
+        //noinspection WrongConstant
+        when(mResources.getDisplayMetrics()).thenReturn(mDisplayMetrics);
+        mDisplayMetrics.widthPixels = SCREEN_WIDTH;
+        mDisplayMetrics.heightPixels = SCREEN_HEIGHT;
 
         /* Mock data. */
+        final Integer osApiLevel = 21;
         final String appVersion = "1.0";
         final String appBuild = "1";
         final String appNamespace = "com.contoso.app";
@@ -203,6 +212,14 @@ public class DeviceInfoHelperTest {
         /* Remove wrapper SDK information. */
         DeviceInfoHelper.setWrapperSdk(null);
         assertEquals(device, DeviceInfoHelper.getDeviceInfo(mContext));
+
+        /* Verify the right API was called to get a screen size. */
+        verify(mContext, atLeastOnce()).getSystemService(eq(Context.DISPLAY_SERVICE));
+        verify(mContext, atLeastOnce()).getResources();
+        verify(mResources, atLeastOnce()).getDisplayMetrics();
+        //noinspection deprecation
+        verify(mDisplay, never()).getSize(any(Point.class));
+        verify(mContext, never()).getSystemService(eq(Context.WINDOW_SERVICE));
     }
 
     @Test(expected = DeviceInfoHelper.DeviceInfoException.class)
@@ -226,7 +243,6 @@ public class DeviceInfoHelperTest {
         when(mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY)).thenReturn(mDisplay);
         when(mContext.getResources()).thenReturn(mResources);
         when(mResources.getDisplayMetrics()).thenReturn(mDisplayMetrics);
-        
         //noinspection WrongConstant
         when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
 
