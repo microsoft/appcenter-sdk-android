@@ -55,7 +55,7 @@ public class DownloadManagerRequestTaskTest {
         when(mDownloader.getDownloadManager()).thenReturn(mDownloadManager);
 
         /* Create RequestTask. */
-        mRequestTask = spy(new DownloadManagerRequestTask(mDownloader));
+        mRequestTask = spy(new DownloadManagerRequestTask(mDownloader, "title"));
         when(mRequestTask.createRequest(any(Uri.class))).thenReturn(mDownloadManagerRequest);
     }
 
@@ -69,7 +69,7 @@ public class DownloadManagerRequestTaskTest {
         mRequestTask.doInBackground();
 
         /* Verify. */
-        String expectedTitle = "Downloading version 1 (1)";
+        String expectedTitle = "title 1 (1)";
         verify(mDownloadManagerRequest).setTitle(eq(expectedTitle));
         verifyZeroInteractions(mDownloadManagerRequest);
         verify(mDownloader).onDownloadStarted(eq(DOWNLOAD_ID), anyLong());
@@ -86,7 +86,7 @@ public class DownloadManagerRequestTaskTest {
         mRequestTask.doInBackground();
 
         /* Verify. */
-        String expectedTitle = "Downloading version 1 (1)";
+        String expectedTitle = "title 1 (1)";
         verify(mDownloadManagerRequest).setTitle(eq(expectedTitle));
         verify(mDownloadManagerRequest).setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
         verify(mDownloadManagerRequest).setVisibleInDownloadsUi(false);

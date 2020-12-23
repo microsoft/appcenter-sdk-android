@@ -4,7 +4,7 @@
 
 ### App Center Distribute
 
-* **[Fix]** Fix show title in the push notification during downloading a new release.
+* **[Fix]** Fix showing the title in the push notification while downloading a new release.
 
 ## Version 4.1.0
 

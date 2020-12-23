@@ -15,6 +15,7 @@ import android.support.annotation.AnyThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 
+import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.AbstractReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -117,7 +118,7 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
             AppCenterLog.debug(LOG_TAG, "Downloading is already in progress.");
             return;
         }
-        mRequestTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRequestTask(this));
+        mRequestTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRequestTask(this, mContext.getString(R.string.appcenter_distribute_downloading_version)));
     }
 
     /**

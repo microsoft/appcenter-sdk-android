@@ -17,6 +17,7 @@
     <!-- TODO: Deprecated. Remove this key and move the translated strings to appcenter_distribute_downloading_update. -->
     <string name="appcenter_distribute_downloading_mandatory_update">Downloading update</string>
     <!-- TODO: Add translations. -->
+    <string name="appcenter_distribute_downloading_version" tools:ignore="MissingTranslation">Downloading version</string>
     <string name="appcenter_distribute_downloading_error" tools:ignore="MissingTranslation">Failed to download app update</string>
     <string name="appcenter_distribute_download_progress_number_format">%1$d MB of %2$d MB</string>
     <string name="appcenter_distribute_install_ready_title">App update downloaded</string>
