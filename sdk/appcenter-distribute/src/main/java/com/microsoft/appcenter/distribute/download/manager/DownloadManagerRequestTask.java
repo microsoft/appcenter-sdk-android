@@ -37,7 +37,7 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
         AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
         DownloadManager downloadManager = mDownloader.getDownloadManager();
         DownloadManager.Request request = createRequest(downloadUrl);
-        request.setTitle(String.format("%s %s (%s)", mTitle, releaseDetails.getShortVersion(), releaseDetails.getVersion()));
+        request.setTitle(String.format(mTitle, releaseDetails.getShortVersion(), releaseDetails.getVersion()));
 
         /* Hide mandatory download to prevent canceling via notification cancel or download UI delete. */
         if (releaseDetails.isMandatoryUpdate()) {
