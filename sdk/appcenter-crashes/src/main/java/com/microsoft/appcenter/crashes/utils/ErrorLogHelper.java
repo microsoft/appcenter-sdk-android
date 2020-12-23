@@ -469,7 +469,6 @@ public class ErrorLogHelper {
         return report;
     }
 
-    @VisibleForTesting
     public static void setErrorLogDirectory(File file) {
         sErrorLogDirectory = file;
     }

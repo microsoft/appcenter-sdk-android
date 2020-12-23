@@ -1600,7 +1600,7 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Verify. */
         assertEquals(expectedStacktrace, report.getStackTrace());
         verify(crashes, never()).buildStackTrace(any(com.microsoft.appcenter.crashes.ingestion.models.Exception.class));
-        verifyStatic(times(1));
+        verifyStatic();
         FileManager.read(any(File.class));
     }
 

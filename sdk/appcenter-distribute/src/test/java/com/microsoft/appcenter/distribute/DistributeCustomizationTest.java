@@ -174,14 +174,14 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify the right listener gets called. */
-        verify(listener, times(1)).onNoReleaseAvailable(mActivity);
+        verify(listener).onNoReleaseAvailable(mActivity);
         verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
 
         /* Resume activity again to invoke update request. */
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify the right listener gets called again. */
-        verify(listener, times(1)).onNoReleaseAvailable(mActivity);
+        verify(listener).onNoReleaseAvailable(mActivity);
         verify(listener, never()).onReleaseAvailable(any(Activity.class), any(ReleaseDetails.class));
     }
 
