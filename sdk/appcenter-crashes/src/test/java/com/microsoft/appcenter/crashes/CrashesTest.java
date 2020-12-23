@@ -1522,7 +1522,7 @@ public class CrashesTest extends AbstractCrashesTest {
     @Test
     public void checkStacktraceWhenThrowableFileIsEmpty() throws Exception {
         String expectedStacktrace = "type: message\n" +
-                " ClassName.MethodName(FileName:1)";
+                "\t at ClassName.MethodName(FileName:1)";
 
         /* Create empty throwable file. */
         UUID logId = UUID.randomUUID();
@@ -1607,8 +1607,8 @@ public class CrashesTest extends AbstractCrashesTest {
     @Test
     public void checkBuildStacktrace() {
         String expectedStacktrace = "Type of exception: Message exception\n" +
-                " ClassName.MethodName(FileName:1)\n" +
-                " ClassName.MethodName(FileName:2)";
+                "\t at ClassName.MethodName(FileName:1)\n" +
+                "\t at ClassName.MethodName(FileName:2)";
         com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = new com.microsoft.appcenter.crashes.ingestion.models.Exception();
         mockException.setType("Type of exception");
         mockException.setMessage("Message exception");

@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 4.1.1 (Under development)
+
+### App Center Crashes
+
+* **[Fix]** Fix formatting of stack trace in the `ErrorReport`.
+
+___
+
 ## Version 4.1.0
 
 ### App Center Crashes
