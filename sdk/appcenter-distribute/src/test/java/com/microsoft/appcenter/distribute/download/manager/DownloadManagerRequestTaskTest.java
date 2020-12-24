@@ -55,7 +55,7 @@ public class DownloadManagerRequestTaskTest {
         when(mDownloader.getDownloadManager()).thenReturn(mDownloadManager);
 
         /* Create RequestTask. */
-        mRequestTask = spy(new DownloadManagerRequestTask(mDownloader, "title"));
+        mRequestTask = spy(new DownloadManagerRequestTask(mDownloader, "title %1$s (%2$d)"));
         when(mRequestTask.createRequest(any(Uri.class))).thenReturn(mDownloadManagerRequest);
     }
 
