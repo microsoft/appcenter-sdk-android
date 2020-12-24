@@ -530,12 +530,12 @@ public class ErrorLogHelperTest {
         /* Mock files. */
         File mockFile1 = mock(File.class);
         File mockFile2 = mock(File.class);
-        when(mockFile1.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120002" + ErrorLogHelper.THROWABLE_FILE_EXTENSION );
+        when(mockFile1.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120002" + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         when(mockFile2.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120003" + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
 
         /* Mock getting storage directory. */
         File mockDir = mock(File.class);
-        File[] mockFiles = new File[] {mockFile1, mockFile2};
+        File[] mockFiles = new File[]{mockFile1, mockFile2};
         when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(mockFiles);
         ErrorLogHelper.setErrorLogDirectory(mockDir);
 
@@ -567,5 +567,27 @@ public class ErrorLogHelperTest {
         ErrorLogHelper.removeLostThrowableFiles();
         verifyStatic(never());
         FileManager.delete(any(File.class));
+    }
+
+    @Test
+    public void removeStoredErrorLogFile() throws java.lang.Exception {
+
+        /* Create file. */
+        UUID logId = UUID.randomUUID();
+        String throwableFileName = logId + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION;
+        File errorStorageDirectory = mTemporaryFolder.newFolder("error");
+        ErrorLogHelper.setErrorLogDirectory(errorStorageDirectory);
+        File errorLogFile = new File(errorStorageDirectory, throwableFileName);
+        assertTrue(errorLogFile.createNewFile());
+        assertTrue(errorLogFile.exists());
+
+        /* Remove stored log file. */
+        ErrorLogHelper.removeStoredErrorLogFile(logId);
+
+        /* Verify. */
+        assertFalse(errorLogFile.exists());
+
+        /* Coverage check. */
+        ErrorLogHelper.removeStoredErrorLogFile(UUID.randomUUID());
     }
 }
