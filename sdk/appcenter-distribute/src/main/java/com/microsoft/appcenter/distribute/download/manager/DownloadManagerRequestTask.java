@@ -21,9 +21,11 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
 
     private final DownloadManagerReleaseDownloader mDownloader;
+    private String mTitle;
 
-    DownloadManagerRequestTask(DownloadManagerReleaseDownloader downloader) {
+    DownloadManagerRequestTask(DownloadManagerReleaseDownloader downloader, String title) {
         mDownloader = downloader;
+        mTitle = title;
     }
 
     @Override
@@ -35,6 +37,7 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
         AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
         DownloadManager downloadManager = mDownloader.getDownloadManager();
         DownloadManager.Request request = createRequest(downloadUrl);
+        request.setTitle(String.format(mTitle, releaseDetails.getShortVersion(), releaseDetails.getVersion()));
 
         /* Hide mandatory download to prevent canceling via notification cancel or download UI delete. */
         if (releaseDetails.isMandatoryUpdate()) {

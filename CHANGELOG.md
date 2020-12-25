@@ -2,6 +2,10 @@
 
 ## Version 4.1.1 (Under development)
 
+### App Center Distribute
+
+* **[Fix]** Fix showing the title in the push notification while downloading a new release.
+
 ### App Center Crashes
 
 * **[Fix]** Fix formatting of stack trace in the `ErrorReport`.
