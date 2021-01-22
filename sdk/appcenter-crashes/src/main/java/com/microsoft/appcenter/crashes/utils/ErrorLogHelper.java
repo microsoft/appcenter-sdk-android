@@ -143,13 +143,13 @@ public class ErrorLogHelper {
      * Key for saving deviceInfo to JSON.
      */
     @VisibleForTesting
-    static String DEVICE_INFO_KEY = "DEVICE_INFO_KEY";
+    static String DEVICE_INFO_KEY = "DEVICE_INFO";
 
     /**
      * Key for saving userId to JSON.
      */
     @VisibleForTesting
-    static String USER_ID_KEY = "USER_ID_KEY";
+    static String USER_ID_KEY = "USER_ID";
 
     @NonNull
     public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
@@ -362,7 +362,7 @@ public class ErrorLogHelper {
     /**
      * Get userId data.
      * @param logFolder folder where to look for stored userId.
-     * @return a userId or null.
+     * @return userId or null.
      */
     public static String getStoredUserInfo(File logFolder) {
         String userInformationString = getContextInformation(logFolder);
@@ -407,7 +407,9 @@ public class ErrorLogHelper {
     static String parseUserId(String contextInformation) {
         try {
             JSONObject jsonObject = new JSONObject(contextInformation);
-            return jsonObject.getString(USER_ID_KEY);
+            if (jsonObject.has(USER_ID_KEY)) {
+                return jsonObject.getString(USER_ID_KEY);
+            }
         } catch (JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize user info.", e);
         }
@@ -424,7 +426,13 @@ public class ErrorLogHelper {
         try {
             Device device = new Device();
             JSONObject jsonObject = new JSONObject(contextInformation);
-            device.read(new JSONObject(jsonObject.getString(DEVICE_INFO_KEY)));
+            JSONObject deviceJson;
+            if (jsonObject.has(DEVICE_INFO_KEY)) {
+                deviceJson = new JSONObject(jsonObject.getString(DEVICE_INFO_KEY));
+            } else {
+                deviceJson = jsonObject;
+            }
+            device.read(deviceJson);
             return device;
         } catch (JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize device info.", e);

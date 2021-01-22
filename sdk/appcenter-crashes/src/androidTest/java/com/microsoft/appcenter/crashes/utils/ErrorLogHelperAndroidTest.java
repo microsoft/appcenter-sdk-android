@@ -140,7 +140,7 @@ public class ErrorLogHelperAndroidTest {
 
     @Test
     public void parseDevice() {
-        String contextInfoString = "{\"DEVICE_INFO_KEY\":{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}, \"USER_ID_KEY\":\"qwerty12345\"}";
+        String contextInfoString = "{\"DEVICE_INFO\":{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}, \"USER_ID\":\"qwerty12345\"}";
         Device device = ErrorLogHelper.parseDevice(contextInfoString);
         String userId = ErrorLogHelper.parseUserId(contextInfoString);
         assertNotNull(device);
