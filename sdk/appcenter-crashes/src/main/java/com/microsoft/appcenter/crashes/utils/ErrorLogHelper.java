@@ -345,7 +345,7 @@ public class ErrorLogHelper {
     }
 
     /**
-     * Get deviceInfo data..
+     * Get deviceInfo data.
      *
      * @param logFolder folder where to look for stored device information.
      * @return a device information or null.
