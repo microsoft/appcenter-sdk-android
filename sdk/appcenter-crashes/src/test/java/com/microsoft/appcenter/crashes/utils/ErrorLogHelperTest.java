@@ -415,29 +415,35 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    public void getStoredDeviceInfoNull() {
+    public void getStoredDeviceInfoAndUserIdNull() {
         File minidumpFolder = mock(File.class);
         when(minidumpFolder.listFiles(any(FilenameFilter.class))).thenReturn(null);
         Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        String storedUserId = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
         assertNull(storedDeviceInfo);
+        assertNull(storedUserId);
     }
 
     @Test
-    public void getStoredDeviceInfoEmpty() throws IOException {
+    public void getStoredDeviceInfoAndUserIdEmpty() throws IOException {
         File minidumpFolder = mTemporaryFolder.newFolder("minidump");
         Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        String storedUserId = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
         assertNull(storedDeviceInfo);
+        assertNull(storedUserId);
     }
 
     @Test
-    public void getStoredDeviceInfoCannotRead() throws IOException {
+    public void getStoredDeviceInfoAndUserInfoCannotRead() throws IOException {
         File minidumpFolder = mTemporaryFolder.newFolder("minidump");
         File deviceInfoFile = new File(minidumpFolder, ErrorLogHelper.DEVICE_INFO_FILE);
         assertTrue(deviceInfoFile.createNewFile());
         mockStatic(FileManager.class);
         when(FileManager.read(eq(deviceInfoFile))).thenReturn(null);
-        Device storedDeviceInfo3 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
-        assertNull(storedDeviceInfo3);
+        Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNull(storedDeviceInfo);
+        String userInfo = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
+        assertNull(userInfo);
     }
 
     @Test
