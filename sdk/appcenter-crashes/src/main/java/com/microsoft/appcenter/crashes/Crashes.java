@@ -778,14 +778,8 @@ public class Crashes extends AbstractAppCenterService {
          */
         errorLog.setProcessId(0);
         errorLog.setProcessName("");
-
-        /*
-         * TODO user id is read after restart contrary to Java crashes.
-         * We should have a user history like we did for session to fix that issue.
-         * The main issue with the current code is that userId can change between crash and reporting.
-         */
-        errorLog.setUserId(UserIdContext.getInstance().getUserId());
         try {
+            String savedUserId = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
             Device savedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
             if (savedDeviceInfo == null) {
 
@@ -797,6 +791,7 @@ public class Crashes extends AbstractAppCenterService {
                 savedDeviceInfo.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
             }
             errorLog.setDevice(savedDeviceInfo);
+            errorLog.setUserId(savedUserId);
             saveErrorLogFiles(new NativeException(), errorLog);
             if (!minidumpFile.renameTo(dest)) {
                 throw new IOException("Failed to move file");
