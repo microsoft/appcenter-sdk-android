@@ -628,6 +628,7 @@ public class CrashesAndroidTest {
         ArgumentCaptor<ManagedErrorLog> managedErrorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
         verify(mChannel, times(2)).enqueue(managedErrorLog.capture(), anyString(), eq(CRITICAL));
         assertNotNull(managedErrorLog.getValue());
+        assertNull(managedErrorLog.getValue().getUserId());
         assertNotNull(managedErrorLog.getValue().getException());
         assertNull(managedErrorLog.getValue().getException().getMinidumpFilePath());
         files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
