@@ -252,7 +252,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        FileManager.write(minidumpFile, "{\"DEVICE_INFO_KEY\":\"{mock minidump}\"}");
+        FileManager.write(minidumpFile, "{\"DEVICE_INFO\":\"{mock minidump}\"}");
 
         /* Start crashes now. */
         startFresh(null);
@@ -280,7 +280,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        FileManager.write(minidumpFile, "{\"DEVICE_INFO_KEY\":\"{mock minidump}\"}");
+        FileManager.write(minidumpFile, "{\"DEVICE_INFO\":\"{mock minidump}\"}");
 
         /* Make moving fail. */
         assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().delete());
@@ -446,7 +446,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        FileManager.write(minidumpFile, "{\"DEVICE_INFO_KEY\":\"{mock minidump}\"}");
+        FileManager.write(minidumpFile, "{\"DEVICE_INFO\":\"{mock minidump}\"}");
 
         /* Set up crash listener. */
         CrashesListener crashesListener = mock(CrashesListener.class);
