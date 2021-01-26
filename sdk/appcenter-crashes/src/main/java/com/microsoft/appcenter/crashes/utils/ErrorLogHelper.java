@@ -375,7 +375,7 @@ public class ErrorLogHelper {
     /**
      * Get data about userId and deviceInfo in JSON format.
      * @param logFolder - path to folder where placed file with data about userId and deviceId.
-     * @return - with data about userId and deviceId in JSON format or null.
+     * @return - data about userId and deviceId in JSON format or null.
      */
     static String getContextInformation(File logFolder) {
         File[] files = logFolder.listFiles(new FilenameFilter() {
