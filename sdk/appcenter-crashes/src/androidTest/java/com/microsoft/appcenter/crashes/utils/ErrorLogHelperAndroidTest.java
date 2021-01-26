@@ -140,21 +140,34 @@ public class ErrorLogHelperAndroidTest {
 
     @Test
     public void parseDevice() {
-        String deviceInfoString = "{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}";
-        Device device = ErrorLogHelper.parseDevice(deviceInfoString);
+        String contextInfoString = "{\"DEVICE_INFO\":{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}, \"USER_ID\":\"qwerty12345\"}";
+        Device device = ErrorLogHelper.parseDevice(contextInfoString);
+        String userId = ErrorLogHelper.parseUserId(contextInfoString);
         assertNotNull(device);
+        assertNotNull(userId);
         assertEquals(device.getAppBuild(), "59");
         assertEquals(device.getAppVersion(), "2.5.4.2");
         assertEquals(device.getSdkName(), "appcenter.android");
 
         /* Test empty string. */
-        String deviceInfo2 = "";
-        Device device2 = ErrorLogHelper.parseDevice(deviceInfo2);
+        String contextInfo2 = "";
+        Device device2 = ErrorLogHelper.parseDevice(contextInfo2);
+        String userId2 = ErrorLogHelper.parseUserId(contextInfo2);
         assertNull(device2);
+        assertNull(userId2);
 
         /* Test malformed string. */
-        String deviceInfo3 = "abcd";
-        Device device3 = ErrorLogHelper.parseDevice(deviceInfo3);
+        String contextInfo3 = "abcd";
+        Device device3 = ErrorLogHelper.parseDevice(contextInfo3);
+        String userId3 = ErrorLogHelper.parseUserId(contextInfo3);
         assertNull(device3);
+        assertNull(userId3);
+
+        /* Test parse old device data. */
+        String contextInfo4 = "{\"sdkName\":\"appcenter.android\",\"sdkVersion\":\"2.5.4.2\",\"model\":\"Android SDK built for x86\",\"oemName\":\"Google\",\"osName\":\"Android\",\"osVersion\":\"9\",\"osBuild\":\"PSR1.180720.075\",\"osApiLevel\":28,\"locale\":\"en_US\",\"timeZoneOffset\":240,\"screenSize\":\"1080x1794\",\"appVersion\":\"2.5.4.2\",\"carrierName\":\"Android\",\"carrierCountry\":\"us\",\"appBuild\":\"59\",\"appNamespace\":\"com.microsoft.appcenter.sasquatch.project\"}";
+        Device device4 = ErrorLogHelper.parseDevice(contextInfo4);
+        String userId4 = ErrorLogHelper.parseUserId(contextInfo4);
+        assertNotNull(device4);
+        assertNull(userId4);
     }
 }

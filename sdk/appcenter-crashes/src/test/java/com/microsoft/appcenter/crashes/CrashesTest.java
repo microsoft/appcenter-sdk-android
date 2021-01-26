@@ -1150,10 +1150,11 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), anyInt());
     }
 
-    private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession, boolean hasDeviceInfo) throws Exception {
+    private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession, boolean hasDeviceInfo, boolean hasUserId) throws Exception {
 
         /* Create minidump sub-folder. */
         File minidumpSubfolder = mTemporaryFolder.newFolder("mockFolder");
+        String mockUserId = "user-id";
 
         /* Create a file for a crash in disk. */
         File minidumpFile = new File(minidumpSubfolder, "mockFile.dmp");
@@ -1182,6 +1183,7 @@ public class CrashesTest extends AbstractCrashesTest {
         Device device = mock(Device.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
         when(ErrorLogHelper.getStoredDeviceInfo(any(File.class))).thenReturn(hasDeviceInfo ? device : null);
+        when(ErrorLogHelper.getStoredUserInfo(any(File.class))).thenReturn(hasUserId ? mockUserId: null);
         ErrorReport report = new ErrorReport();
         File errorLogFile = mock(File.class);
         when(errorLogFile.length()).thenReturn(1L);
@@ -1230,7 +1232,7 @@ public class CrashesTest extends AbstractCrashesTest {
     public void minidumpDeviceInfoNull() throws Exception {
         long appStartTime = 95000L;
         long crashTime = 126000L;
-        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false);
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false, false);
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(appStartTime), crashLog.getAppLaunchTimestamp());
     }
@@ -1240,7 +1242,7 @@ public class CrashesTest extends AbstractCrashesTest {
     public void minidumpAppLaunchTimestampFromSessionContext() throws Exception {
         long appStartTime = 99000L;
         long crashTime = 123000L;
-        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true);
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true, true);
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(appStartTime), crashLog.getAppLaunchTimestamp());
     }
@@ -1250,7 +1252,7 @@ public class CrashesTest extends AbstractCrashesTest {
     public void minidumpAppLaunchTimestampFromSessionContextInFuture() throws Exception {
         long appStartTime = 101000L;
         long crashTime = 100000L;
-        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true);
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true, true);
 
         /* Verify we fall back to crash time for app start time. */
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
@@ -1262,11 +1264,29 @@ public class CrashesTest extends AbstractCrashesTest {
     public void minidumpAppLaunchTimestampFromSessionContextNotFound() throws Exception {
         long appStartTime = 99000L;
         long crashTime = 123000L;
-        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, false, true);
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, false, true, true);
 
         /* Verify we fall back to crash time for app start time. */
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(crashTime), crashLog.getAppLaunchTimestamp());
+    }
+
+    @Test
+    @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
+    public void minidumpDeviceUserIdNull() throws Exception {
+        long appStartTime = 95000L;
+        long crashTime = 126000L;
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false, false);
+        assertNull(crashLog.getUserId());
+    }
+
+    @Test
+    @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
+    public void minidumpDeviceUserIdNotNull() throws Exception {
+        long appStartTime = 95000L;
+        long crashTime = 126000L;
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false, true);
+        assertNotNull(crashLog.getUserId());
     }
 
     @Test

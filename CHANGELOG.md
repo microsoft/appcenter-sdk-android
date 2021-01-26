@@ -9,6 +9,7 @@
 ### App Center Crashes
 
 * **[Fix]** Fix formatting of stack trace in the `ErrorReport`.
+* **[Fix]** Fix setting `userId` value in NDK crashes before sending.
 
 ___
 

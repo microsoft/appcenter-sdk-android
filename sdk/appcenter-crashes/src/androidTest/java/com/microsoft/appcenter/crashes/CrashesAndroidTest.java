@@ -252,7 +252,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        FileManager.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "{\"DEVICE_INFO\":\"{mock minidump}\"}");
 
         /* Start crashes now. */
         startFresh(null);
@@ -280,7 +280,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        FileManager.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "{\"DEVICE_INFO\":\"{mock minidump}\"}");
 
         /* Make moving fail. */
         assertTrue(ErrorLogHelper.getPendingMinidumpDirectory().delete());
@@ -446,7 +446,7 @@ public class CrashesAndroidTest {
         /* Simulate we have a minidump. */
         File newMinidumpDirectory = ErrorLogHelper.getNewMinidumpSubfolder();
         File minidumpFile = new File(newMinidumpDirectory, "minidump.dmp");
-        FileManager.write(minidumpFile, "mock minidump");
+        FileManager.write(minidumpFile, "{\"DEVICE_INFO\":\"{mock minidump}\"}");
 
         /* Set up crash listener. */
         CrashesListener crashesListener = mock(CrashesListener.class);
@@ -628,7 +628,7 @@ public class CrashesAndroidTest {
         ArgumentCaptor<ManagedErrorLog> managedErrorLog = ArgumentCaptor.forClass(ManagedErrorLog.class);
         verify(mChannel, times(2)).enqueue(managedErrorLog.capture(), anyString(), eq(CRITICAL));
         assertNotNull(managedErrorLog.getValue());
-        assertEquals(mUserId, managedErrorLog.getValue().getUserId());
+        assertNull(managedErrorLog.getValue().getUserId());
         assertNotNull(managedErrorLog.getValue().getException());
         assertNull(managedErrorLog.getValue().getException().getMinidumpFilePath());
         files = ErrorLogHelper.getErrorStorageDirectory().listFiles(mMinidumpFilter);
