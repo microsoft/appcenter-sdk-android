@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (c) Microsoft Corporation. All rights reserved.
+  ~ Licensed under the MIT License.
+  -->
+
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <string name="appcenter_distribute_downloading_version" tools:ignore="MissingTranslation">Downloading version %1$s (%2$d)</string>
+    <string name="appcenter_distribute_downloading_error" tools:ignore="MissingTranslation">Failed to download app update</string>
+</resources>
