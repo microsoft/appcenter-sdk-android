@@ -163,8 +163,13 @@ Content-Type: application/octet-stream
 $fileBinary
 --$boundary--
 "@
-
-    Invoke-RestMethod -Uri "http://tdbuild/api/teams/$teamId/LocalizableFiles/ParserId/246" -Method Put -UseDefaultCredentials -ContentType "multipart/form-data; boundary=$boundary" -Body $body -OutFile $outFilePath
+    try {
+        Invoke-RestMethod -Uri "http://tdbuild/api/teams/$teamId/LocalizableFiles/ParserId/246" -Method Put -UseDefaultCredentials -ContentType "multipart/form-data; boundary=$boundary" -Body $body -OutFile $outFilePath
+    }
+    catch {
+        write-error "Exception occured. ${_.Exception}"
+        exit
+    }
 }
 
 Function BinPlace ($UnzipFileTo,$relativeFilePath,$TargetPath,$LanguageSet)
