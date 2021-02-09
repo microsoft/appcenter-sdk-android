@@ -22,7 +22,7 @@ $ProjectInfo = "appcenter-sdks-loc-file-list.csv"
 
 $TempLocBranch = "translatedFiles"
 $repoPath = $SrcRoot
-$DefaultRepoBranch = "develop"
+$DefaultRepoBranch = "v-vlvech/tranlation_WIP"
 $teamId = "269" #ID for Android
 $git = "git"
 
