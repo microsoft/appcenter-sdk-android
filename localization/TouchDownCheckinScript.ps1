@@ -164,12 +164,17 @@ $fileBinary
 --$boundary--
 "@
     try {
-        $command =  "Invoke-RestMethod -Uri ""http://tdbuild/api/teams/$teamId/LocalizableFiles/ParserId/246"" -Method Put -UseDefaultCredentials -ContentType ""multipart/form-data; boundary=$boundary"" -Body $body -OutFile $outFilePath"
-        write-host $command
+        write-host "teamId $teamId"
+        write-host "boundary $boundary"
+        write-host "outFilePath $outFilePath"
+        write-host "Body (below) \n $body"
         Invoke-RestMethod -Uri "http://tdbuild/api/teams/$teamId/LocalizableFiles/ParserId/246" -Method Put -UseDefaultCredentials -ContentType "multipart/form-data; boundary=$boundary" -Body $body -OutFile $outFilePath
     }
     catch {
-        write-error "Exception occured. ${_.Exception}"
+        Write-Host "An error occurred:"
+        Write-Host $_
+        Write-Host $_.ErrorDetails
+        Write-Host $_.ScriptStackTrace
         exit
     }
 }
@@ -249,6 +254,11 @@ Function RefreshTDFiles
         $TargetPath       = $ExecutionContext.InvokeCommand.ExpandString($TargetPath)
 
         write-host "-----TOUCHDOWN TRANSACTION-----"
+        write-host "absoluteFilePath $absoluteFilePath"
+        write-host "outFilePath $outFilePath"
+        write-host "relativeFilePath $relativeFilePath"
+        write-host "teamId $teamId"
+        write-host "LanguageSet $LanguageSet"
         TouchDownTransaction $absoluteFilePath $outFilePath $relativeFilePath $teamId $LanguageSet
 
         $UnzipFolderLocation = $SrcRoot + "\localization\unzip"
