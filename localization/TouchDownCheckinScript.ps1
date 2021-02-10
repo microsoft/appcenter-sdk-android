@@ -171,10 +171,10 @@ $fileBinary
         Invoke-RestMethod -Uri "http://tdbuild/api/teams/$teamId/LocalizableFiles/ParserId/246" -Method Put -UseDefaultCredentials -ContentType "multipart/form-data; boundary=$boundary" -Body $body -OutFile $outFilePath
     }
     catch {
-        Write-Host "An error occurred:"
-        Write-Host $_
-        Write-Host $_.ErrorDetails
-        Write-Host $_.ScriptStackTrace
+        write-error "An error occurred:"
+        write-error $_
+        write-host $_.ErrorDetails
+        write-host $_.ScriptStackTrace
         exit
     }
 }
