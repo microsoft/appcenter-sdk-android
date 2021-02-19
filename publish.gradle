@@ -17,10 +17,12 @@ ext {
         properties.load(file.newDataInputStream())
     }
 
-    bintrayUser = properties.getProperty("bintray.user")
-    bintrayKey = properties.getProperty("bintray.key")
-    bintrayUserOrg = properties.getProperty("bintray.user.org")
-    bintrayRepo = properties.getProperty("bintray.repo")
+    mavenUser = properties.getProperty("maven.user")
+    mavenKey = properties.getProperty("maven.key")
+    mavenReleasesRepoUrl = properties.getProperty("maven.releasesRepoUrl")
+    mavenSigningKeyId = properties.getProperty("maven.signingKeyId")
+    mavenPublicKeyPassword = properties.getProperty("maven.publicKeyPassword")
+    mavenSecretKeyPath = properties.getProperty("maven.secretKeyPath")
 
     licenseName = 'The MIT License (MIT)'
     licenseSite = 'https://opensource.org/licenses/MIT'
