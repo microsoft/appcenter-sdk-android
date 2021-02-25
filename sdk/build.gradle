@@ -167,14 +167,7 @@ subprojects {
                 mavenDeployer {
                     beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-                    // Set repository URL based on gradle version.
-                    repository(url: ext.mavenReleasesRepoUrl) {
-                        authentication(userName: ext.mavenUser, password: ext.mavenKey)
-                    }
-
-                    // when the versionName contains a prefix '-SNAPSHOT' then
-                    // all assemblies will be published to snapshot repository.
-                    snapshotRepository(url: ext.mavenSnapshotRepoUrl) {
+                    repository(url: ext.mavenRepoUrl) {
                         authentication(userName: ext.mavenUser, password: ext.mavenKey)
                     }
 

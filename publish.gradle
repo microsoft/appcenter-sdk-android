@@ -19,8 +19,7 @@ ext {
 
     mavenUser = properties.getProperty("maven.user")
     mavenKey = properties.getProperty("maven.key")
-    mavenReleasesRepoUrl = properties.getProperty("maven.releasesRepoUrl")
-    mavenSnapshotRepoUrl = properties.getProperty("maven.snapshotRepoUrl")
+    mavenRepoUrl = properties.getProperty("maven.repoUrl")
     mavenSigningKeyId = properties.getProperty("maven.signingKeyId")
     mavenPublicKeyPassword = properties.getProperty("maven.publicKeyPassword")
     mavenSecretKeyPath = properties.getProperty("maven.secretKeyPath")
