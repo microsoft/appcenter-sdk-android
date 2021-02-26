@@ -56,9 +56,7 @@ android {
 
 repositories {
     maven {
-
-        // TODO SET ACTUAL URL
-        url "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
+        url "https://oss.sonatype.org/content/repositories/snapshots"
     }
 }
 
