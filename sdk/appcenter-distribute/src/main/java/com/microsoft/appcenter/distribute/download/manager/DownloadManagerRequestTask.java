@@ -45,11 +45,14 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
             request.setVisibleInDownloadsUi(false);
         }
         long enqueueTime = System.currentTimeMillis();
-        long downloadId = downloadManager.enqueue(request);
-        if (isCancelled()) {
-            return null;
+        try {
+            long downloadId = downloadManager.enqueue(request);
+            if (!isCancelled()) {
+                mDownloader.onDownloadStarted(downloadId, enqueueTime);
+            }
+        } catch (IllegalArgumentException e) {
+            AppCenterLog.error(LOG_TAG, "Failed to download: download manager app is disabled.");
         }
-        mDownloader.onDownloadStarted(downloadId, enqueueTime);
         return null;
     }
 
