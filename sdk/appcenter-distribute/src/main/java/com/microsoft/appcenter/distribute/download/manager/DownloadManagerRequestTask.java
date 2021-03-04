@@ -52,8 +52,8 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
             }
         } catch (IllegalArgumentException e) {
             /*
-             *  In cases when Download Manager application is disabled,
-             *  IllegalArgumentException: Unknown URL content://downloads/my_download is thrown.
+             * In cases when Download Manager application is disabled,
+             * IllegalArgumentException: Unknown URL content://downloads/my_download is thrown.
              */
             mDownloader.onDownloadError(new IllegalStateException("Failed to start download: Download Manager is disabled.", e));
         }
