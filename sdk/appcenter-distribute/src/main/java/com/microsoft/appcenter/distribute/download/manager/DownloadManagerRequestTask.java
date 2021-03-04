@@ -51,7 +51,7 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
                 mDownloader.onDownloadStarted(downloadId, enqueueTime);
             }
         } catch (IllegalArgumentException e) {
-            AppCenterLog.error(LOG_TAG, "Failed to download: download manager app is disabled.");
+            AppCenterLog.error(LOG_TAG, "Failed to download: Download Manager is disabled.");
         }
         return null;
     }
