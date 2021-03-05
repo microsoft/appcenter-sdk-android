@@ -1566,6 +1566,12 @@ public class Distribute extends AbstractAppCenterService {
     @UiThread
     private synchronized void showUnknownSourcesDialog() {
 
+        /* Check if we are in foreground. */
+        if (mForegroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the unknown sources dialog won't be displayed.");
+            return;
+        }
+
         /* Check if we need to replace dialog. */
         if (!shouldRefreshDialog(mUnknownSourcesDialog)) {
             return;
@@ -1620,6 +1626,12 @@ public class Distribute extends AbstractAppCenterService {
      */
     @UiThread
     private synchronized void showUpdateSetupFailedDialog() {
+
+        /* Check if we are in foreground. */
+        if (mForegroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the setup failed dialog won't be displayed.");
+            return;
+        }
 
         /* Check if we need to replace the dialog. */
         if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {
