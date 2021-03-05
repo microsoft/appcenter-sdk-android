@@ -1566,7 +1566,7 @@ public class Distribute extends AbstractAppCenterService {
     @UiThread
     private synchronized void showUnknownSourcesDialog() {
 
-        /* Check if we are in foreground. */
+        /* Do not attempt to show dialog if application is in the background. */
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "The application is in background mode, the unknown sources dialog won't be displayed.");
             return;
@@ -1627,7 +1627,7 @@ public class Distribute extends AbstractAppCenterService {
     @UiThread
     private synchronized void showUpdateSetupFailedDialog() {
 
-        /* Check if we are in foreground. */
+        /* Do not attempt to show dialog if application is in the background. */
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "The application is in background mode, the setup failed dialog won't be displayed.");
             return;
@@ -1670,6 +1670,8 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void goToUnknownAppsSettings(ReleaseDetails releaseDetails) {
         Intent intent;
+
+        /* Do not attempt to show dialog if application is in the background. */
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "The application is in background mode, the settings screen could not be opened.");
             return;
@@ -1849,6 +1851,8 @@ public class Distribute extends AbstractAppCenterService {
      * Show download progress (used only for mandatory updates).
      */
     private synchronized void showDownloadProgress() {
+
+        /* Do not attempt to show dialog if application is in the background. */
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
             return;
@@ -1872,7 +1876,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void showMandatoryDownloadReadyDialog() {
 
-        /* Check if we are in foreground. */
+        /* Do not attempt to show dialog if application is in the background. */
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "The application is in background mode, the mandatory download ready dialog won't be displayed.");
             return;
@@ -1887,6 +1891,7 @@ public class Distribute extends AbstractAppCenterService {
         dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);
         dialogBuilder.setMessage(getInstallReadyMessage());
         dialogBuilder.setPositiveButton(R.string.appcenter_distribute_install, new DialogInterface.OnClickListener() {
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 installMandatoryUpdate(releaseDetails);
