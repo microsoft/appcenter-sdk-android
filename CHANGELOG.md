@@ -4,7 +4,7 @@
 
 ### App Center Distribute
 
-* **[Fix]** Fix NullPointerExceptions occurring in Distribute module.
+* **[Fix]** Fix NullPointerExceptions occurring in Distribute module when dialogs were intended to be shown.
 * **[Fix]** Fix showing the title in the push notification while downloading a new release.
 
 ### App Center Crashes
