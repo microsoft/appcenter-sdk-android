@@ -1859,22 +1859,30 @@ public class Distribute extends AbstractAppCenterService {
      * Show modal dialog with install button if mandatory update ready and user cancelled install.
      */
     private synchronized void showMandatoryDownloadReadyDialog() {
-        if (shouldRefreshDialog(mCompletedDownloadDialog)) {
-            final ReleaseDetails releaseDetails = mReleaseDetails;
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-            dialogBuilder.setCancelable(false);
-            dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);
-            dialogBuilder.setMessage(getInstallReadyMessage());
-            dialogBuilder.setPositiveButton(R.string.appcenter_distribute_install, new DialogInterface.OnClickListener() {
 
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    installMandatoryUpdate(releaseDetails);
-                }
-            });
-            mCompletedDownloadDialog = dialogBuilder.create();
-            showAndRememberDialogActivity(mCompletedDownloadDialog);
+        /* Check if we are in foreground. */
+        if (mForegroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the mandatory download ready dialog won't be displayed.");
+            return;
         }
+
+        if (!shouldRefreshDialog(mCompletedDownloadDialog)) {
+            return;
+        }
+        final ReleaseDetails releaseDetails = mReleaseDetails;
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
+        dialogBuilder.setCancelable(false);
+        dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);
+        dialogBuilder.setMessage(getInstallReadyMessage());
+        dialogBuilder.setPositiveButton(R.string.appcenter_distribute_install, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                installMandatoryUpdate(releaseDetails);
+            }
+        });
+        mCompletedDownloadDialog = dialogBuilder.create();
+        showAndRememberDialogActivity(mCompletedDownloadDialog);
     }
 
     /**
