@@ -1887,7 +1887,6 @@ public class Distribute extends AbstractAppCenterService {
         dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);
         dialogBuilder.setMessage(getInstallReadyMessage());
         dialogBuilder.setPositiveButton(R.string.appcenter_distribute_install, new DialogInterface.OnClickListener() {
-
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 installMandatoryUpdate(releaseDetails);
