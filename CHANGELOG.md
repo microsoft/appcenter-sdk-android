@@ -4,6 +4,7 @@
 
 ### App Center Distribute
 
+* **[Fix]** Fix a crash when download manager application was disabled.
 * **[Fix]** Fix showing the title in the push notification while downloading a new release.
 
 ### App Center Crashes

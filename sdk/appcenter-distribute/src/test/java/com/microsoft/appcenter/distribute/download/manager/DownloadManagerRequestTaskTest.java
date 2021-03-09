@@ -104,4 +104,18 @@ public class DownloadManagerRequestTaskTest {
         /* Verify. */
         verify(mDownloader, never()).onDownloadStarted(anyLong(), anyLong());
     }
+
+    @Test
+    public void enqueueTaskIllegalStateExceptionHandled() {
+
+        /* Mock DownloadManager. */
+        when(mDownloadManager.enqueue(eq(mDownloadManagerRequest))).thenThrow(new IllegalArgumentException("MOCK Unknown URL content://downloads/my_download"));
+
+        /* Perform background task. */
+        mRequestTask.doInBackground();
+
+        /* Verify. */
+        verify(mDownloader).onDownloadError(any(IllegalStateException.class));
+        verify(mDownloader, never()).onDownloadStarted(anyLong(), anyLong());
+    }
 }
