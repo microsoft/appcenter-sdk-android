@@ -618,7 +618,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(false);
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
-        /* Verify UPDATE has been processed. */
+        /* Verify UPDATE has not been processed. */
         verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
         verify(mDialogBuilder, never()).create();
     }
