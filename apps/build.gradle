@@ -41,7 +41,7 @@ def copyApkToProjectBuildTask(buildType) {
     if (file.exists()) {
         properties.load(file.newDataInputStream())
     }
-    def defaultDependency = "jcenter"
+    def defaultDependency = "mavenCentral"
     def dependency = properties.get("dimension.dependency", defaultDependency)
     if (dependency.isEmpty()) {
         dependency = defaultDependency
