@@ -55,8 +55,18 @@ android {
 }
 
 repositories {
+
+    // Load credentials from local.properties file.
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('local.properties').newDataInputStream())
+    def AZURE_USERNAME = properties.getProperty('AZURE_USERNAME')
+    def AZURE_PASSWORD = properties.getProperty('AZURE_PASSWORD')
     maven {
-        url "https://oss.sonatype.org/content/repositories/snapshots"
+        credentials {
+            username = AZURE_USERNAME
+            password = AZURE_PASSWORD
+        }
+        url "https://msmobilecenter.pkgs.visualstudio.com/_packaging/AppCenter/maven/v1/"
     }
 }
 
