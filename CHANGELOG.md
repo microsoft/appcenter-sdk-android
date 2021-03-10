@@ -2,6 +2,10 @@
 
 ## Version 4.1.1 (Under development)
 
+### App Center Distribute Play
+
+* **[Fix]** Fix `onNoReleaseAvailable` callback signature.
+
 ### App Center Distribute
 
 * **[Fix]** Fix a crash when download manager application was disabled.
