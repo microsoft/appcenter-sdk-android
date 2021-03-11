@@ -13,7 +13,7 @@ jobs:
 
 
     # CodeQL runs on ubuntu-latest, windows-latest, and macos-latest
-    runs-on: windows-latest
+    runs-on: macos-latest
 
     steps:
     - name: Checkout repository
@@ -33,15 +33,12 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
     - run: |
-        echo "Put mock credentials"
-        ./scripts/put-azure-credential.sh "username" "password"
-
-    - run: |
         echo "Downloading submodules"
         git submodule update --init --recursive
         
     - run: |
         echo "Assemble modules"
+        ./scripts/put-azure-credentials.sh "username" "password"
         ./gradlew :sdk:appcenter:assemble :sdk:appcenter-analytics:assemble :sdk:appcenter-crashes:assemble :sdk:appcenter-distribute:assemble :sdk:appcenter-distribute-play:assemble
 
     - name: Perform CodeQL Analysis
