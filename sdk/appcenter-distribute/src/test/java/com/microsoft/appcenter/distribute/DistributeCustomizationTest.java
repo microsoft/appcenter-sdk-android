@@ -595,6 +595,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     @Test
     public void doNotShowUnknownSourcesDialogWhileInBackground() throws Exception {
+
         /* Mock. */
         ReleaseDetails details = mockForCustomizationTest(false);
         mockStatic(DistributeUtils.class);
@@ -625,6 +626,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     @Test
     public void doShowUnknownSourcesDialogWhileInForeground() throws Exception {
+
         /* Mock. */
         ReleaseDetails details = mockForCustomizationTest(false);
         mockStatic(DistributeUtils.class);
@@ -651,7 +653,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
         verify(mDialogBuilder).create();
     }
-
 
     @Test
     public void handleUserUpdateActionPostponeForMandatoryUpdate() throws Exception {

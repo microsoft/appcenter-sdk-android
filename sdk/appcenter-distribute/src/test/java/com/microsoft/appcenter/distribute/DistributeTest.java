@@ -513,6 +513,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         verify(mDialogBuilder, never()).create();
+        verifyStatic(never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
     }
 
@@ -524,12 +525,11 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
         start();
 
-
         /* Verify dialog. */
         verify(mDialogBuilder).create();
+        verifyStatic();
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
     }
-
 
     @Test
     public void showDownloadProgressAndActivityTest() {
