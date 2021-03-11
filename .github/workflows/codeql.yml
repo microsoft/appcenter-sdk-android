@@ -13,7 +13,7 @@ jobs:
 
 
     # CodeQL runs on ubuntu-latest, windows-latest, and macos-latest
-    runs-on: macos-latest
+    runs-on: windows-latest
 
     steps:
     - name: Checkout repository
