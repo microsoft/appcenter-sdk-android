@@ -2,9 +2,14 @@
 
 ## Version 4.1.1 (Under development)
 
+### App Center Distribute Play
+
+* **[Fix]** Fix `onNoReleaseAvailable` callback signature.
+
 ### App Center Distribute
 
 * **[Fix]** Fix NullPointerExceptions occurring in Distribute module when dialogs were intended to be shown.
+* **[Fix]** Fix a crash when download manager application was disabled.
 * **[Fix]** Fix showing the title in the push notification while downloading a new release.
 
 ### App Center Crashes

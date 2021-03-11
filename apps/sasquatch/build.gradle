@@ -27,9 +27,9 @@ android {
             dimension "dependency"
             applicationIdSuffix ".project"
         }
-        jcenterDependency {
+        mavenCentralDependency {
             dimension "dependency"
-            applicationIdSuffix ".jcenter"
+            applicationIdSuffix ".mavenCentral"
         }
         appCenter {
             dimension "distribute"
@@ -56,7 +56,7 @@ android {
 
 repositories {
     maven {
-        url "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
+        url "https://oss.sonatype.org/content/repositories/snapshots"
     }
 }
 
@@ -70,16 +70,16 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-crashes')
 
     def appCenterSdkVersion = "4.1.0"
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
+    mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
+    mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
 
     def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
     if (taskRequests.contains("GooglePlay")) {
         projectDependencyImplementation project(':sdk:appcenter-distribute-play')
-        jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute-play:${appCenterSdkVersion}"
+        mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-distribute-play:${appCenterSdkVersion}"
     } else {
         projectDependencyImplementation project(':sdk:appcenter-distribute')
-        jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
+        mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
     }
 
     androidTestImplementation 'com.android.support.test:rules:1.0.2'
