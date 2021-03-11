@@ -8,7 +8,7 @@
 
 ### App Center Distribute
 
-* **[Fix]** Fix NullPointerExceptions occurring in Distribute module when dialogs were intended to be shown.
+* **[Fix]** Fix `NullPointerException` occurring when settings dialog was intended to be shown, but there is no foreground activity at that moment.
 * **[Fix]** Fix a crash when download manager application was disabled.
 * **[Fix]** Fix showing the title in the push notification while downloading a new release.
 

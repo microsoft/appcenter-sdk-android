@@ -1627,12 +1627,6 @@ public class Distribute extends AbstractAppCenterService {
     @UiThread
     private synchronized void showUpdateSetupFailedDialog() {
 
-        /* Do not attempt to show dialog if application is in the background. */
-        if (mForegroundActivity == null) {
-            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the setup failed dialog won't be displayed.");
-            return;
-        }
-
         /* Check if we need to replace the dialog. */
         if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {
             return;
@@ -1875,13 +1869,6 @@ public class Distribute extends AbstractAppCenterService {
      * Show modal dialog with install button if mandatory update ready and user cancelled install.
      */
     private synchronized void showMandatoryDownloadReadyDialog() {
-
-        /* Do not attempt to show dialog if application is in the background. */
-        if (mForegroundActivity == null) {
-            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the mandatory download ready dialog won't be displayed.");
-            return;
-        }
-
         if (!shouldRefreshDialog(mCompletedDownloadDialog)) {
             return;
         }
