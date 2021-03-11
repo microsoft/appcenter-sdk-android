@@ -57,10 +57,20 @@ android {
 repositories {
 
     // Load credentials from local.properties file.
-    Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def AZURE_USERNAME = properties.getProperty('AZURE_USERNAME')
-    def AZURE_PASSWORD = properties.getProperty('AZURE_PASSWORD')
+    File propertiesFile = project.rootProject.file('local.properties')
+    def AZURE_USERNAME = null
+    def AZURE_PASSWORD = null
+
+    // Check that file exist.
+    if (propertiesFile.exists()) {
+        Properties properties = new Properties()
+        properties.load(propertiesFile.newDataInputStream())
+
+        // Get properties. If properties aren't exist it returns null.
+        AZURE_USERNAME = properties.getProperty('AZURE_USERNAME')
+        AZURE_PASSWORD = properties.getProperty('AZURE_PASSWORD')
+    }
+
     maven {
         credentials {
             username = AZURE_USERNAME
