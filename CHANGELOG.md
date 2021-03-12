@@ -1,6 +1,6 @@
 # App Center SDK for Android Change Log
 
-## Version 4.1.1 (Under development)
+## Version 4.1.1
 
 ### App Center Distribute Play
 
