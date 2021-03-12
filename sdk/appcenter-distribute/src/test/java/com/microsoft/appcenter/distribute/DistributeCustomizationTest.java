@@ -594,6 +594,67 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void doNotShowUnknownSourcesDialogWhileInBackground() throws Exception {
+
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(false);
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+
+        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
+        Distribute distribute = spy(Distribute.getInstance());
+
+        /* Start Distribute service. */
+        start(distribute);
+        distribute.onActivityResumed(mActivity);
+        distribute.onActivityPaused(mActivity);
+
+        /* Call handleUpdateAction. */
+        when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(false);
+        distribute.handleUpdateAction(UpdateAction.UPDATE);
+
+        /* Verify UPDATE has not been processed. */
+        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+        verify(mDialogBuilder, never()).create();
+    }
+
+    @Test
+    public void doShowUnknownSourcesDialogWhileInForeground() throws Exception {
+
+        /* Mock. */
+        ReleaseDetails details = mockForCustomizationTest(false);
+        mockStatic(DistributeUtils.class);
+
+        /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
+
+        /* Set Distribute listener so that Distribute doesn't use default update dialog. */
+        DistributeListener listener = mock(DistributeListener.class);
+        when(listener.onReleaseAvailable(eq(mActivity), any(ReleaseDetails.class))).thenReturn(true);
+        Distribute.unsetInstance();
+        Distribute.setListener(listener);
+        Distribute distribute = spy(Distribute.getInstance());
+
+        /* Start Distribute service. */
+        start(distribute);
+        distribute.onActivityResumed(mActivity);
+
+        /* Call handleUpdateAction. */
+        when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(false);
+        distribute.handleUpdateAction(UpdateAction.UPDATE);
+
+        /* Verify UPDATE has been processed. */
+        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+        verify(mDialogBuilder).create();
+    }
+
+    @Test
     public void handleUserUpdateActionPostponeForMandatoryUpdate() throws Exception {
 
         /* Mock. */

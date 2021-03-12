@@ -1566,6 +1566,12 @@ public class Distribute extends AbstractAppCenterService {
     @UiThread
     private synchronized void showUnknownSourcesDialog() {
 
+        /* Do not attempt to show dialog if application is in the background. */
+        if (mForegroundActivity == null) {
+            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the unknown sources dialog won't be displayed.");
+            return;
+        }
+
         /* Check if we need to replace dialog. */
         if (!shouldRefreshDialog(mUnknownSourcesDialog)) {
             return;
@@ -1658,6 +1664,8 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void goToUnknownAppsSettings(ReleaseDetails releaseDetails) {
         Intent intent;
+
+        /* Do not attempt to show dialog if application is in the background. */
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "The application is in background mode, the settings screen could not be opened.");
             return;
@@ -1837,6 +1845,8 @@ public class Distribute extends AbstractAppCenterService {
      * Show download progress (used only for mandatory updates).
      */
     private synchronized void showDownloadProgress() {
+
+        /* Do not attempt to show dialog if application is in the background. */
         if (mForegroundActivity == null) {
             AppCenterLog.warn(LOG_TAG, "Could not display progress dialog in the background.");
             return;
@@ -1859,22 +1869,23 @@ public class Distribute extends AbstractAppCenterService {
      * Show modal dialog with install button if mandatory update ready and user cancelled install.
      */
     private synchronized void showMandatoryDownloadReadyDialog() {
-        if (shouldRefreshDialog(mCompletedDownloadDialog)) {
-            final ReleaseDetails releaseDetails = mReleaseDetails;
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-            dialogBuilder.setCancelable(false);
-            dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);
-            dialogBuilder.setMessage(getInstallReadyMessage());
-            dialogBuilder.setPositiveButton(R.string.appcenter_distribute_install, new DialogInterface.OnClickListener() {
-
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    installMandatoryUpdate(releaseDetails);
-                }
-            });
-            mCompletedDownloadDialog = dialogBuilder.create();
-            showAndRememberDialogActivity(mCompletedDownloadDialog);
+        if (!shouldRefreshDialog(mCompletedDownloadDialog)) {
+            return;
         }
+        final ReleaseDetails releaseDetails = mReleaseDetails;
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
+        dialogBuilder.setCancelable(false);
+        dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);
+        dialogBuilder.setMessage(getInstallReadyMessage());
+        dialogBuilder.setPositiveButton(R.string.appcenter_distribute_install, new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                installMandatoryUpdate(releaseDetails);
+            }
+        });
+        mCompletedDownloadDialog = dialogBuilder.create();
+        showAndRememberDialogActivity(mCompletedDownloadDialog);
     }
 
     /**

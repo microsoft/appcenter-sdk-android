@@ -54,6 +54,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -472,6 +473,65 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void doNotShowDownloadProgressTestInBackground() {
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
+
+        /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
+
+        /* mReleaseDetails is not null and it's a mandatory update. */
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+
+        resumeWorkflowWithNoOnResume();
+        verify(mReleaseDownloaderListener, never()).showDownloadProgress(mActivity);
+    }
+
+    @Test
+    public void showDownloadProgressTestInForeground() {
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
+
+        /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
+
+        /* mReleaseDetails is not null and it's a mandatory update. */
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+
+        resumeWorkflow(mActivity);
+        verify(mReleaseDownloaderListener).showDownloadProgress(mActivity);
+    }
+
+    @Test
+    public void doNotShowUpdateSetupFailedDialogInBackground() {
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+
+        /* Trigger call. */
+        start();
+
+        /* Verify dialog. */
+        verify(mDialogBuilder, never()).create();
+        verifyStatic(never());
+        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+    }
+
+    @Test
+    public void showUpdateSetupFailedDialogInForeground() {
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
+
+        /* Trigger call. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        start();
+
+        /* Verify dialog. */
+        verify(mDialogBuilder).create();
+        verifyStatic();
+        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+    }
+
+    @Test
     public void showDownloadProgressAndActivityTest() {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
@@ -596,6 +656,12 @@ public class DistributeTest extends AbstractDistributeTest {
         start();
         Distribute.setEnabledForDebuggableBuild(true);
         Distribute.getInstance().onActivityResumed(activity);
+    }
+
+    private void resumeWorkflowWithNoOnResume() {
+        Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
+        start();
+        Distribute.setEnabledForDebuggableBuild(true);
     }
 
     @Test
