@@ -27,9 +27,9 @@ android {
             dimension "dependency"
             applicationIdSuffix ".project"
         }
-        jcenterDependency {
+        mavenCentralDependency {
             dimension "dependency"
-            applicationIdSuffix ".jcenter"
+            applicationIdSuffix ".mavenCentral"
         }
         appCenter {
             dimension "distribute"
@@ -55,8 +55,28 @@ android {
 }
 
 repositories {
+
+    // Load credentials from local.properties file.
+    File propertiesFile = project.rootProject.file('local.properties')
+    def AZURE_USERNAME = null
+    def AZURE_PASSWORD = null
+
+    // Check that file exist.
+    if (propertiesFile.exists()) {
+        Properties properties = new Properties()
+        properties.load(propertiesFile.newDataInputStream())
+
+        // Get properties. If properties aren't exist it returns null.
+        AZURE_USERNAME = properties.getProperty('AZURE_USERNAME')
+        AZURE_PASSWORD = properties.getProperty('AZURE_PASSWORD')
+    }
+
     maven {
-        url "https://dl.bintray.com/vsappcenter/appcenter-snapshot"
+        credentials {
+            username = AZURE_USERNAME
+            password = AZURE_PASSWORD
+        }
+        url "https://msmobilecenter.pkgs.visualstudio.com/_packaging/AppCenter/maven/v1/"
     }
 }
 
@@ -70,16 +90,16 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-crashes')
 
     def appCenterSdkVersion = "4.1.0"
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
-    jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
+    mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
+    mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
 
     def taskRequests = getGradle().getStartParameter().getTaskRequests().toString()
     if (taskRequests.contains("GooglePlay")) {
         projectDependencyImplementation project(':sdk:appcenter-distribute-play')
-        jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute-play:${appCenterSdkVersion}"
+        mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-distribute-play:${appCenterSdkVersion}"
     } else {
         projectDependencyImplementation project(':sdk:appcenter-distribute')
-        jcenterDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
+        mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-distribute:${appCenterSdkVersion}"
     }
 
     androidTestImplementation 'com.android.support.test:rules:1.0.2'

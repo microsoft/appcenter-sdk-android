@@ -39,5 +39,5 @@ public interface DistributeListener {
      *
      * @param activity current activity.
      */
-    boolean onNoReleaseAvailable(Activity activity);
+    void onNoReleaseAvailable(Activity activity);
 }

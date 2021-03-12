@@ -11,7 +11,7 @@ apply from: 'publish.gradle'
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
         maven {
             url 'https://plugins.gradle.org/m2/'
         }
@@ -19,7 +19,6 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:4.0.1'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
         classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'
     }
@@ -28,7 +27,14 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
+        jcenter {
+            content {
+
+                // https://youtrack.jetbrains.com/issue/IDEA-261387
+                includeModule("org.jetbrains.trove4j", "trove4j")
+            }
+        }
     }
 
     tasks.withType(JavaCompile) {

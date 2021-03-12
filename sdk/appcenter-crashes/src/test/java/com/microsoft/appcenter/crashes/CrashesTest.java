@@ -52,9 +52,9 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.reflect.Whitebox;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1150,10 +1150,11 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), anyInt());
     }
 
-    private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession, boolean hasDeviceInfo) throws Exception {
+    private ManagedErrorLog testNativeCrashLog(long appStartTime, long crashTime, boolean correlateSession, boolean hasDeviceInfo, boolean hasUserId) throws Exception {
 
         /* Create minidump sub-folder. */
         File minidumpSubfolder = mTemporaryFolder.newFolder("mockFolder");
+        String mockUserId = "user-id";
 
         /* Create a file for a crash in disk. */
         File minidumpFile = new File(minidumpSubfolder, "mockFile.dmp");
@@ -1182,6 +1183,7 @@ public class CrashesTest extends AbstractCrashesTest {
         Device device = mock(Device.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mock(Device.class));
         when(ErrorLogHelper.getStoredDeviceInfo(any(File.class))).thenReturn(hasDeviceInfo ? device : null);
+        when(ErrorLogHelper.getStoredUserInfo(any(File.class))).thenReturn(hasUserId ? mockUserId: null);
         ErrorReport report = new ErrorReport();
         File errorLogFile = mock(File.class);
         when(errorLogFile.length()).thenReturn(1L);
@@ -1230,7 +1232,7 @@ public class CrashesTest extends AbstractCrashesTest {
     public void minidumpDeviceInfoNull() throws Exception {
         long appStartTime = 95000L;
         long crashTime = 126000L;
-        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false);
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false, false);
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(appStartTime), crashLog.getAppLaunchTimestamp());
     }
@@ -1240,7 +1242,7 @@ public class CrashesTest extends AbstractCrashesTest {
     public void minidumpAppLaunchTimestampFromSessionContext() throws Exception {
         long appStartTime = 99000L;
         long crashTime = 123000L;
-        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true);
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true, true);
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(appStartTime), crashLog.getAppLaunchTimestamp());
     }
@@ -1250,7 +1252,7 @@ public class CrashesTest extends AbstractCrashesTest {
     public void minidumpAppLaunchTimestampFromSessionContextInFuture() throws Exception {
         long appStartTime = 101000L;
         long crashTime = 100000L;
-        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true);
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, true, true);
 
         /* Verify we fall back to crash time for app start time. */
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
@@ -1262,11 +1264,29 @@ public class CrashesTest extends AbstractCrashesTest {
     public void minidumpAppLaunchTimestampFromSessionContextNotFound() throws Exception {
         long appStartTime = 99000L;
         long crashTime = 123000L;
-        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, false, true);
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, false, true, true);
 
         /* Verify we fall back to crash time for app start time. */
         assertEquals(new Date(crashTime), crashLog.getTimestamp());
         assertEquals(new Date(crashTime), crashLog.getAppLaunchTimestamp());
+    }
+
+    @Test
+    @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
+    public void minidumpDeviceUserIdNull() throws Exception {
+        long appStartTime = 95000L;
+        long crashTime = 126000L;
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false, false);
+        assertNull(crashLog.getUserId());
+    }
+
+    @Test
+    @PrepareForTest({SessionContext.class, DeviceInfoHelper.class})
+    public void minidumpDeviceUserIdNotNull() throws Exception {
+        long appStartTime = 95000L;
+        long crashTime = 126000L;
+        ManagedErrorLog crashLog = testNativeCrashLog(appStartTime, crashTime, true, false, true);
+        assertNotNull(crashLog.getUserId());
     }
 
     @Test
@@ -1520,18 +1540,17 @@ public class CrashesTest extends AbstractCrashesTest {
     }
 
     @Test
-    public void checkStacktraceWhenThrowableFileIsNull() throws Exception {
+    public void checkStacktraceWhenThrowableFileIsEmpty() throws Exception {
         String expectedStacktrace = "type: message\n" +
-                " ClassName.MethodName(FileName:1)";
+                "\t at ClassName.MethodName(FileName:1)";
 
-        /* Mock file. */
-        File mockFile = mock(File.class);
-        when(mockFile.length()).thenReturn(0L);
-
-        /* Mock files. */
-        File mockDir = mock(File.class);
-        when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(new File[] {mockFile});
-        whenNew(File.class).withAnyArguments().thenReturn(mockDir);
+        /* Create empty throwable file. */
+        UUID logId = UUID.randomUUID();
+        String throwableFileName = logId + ErrorLogHelper.THROWABLE_FILE_EXTENSION;
+        File errorStorageDirectory = mTemporaryFolder.newFolder("error");
+        ErrorLogHelper.setErrorLogDirectory(errorStorageDirectory);
+        File throwableFile = new File(errorStorageDirectory, throwableFileName);
+        assertTrue(throwableFile.createNewFile());
 
         /* Prepare first frame. */
         final StackFrame stackFrame1 = new StackFrame();
@@ -1548,7 +1567,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Mock log. */
         ManagedErrorLog mockLog = new ManagedErrorLog();
-        mockLog.setId(UUID.randomUUID());
+        mockLog.setId(logId);
         mockLog.setErrorThreadName("Thread name");
         mockLog.setAppLaunchTimestamp(new Date());
         mockLog.setTimestamp(new Date());
@@ -1566,10 +1585,50 @@ public class CrashesTest extends AbstractCrashesTest {
     }
 
     @Test
+    public void checkStacktraceWithLegacyThrowableFile() throws Exception {
+        String expectedStacktrace = "type: message\n" +
+                " ClassName.MethodName(FileName:1)";
+
+        /* Mock FileManager call. */
+        when(FileManager.read(any(File.class))).thenReturn(expectedStacktrace);
+
+        /* Create throwable file. */
+        UUID logId = UUID.randomUUID();
+        String throwableFileName = logId + ErrorLogHelper.THROWABLE_FILE_EXTENSION;
+        File errorStorageDirectory = mTemporaryFolder.newFolder("error");
+        ErrorLogHelper.setErrorLogDirectory(errorStorageDirectory);
+        File throwableFile = new File(errorStorageDirectory, throwableFileName);
+        assertTrue(throwableFile.createNewFile());
+
+        /* Write file content. */
+        BufferedWriter writer = new BufferedWriter(new FileWriter(throwableFile));
+        writer.write(expectedStacktrace);
+        writer.close();
+
+        /* Mock log. */
+        ManagedErrorLog mockLog = new ManagedErrorLog();
+        mockLog.setId(logId);
+        mockLog.setErrorThreadName("Thread name");
+        mockLog.setAppLaunchTimestamp(new Date());
+        mockLog.setTimestamp(new Date());
+        mockLog.setDevice(new Device());
+
+        /* Build error report. */
+        Crashes crashes = Mockito.spy(Crashes.getInstance());
+        ErrorReport report = crashes.buildErrorReport(mockLog);
+
+        /* Verify. */
+        assertEquals(expectedStacktrace, report.getStackTrace());
+        verify(crashes, never()).buildStackTrace(any(com.microsoft.appcenter.crashes.ingestion.models.Exception.class));
+        verifyStatic();
+        FileManager.read(any(File.class));
+    }
+
+    @Test
     public void checkBuildStacktrace() {
         String expectedStacktrace = "Type of exception: Message exception\n" +
-                " ClassName.MethodName(FileName:1)\n" +
-                " ClassName.MethodName(FileName:2)";
+                "\t at ClassName.MethodName(FileName:1)\n" +
+                "\t at ClassName.MethodName(FileName:2)";
         com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = new com.microsoft.appcenter.crashes.ingestion.models.Exception();
         mockException.setType("Type of exception");
         mockException.setMessage("Message exception");

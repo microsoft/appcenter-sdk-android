@@ -14,7 +14,6 @@ import android.support.annotation.WorkerThread;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -353,58 +352,6 @@ public abstract class AbstractAppCenterService implements AppCenterService {
 
             /* App Center is not configured if we reach this. */
             disabledOrNotStartedRunnable.run();
-        }
-    }
-
-    /**
-     * Like {{@link #post(Runnable)}} but also post back in U.I. thread.
-     * Use this for example to manage life cycle callbacks to make sure SDK is started and that
-     * every operation runs in order.
-     * <p>
-     * This method will not run the command if the SDK is disabled, the purpose is for internal commands, not APIs.
-     *
-     * @param runnable command to run.
-     */
-    protected synchronized void postOnUiThread(final Runnable runnable) {
-
-        /*
-         * We don't try to optimize with if channel if not null as there could be race conditions:
-         * If onResume was queued, then onStarted called, onResume will be next in queue and thus
-         * onPause could be called between the queued onStarted and the queued onResume.
-         */
-        post(new Runnable() {
-
-            @Override
-            public void run() {
-
-                /* And make sure we run the original command on U.I. thread. */
-                HandlerUtils.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        runIfEnabled(runnable);
-                    }
-                });
-            }
-        }, new Runnable() {
-
-            @Override
-            public void run() {
-
-                /* Avoid logging SDK disabled by providing an empty command. */
-            }
-        }, null);
-    }
-
-    /**
-     * Run the command only if service is enabled.
-     * The method is top level just because code coverage when using synchronized.
-     *
-     * @param runnable command to run.
-     */
-    private synchronized void runIfEnabled(Runnable runnable) {
-        if (isInstanceEnabled()) {
-            runnable.run();
         }
     }
 }

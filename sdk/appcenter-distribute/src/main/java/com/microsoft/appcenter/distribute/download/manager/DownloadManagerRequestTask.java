@@ -21,9 +21,11 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
 
     private final DownloadManagerReleaseDownloader mDownloader;
+    private String mTitle;
 
-    DownloadManagerRequestTask(DownloadManagerReleaseDownloader downloader) {
+    DownloadManagerRequestTask(DownloadManagerReleaseDownloader downloader, String title) {
         mDownloader = downloader;
+        mTitle = title;
     }
 
     @Override
@@ -35,6 +37,7 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
         AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
         DownloadManager downloadManager = mDownloader.getDownloadManager();
         DownloadManager.Request request = createRequest(downloadUrl);
+        request.setTitle(String.format(mTitle, releaseDetails.getShortVersion(), releaseDetails.getVersion()));
 
         /* Hide mandatory download to prevent canceling via notification cancel or download UI delete. */
         if (releaseDetails.isMandatoryUpdate()) {
@@ -42,11 +45,19 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
             request.setVisibleInDownloadsUi(false);
         }
         long enqueueTime = System.currentTimeMillis();
-        long downloadId = downloadManager.enqueue(request);
-        if (isCancelled()) {
-            return null;
+        try {
+            long downloadId = downloadManager.enqueue(request);
+            if (!isCancelled()) {
+                mDownloader.onDownloadStarted(downloadId, enqueueTime);
+            }
+        } catch (IllegalArgumentException e) {
+            
+            /*
+             * In cases when Download Manager application is disabled,
+             * IllegalArgumentException: Unknown URL content://downloads/my_download is thrown.
+             */
+            mDownloader.onDownloadError(new IllegalStateException("Failed to start download: Download Manager is disabled.", e));
         }
-        mDownloader.onDownloadStarted(downloadId, enqueueTime);
         return null;
     }
 

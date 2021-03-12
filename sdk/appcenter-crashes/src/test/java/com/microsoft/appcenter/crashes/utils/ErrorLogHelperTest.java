@@ -415,29 +415,35 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    public void getStoredDeviceInfoNull() {
+    public void getStoredDeviceInfoAndUserIdNull() {
         File minidumpFolder = mock(File.class);
         when(minidumpFolder.listFiles(any(FilenameFilter.class))).thenReturn(null);
         Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        String storedUserId = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
         assertNull(storedDeviceInfo);
+        assertNull(storedUserId);
     }
 
     @Test
-    public void getStoredDeviceInfoEmpty() throws IOException {
+    public void getStoredDeviceInfoAndUserIdEmpty() throws IOException {
         File minidumpFolder = mTemporaryFolder.newFolder("minidump");
         Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        String storedUserId = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
         assertNull(storedDeviceInfo);
+        assertNull(storedUserId);
     }
 
     @Test
-    public void getStoredDeviceInfoCannotRead() throws IOException {
+    public void getStoredDeviceInfoAndUserInfoCannotRead() throws IOException {
         File minidumpFolder = mTemporaryFolder.newFolder("minidump");
         File deviceInfoFile = new File(minidumpFolder, ErrorLogHelper.DEVICE_INFO_FILE);
         assertTrue(deviceInfoFile.createNewFile());
         mockStatic(FileManager.class);
         when(FileManager.read(eq(deviceInfoFile))).thenReturn(null);
-        Device storedDeviceInfo3 = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
-        assertNull(storedDeviceInfo3);
+        Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
+        assertNull(storedDeviceInfo);
+        String userInfo = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
+        assertNull(userInfo);
     }
 
     @Test
@@ -530,12 +536,12 @@ public class ErrorLogHelperTest {
         /* Mock files. */
         File mockFile1 = mock(File.class);
         File mockFile2 = mock(File.class);
-        when(mockFile1.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120002" + ErrorLogHelper.THROWABLE_FILE_EXTENSION );
+        when(mockFile1.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120002" + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         when(mockFile2.getName()).thenReturn("74aa0682-3478-11eb-adc1-0242ac120003" + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
 
         /* Mock getting storage directory. */
         File mockDir = mock(File.class);
-        File[] mockFiles = new File[] {mockFile1, mockFile2};
+        File[] mockFiles = new File[]{mockFile1, mockFile2};
         when(mockDir.listFiles(any(FilenameFilter.class))).thenReturn(mockFiles);
         ErrorLogHelper.setErrorLogDirectory(mockDir);
 
@@ -567,5 +573,27 @@ public class ErrorLogHelperTest {
         ErrorLogHelper.removeLostThrowableFiles();
         verifyStatic(never());
         FileManager.delete(any(File.class));
+    }
+
+    @Test
+    public void removeStoredErrorLogFile() throws java.lang.Exception {
+
+        /* Create file. */
+        UUID logId = UUID.randomUUID();
+        String throwableFileName = logId + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION;
+        File errorStorageDirectory = mTemporaryFolder.newFolder("error");
+        ErrorLogHelper.setErrorLogDirectory(errorStorageDirectory);
+        File errorLogFile = new File(errorStorageDirectory, throwableFileName);
+        assertTrue(errorLogFile.createNewFile());
+        assertTrue(errorLogFile.exists());
+
+        /* Remove stored log file. */
+        ErrorLogHelper.removeStoredErrorLogFile(logId);
+
+        /* Verify. */
+        assertFalse(errorLogFile.exists());
+
+        /* Coverage check. */
+        ErrorLogHelper.removeStoredErrorLogFile(UUID.randomUUID());
     }
 }
