@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.utils.storage;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -24,7 +24,7 @@ public class SharedPreferencesManagerAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
-        Context sContext = InstrumentationRegistry.getTargetContext();
+        Context sContext = InstrumentationRegistry.getInstrumentation().getContext();
         SharedPreferencesManager.initialize(sContext);
     }
 

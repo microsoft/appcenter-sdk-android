@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.ingestion.models;
 
 
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;

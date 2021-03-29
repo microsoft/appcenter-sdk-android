@@ -5,8 +5,8 @@
 
 package com.microsoft.appcenter.utils;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;

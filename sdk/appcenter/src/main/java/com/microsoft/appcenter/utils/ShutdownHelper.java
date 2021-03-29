@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.utils;
 
 import android.os.Process;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 /**
  * Shutdown helper.

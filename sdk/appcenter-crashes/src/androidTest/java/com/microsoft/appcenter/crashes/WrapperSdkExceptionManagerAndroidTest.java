@@ -7,7 +7,7 @@ package com.microsoft.appcenter.crashes;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterPrivateHelper;
@@ -41,7 +41,7 @@ public class WrapperSdkExceptionManagerAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
-        sApplication = (Application) InstrumentationRegistry.getContext().getApplicationContext();
+        sApplication = (Application) InstrumentationRegistry.getInstrumentation().getContext().getApplicationContext();
         SharedPreferencesManager.initialize(sApplication);
         Constants.loadFromContext(sApplication);
     }

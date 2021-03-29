@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.crashes.utils;
 
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.ingestion.models.Device;
@@ -32,7 +32,7 @@ public class ErrorLogHelperAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
-        Constants.loadFromContext(InstrumentationRegistry.getContext());
+        Constants.loadFromContext(InstrumentationRegistry.getInstrumentation().getContext());
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

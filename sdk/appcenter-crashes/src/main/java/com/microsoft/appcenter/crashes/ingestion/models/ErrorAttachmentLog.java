@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.crashes.ingestion.models;
 
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 import android.util.Base64;
 
 import com.microsoft.appcenter.ingestion.models.AbstractLog;

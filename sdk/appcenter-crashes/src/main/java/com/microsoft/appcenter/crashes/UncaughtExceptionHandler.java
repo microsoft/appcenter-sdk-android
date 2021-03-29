@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.crashes;
 
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.ShutdownHelper;
 

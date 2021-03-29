@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.DownloadManager;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
 

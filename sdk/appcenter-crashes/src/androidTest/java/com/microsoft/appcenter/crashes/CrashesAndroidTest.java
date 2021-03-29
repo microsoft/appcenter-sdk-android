@@ -7,7 +7,7 @@ package com.microsoft.appcenter.crashes;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.AppCenterPrivateHelper;
@@ -98,7 +98,7 @@ public class CrashesAndroidTest {
     @BeforeClass
     public static void setUpClass() {
         sDefaultCrashHandler = Thread.getDefaultUncaughtExceptionHandler();
-        sApplication = (Application) InstrumentationRegistry.getContext().getApplicationContext();
+        sApplication = (Application) InstrumentationRegistry.getInstrumentation().getContext().getApplicationContext();
         FileManager.initialize(sApplication);
         SharedPreferencesManager.initialize(sApplication);
         Constants.loadFromContext(sApplication);
