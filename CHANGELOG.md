@@ -2,6 +2,10 @@
 
 ## Version 4.1.2 (Under active development)
 
+### App Center
+
+* **[Fix]** Remove old support libraries. 
+
 ___
 
 ## Version 4.1.1
