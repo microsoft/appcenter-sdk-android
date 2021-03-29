@@ -95,7 +95,7 @@
                 "type": "Maven",
                 "maven": {
                     "artifactId": "recyclerview",
-                    "groupId": "com.androidx",
+                    "groupId": "com.androidx.recyclerview",
                     "version": "1.1.0"
                 }
             }
