@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.sasquatch.eventfilter;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;
