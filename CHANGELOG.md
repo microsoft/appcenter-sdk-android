@@ -4,7 +4,7 @@
 
 ### App Center
 
-* **[Fix]** Remove old support libraries. 
+* **[Fix]** Remove old support libraries for compatibility with apps without enabled Jetifier tool. 
 
 ___
 
