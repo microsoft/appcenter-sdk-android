@@ -13,7 +13,7 @@ jobs:
 
 
     # CodeQL runs on ubuntu-latest, windows-latest, and macos-latest
-    runs-on: windows-latest
+    runs-on: macos-latest
 
     steps:
     - name: Checkout repository
@@ -38,6 +38,7 @@ jobs:
         
     - run: |
         echo "Assemble modules"
+        ./scripts/add-gradle-property.sh
         ./gradlew :sdk:appcenter:assemble :sdk:appcenter-analytics:assemble :sdk:appcenter-crashes:assemble :sdk:appcenter-distribute:assemble :sdk:appcenter-distribute-play:assemble
 
     - name: Perform CodeQL Analysis

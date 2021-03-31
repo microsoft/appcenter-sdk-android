@@ -7,8 +7,8 @@ package com.microsoft.appcenter.persistence;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
 
+import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
