@@ -15,7 +15,8 @@ import java.lang.reflect.Method;
 public class InstrumentationRegistryHelper {
 
     private static final String[] LOCATIONS = new String[]{"androidx.test.platform.app.InstrumentationRegistry",
-            "androidx.test.InstrumentationRegistry"};
+            "androidx.test.InstrumentationRegistry",
+            "android.support.test.InstrumentationRegistry"};
 
     /**
      * Get the instrumentation arguments from the InstrumentationRegistry. Wrapper exists for unit
