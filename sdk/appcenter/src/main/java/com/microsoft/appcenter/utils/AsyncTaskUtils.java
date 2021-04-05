@@ -6,8 +6,8 @@
 package com.microsoft.appcenter.utils;
 
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.RejectedExecutionException;
 

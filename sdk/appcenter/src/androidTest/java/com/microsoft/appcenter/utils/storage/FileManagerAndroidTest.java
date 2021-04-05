@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.utils.storage;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -42,7 +42,7 @@ public class FileManagerAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         FileManager.initialize(context);
         sAndroidFilesPath = context.getFilesDir().getAbsolutePath() + "/test/";
 

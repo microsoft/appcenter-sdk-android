@@ -7,9 +7,10 @@ package com.microsoft.appcenter.persistence;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 import com.microsoft.appcenter.ingestion.models.json.MockLog;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -23,7 +24,7 @@ import static com.microsoft.appcenter.Flags.NORMAL;
 
 @SuppressWarnings("unused")
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(AndroidJUnit4ClassRunner.class)
 public class PersistenceAndroidTest {
 
     /**
@@ -34,7 +35,7 @@ public class PersistenceAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
-        sContext = InstrumentationRegistry.getTargetContext();
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
         SharedPreferencesManager.initialize(sContext);
 
         /* Clean up database. */

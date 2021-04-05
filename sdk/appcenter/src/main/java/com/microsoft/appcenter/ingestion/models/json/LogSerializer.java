@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.ingestion.models.json;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;

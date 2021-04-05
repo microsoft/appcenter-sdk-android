@@ -8,7 +8,7 @@ package com.microsoft.appcenter.utils.crypto;
 import android.annotation.SuppressLint;
 import android.os.Build;
 import android.security.keystore.KeyProperties;
-import android.support.annotation.RequiresApi;
+import androidx.annotation.RequiresApi;
 
 /**
  * Various constants used in the cryptography package.

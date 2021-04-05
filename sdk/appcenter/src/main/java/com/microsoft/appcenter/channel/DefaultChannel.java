@@ -7,10 +7,10 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 import android.os.Handler;
-import android.support.annotation.MainThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.annotation.WorkerThread;
+import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpClient;

@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.http;
 
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import java.io.IOException;
 

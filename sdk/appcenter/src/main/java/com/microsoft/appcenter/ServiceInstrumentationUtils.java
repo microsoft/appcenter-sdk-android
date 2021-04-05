@@ -6,7 +6,7 @@
 package com.microsoft.appcenter;
 
 import android.os.Bundle;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.InstrumentationRegistryHelper;

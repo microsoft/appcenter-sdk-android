@@ -11,9 +11,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
+
+import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.filters.SmallTest;
 
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.verify;
 
 @SuppressWarnings("unused")
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(AndroidJUnit4ClassRunner.class)
 public class DatabaseManagerAndroidTest {
 
     /**
@@ -85,7 +86,7 @@ public class DatabaseManagerAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
-        sContext = InstrumentationRegistry.getTargetContext();
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
 
         /* Create a test schema. */
         mSchema = generateContentValues();

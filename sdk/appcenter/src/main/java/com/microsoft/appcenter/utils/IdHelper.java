@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.utils;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;

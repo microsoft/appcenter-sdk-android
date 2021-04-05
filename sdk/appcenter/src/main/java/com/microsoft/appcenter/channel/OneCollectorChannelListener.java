@@ -5,8 +5,8 @@
 
 package com.microsoft.appcenter.channel;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.ingestion.Ingestion;

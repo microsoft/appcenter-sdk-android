@@ -8,8 +8,8 @@ package com.microsoft.appcenter;
 import android.app.Application;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
+import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -43,7 +43,7 @@ public class AppCenterAndroidTest {
     public void setUp() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
         AppCenter.unsetInstance();
         Constants.APPLICATION_DEBUGGABLE = false;
-        mApplication = Instrumentation.newApplication(Application.class, InstrumentationRegistry.getTargetContext());
+        mApplication = Instrumentation.newApplication(Application.class, InstrumentationRegistry.getInstrumentation().getContext());
     }
 
     @After

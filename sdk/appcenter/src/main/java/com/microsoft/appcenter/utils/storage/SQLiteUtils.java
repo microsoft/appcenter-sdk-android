@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.utils.storage;
 
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 public class SQLiteUtils {
 

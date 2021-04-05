@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.ingestion.models;
 
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 public final class CommonProperties {
 

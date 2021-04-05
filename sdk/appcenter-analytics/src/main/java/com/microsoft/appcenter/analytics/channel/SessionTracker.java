@@ -6,8 +6,8 @@
 package com.microsoft.appcenter.analytics.channel;
 
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
-import android.support.annotation.WorkerThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.analytics.Analytics;
