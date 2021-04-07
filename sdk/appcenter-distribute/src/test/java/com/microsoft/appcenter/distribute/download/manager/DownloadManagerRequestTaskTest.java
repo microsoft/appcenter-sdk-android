@@ -118,22 +118,4 @@ public class DownloadManagerRequestTaskTest {
         verify(mDownloader).onDownloadError(any(IllegalStateException.class));
         verify(mDownloader, never()).onDownloadStarted(anyLong(), anyLong());
     }
-
-    @Test
-    public void enqueueTaskRuntimeExceptionHandled() {
-        try {
-
-            /* Mock DownloadManager. */
-            when(mDownloadManager.enqueue(eq(mDownloadManagerRequest))).thenThrow(new RuntimeException("Mock some exception."));
-
-            /* Perform background task. */
-            mRequestTask.doInBackground();
-            throw new Exception("Test should crash.");
-        } catch (Throwable e) {
-
-            /* Verify. */
-            verify(mDownloader, never()).onDownloadError(any(RuntimeException.class));
-            verify(mDownloader, never()).onDownloadStarted(anyLong(), anyLong());
-        }
-    }
 }
