@@ -57,24 +57,6 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
              * IllegalArgumentException: Unknown URL content://downloads/my_download is thrown.
              */
             mDownloader.onDownloadError(new IllegalStateException("Failed to start download: Download Manager is disabled.", e));
-        } catch (Throwable throwable) {
-
-            /*
-             * We have to catch all types of errors to avoid crashes in runtime during downloading
-             * a new release with the specific Gradle configuration:
-             * release {
-             *     minifyEnabled true
-             *     proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-             * }
-             *
-             * Possible error:
-             * Caused by: java.lang.VerifyError: Verifier rejected class b.c.a.n.j.c.c: java.lang.Object
-             * b.c.a.n.j.c.c.doInBackground(java.lang.Object[]) failed to verify:
-             * java.lang.Object b.c.a.n.j.c.c.doInBackground(java.lang.Object[]): [0x6E]
-             * expected to be within a catch-all for an instruction where a monitor is held
-             * (declaration of 'b.c.a.n.j.c.c' appears in base.apk).
-             */
-            throw throwable;
         }
         return null;
     }
