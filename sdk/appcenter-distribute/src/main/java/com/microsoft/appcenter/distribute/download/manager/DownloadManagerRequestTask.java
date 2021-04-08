@@ -21,7 +21,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
 
     private final DownloadManagerReleaseDownloader mDownloader;
-    private String mTitle;
+    private final String mTitle;
 
     DownloadManagerRequestTask(DownloadManagerReleaseDownloader downloader, String title) {
         mDownloader = downloader;

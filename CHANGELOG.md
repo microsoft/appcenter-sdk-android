@@ -6,6 +6,10 @@
 
 * **[Fix]** Remove old support libraries for compatibility with apps without enabled Jetifier tool. 
 
+### App Center Distribute
+
+* **[Fix]** Fix crash during downloading a new release when `minifyEnabled` settings is `true`.
+
 ___
 
 ## Version 4.1.1
