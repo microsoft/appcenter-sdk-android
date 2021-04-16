@@ -117,6 +117,11 @@ public class DefaultChannel implements Channel {
     private boolean mEnabled;
 
     /**
+     * Is network requests allowed? True by the default.
+     */
+    private boolean mIsNetworkRequestsAllowed = true;
+
+    /**
      * Is channel disabled due to connectivity issues or was the problem fatal?
      * In that case we stop accepting new logs in database.
      */
@@ -344,28 +349,27 @@ public class DefaultChannel implements Channel {
         } else {
             suspend(true, new CancellationException());
         }
-        notifyListenersThatChannelStateHasChanged(true);
-    }
 
-    /**
-     * Disable channel without removing logs.
-     *
-     */
-    @Override
-    public void disableWithoutRemovingLogs() {
-        mEnabled = false;
-        notifyListenersThatChannelStateHasChanged(false);
-    }
-
-    /**
-     * Notify listeners that channel state has changed.
-     *
-     * @param enabled true if channel is enabled, otherwise false.
-     */
-    private void notifyListenersThatChannelStateHasChanged(boolean enabled) {
+        /* Notify listeners that channel state has changed. */
         for (Listener listener : mListeners) {
             listener.onGloballyEnabled(enabled);
         }
+    }
+
+    @Override
+    public void setNetworkRequestsAllowed(boolean isAllowed) {
+        mIsNetworkRequestsAllowed = isAllowed;
+        AppCenterLog.info(LOG_TAG, "Set network request allowed " + mIsNetworkRequestsAllowed);
+        if (isAllowed && mEnabled) {
+            for (GroupState groupState : mGroupStates.values()) {
+                checkPendingLogs(groupState);
+            }
+        }
+    }
+
+    @Override
+    public boolean isNetworkRequestsAllowed() {
+        return mIsNetworkRequestsAllowed;
     }
 
     @Override
@@ -475,6 +479,10 @@ public class DefaultChannel implements Channel {
      */
     private void triggerIngestion(final @NonNull GroupState groupState) {
         if (!mEnabled) {
+            return;
+        }
+        if (!mIsNetworkRequestsAllowed) {
+            AppCenterLog.debug(LOG_TAG, "SDK is in offline mode.");
             return;
         }
         int pendingLogCount = groupState.mPendingLogCount;

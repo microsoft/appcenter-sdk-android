@@ -577,13 +577,8 @@ public class AppCenter {
     private synchronized void setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
         mIsNetworkRequestsAllowed = isAllowed;
         if (mChannel != null) {
-            if (isAllowed) {
-                mChannel.setEnabled(true);
-            } else {
-                mChannel.disableWithoutRemovingLogs();
-            }
+            mChannel.setNetworkRequestsAllowed(isAllowed);
         }
-        AppCenterLog.info(LOG_TAG, "Set network request allowed " + isAllowed);
     }
 
     private boolean isInstanceNetworkRequestsAllowed() {
@@ -864,9 +859,7 @@ public class AppCenter {
                 mOneCollectorChannelListener.setLogUrl(mLogUrl);
             }
         }
-        if (!mIsNetworkRequestsAllowed) {
-            mChannel.disableWithoutRemovingLogs();
-        }
+        mChannel.setNetworkRequestsAllowed(mIsNetworkRequestsAllowed);
         mChannel.addListener(mOneCollectorChannelListener);
 
         /* Disable listening network if we start while being disabled. */
@@ -1112,10 +1105,6 @@ public class AppCenter {
      */
     @WorkerThread
     private void setInstanceEnabled(boolean enabled) {
-        if (enabled && !mIsNetworkRequestsAllowed) {
-            AppCenterLog.info(LOG_TAG,"SDK is in offline mode.");
-            return;
-        }
 
         /* Update channel state. */
         mChannel.setEnabled(enabled);

@@ -97,10 +97,18 @@ public interface Channel {
     void setEnabled(boolean enabled);
 
     /**
-     * Disable channel without removing logs.
+     * Allow or disallow network requests.
      *
+     * @param isAllowed true to allow, false to disallow.
      */
-    void disableWithoutRemovingLogs();
+    void setNetworkRequestsAllowed(boolean isAllowed);
+
+    /**
+     * Check whether network requests is allow or disallow.
+     *
+     * @return true if network requests is allow, false otherwise.
+     */
+    boolean isNetworkRequestsAllowed();
 
     /**
      * Update log URL.
