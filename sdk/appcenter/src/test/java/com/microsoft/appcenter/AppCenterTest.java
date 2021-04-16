@@ -19,6 +19,7 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
@@ -413,6 +414,12 @@ public class AppCenterTest extends AbstractAppCenterTest {
         /* Verify services are enabled by default */
         Set<AppCenterService> services = appCenter.getServices();
         assertTrue(AppCenter.isEnabled().get());
+
+        /* Verify that network request is allowed by default. */
+        Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
+        verify(mChannel).setNetworkRequestsAllowed(true);
+
+        /* Prepare mock service. */
         DummyService dummyService = DummyService.getInstance();
         AnotherDummyService anotherDummyService = AnotherDummyService.getInstance();
         for (AppCenterService service : services) {
@@ -1116,5 +1123,27 @@ public class AppCenterTest extends AbstractAppCenterTest {
         /* Check enter background. */
         lifecycleListener.onActivityStopped(mockActivity);
         verify(service).onApplicationEnterBackground();
+    }
+
+    @Test
+    public void testChangeNetworkRequestsAllowedStatus() {
+        AppCenter.getInstance().setChannel(null);
+
+        /* Verify that network request is allowed by default. */
+        Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
+
+        /* Verify that network request is disallowed. */
+        AppCenter.setNetworkRequestsAllowed(false);
+        Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
+        verify(mChannel, never()).setNetworkRequestsAllowed(eq(false));
+
+        /* Start App Center. */
+        AppCenter.start(mApplication, DUMMY_APP_SECRET);
+        verify(mChannel).setNetworkRequestsAllowed(eq(false));
+
+        /* Verify that network request is allowed. */
+        AppCenter.setNetworkRequestsAllowed(true);
+        Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
+        verify(mChannel).setNetworkRequestsAllowed(eq(true));
     }
 }
