@@ -136,6 +136,11 @@ public class AppCenter {
     private String mLogUrl;
 
     /**
+     * Is network requests enabled? True by the default.
+     */
+    private boolean mIsNetworkRequestsAllowed = true;
+
+    /**
      * Application context.
      */
     private Application mApplication;
@@ -404,6 +409,24 @@ public class AppCenter {
     }
 
     /**
+     * Enable or disable network requests.
+     *
+     * @param isAllowed true to enable, false to disable.
+     */
+    public static void setNetworkRequestsAllowed(boolean isAllowed) {
+        getInstance().setInstanceNetworkRequestsAllowed(isAllowed);
+    }
+
+    /**
+     * Check whether network requests is enabled or disabled.
+     *
+     * @return true if network requests is enabled, false otherwise.
+     */
+    public static boolean isNetworkRequestsAllowed() {
+        return getInstance().isInstanceNetworkRequestsAllowed();
+    }
+
+    /**
      * Check whether the SDK is enabled or not as a whole.
      * This operation is performed in background as it accesses SharedPreferences.
      *
@@ -549,6 +572,20 @@ public class AppCenter {
                 }
             });
         }
+    }
+
+    private void setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
+        mIsNetworkRequestsAllowed = isAllowed;
+        if (mChannel != null) {
+            mChannel.setNetworkRequestsAllowed(isAllowed);
+        }
+    }
+
+    private boolean isInstanceNetworkRequestsAllowed() {
+        if (mChannel != null) {
+            return mChannel.isNetworkRequestsAllowed();
+        }
+        return mIsNetworkRequestsAllowed;
     }
 
     /**
@@ -825,6 +862,7 @@ public class AppCenter {
                 mOneCollectorChannelListener.setLogUrl(mLogUrl);
             }
         }
+        mChannel.setNetworkRequestsAllowed(mIsNetworkRequestsAllowed);
         mChannel.addListener(mOneCollectorChannelListener);
 
         /* Disable listening network if we start while being disabled. */

@@ -135,6 +135,20 @@ public interface Channel {
     void shutdown();
 
     /**
+     * Enable or disable network requests.
+     *
+     * @param isAllowed true to enable, false to disable.
+     */
+    void setNetworkRequestsAllowed(boolean isAllowed);
+
+    /**
+     * Check whether network requests is enabled or disabled.
+     *
+     * @return true if network requests is enabled, false otherwise.
+     */
+    boolean isNetworkRequestsAllowed();
+
+    /**
      * Channel global listener specification.
      */
     interface Listener {
