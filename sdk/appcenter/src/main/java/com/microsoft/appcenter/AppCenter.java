@@ -136,7 +136,7 @@ public class AppCenter {
     private String mLogUrl;
 
     /**
-     * Is network requests enabled? True by the default.
+     * Is network requests allowed? True by the default.
      */
     private boolean mIsNetworkRequestsAllowed = true;
 
@@ -409,18 +409,18 @@ public class AppCenter {
     }
 
     /**
-     * Enable or disable network requests.
+     * Allow or disallow network requests.
      *
-     * @param isAllowed true to enable, false to disable.
+     * @param isAllowed true to allow, false to disallow.
      */
     public static void setNetworkRequestsAllowed(boolean isAllowed) {
         getInstance().setInstanceNetworkRequestsAllowed(isAllowed);
     }
 
     /**
-     * Check whether network requests is enabled or disabled.
+     * Check whether network requests is allow or disallow.
      *
-     * @return true if network requests is enabled, false otherwise.
+     * @return true if network requests is allow, false otherwise.
      */
     public static boolean isNetworkRequestsAllowed() {
         return getInstance().isInstanceNetworkRequestsAllowed();
@@ -574,17 +574,19 @@ public class AppCenter {
         }
     }
 
-    private void setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
+    private synchronized void setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
         mIsNetworkRequestsAllowed = isAllowed;
         if (mChannel != null) {
-            mChannel.setNetworkRequestsAllowed(isAllowed);
+            if (isAllowed) {
+                mChannel.setEnabled(true);
+            } else {
+                mChannel.disableWithoutRemovingLogs();
+            }
         }
+        AppCenterLog.info(LOG_TAG, "Set network request allowed " + isAllowed);
     }
 
     private boolean isInstanceNetworkRequestsAllowed() {
-        if (mChannel != null) {
-            return mChannel.isNetworkRequestsAllowed();
-        }
         return mIsNetworkRequestsAllowed;
     }
 
@@ -862,7 +864,9 @@ public class AppCenter {
                 mOneCollectorChannelListener.setLogUrl(mLogUrl);
             }
         }
-        mChannel.setNetworkRequestsAllowed(mIsNetworkRequestsAllowed);
+        if (!mIsNetworkRequestsAllowed) {
+            mChannel.disableWithoutRemovingLogs();
+        }
         mChannel.addListener(mOneCollectorChannelListener);
 
         /* Disable listening network if we start while being disabled. */
@@ -1108,6 +1112,10 @@ public class AppCenter {
      */
     @WorkerThread
     private void setInstanceEnabled(boolean enabled) {
+        if (enabled && !mIsNetworkRequestsAllowed) {
+            AppCenterLog.info(LOG_TAG,"SDK is in offline mode.");
+            return;
+        }
 
         /* Update channel state. */
         mChannel.setEnabled(enabled);

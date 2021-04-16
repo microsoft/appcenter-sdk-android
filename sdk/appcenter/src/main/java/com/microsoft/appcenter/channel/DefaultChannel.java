@@ -12,7 +12,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpResponse;
@@ -135,11 +134,6 @@ public class DefaultChannel implements Channel {
     private int mCurrentState;
 
     /**
-     * Is network requests enabled? True by the default.
-     */
-    private boolean mIsNetworkRequestsAllowed = true;
-
-    /**
      * Creates and initializes a new instance.
      *
      * @param context          The context.
@@ -220,32 +214,6 @@ public class DefaultChannel implements Channel {
                 }
             }
         }
-    }
-
-    /**
-     * Enable or disable network requests.
-     *
-     * @param isAllowed true to enable, false to disable.
-     */
-    @Override
-    public void setNetworkRequestsAllowed(boolean isAllowed) {
-        mIsNetworkRequestsAllowed = isAllowed;
-        AppCenterLog.info(LOG_TAG, "Set network request allowed " + mIsNetworkRequestsAllowed);
-        if (isAllowed && mEnabled) {
-            for (GroupState groupState : mGroupStates.values()) {
-                checkPendingLogs(groupState);
-            }
-        }
-    }
-
-    /**
-     * Check whether network requests is enabled or disabled.
-     *
-     * @return true if network requests is enabled, false otherwise.
-     */
-    @Override
-    public boolean isNetworkRequestsAllowed() {
-        return mIsNetworkRequestsAllowed;
     }
 
     @Override
@@ -376,8 +344,25 @@ public class DefaultChannel implements Channel {
         } else {
             suspend(true, new CancellationException());
         }
+        notifyListenersThatChannelStateHasChanged(true);
+    }
 
-        /* Notify listeners that channel state has changed. */
+    /**
+     * Disable channel without removing logs.
+     *
+     */
+    @Override
+    public void disableWithoutRemovingLogs() {
+        mEnabled = false;
+        notifyListenersThatChannelStateHasChanged(false);
+    }
+
+    /**
+     * Notify listeners that channel state has changed.
+     *
+     * @param enabled true if channel is enabled, otherwise false.
+     */
+    private void notifyListenersThatChannelStateHasChanged(boolean enabled) {
         for (Listener listener : mListeners) {
             listener.onGloballyEnabled(enabled);
         }
@@ -489,10 +474,6 @@ public class DefaultChannel implements Channel {
      * @param groupState the group state.
      */
     private void triggerIngestion(final @NonNull GroupState groupState) {
-        if (!mIsNetworkRequestsAllowed) {
-            AppCenterLog.debug(LOG_TAG, "SDK is in offline mode.");
-            return;
-        }
         if (!mEnabled) {
             return;
         }
