@@ -151,6 +151,18 @@ public class SettingsActivity extends AppCompatActivity {
                     onDatabaseFileChanged(dbFile);
                 }
             };
+            initCheckBoxSetting(R.string.appcenter_network_request_allowed_key, R.string.appcenter_network_request_allowed_enabled, R.string.appcenter_network_request_allowed_disabled, new HasEnabled() {
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    AppCenter.setNetworkRequestsAllowed(enabled);
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return AppCenter.isNetworkRequestsAllowed();
+                }
+            });
 
             /* Analytics. */
             initCheckBoxSetting(R.string.appcenter_analytics_state_key, R.string.appcenter_analytics_state_summary_enabled, R.string.appcenter_analytics_state_summary_disabled, new HasEnabled() {

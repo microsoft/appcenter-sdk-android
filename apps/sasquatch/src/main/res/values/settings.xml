@@ -15,6 +15,12 @@
     <string name="storage_file_size_key" tools:ignore="MissingTranslation">storage_file_size_key</string>
     <string name="storage_file_size_title" tools:ignore="MissingTranslation">Storage File Size</string>
 
+    <string name="appcenter_network_request_allowed_key" tools:ignore="MissingTranslation">allow_network_request</string>
+    <string name="appcenter_network_request_allowed_title" tools:ignore="MissingTranslation">Allow network request</string>
+
+    <string name="appcenter_network_request_allowed_enabled" tools:ignore="MissingTranslation">Allow network request enabled</string>
+    <string name="appcenter_network_request_allowed_disabled" tools:ignore="MissingTranslation">Allow network request disabled</string>
+
     <string name="analytics_key" tools:ignore="MissingTranslation">appcenter_analytics</string>
     <string name="analytics_title" tools:ignore="MissingTranslation">Analytics</string>
 

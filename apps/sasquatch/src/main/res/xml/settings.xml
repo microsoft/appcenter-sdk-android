@@ -14,6 +14,9 @@
     <Preference
         android:key="@string/storage_file_size_key"
         android:title="@string/storage_file_size_title" />
+    <CheckBoxPreference
+        android:key="@string/appcenter_network_request_allowed_key"
+        android:title="@string/appcenter_network_request_allowed_title" />
 
     <PreferenceCategory
         android:key="@string/analytics_key"
