@@ -232,7 +232,6 @@ public class DefaultChannel implements Channel {
         mIsNetworkRequestsAllowed = isAllowed;
         AppCenterLog.info(LOG_TAG, "Set network request allowed " + mIsNetworkRequestsAllowed);
         if (isAllowed && mEnabled) {
-            mEnabled = true;
             for (GroupState groupState : mGroupStates.values()) {
                 checkPendingLogs(groupState);
             }
