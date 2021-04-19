@@ -155,12 +155,15 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    AppCenter.setNetworkRequestsAllowed(enabled);
+                    // TODO uncomment before SDK release
+                    // AppCenter.setNetworkRequestsAllowed(enabled);
                 }
 
                 @Override
                 public boolean isEnabled() {
-                    return AppCenter.isNetworkRequestsAllowed();
+                    // TODO uncomment before SDK release
+                    //return AppCenter.isNetworkRequestsAllowed();
+                    return true;
                 }
             });
 
