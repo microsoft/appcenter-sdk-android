@@ -574,13 +574,23 @@ public class AppCenter {
         }
     }
 
-    private synchronized void setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
+    /**
+     * {@link #setNetworkRequestsAllowed(boolean)} implementation at instance level.
+     *
+     * @param isAllowed true to allow, false to disallow.
+     */
+    private synchronized void  setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
         mIsNetworkRequestsAllowed = isAllowed;
         if (mChannel != null) {
             mChannel.setNetworkRequestsAllowed(isAllowed);
         }
     }
 
+    /**
+     * {@link #isNetworkRequestsAllowed()} implementation at instance level.
+     *
+     * @return true if network requests is allow, false otherwise.
+     */
     private boolean isInstanceNetworkRequestsAllowed() {
         return mIsNetworkRequestsAllowed;
     }

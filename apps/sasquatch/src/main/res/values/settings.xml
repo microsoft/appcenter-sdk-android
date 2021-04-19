@@ -17,7 +17,6 @@
 
     <string name="appcenter_network_requests_allowed_key" tools:ignore="MissingTranslation">allow_network_requests</string>
     <string name="appcenter_network_requests_allowed_title" tools:ignore="MissingTranslation">Allow network requests</string>
-
     <string name="appcenter_network_requests_allowed_allowed" tools:ignore="MissingTranslation">Allow network requests allowed</string>
     <string name="appcenter_network_requests_allowed_disallowed" tools:ignore="MissingTranslation">Allow network requests disallowed</string>
 
