@@ -591,7 +591,7 @@ public class AppCenter {
      *
      * @return true if network requests is allow, false otherwise.
      */
-    private boolean isInstanceNetworkRequestsAllowed() {
+    private synchronized boolean isInstanceNetworkRequestsAllowed() {
         return mIsNetworkRequestsAllowed;
     }
 
