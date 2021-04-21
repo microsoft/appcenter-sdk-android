@@ -5,6 +5,7 @@
 ### App Center
 
 * **[Fix]** Remove old support libraries for compatibility with apps without enabled Jetifier tool. 
+* **[Feature]** Add a `setNetworkRequestsAllowed` API to block network requests.
 
 ### App Center Distribute
 
