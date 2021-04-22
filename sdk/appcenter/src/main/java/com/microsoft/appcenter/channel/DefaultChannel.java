@@ -117,7 +117,7 @@ public class DefaultChannel implements Channel {
     private boolean mEnabled;
 
     /**
-     * Is network requests allowed? True by the default.
+     * Flag indicating whether SDK network requests are allowed. True by default.
      */
     private boolean mIsNetworkRequestsAllowed = true;
 

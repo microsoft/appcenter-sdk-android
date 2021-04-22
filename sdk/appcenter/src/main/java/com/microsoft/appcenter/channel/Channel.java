@@ -104,9 +104,9 @@ public interface Channel {
     void setNetworkRequestsAllowed(boolean isAllowed);
 
     /**
-     * Check whether network requests is allow or disallow.
+     * Check whether network requests are allowed or disallowed.
      *
-     * @return true if network requests is allow, false otherwise.
+     * @return true if network requests are allowed, false otherwise.
      */
     boolean isNetworkRequestsAllowed();
 

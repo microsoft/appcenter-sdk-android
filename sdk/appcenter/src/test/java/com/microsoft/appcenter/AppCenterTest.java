@@ -415,7 +415,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         Set<AppCenterService> services = appCenter.getServices();
         assertTrue(AppCenter.isEnabled().get());
 
-        /* Verify that network request is allowed by default. */
+        /* Verify that network request are allowed by default. */
         Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
         verify(mChannel).setNetworkRequestsAllowed(true);
 
@@ -1129,10 +1129,10 @@ public class AppCenterTest extends AbstractAppCenterTest {
     public void testChangeNetworkRequestsAllowedStatus() {
         AppCenter.getInstance().setChannel(null);
 
-        /* Verify that network request is allowed by default. */
+        /* Verify that network request are allowed by default. */
         Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
 
-        /* Verify that network request is disallowed. */
+        /* Verify that network request are disallowed. */
         AppCenter.setNetworkRequestsAllowed(false);
         Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
         verify(mChannel, never()).setNetworkRequestsAllowed(eq(false));
@@ -1141,7 +1141,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.start(mApplication, DUMMY_APP_SECRET);
         verify(mChannel).setNetworkRequestsAllowed(eq(false));
 
-        /* Verify that network request is allowed. */
+        /* Verify that network request are allowed. */
         AppCenter.setNetworkRequestsAllowed(true);
         Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
         verify(mChannel).setNetworkRequestsAllowed(eq(true));

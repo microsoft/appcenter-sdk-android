@@ -1140,21 +1140,21 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
 
-        /* Verify that network request is allowed by default. */
+        /* Verify that network request are allowed by default. */
         assertTrue(channel.isNetworkRequestsAllowed());
 
-        /* Disallowed network requests. */
+        /* Disallow network requests. */
         channel.setNetworkRequestsAllowed(false);
         channel.addGroup(TEST_GROUP, 3, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
 
         /* Verify that sending logs wasn't called. */
         verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Enabled network requests and verify that sending logs was called. */
+        /* Enable network requests and verify that sending logs was called. */
         channel.setNetworkRequestsAllowed(true);
         verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Disallowed network requests and verify that sending logs wasn't called. */
+        /* Disallow network requests and verify that sending logs wasn't called. */
         channel.setNetworkRequestsAllowed(false);
         channel.addGroup(TEST_GROUP, 3, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
         verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
@@ -1178,7 +1178,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
 
-        /* Verify that network request is allowed by default. */
+        /* Verify that network request are allowed by default. */
         assertTrue(channel.isNetworkRequestsAllowed());
 
         /* Disable channel. */
@@ -1188,7 +1188,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         /* Verify that sending logs wasn't called. */
         verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 
-        /* Allowed network requests and verify that sending logs wasn't called. */
+        /* Allow network requests and verify that sending logs wasn't called. */
         channel.setNetworkRequestsAllowed(true);
         verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
 

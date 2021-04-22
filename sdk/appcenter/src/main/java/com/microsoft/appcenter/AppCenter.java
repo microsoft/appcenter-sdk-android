@@ -136,7 +136,7 @@ public class AppCenter {
     private String mLogUrl;
 
     /**
-     * Is network requests allowed? True by the default.
+     * Flag indicating whether SDK network requests are allowed. True by default.
      */
     private boolean mIsNetworkRequestsAllowed = true;
 
@@ -418,9 +418,9 @@ public class AppCenter {
     }
 
     /**
-     * Check whether network requests is allow or disallow.
+     * Check whether network requests are allowed or disallowed.
      *
-     * @return true if network requests is allow, false otherwise.
+     * @return true if network requests are allowed, false otherwise.
      */
     public static boolean isNetworkRequestsAllowed() {
         return getInstance().isInstanceNetworkRequestsAllowed();
@@ -589,7 +589,7 @@ public class AppCenter {
     /**
      * {@link #isNetworkRequestsAllowed()} implementation at instance level.
      *
-     * @return true if network requests is allow, false otherwise.
+     * @return true if network requests are allowed, false otherwise.
      */
     private synchronized boolean isInstanceNetworkRequestsAllowed() {
         return mIsNetworkRequestsAllowed;
