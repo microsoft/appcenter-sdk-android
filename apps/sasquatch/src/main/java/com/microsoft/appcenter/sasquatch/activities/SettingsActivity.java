@@ -157,6 +157,7 @@ public class SettingsActivity extends AppCompatActivity {
                 public void setEnabled(boolean enabled) {
                     // TODO uncomment before SDK release
                     // AppCenter.setNetworkRequestsAllowed(enabled);
+                    MainActivity.sSharedPreferences.edit().putBoolean(MainActivity.ALLOW_NETWORK_REQUESTS, enabled).apply();
                 }
 
                 @Override

@@ -61,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
 
     static final String USER_ID_KEY = "userId";
 
+    static final String ALLOW_NETWORK_REQUESTS = "allowNetworkRequests";
+
     static final String APPCENTER_START_TYPE = "appCenterStartType";
 
     static final String LOG_URL_KEY = "logUrl";
@@ -157,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class);
                 return;
         }
+        AppCenter.setNetworkRequestsAllowed(sSharedPreferences.getBoolean(ALLOW_NETWORK_REQUESTS, true));
         AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class);
     }
 
