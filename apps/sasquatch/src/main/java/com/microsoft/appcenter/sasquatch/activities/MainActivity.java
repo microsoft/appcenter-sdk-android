@@ -159,7 +159,8 @@ public class MainActivity extends AppCompatActivity {
                 AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class);
                 return;
         }
-        AppCenter.setNetworkRequestsAllowed(sSharedPreferences.getBoolean(ALLOW_NETWORK_REQUESTS, true));
+        // TODO uncomment before SDK release
+        // AppCenter.setNetworkRequestsAllowed(sSharedPreferences.getBoolean(ALLOW_NETWORK_REQUESTS, true));
         AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class);
     }
 
