@@ -117,11 +117,6 @@ public class DefaultChannel implements Channel {
     private boolean mEnabled;
 
     /**
-     * Flag indicating whether SDK network requests are allowed. True by default.
-     */
-    private boolean mIsNetworkRequestsAllowed = true;
-
-    /**
      * Is channel disabled due to connectivity issues or was the problem fatal?
      * In that case we stop accepting new logs in database.
      */
@@ -325,14 +320,13 @@ public class DefaultChannel implements Channel {
     }
 
     /**
-     * Set the enabled flag. If false, the channel will continue to persist data but not forward any item to ingestion.
-     * The most common use-case would be to set it to false and enable sending again after the channel has disabled itself after receiving
-     * a recoverable error (most likely related to a server issue).
+     * Enable or disable channel with deleting logs.
      *
-     * @param enabled flag to enable or disable the channel.
+     * @param enabled true to enable, false to disable.
+     * @param deleteLogs true if logs should be deleted, false otherwise.
      */
     @Override
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(boolean enabled, boolean deleteLogs) {
         if (mEnabled == enabled) {
             return;
         }
@@ -347,7 +341,7 @@ public class DefaultChannel implements Channel {
                 checkPendingLogs(groupState);
             }
         } else {
-            suspend(true, new CancellationException());
+            suspend(deleteLogs, new CancellationException());
         }
 
         /* Notify listeners that channel state has changed. */
@@ -356,20 +350,16 @@ public class DefaultChannel implements Channel {
         }
     }
 
+    /**
+     * Set the enabled flag. If false, the channel will continue to persist data but not forward any item to ingestion.
+     * The most common use-case would be to set it to false and enable sending again after the channel has disabled itself after receiving
+     * a recoverable error (most likely related to a server issue).
+     *
+     * @param enabled flag to enable or disable the channel.
+     */
     @Override
-    public void setNetworkRequestsAllowed(boolean isAllowed) {
-        mIsNetworkRequestsAllowed = isAllowed;
-        AppCenterLog.info(LOG_TAG, "Set network request allowed " + mIsNetworkRequestsAllowed);
-        if (isAllowed && mEnabled) {
-            for (GroupState groupState : mGroupStates.values()) {
-                checkPendingLogs(groupState);
-            }
-        }
-    }
-
-    @Override
-    public boolean isNetworkRequestsAllowed() {
-        return mIsNetworkRequestsAllowed;
+    public void setEnabled(boolean enabled) {
+        setEnabled(enabled, true);
     }
 
     @Override
@@ -479,10 +469,6 @@ public class DefaultChannel implements Channel {
      */
     private void triggerIngestion(final @NonNull GroupState groupState) {
         if (!mEnabled) {
-            return;
-        }
-        if (!mIsNetworkRequestsAllowed) {
-            AppCenterLog.debug(LOG_TAG, "SDK is in offline mode.");
             return;
         }
         int pendingLogCount = groupState.mPendingLogCount;

@@ -9,6 +9,7 @@ import android.app.Activity;
 import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
@@ -415,10 +416,6 @@ public class AppCenterTest extends AbstractAppCenterTest {
         Set<AppCenterService> services = appCenter.getServices();
         assertTrue(AppCenter.isEnabled().get());
 
-        /* Verify that network request are allowed by default. */
-        Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
-        verify(mChannel).setNetworkRequestsAllowed(true);
-
         /* Prepare mock service. */
         DummyService dummyService = DummyService.getInstance();
         AnotherDummyService anotherDummyService = AnotherDummyService.getInstance();
@@ -434,7 +431,8 @@ public class AppCenterTest extends AbstractAppCenterTest {
         }
         verify(dummyService, never()).setInstanceEnabled(anyBoolean());
         verify(anotherDummyService, never()).setInstanceEnabled(anyBoolean());
-        verify(mChannel, times(2)).setEnabled(true);
+        verify(mChannel).setEnabled(true, false);
+        verify(mChannel).setEnabled(true, true);
         verify(mNetworkStateHelper, never()).close();
         verify(mNetworkStateHelper, never()).reopen();
 
@@ -446,7 +444,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         }
         verify(dummyService).setInstanceEnabled(false);
         verify(anotherDummyService).setInstanceEnabled(false);
-        verify(mChannel).setEnabled(false);
+        verify(mChannel).setEnabled(false, true);
         verify(mNetworkStateHelper).close();
         verify(mNetworkStateHelper, never()).reopen();
 
@@ -460,7 +458,8 @@ public class AppCenterTest extends AbstractAppCenterTest {
         verify(anotherDummyService).setInstanceEnabled(true);
         verify(mApplication, times(1)).registerActivityLifecycleCallbacks(dummyService);
         verify(mApplication, times(1)).registerActivityLifecycleCallbacks(anotherDummyService);
-        verify(mChannel, times(3)).setEnabled(true);
+        verify(mChannel, times(2)).setEnabled(true, true);
+        verify(mChannel).setEnabled(true, false);
         verify(mNetworkStateHelper).reopen();
 
         /* Verify that disabling one service leaves base and other services enabled */
@@ -477,7 +476,8 @@ public class AppCenterTest extends AbstractAppCenterTest {
         }
         verify(dummyService, times(2)).setInstanceEnabled(true);
         verify(anotherDummyService).setInstanceEnabled(true);
-        verify(mChannel, times(4)).setEnabled(true);
+        verify(mChannel, times(3)).setEnabled(true, true);
+        verify(mChannel).setEnabled(true, false);
         verify(mNetworkStateHelper, times(1)).reopen();
 
         /* Enable service after the SDK is disabled. */
@@ -491,7 +491,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         verifyStatic();
         AppCenterLog.error(eq(LOG_TAG), anyString());
         assertFalse(AppCenter.isEnabled().get());
-        verify(mChannel, times(2)).setEnabled(false);
+        verify(mChannel, times(2)).setEnabled(false, true);
         verify(mNetworkStateHelper, times(2)).close();
 
         /* Disable back via main class. */
@@ -500,7 +500,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         for (AppCenterService service : services) {
             assertFalse(service.isInstanceEnabled());
         }
-        verify(mChannel, times(3)).setEnabled(false);
+        verify(mChannel, times(3)).setEnabled(false, true);
         verify(mNetworkStateHelper, times(2)).close();
 
         /* Check factories / channel only once interactions. */
@@ -1126,24 +1126,68 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
-    public void testChangeNetworkRequestsAllowedStatus() {
-        AppCenter.getInstance().setChannel(null);
+    public void setInstanceNetworkRequestsAllowedWhenChannelNull() {
 
-        /* Verify that network request are allowed by default. */
+        /* Verify that network requests allow by default. */
         Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
 
-        /* Verify that network request are disallowed. */
+        /* Disallow network requests. */
         AppCenter.setNetworkRequestsAllowed(false);
         Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
-        verify(mChannel, never()).setNetworkRequestsAllowed(eq(false));
+        verifyStatic(never());
+        SharedPreferencesManager.getBoolean(eq(KEY_ENABLED), anyBoolean());
 
-        /* Start App Center. */
-        AppCenter.start(mApplication, DUMMY_APP_SECRET);
-        verify(mChannel).setNetworkRequestsAllowed(eq(false));
+        /* Set channel. */
+        AppCenter.getInstance().setChannel(mChannel);
 
-        /* Verify that network request are allowed. */
+        /* Allow network request. */
         AppCenter.setNetworkRequestsAllowed(true);
         Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
-        verify(mChannel).setNetworkRequestsAllowed(eq(true));
+        verify(mChannel).setEnabled(true, false);
+    }
+
+    @Test
+    public void checkEnabledAppCenterWhenNetwoerRequestAllowedOrDisallowed() {
+
+        /* Set channel. */
+        AppCenter.getInstance().setChannel(mChannel);
+
+        /* Verify that network requests allow by default. */
+        Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
+
+        /* Disallow network requests. */
+        AppCenter.setNetworkRequestsAllowed(false);
+        Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
+
+        /* Check that after setting the same value nothing happens. */
+        AppCenter.setNetworkRequestsAllowed(true);
+        verify(mChannel).setEnabled(true, false);
+
+        /* Disable App Center and check that the channel will not be enabled. */
+        AppCenter.setEnabled(false);
+        verify(mChannel).setEnabled(false, false);
+
+        /* Allow network requests and check that the channel will not be enabled. */
+        AppCenter.setNetworkRequestsAllowed(true);
+        verify(mChannel).setEnabled(false, false);
+
+        /* Allow network requests and check that after enabled App Center the channel will be enabled. */
+        AppCenter.setNetworkRequestsAllowed(true);
+        AppCenter.setEnabled(true);
+        verify(mChannel).setEnabled(false, false);
+    }
+
+    @Test
+    public void configureAppCenterWhenNetworkDisallowed() throws Exception {
+
+        /* Mock default channel. */
+        whenNew(DefaultChannel.class).withAnyArguments().thenReturn(mChannel);
+
+        /* Disallow network requests. */
+        AppCenter.setNetworkRequestsAllowed(false);
+
+        /* Verify that channel will not be enabled. */
+        AppCenter.configure(mApplication);
+        verify(mChannel).setEnabled(false, false);
     }
 }

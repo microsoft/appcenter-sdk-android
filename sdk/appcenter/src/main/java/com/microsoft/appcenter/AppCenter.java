@@ -580,10 +580,15 @@ public class AppCenter {
      * @param isAllowed true to allow, false to disallow.
      */
     private synchronized void  setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
+        if (mIsNetworkRequestsAllowed == isAllowed) {
+            AppCenterLog.info(LOG_TAG, "Network request already " + (isAllowed ? "allowed" : "disallowed"));
+            return;
+        }
         mIsNetworkRequestsAllowed = isAllowed;
         if (mChannel != null) {
-            mChannel.setNetworkRequestsAllowed(isAllowed);
+            mChannel.setEnabled(isInstanceEnabled() && mIsNetworkRequestsAllowed, false);
         }
+        AppCenterLog.info(LOG_TAG, "Set network request allowed " + mIsNetworkRequestsAllowed);
     }
 
     /**
@@ -857,7 +862,7 @@ public class AppCenter {
             /* If from library, we apply storage size only later, we have to try using the default value in the mean time. */
             mChannel.setMaxStorageSize(DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
         }
-        mChannel.setEnabled(enabled);
+        mChannel.setEnabled(enabled && mIsNetworkRequestsAllowed, !enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
         mOneCollectorChannelListener = new OneCollectorChannelListener(mChannel, mLogSerializer, httpClient, IdHelper.getInstallId());
         if (mLogUrl != null) {
@@ -869,7 +874,6 @@ public class AppCenter {
                 mOneCollectorChannelListener.setLogUrl(mLogUrl);
             }
         }
-        mChannel.setNetworkRequestsAllowed(mIsNetworkRequestsAllowed);
         mChannel.addListener(mOneCollectorChannelListener);
 
         /* Disable listening network if we start while being disabled. */
@@ -1117,7 +1121,7 @@ public class AppCenter {
     private void setInstanceEnabled(boolean enabled) {
 
         /* Update channel state. */
-        mChannel.setEnabled(enabled);
+        mChannel.setEnabled(enabled && mIsNetworkRequestsAllowed, true);
 
         /* Un-subscribe app callbacks if we were enabled and now disabled. */
         boolean previouslyEnabled = isInstanceEnabled();

@@ -573,6 +573,16 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
+    public void disableChannelWithoutDeletingLogs() {
+        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), mAppCenterHandler);
+        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+        channel.setEnabled(false, false);
+        channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
+        verify(mockListener, never()).onFailure(any(Log.class), any(CancellationException.class));
+    }
+
+    @Test
     public void suspendWithFailureCallback() {
         Ingestion mockIngestion = mock(Ingestion.class);
         Persistence mockPersistence = mock(Persistence.class);
@@ -1124,76 +1134,5 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
         /* Check rest logs sending. */
         verify(mockIngestion, times(4)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-    }
-
-    @Test
-    public void testChangeNetworkRequestsAllowedStatus() {
-
-        /* Mock current time - before end of interval. */
-        long now = 1;
-        when(System.currentTimeMillis()).thenReturn(now);
-
-        /* Create channel and group. */
-        Persistence mockPersistence = mock(Persistence.class);
-        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
-
-        /* Verify that network request are allowed by default. */
-        assertTrue(channel.isNetworkRequestsAllowed());
-
-        /* Disallow network requests. */
-        channel.setNetworkRequestsAllowed(false);
-        channel.addGroup(TEST_GROUP, 3, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
-
-        /* Verify that sending logs wasn't called. */
-        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-
-        /* Enable network requests and verify that sending logs was called. */
-        channel.setNetworkRequestsAllowed(true);
-        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-
-        /* Disallow network requests and verify that sending logs wasn't called. */
-        channel.setNetworkRequestsAllowed(false);
-        channel.addGroup(TEST_GROUP, 3, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
-        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-
-        /* Allow network requests and verify that sending logs was called again. */
-        channel.setNetworkRequestsAllowed(true);
-        verify(mockIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-    }
-
-    @Test
-    public void testSendingLogsWhenNetworkRequestsAllowedAndChannelIsDisabled() {
-
-        /* Mock current time - before end of interval. */
-        long now = 1;
-        when(System.currentTimeMillis()).thenReturn(now);
-
-        /* Create channel and group. */
-        Persistence mockPersistence = mock(Persistence.class);
-        when(mockPersistence.countLogs(TEST_GROUP)).thenReturn(5);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
-
-        /* Verify that network request are allowed by default. */
-        assertTrue(channel.isNetworkRequestsAllowed());
-
-        /* Disable channel. */
-        channel.setEnabled(false);
-        channel.addGroup(TEST_GROUP, 3, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
-
-        /* Verify that sending logs wasn't called. */
-        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-
-        /* Allow network requests and verify that sending logs wasn't called. */
-        channel.setNetworkRequestsAllowed(true);
-        verify(mockIngestion, never()).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
-
-        /* Verify that after enable channel logs were sent. */
-        channel.setEnabled(true);
-        verify(mockIngestion).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
     }
 }

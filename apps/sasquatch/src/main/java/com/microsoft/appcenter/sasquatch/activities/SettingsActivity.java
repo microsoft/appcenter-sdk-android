@@ -151,7 +151,7 @@ public class SettingsActivity extends AppCompatActivity {
                     onDatabaseFileChanged(dbFile);
                 }
             };
-            initCheckBoxSetting(R.string.appcenter_network_requests_allowed_key, R.string.appcenter_network_requests_allowed_allowed, R.string.appcenter_network_requests_allowed_disallowed, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_network_requests_allowed_key, R.string.appcenter_network_requests_allowed, R.string.appcenter_network_requests_allowed_disallowed, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
