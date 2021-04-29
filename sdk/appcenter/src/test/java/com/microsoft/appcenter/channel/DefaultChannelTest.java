@@ -573,16 +573,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    public void disableChannelWithoutDeletingLogs() {
-        Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mock(Persistence.class), mock(Ingestion.class), mAppCenterHandler);
-        channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
-        channel.setEnabled(false, false);
-        channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
-        verify(mockListener, never()).onFailure(any(Log.class), any(CancellationException.class));
-    }
-
-    @Test
     public void suspendWithFailureCallback() {
         Ingestion mockIngestion = mock(Ingestion.class);
         Persistence mockPersistence = mock(Persistence.class);

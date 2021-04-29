@@ -136,11 +136,6 @@ public class AppCenter {
     private String mLogUrl;
 
     /**
-     * Flag indicating whether SDK network requests are allowed. True by default.
-     */
-    private boolean mIsNetworkRequestsAllowed = true;
-
-    /**
      * Application context.
      */
     private Application mApplication;
@@ -580,15 +575,19 @@ public class AppCenter {
      * @param isAllowed true to allow, false to disallow.
      */
     private synchronized void  setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
-        if (mIsNetworkRequestsAllowed == isAllowed) {
-            AppCenterLog.info(LOG_TAG, "Network request already " + (isAllowed ? "allowed" : "disallowed"));
+        if (isInstanceNetworkRequestsAllowed() == isAllowed) {
+            AppCenterLog.info(LOG_TAG, "Network requests are already " + (isAllowed ? "allowed" : "disallowed"));
             return;
         }
-        mIsNetworkRequestsAllowed = isAllowed;
+        SharedPreferencesManager.putBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, isAllowed);
         if (mChannel != null) {
-            mChannel.setEnabled(isInstanceEnabled() && mIsNetworkRequestsAllowed, false);
+            if (isAllowed) {
+                mChannel.sendLogs();
+            } else {
+                mChannel.suspendSendLogs(false);
+            }
         }
-        AppCenterLog.info(LOG_TAG, "Set network request allowed " + mIsNetworkRequestsAllowed);
+        AppCenterLog.info(LOG_TAG, "Set network requests " + (isAllowed ? "allowed" : "disallowed"));
     }
 
     /**
@@ -597,7 +596,7 @@ public class AppCenter {
      * @return true if network requests are allowed, false otherwise.
      */
     private synchronized boolean isInstanceNetworkRequestsAllowed() {
-        return mIsNetworkRequestsAllowed;
+        return SharedPreferencesManager.getBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, true);
     }
 
     /**
@@ -862,7 +861,7 @@ public class AppCenter {
             /* If from library, we apply storage size only later, we have to try using the default value in the mean time. */
             mChannel.setMaxStorageSize(DEFAULT_MAX_STORAGE_SIZE_IN_BYTES);
         }
-        mChannel.setEnabled(enabled && mIsNetworkRequestsAllowed, !enabled);
+        mChannel.setEnabled(enabled);
         mChannel.addGroup(CORE_GROUP, DEFAULT_TRIGGER_COUNT, DEFAULT_TRIGGER_INTERVAL, DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS, null, null);
         mOneCollectorChannelListener = new OneCollectorChannelListener(mChannel, mLogSerializer, httpClient, IdHelper.getInstallId());
         if (mLogUrl != null) {
@@ -1121,7 +1120,7 @@ public class AppCenter {
     private void setInstanceEnabled(boolean enabled) {
 
         /* Update channel state. */
-        mChannel.setEnabled(enabled && mIsNetworkRequestsAllowed, true);
+        mChannel.setEnabled(enabled);
 
         /* Un-subscribe app callbacks if we were enabled and now disabled. */
         boolean previouslyEnabled = isInstanceEnabled();

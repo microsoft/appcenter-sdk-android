@@ -37,6 +37,13 @@ public interface Ingestion extends Closeable {
     void setLogUrl(String logUrl);
 
     /**
+     * Check whether the ingestion is enabled or not as a whole.
+     *
+     * @return true if enabled, false otherwise.
+     */
+    boolean isEnabled();
+
+    /**
      * Make ingestion active again after closing.
      */
     void reopen();

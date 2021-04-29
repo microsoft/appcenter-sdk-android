@@ -323,10 +323,9 @@ public class DefaultChannel implements Channel {
      * Enable or disable channel with deleting logs.
      *
      * @param enabled true to enable, false to disable.
-     * @param deleteLogs true if logs should be deleted, false otherwise.
      */
     @Override
-    public void setEnabled(boolean enabled, boolean deleteLogs) {
+    public void setEnabled(boolean enabled) {
         if (mEnabled == enabled) {
             return;
         }
@@ -341,25 +340,13 @@ public class DefaultChannel implements Channel {
                 checkPendingLogs(groupState);
             }
         } else {
-            suspend(deleteLogs, new CancellationException());
+            suspend(true, new CancellationException());
         }
 
         /* Notify listeners that channel state has changed. */
         for (Listener listener : mListeners) {
             listener.onGloballyEnabled(enabled);
         }
-    }
-
-    /**
-     * Set the enabled flag. If false, the channel will continue to persist data but not forward any item to ingestion.
-     * The most common use-case would be to set it to false and enable sending again after the channel has disabled itself after receiving
-     * a recoverable error (most likely related to a server issue).
-     *
-     * @param enabled flag to enable or disable the channel.
-     */
-    @Override
-    public void setEnabled(boolean enabled) {
-        setEnabled(enabled, true);
     }
 
     @Override
@@ -469,6 +456,10 @@ public class DefaultChannel implements Channel {
      */
     private void triggerIngestion(final @NonNull GroupState groupState) {
         if (!mEnabled) {
+            return;
+        }
+        if (!mIngestion.isEnabled()) {
+            AppCenterLog.debug(LOG_TAG, "SDK in offline mode.");
             return;
         }
         int pendingLogCount = groupState.mPendingLogCount;
@@ -807,6 +798,18 @@ public class DefaultChannel implements Channel {
     @Override
     public void shutdown() {
         suspend(false, new CancellationException());
+    }
+
+    @Override
+    public void sendLogs() {
+        for (GroupState groupState : mGroupStates.values()) {
+            checkPendingLogs(groupState);
+        }
+    }
+
+    @Override
+    public void suspendSendLogs(boolean deleteLogs) {
+        suspend(deleteLogs, new CancellationException());
     }
 
     /**

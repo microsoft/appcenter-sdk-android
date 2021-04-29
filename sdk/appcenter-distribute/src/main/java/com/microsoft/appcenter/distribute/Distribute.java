@@ -38,6 +38,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
+import com.microsoft.appcenter.distribute.ingestion.DistributeIngestion;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.http.HttpClient;
@@ -1082,10 +1083,6 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(final String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
-        HttpClient httpClient = DependencyConfiguration.getHttpClient();
-        if (httpClient == null) {
-            httpClient = createHttpClient(mContext);
-        }
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
@@ -1098,7 +1095,11 @@ public class Distribute extends AbstractAppCenterService {
             headers.put(HEADER_API_TOKEN, updateToken);
         }
         final Object releaseCallId = mCheckReleaseCallId = new Object();
-        mCheckReleaseApiCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
+        HttpClient httpClient = DependencyConfiguration.getHttpClient();
+        if (httpClient == null) {
+            httpClient = createHttpClient(mContext);
+        }
+        mCheckReleaseApiCall =  new DistributeIngestion(httpClient).getServiceCall(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
             @Override
             public String buildRequestBody() {

@@ -97,14 +97,6 @@ public interface Channel {
     void setEnabled(boolean enabled);
 
     /**
-     * Enable or disable channel with deleting logs.
-     *
-     * @param enabled true to enable, false to disable.
-     * @param deleteLogs true if logs should be deleted, false otherwise.
-     */
-    void setEnabled(boolean enabled, boolean deleteLogs);
-
-    /**
      * Update log URL.
      *
      * @param logUrl log URL.
@@ -141,6 +133,18 @@ public interface Channel {
      * Suspend channel and wait for a limited period of time for queued logs to be persisted.
      */
     void shutdown();
+
+    /**
+     * Send logs.
+     */
+    void sendLogs();
+
+    /**
+     * Suspend sending logs.
+     *
+     * @param deleteLogs true if logs should be deleted, false otherwise.
+     */
+    void suspendSendLogs(boolean deleteLogs);
 
     /**
      * Channel global listener specification.

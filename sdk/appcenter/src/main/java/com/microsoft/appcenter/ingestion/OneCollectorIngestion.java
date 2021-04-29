@@ -37,7 +37,7 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
-public class OneCollectorIngestion implements Ingestion {
+public class OneCollectorIngestion extends AbstractAppCenterIngestion {
 
     /**
      * Default log URL.
@@ -90,25 +90,14 @@ public class OneCollectorIngestion implements Ingestion {
     private final LogSerializer mLogSerializer;
 
     /**
-     * HTTP client.
-     */
-    private final HttpClient mHttpClient;
-
-    /**
-     * Log base URL (scheme + authority).
-     */
-    private String mLogUrl;
-
-    /**
      * Init.
      *
      * @param httpClient    the HTTP client.
      * @param logSerializer log serializer.
      */
     public OneCollectorIngestion(@NonNull HttpClient httpClient, @NonNull LogSerializer logSerializer) {
+        super(httpClient, DEFAULT_LOG_URL);
         mLogSerializer = logSerializer;
-        mHttpClient = httpClient;
-        mLogUrl = DEFAULT_LOG_URL;
     }
 
     @Override
@@ -172,28 +161,17 @@ public class OneCollectorIngestion implements Ingestion {
 
         /* Make the call. */
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
-        return mHttpClient.callAsync(mLogUrl, METHOD_POST, headers, callTemplate, serviceCallback);
-    }
-
-    /**
-     * Update log URL.
-     *
-     * @param logUrl log URL.
-     */
-    @Override
-    @SuppressWarnings("SameParameterValue")
-    public void setLogUrl(@NonNull String logUrl) {
-        mLogUrl = logUrl;
+        return getServiceCall(getLogUrl(), METHOD_POST, headers, callTemplate, serviceCallback);
     }
 
     @Override
     public void reopen() {
-        mHttpClient.reopen();
+        super.reopen();
     }
 
     @Override
     public void close() throws IOException {
-        mHttpClient.close();
+        super.close();
     }
 
     /**
