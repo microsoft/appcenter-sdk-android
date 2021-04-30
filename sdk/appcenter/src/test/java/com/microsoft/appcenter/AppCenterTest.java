@@ -19,7 +19,6 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
@@ -414,8 +413,6 @@ public class AppCenterTest extends AbstractAppCenterTest {
         /* Verify services are enabled by default */
         Set<AppCenterService> services = appCenter.getServices();
         assertTrue(AppCenter.isEnabled().get());
-
-        /* Prepare mock service. */
         DummyService dummyService = DummyService.getInstance();
         AnotherDummyService anotherDummyService = AnotherDummyService.getInstance();
         for (AppCenterService service : services) {

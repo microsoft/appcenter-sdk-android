@@ -164,16 +164,6 @@ public class OneCollectorIngestion extends AbstractAppCenterIngestion {
         return getServiceCall(getLogUrl(), METHOD_POST, headers, callTemplate, serviceCallback);
     }
 
-    @Override
-    public void reopen() {
-        super.reopen();
-    }
-
-    @Override
-    public void close() throws IOException {
-        super.close();
-    }
-
     /**
      * Call template implementation for One Collector.
      */

@@ -576,7 +576,7 @@ public class AppCenter {
      */
     private synchronized void  setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
         if (isInstanceNetworkRequestsAllowed() == isAllowed) {
-            AppCenterLog.info(LOG_TAG, "Network requests are already " + (isAllowed ? "allowed" : "disallowed"));
+            AppCenterLog.info(LOG_TAG, "Network requests are already " + (isAllowed ? "allowed" : "forbidden"));
             return;
         }
         SharedPreferencesManager.putBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, isAllowed);
@@ -584,7 +584,7 @@ public class AppCenter {
             if (isAllowed) {
                 mChannel.sendLogs();
             } else {
-                mChannel.suspendSendLogs(false);
+                mChannel.suspendSendLogs();
             }
         }
         AppCenterLog.info(LOG_TAG, "Set network requests " + (isAllowed ? "allowed" : "disallowed"));

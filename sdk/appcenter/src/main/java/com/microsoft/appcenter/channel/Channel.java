@@ -142,9 +142,8 @@ public interface Channel {
     /**
      * Suspend sending logs.
      *
-     * @param deleteLogs true if logs should be deleted, false otherwise.
      */
-    void suspendSendLogs(boolean deleteLogs);
+    void suspendSendLogs();
 
     /**
      * Channel global listener specification.

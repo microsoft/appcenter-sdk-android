@@ -340,7 +340,7 @@ public class DefaultChannel implements Channel {
                 checkPendingLogs(groupState);
             }
         } else {
-            suspend(true, new CancellationException());
+            suspendWithDisableChannel(true, new CancellationException());
         }
 
         /* Notify listeners that channel state has changed. */
@@ -379,13 +379,23 @@ public class DefaultChannel implements Channel {
     }
 
     /**
+     * Stop sending logs until app is restarted or the channel is enabled again and disable channel.
+     *
+     * @param deleteLogs in addition to suspending, if this is true, delete all logs from Persistence.
+     * @param exception  the exception that caused suspension.
+     */
+    private void suspendWithDisableChannel(boolean deleteLogs, Exception exception) {
+        mEnabled = false;
+        suspend(deleteLogs, exception);
+    }
+
+    /**
      * Stop sending logs until app is restarted or the channel is enabled again.
      *
      * @param deleteLogs in addition to suspending, if this is true, delete all logs from Persistence.
      * @param exception  the exception that caused suspension.
      */
     private void suspend(boolean deleteLogs, Exception exception) {
-        mEnabled = false;
         mDiscardLogs = deleteLogs;
         mCurrentState++;
         for (GroupState groupState : mGroupStates.values()) {
@@ -459,7 +469,7 @@ public class DefaultChannel implements Channel {
             return;
         }
         if (!mIngestion.isEnabled()) {
-            AppCenterLog.debug(LOG_TAG, "SDK in offline mode.");
+            AppCenterLog.debug(LOG_TAG, "SDK is in offline mode.");
             return;
         }
         int pendingLogCount = groupState.mPendingLogCount;
@@ -598,7 +608,7 @@ public class DefaultChannel implements Channel {
                     }
                 }
             }
-            suspend(!recoverableError, e);
+            suspendWithDisableChannel(!recoverableError, e);
         }
     }
 
@@ -797,19 +807,20 @@ public class DefaultChannel implements Channel {
 
     @Override
     public void shutdown() {
-        suspend(false, new CancellationException());
+        suspendWithDisableChannel(false, new CancellationException());
     }
 
     @Override
     public void sendLogs() {
+        mCurrentState++;
         for (GroupState groupState : mGroupStates.values()) {
             checkPendingLogs(groupState);
         }
     }
 
     @Override
-    public void suspendSendLogs(boolean deleteLogs) {
-        suspend(deleteLogs, new CancellationException());
+    public void suspendSendLogs() {
+        suspend(false, new CancellationException());
     }
 
     /**

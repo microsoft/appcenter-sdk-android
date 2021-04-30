@@ -1099,33 +1099,7 @@ public class Distribute extends AbstractAppCenterService {
         if (httpClient == null) {
             httpClient = createHttpClient(mContext);
         }
-        mCheckReleaseApiCall =  new DistributeIngestion(httpClient).getServiceCall(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
-
-            @Override
-            public String buildRequestBody() {
-
-                /* Only GET is used by Distribute service. This method is never getting called. */
-                return null;
-            }
-
-            @Override
-            public void onBeforeCalling(URL url, Map<String, String> headers) {
-                if (AppCenterLog.getLogLevel() <= VERBOSE) {
-
-                    /* Log url. */
-                    String urlString = url.toString().replaceAll(mAppSecret, HttpUtils.hideSecret(mAppSecret));
-                    AppCenterLog.verbose(LOG_TAG, "Calling " + urlString + "...");
-
-                    /* Log headers. */
-                    Map<String, String> logHeaders = new HashMap<>(headers);
-                    String apiToken = logHeaders.get(HEADER_API_TOKEN);
-                    if (apiToken != null) {
-                        logHeaders.put(HEADER_API_TOKEN, HttpUtils.hideSecret(apiToken));
-                    }
-                    AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
-                }
-            }
-        }, new ServiceCallback() {
+        mCheckReleaseApiCall = new DistributeIngestion(httpClient).checkReleaseAsync(mAppSecret, HEADER_API_TOKEN, url, METHOD_GET, headers, new ServiceCallback() {
 
             @Override
             public void onCallSucceeded(final HttpResponse httpResponse) {

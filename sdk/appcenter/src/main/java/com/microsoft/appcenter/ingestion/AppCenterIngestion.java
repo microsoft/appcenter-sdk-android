@@ -70,16 +70,6 @@ public class AppCenterIngestion extends AbstractAppCenterIngestion {
         return getServiceCall(getLogUrl() + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
     }
 
-    @Override
-    public void close() throws IOException {
-        super.close();
-    }
-
-    @Override
-    public void reopen() {
-        super.reopen();
-    }
-
     /**
      * Inner class is used to be able to mock System.currentTimeMillis, does not work if using anonymous inner class...
      */

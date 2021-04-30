@@ -13,9 +13,13 @@ import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Abstract class to send logs to the Ingestion service.
+ */
 public abstract class AbstractAppCenterIngestion implements Ingestion {
 
     /**
@@ -68,6 +72,7 @@ public abstract class AbstractAppCenterIngestion implements Ingestion {
 
     public ServiceCall getServiceCall(String url, String method, Map<String, String> headers, HttpClient.CallTemplate callTemplate, ServiceCallback serviceCallback) {
         if (!isEnabled()) {
+            serviceCallback.onCallFailed(new ConnectException("SDK is in offline mode."));
             return null;
         }
         return mHttpClient.callAsync(url, method, headers, callTemplate, serviceCallback);

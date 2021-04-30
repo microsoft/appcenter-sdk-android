@@ -157,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
                 AppCenter.start(application, Analytics.class, Crashes.class, Distribute.class);
                 return;
         }
-        // TODO uncomment before SDK release
         AppCenter.start(application, appIdArg, Analytics.class, Crashes.class, Distribute.class);
     }
 
