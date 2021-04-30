@@ -63,6 +63,7 @@ public class AppCenterIngestion extends AbstractAppCenterIngestion {
 
     @Override
     public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+        super.sendAsync(appSecret, installId, logContainer, serviceCallback);
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);

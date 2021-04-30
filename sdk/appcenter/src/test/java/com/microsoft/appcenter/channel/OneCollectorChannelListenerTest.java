@@ -308,6 +308,7 @@ public class OneCollectorChannelListenerTest {
     @Test
     public void setLogUrl() {
         OneCollectorIngestion ingestion = mock(OneCollectorIngestion.class);
+        when(ingestion.isEnabled()).thenReturn(true);
         OneCollectorChannelListener listener = new OneCollectorChannelListener(ingestion, mock(Channel.class), mock(LogSerializer.class), UUID.randomUUID());
 
         /* Set the log url. */

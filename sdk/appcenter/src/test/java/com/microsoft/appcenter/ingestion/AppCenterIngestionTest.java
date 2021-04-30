@@ -14,9 +14,11 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -25,6 +27,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,8 +37,10 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
+import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK_REQUEST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.contains;
@@ -52,7 +57,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 @SuppressWarnings("unused")
 @PrepareForTest({
         AppCenterIngestion.class,
-        AppCenterLog.class
+        AppCenterLog.class,
+        SharedPreferencesManager.class
 })
 public class AppCenterIngestionTest {
 
@@ -61,6 +67,12 @@ public class AppCenterIngestionTest {
 
     @Mock
     private HttpClient mHttpClient;
+
+    @Before
+    public void setUp() {
+        mockStatic(SharedPreferencesManager.class);
+        when(SharedPreferencesManager.getBoolean(ALLOWED_NETWORK_REQUEST, true)).thenReturn(true);
+    }
 
     @Test
     public void sendAsync() throws Exception {
@@ -215,6 +227,38 @@ public class AppCenterIngestionTest {
         /* Verify. */
         verifyStatic(never());
         AppCenterLog.verbose(anyString(), anyString());
+    }
+
+    @Test
+    public void sendLogsWhenIngestionDisable() throws JSONException, IOException {
+        mockStatic(SharedPreferencesManager.class);
+        when(SharedPreferencesManager.getBoolean(ALLOWED_NETWORK_REQUEST, true)).thenReturn(false);
+
+        /* Build some payload. */
+        LogContainer container = new LogContainer();
+        Log log = mock(Log.class);
+        List<Log> logs = new ArrayList<>();
+        logs.add(log);
+        container.setLogs(logs);
+        LogSerializer serializer = mock(LogSerializer.class);
+        when(serializer.serializeContainer(any(LogContainer.class))).thenReturn("mockPayload");
+
+        /* Configure mock HTTP. */
+        final ServiceCall call = mock(ServiceCall.class);
+
+        /* Test calling code. */
+        AppCenterIngestion ingestion = new AppCenterIngestion(mHttpClient, serializer);
+        ingestion.setLogUrl("http://mock");
+        String appSecret = UUID.randomUUID().toString();
+        UUID installId = UUID.randomUUID();
+        ServiceCallback serviceCallback = mock(ServiceCallback.class);
+        assertNull(ingestion.sendAsync(appSecret, installId, container, serviceCallback));
+
+        /* Verify call to http client. */
+        HashMap<String, String> expectedHeaders = new HashMap<>();
+        expectedHeaders.put(Constants.APP_SECRET, appSecret);
+        expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
+        verify(mHttpClient, never()).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
     }
 
     private HttpClient.CallTemplate getCallTemplate(String appSecret) {

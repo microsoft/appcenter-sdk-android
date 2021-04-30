@@ -49,6 +49,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        when(mockIngestion.isEnabled()).thenReturn(true);
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 
             @Override
@@ -102,6 +103,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
         when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        when(mockIngestion.isEnabled()).thenReturn(true);
         final Exception mockException = new IOException();
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
 

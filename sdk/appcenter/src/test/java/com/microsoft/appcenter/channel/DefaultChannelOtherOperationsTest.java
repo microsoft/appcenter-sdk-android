@@ -94,6 +94,7 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
     public void shutdown() {
         Persistence mockPersistence = mock(Persistence.class);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        when(mockIngestion.isEnabled()).thenReturn(true);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<List<Log>>any()))
                 .then(getGetLogsAnswer(1));

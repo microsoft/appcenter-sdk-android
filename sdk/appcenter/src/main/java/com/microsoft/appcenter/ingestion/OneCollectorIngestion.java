@@ -102,6 +102,7 @@ public class OneCollectorIngestion extends AbstractAppCenterIngestion {
 
     @Override
     public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+        super.sendAsync(appSecret, installId, logContainer, serviceCallback);
 
         /* Gather API keys from logs. */
         Map<String, String> headers = new HashMap<>();
