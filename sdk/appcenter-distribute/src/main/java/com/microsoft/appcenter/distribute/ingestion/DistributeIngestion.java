@@ -5,8 +5,11 @@
 
 package com.microsoft.appcenter.distribute.ingestion;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 
+import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
@@ -19,16 +22,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static android.util.Log.VERBOSE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
+import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 public class DistributeIngestion extends AbstractAppCenterIngestion {
 
-    public DistributeIngestion(@NonNull HttpClient httpClient) {
-        super(httpClient);
+    public DistributeIngestion(Context context) {
+        super();
+        HttpClient httpClient = DependencyConfiguration.getHttpClient();
+        if (httpClient == null) {
+            httpClient = createHttpClient(context);
+        }
+        setHttpClient(httpClient);
     }
 
-    public ServiceCall checkReleaseAsync(final String appSecret, final String headerApiToken, String url, String method, Map<String, String> headers, ServiceCallback serviceCallback) {
-       return getServiceCall(url, method, headers, new HttpClient.CallTemplate() {
+    public ServiceCall checkReleaseAsync(final String appSecret, String url, Map<String, String> headers, ServiceCallback serviceCallback) {
+       return getServiceCall(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
 
             @Override
             public String buildRequestBody() {
@@ -47,9 +58,9 @@ public class DistributeIngestion extends AbstractAppCenterIngestion {
 
                     /* Log headers. */
                     Map<String, String> logHeaders = new HashMap<>(headers);
-                    String apiToken = logHeaders.get(headerApiToken);
+                    String apiToken = logHeaders.get(HEADER_API_TOKEN);
                     if (apiToken != null) {
-                        logHeaders.put(headerApiToken, HttpUtils.hideSecret(apiToken));
+                        logHeaders.put(HEADER_API_TOKEN, HttpUtils.hideSecret(apiToken));
                     }
                     AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
                 }

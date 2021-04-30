@@ -135,15 +135,11 @@ public interface Channel {
     void shutdown();
 
     /**
-     * Send logs.
-     */
-    void sendLogs();
-
-    /**
-     * Suspend sending logs.
+     * Set network request allowed. If true check pending logs, suspend sending logs otherwise.
      *
+     * @param isAllowed True if network request allowed, false otherwise.
      */
-    void suspendSendLogs();
+    void setNetworkRequests(boolean isAllowed);
 
     /**
      * Channel global listener specification.

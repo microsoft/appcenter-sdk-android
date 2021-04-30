@@ -405,6 +405,7 @@ public class AppCenter {
 
     /**
      * Allow or disallow network requests.
+     * If network requests is disallowed then SDK continue to collect data but they will be sent only when network requests will be allowed.
      *
      * @param isAllowed true to allow, false to disallow.
      */
@@ -581,13 +582,9 @@ public class AppCenter {
         }
         SharedPreferencesManager.putBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, isAllowed);
         if (mChannel != null) {
-            if (isAllowed) {
-                mChannel.sendLogs();
-            } else {
-                mChannel.suspendSendLogs();
-            }
+            mChannel.setNetworkRequests(isAllowed);
         }
-        AppCenterLog.info(LOG_TAG, "Set network requests " + (isAllowed ? "allowed" : "disallowed"));
+        AppCenterLog.info(LOG_TAG, "Set network requests " + (isAllowed ? "allowed" : "forbidden"));
     }
 
     /**

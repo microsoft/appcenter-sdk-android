@@ -30,15 +30,14 @@ public abstract class AbstractAppCenterIngestion implements Ingestion {
     /**
      * HTTP client.
      */
-    private final HttpClient mHttpClient;
+    private HttpClient mHttpClient;
 
-    public AbstractAppCenterIngestion(HttpClient httpClient) {
-        mHttpClient = httpClient;
+    public AbstractAppCenterIngestion(){
     }
 
     public AbstractAppCenterIngestion(HttpClient httpClient, String logUrl) {
-        mHttpClient = httpClient;
         mLogUrl = logUrl;
+        mHttpClient = httpClient;
     }
 
     @Override
@@ -68,6 +67,10 @@ public abstract class AbstractAppCenterIngestion implements Ingestion {
     @Override
     public void close() throws IOException {
         mHttpClient.close();
+    }
+
+    public void setHttpClient(HttpClient httpClient) {
+        mHttpClient = httpClient;
     }
 
     public ServiceCall getServiceCall(String url, String method, Map<String, String> headers, HttpClient.CallTemplate callTemplate, ServiceCallback serviceCallback) {

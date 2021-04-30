@@ -1095,11 +1095,7 @@ public class Distribute extends AbstractAppCenterService {
             headers.put(HEADER_API_TOKEN, updateToken);
         }
         final Object releaseCallId = mCheckReleaseCallId = new Object();
-        HttpClient httpClient = DependencyConfiguration.getHttpClient();
-        if (httpClient == null) {
-            httpClient = createHttpClient(mContext);
-        }
-        mCheckReleaseApiCall = new DistributeIngestion(httpClient).checkReleaseAsync(mAppSecret, HEADER_API_TOKEN, url, METHOD_GET, headers, new ServiceCallback() {
+        mCheckReleaseApiCall = new DistributeIngestion(mContext).checkReleaseAsync(mAppSecret, url, headers, new ServiceCallback() {
 
             @Override
             public void onCallSucceeded(final HttpResponse httpResponse) {

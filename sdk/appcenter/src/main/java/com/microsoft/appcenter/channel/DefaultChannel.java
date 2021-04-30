@@ -340,7 +340,7 @@ public class DefaultChannel implements Channel {
                 checkPendingLogs(groupState);
             }
         } else {
-            suspendWithDisableChannel(true, new CancellationException());
+            suspend(true, new CancellationException());
         }
 
         /* Notify listeners that channel state has changed. */
@@ -379,23 +379,13 @@ public class DefaultChannel implements Channel {
     }
 
     /**
-     * Stop sending logs until app is restarted or the channel is enabled again and disable channel.
-     *
-     * @param deleteLogs in addition to suspending, if this is true, delete all logs from Persistence.
-     * @param exception  the exception that caused suspension.
-     */
-    private void suspendWithDisableChannel(boolean deleteLogs, Exception exception) {
-        mEnabled = false;
-        suspend(deleteLogs, exception);
-    }
-
-    /**
      * Stop sending logs until app is restarted or the channel is enabled again.
      *
      * @param deleteLogs in addition to suspending, if this is true, delete all logs from Persistence.
      * @param exception  the exception that caused suspension.
      */
     private void suspend(boolean deleteLogs, Exception exception) {
+        mEnabled = false;
         mDiscardLogs = deleteLogs;
         mCurrentState++;
         for (GroupState groupState : mGroupStates.values()) {
@@ -608,7 +598,7 @@ public class DefaultChannel implements Channel {
                     }
                 }
             }
-            suspendWithDisableChannel(!recoverableError, e);
+            suspend(!recoverableError, e);
         }
     }
 
@@ -807,20 +797,20 @@ public class DefaultChannel implements Channel {
 
     @Override
     public void shutdown() {
-        suspendWithDisableChannel(false, new CancellationException());
-    }
-
-    @Override
-    public void sendLogs() {
-        mCurrentState++;
-        for (GroupState groupState : mGroupStates.values()) {
-            checkPendingLogs(groupState);
-        }
-    }
-
-    @Override
-    public void suspendSendLogs() {
         suspend(false, new CancellationException());
+    }
+
+    @Override
+    public void setNetworkRequests(boolean isAllowed) {
+        if (isAllowed) {
+            mCurrentState++;
+            for (GroupState groupState : mGroupStates.values()) {
+                checkPendingLogs(groupState);
+            }
+        } else  {
+            suspend(false, new CancellationException());
+            mEnabled = true;
+        }
     }
 
     /**
