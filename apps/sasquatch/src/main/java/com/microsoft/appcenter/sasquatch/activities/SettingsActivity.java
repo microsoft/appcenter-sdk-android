@@ -162,8 +162,8 @@ public class SettingsActivity extends AppCompatActivity {
                          * TODO replace the next line with 'AppCenter.setNetworkRequestsAllowed(enabled);'
                          * when updating the demo during release process.
                          */
-                        Method setNetworkRequestsAllowedMethod = AppCenter.class.getMethod("setNetworkRequestsAllowed");
-                        setNetworkRequestsAllowedMethod.invoke(enabled);
+                        Method setNetworkRequestsAllowedMethod = AppCenter.class.getMethod("setNetworkRequestsAllowed", boolean.class);
+                        setNetworkRequestsAllowedMethod.invoke(null, enabled);
                     } catch (Exception e) {
                         Log.d(LOG_TAG, "No setNetworkRequestsAllowed API in this build");
                     }
