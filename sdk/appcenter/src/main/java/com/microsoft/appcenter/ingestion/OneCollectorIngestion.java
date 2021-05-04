@@ -37,6 +37,9 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
+/**
+ * Class to send logs to the Ingestion service for One Collector.
+ */
 public class OneCollectorIngestion extends AbstractAppCenterIngestion {
 
     /**

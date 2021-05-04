@@ -32,7 +32,7 @@ public abstract class AbstractAppCenterIngestion implements Ingestion {
      */
     private HttpClient mHttpClient;
 
-    public AbstractAppCenterIngestion(){
+    public AbstractAppCenterIngestion() {
     }
 
     public AbstractAppCenterIngestion(HttpClient httpClient, String logUrl) {

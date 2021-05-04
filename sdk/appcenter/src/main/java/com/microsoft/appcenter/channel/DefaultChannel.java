@@ -320,9 +320,11 @@ public class DefaultChannel implements Channel {
     }
 
     /**
-     * Enable or disable channel with deleting logs.
+     * Set the enabled flag. If false, the channel will continue to persist data but not forward any item to ingestion.
+     * The most common use-case would be to set it to false and enable sending again after the channel has disabled itself after receiving
+     * a recoverable error (most likely related to a server issue).
      *
-     * @param enabled true to enable, false to disable.
+     * @param enabled flag to enable or disable the channel.
      */
     @Override
     public void setEnabled(boolean enabled) {
@@ -340,6 +342,7 @@ public class DefaultChannel implements Channel {
                 checkPendingLogs(groupState);
             }
         } else {
+            mEnabled = false;
             suspend(true, new CancellationException());
         }
 
@@ -385,7 +388,6 @@ public class DefaultChannel implements Channel {
      * @param exception  the exception that caused suspension.
      */
     private void suspend(boolean deleteLogs, Exception exception) {
-        mEnabled = false;
         mDiscardLogs = deleteLogs;
         mCurrentState++;
         for (GroupState groupState : mGroupStates.values()) {
@@ -598,6 +600,7 @@ public class DefaultChannel implements Channel {
                     }
                 }
             }
+            mEnabled = false;
             suspend(!recoverableError, e);
         }
     }
@@ -797,6 +800,7 @@ public class DefaultChannel implements Channel {
 
     @Override
     public void shutdown() {
+        mEnabled = false;
         suspend(false, new CancellationException());
     }
 
@@ -807,9 +811,9 @@ public class DefaultChannel implements Channel {
             for (GroupState groupState : mGroupStates.values()) {
                 checkPendingLogs(groupState);
             }
-        } else  {
-            suspend(false, new CancellationException());
+        } else {
             mEnabled = true;
+            suspend(false, new CancellationException());
         }
     }
 

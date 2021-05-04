@@ -27,10 +27,12 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
+/**
+ * Class to send requests for checking in-app updates to the Ingestion service.
+ */
 public class DistributeIngestion extends AbstractAppCenterIngestion {
 
-    public DistributeIngestion(Context context) {
-        super();
+    public DistributeIngestion(@NonNull Context context) {
         HttpClient httpClient = DependencyConfiguration.getHttpClient();
         if (httpClient == null) {
             httpClient = createHttpClient(context);

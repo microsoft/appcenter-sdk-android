@@ -25,6 +25,9 @@ import java.util.UUID;
 import static com.microsoft.appcenter.Constants.APP_SECRET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
+/**
+ * Class to send logs to the Ingestion service for App Center.
+ */
 public class AppCenterIngestion extends AbstractAppCenterIngestion {
 
     /**
