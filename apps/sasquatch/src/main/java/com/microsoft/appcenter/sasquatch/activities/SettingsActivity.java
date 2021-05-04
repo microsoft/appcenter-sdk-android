@@ -43,6 +43,7 @@ import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -155,15 +156,34 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    // TODO uncomment before SDK release
-                    // AppCenter.setNetworkRequestsAllowed(enabled);
+                    try {
+
+                        /*
+                         * TODO replace the next line with 'AppCenter.setNetworkRequestsAllowed(enabled);'
+                         * when updating the demo during release process.
+                         */
+                        Method setNetworkRequestsAllowedMethod = AppCenter.class.getMethod("setNetworkRequestsAllowed");
+                        setNetworkRequestsAllowedMethod.invoke(enabled);
+                    } catch (Exception e) {
+                        Log.d(LOG_TAG, "No setNetworkRequestsAllowed API in this build");
+                    }
                 }
 
                 @Override
                 public boolean isEnabled() {
-                    // TODO uncomment before SDK release
-                    //return AppCenter.isNetworkRequestsAllowed();
-                    return true;
+                    try {
+
+                        /*
+                         * TODO replace the next line with 'AppCenter.isNetworkRequestsAllowed();'
+                         * when updating the demo during release process.
+                         */
+                        Method isNetworkRequestsAllowedMethod = AppCenter.class.getMethod("isNetworkRequestsAllowed");
+                        Object value = isNetworkRequestsAllowedMethod.invoke(null);
+                        return (boolean)value;
+                    } catch (Exception e) {
+                        Log.d(LOG_TAG, "No isNetworkRequestsAllowed API in this build");
+                        return true;
+                    }
                 }
             });
 
