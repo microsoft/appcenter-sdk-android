@@ -223,6 +223,11 @@ public class AppCenter {
     private OneCollectorChannelListener mOneCollectorChannelListener;
 
     /**
+     * Contains value about allowing/disallowing network requests.
+     */
+    private boolean mAllowedNetworkRequests = true;
+
+    /**
      * Get unique instance.
      *
      * @return unique instance.
@@ -406,6 +411,7 @@ public class AppCenter {
     /**
      * Allow or disallow network requests.
      * If network requests is disallowed then SDK continue to collect data but they will be sent only when network requests will be allowed.
+     * This value is stored in SharedPreferences.
      *
      * @param isAllowed true to allow, false to disallow.
      */
@@ -415,6 +421,7 @@ public class AppCenter {
 
     /**
      * Check whether network requests are allowed or disallowed.
+     * Due to this value is taken from SharedPreferences, the method will return true by default until the App Center is fully configured.
      *
      * @return true if network requests are allowed, false otherwise.
      */
@@ -575,7 +582,11 @@ public class AppCenter {
      *
      * @param isAllowed true to allow, false to disallow.
      */
-    private synchronized void  setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
+    private synchronized void setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
+        if (!AppCenter.isConfigured()) {
+            mAllowedNetworkRequests = isAllowed;
+            return;
+        }
         if (isInstanceNetworkRequestsAllowed() == isAllowed) {
             AppCenterLog.info(LOG_TAG, "Network requests are already " + (isAllowed ? "allowed" : "forbidden"));
             return;
@@ -593,6 +604,9 @@ public class AppCenter {
      * @return true if network requests are allowed, false otherwise.
      */
     private synchronized boolean isInstanceNetworkRequestsAllowed() {
+        if (!AppCenter.isConfigured()) {
+            return mAllowedNetworkRequests;
+        }
         return SharedPreferencesManager.getBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, true);
     }
 
@@ -831,6 +845,9 @@ public class AppCenter {
         /* If parameters are valid, init context related resources. */
         FileManager.initialize(mApplication);
         SharedPreferencesManager.initialize(mApplication);
+
+        /* Set network requests allowed. */
+        SharedPreferencesManager.putBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, mAllowedNetworkRequests);
 
         /* Initialize session storage. */
         SessionContext.getInstance();

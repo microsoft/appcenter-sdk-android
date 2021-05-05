@@ -20,6 +20,7 @@ import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -1162,6 +1163,9 @@ public class AppCenterTest extends AbstractAppCenterTest {
 
     @Test
     public void setNetworkRequestValue() {
+
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
         AppCenter.getInstance().setChannel(mChannel);
 
         /* Disallow network request value. */
@@ -1180,6 +1184,12 @@ public class AppCenterTest extends AbstractAppCenterTest {
     @Test
     public void setSameNetworkRequestsAllowedValue() {
 
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
+        AppCenter.getInstance().setChannel(null);
+        verifyStatic();
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
+
         /* Verify that default value is true. */
         assertTrue(AppCenter.isNetworkRequestsAllowed());
 
@@ -1187,18 +1197,49 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.setNetworkRequestsAllowed(true);
 
         /* Verify that value wasn't saved. */
-        verifyStatic(never());
+        verifyStatic();
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
 
         /* Disallow network requests. */
         AppCenter.setNetworkRequestsAllowed(false);
         assertFalse(AppCenter.isNetworkRequestsAllowed());
-        verifyStatic();
+        verifyStatic(times(2));
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
 
         /* Disallow network again requests. */
         AppCenter.setNetworkRequestsAllowed(false);
-        verifyStatic();
+        verifyStatic(times(2));
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
+    }
+
+    @Test
+    public void setNetworkRequestsAllowedValueWhenAppCenterIsNotConfigured() {
+
+        /* Verify that network requests are allowed by default.  */
+        Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
+
+        /* Disallow network requests. */
+        AppCenter.setNetworkRequestsAllowed(false);
+
+        /* Check that this value wasn't saved to SharedPreferences. */
+        verifyStatic(never());
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(false));
+
+        /* Verify that network requests value was saved to local variable. */
+        Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
+        verifyStatic(never());
+        SharedPreferencesManager.getBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(true));
+
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
+
+        /* Verify that network requests value was saved to SharedPreferences. */
+        verifyStatic();
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(false));
+
+        /* Verify that network requests value was saved to SharedPreferences. */
+        Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
+        verifyStatic();
+        SharedPreferencesManager.getBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(true));
     }
 }
