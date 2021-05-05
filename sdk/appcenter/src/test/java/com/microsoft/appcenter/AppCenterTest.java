@@ -1123,6 +1123,44 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
+    public void setNetworkRequestValueWhenChannelEnableOrDisable() {
+
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
+        AppCenter.getInstance().setChannel(mChannel);
+
+        /* Verify that channel was enabled. */
+        verify(mChannel).setEnabled(true);
+
+        /* Verify that network requests are allowed. */
+        assertTrue(AppCenter.isNetworkRequestsAllowed());
+
+        /* Disable App Center. */
+        AppCenter.setEnabled(false);
+
+        /* Verify that channel was disable with disabled App Center and allowed network requests. */
+        verify(mChannel).setEnabled(false);
+
+        /* Disallow network request value. */
+        AppCenter.setNetworkRequestsAllowed(false);
+
+        /* Verify that channel still disable with disabled App Center and disallowed network requests. */
+        verify(mChannel).setEnabled(false);
+
+        /* Enable App Center. */
+        AppCenter.setEnabled(true);
+
+        /* Verify that channel still disable with enabled App Center and disallowed network requests. */
+        verify(mChannel).setEnabled(false);
+
+        /* Allow network request value. */
+        AppCenter.setNetworkRequestsAllowed(true);
+
+        /* Verify that channel was enabled with enabled App Center and allowed network requests. */
+        verify(mChannel, times(2)).setEnabled(true);
+    }
+
+    @Test
     public void setNetworkRequestValue() {
         AppCenter.getInstance().setChannel(mChannel);
 
