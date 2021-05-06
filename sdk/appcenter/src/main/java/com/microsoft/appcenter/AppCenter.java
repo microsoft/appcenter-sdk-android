@@ -223,7 +223,7 @@ public class AppCenter {
     private OneCollectorChannelListener mOneCollectorChannelListener;
 
     /**
-     * Contains value about allowing/disallowing network requests.
+     * Contains a value about allowing/disallowing network requests. Null by default if the value was not set before the start of App Center.
      */
     private Boolean mAllowedNetworkRequests;
 
@@ -421,7 +421,7 @@ public class AppCenter {
 
     /**
      * Check whether network requests are allowed or disallowed.
-     * Due to this value is taken from SharedPreferences, the method will return true by default until the App Center is fully configured.
+     * Due to this value is taken from SharedPreferences, the method before the start of App Center returns the last value set or true if the value wasn't changed before App Center start.
      *
      * @return true if network requests are allowed, false otherwise.
      */

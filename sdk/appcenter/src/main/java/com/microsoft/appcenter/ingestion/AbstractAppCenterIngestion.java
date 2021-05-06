@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Abstract class to send logs to the Ingestion service.
+ * An abstract class with common methods to send logs.
  */
 public abstract class AbstractAppCenterIngestion implements Ingestion {
 

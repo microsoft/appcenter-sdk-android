@@ -28,7 +28,7 @@ import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.HttpUtils.createHttpClient;
 
 /**
- * Class to send requests for checking in-app updates to the Ingestion service.
+ * A class to send requests for checking in-app updates.
  */
 public class DistributeIngestion extends AbstractAppCenterIngestion {
 

@@ -26,7 +26,7 @@ import static com.microsoft.appcenter.Constants.APP_SECRET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
 /**
- * Class to send logs to the Ingestion service for App Center.
+ * A class to send logs to App Center ingestion service.
  */
 public class AppCenterIngestion extends AbstractAppCenterIngestion {
 
