@@ -225,7 +225,7 @@ public class AppCenter {
     /**
      * Contains value about allowing/disallowing network requests.
      */
-    private boolean mAllowedNetworkRequests = true;
+    private Boolean mAllowedNetworkRequests;
 
     /**
      * Get unique instance.
@@ -604,10 +604,11 @@ public class AppCenter {
      * @return true if network requests are allowed, false otherwise.
      */
     private synchronized boolean isInstanceNetworkRequestsAllowed() {
+        boolean defaultValue = mAllowedNetworkRequests == null ? true : mAllowedNetworkRequests;
         if (!AppCenter.isConfigured()) {
-            return mAllowedNetworkRequests;
+            return defaultValue;
         }
-        return SharedPreferencesManager.getBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, true);
+        return SharedPreferencesManager.getBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, defaultValue);
     }
 
     /**
@@ -847,7 +848,9 @@ public class AppCenter {
         SharedPreferencesManager.initialize(mApplication);
 
         /* Set network requests allowed. */
-        SharedPreferencesManager.putBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, mAllowedNetworkRequests);
+        if (mAllowedNetworkRequests != null) {
+            SharedPreferencesManager.putBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, mAllowedNetworkRequests);
+        }
 
         /* Initialize session storage. */
         SessionContext.getInstance();
