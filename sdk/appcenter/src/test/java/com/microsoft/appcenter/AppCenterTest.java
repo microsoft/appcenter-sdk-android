@@ -16,14 +16,19 @@ import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.ApplicationLifecycleListener;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
+import com.microsoft.appcenter.utils.PrefStorageConstants;
 import com.microsoft.appcenter.utils.ShutdownHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
+import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -1116,5 +1121,134 @@ public class AppCenterTest extends AbstractAppCenterTest {
         /* Check enter background. */
         lifecycleListener.onActivityStopped(mockActivity);
         verify(service).onApplicationEnterBackground();
+    }
+
+    @Test
+    public void setNetworkRequestValueWhenChannelEnableOrDisable() {
+
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
+        AppCenter.getInstance().setChannel(mChannel);
+
+        /* Verify that channel was enabled. */
+        verify(mChannel).setEnabled(true);
+
+        /* Verify that network requests are allowed. */
+        assertTrue(AppCenter.isNetworkRequestsAllowed());
+
+        /* Disable App Center. */
+        AppCenter.setEnabled(false);
+
+        /* Verify that channel was disable with disabled App Center and allowed network requests. */
+        verify(mChannel).setEnabled(false);
+
+        /* Disallow network request value. */
+        AppCenter.setNetworkRequestsAllowed(false);
+
+        /* Verify that channel still disable with disabled App Center and disallowed network requests. */
+        verify(mChannel).setEnabled(false);
+
+        /* Enable App Center. */
+        AppCenter.setEnabled(true);
+
+        /* Verify that channel still disable with enabled App Center and disallowed network requests. */
+        verify(mChannel).setEnabled(false);
+
+        /* Allow network request value. */
+        AppCenter.setNetworkRequestsAllowed(true);
+
+        /* Verify that channel was enabled with enabled App Center and allowed network requests. */
+        verify(mChannel, times(2)).setEnabled(true);
+    }
+
+    @Test
+    public void setNetworkRequestValue() {
+
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
+
+        /* Check that this value wasn't saved to SharedPreferences. */
+        verifyStatic(never());
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
+
+        /* Set channel. */
+        AppCenter.getInstance().setChannel(mChannel);
+
+        /* Disallow network request value. */
+        AppCenter.setNetworkRequestsAllowed(false);
+
+        /* Verify that value was passed to channel. */
+        verify(mChannel).setNetworkRequests(false);
+
+        /* Allow network request value. */
+        AppCenter.setNetworkRequestsAllowed(true);
+
+        /* Verify that value was passed to channel. */
+        verify(mChannel).setNetworkRequests(true);
+    }
+
+    @Test
+    public void setSameNetworkRequestsAllowedValue() {
+
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
+        AppCenter.getInstance().setChannel(null);
+        verifyStatic(never());
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
+
+        /* Verify that default value is true. */
+        assertTrue(AppCenter.isNetworkRequestsAllowed());
+
+        /* Allow network request again. */
+        AppCenter.setNetworkRequestsAllowed(true);
+
+        /* Verify that value wasn't saved. */
+        verifyStatic(never());
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
+
+        /* Disallow network requests. */
+        AppCenter.setNetworkRequestsAllowed(false);
+        assertFalse(AppCenter.isNetworkRequestsAllowed());
+        verifyStatic();
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
+
+        /* Disallow network again requests. */
+        AppCenter.setNetworkRequestsAllowed(false);
+        verifyStatic();
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
+    }
+
+    @Test
+    public void setNetworkRequestsAllowedValueWhenAppCenterIsNotConfigured() {
+
+        /* Verify that network requests are allowed by default.  */
+        Assert.assertTrue(AppCenter.isNetworkRequestsAllowed());
+
+        /* Disallow network requests. */
+        AppCenter.setNetworkRequestsAllowed(false);
+
+        /* Verify that network saved previous value. */
+        Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
+
+        /* Check that this value wasn't saved to SharedPreferences. */
+        verifyStatic(never());
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(false));
+
+        /* Verify that network requests value was saved to local variable. */
+        Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
+        verifyStatic(never());
+        SharedPreferencesManager.getBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(true));
+
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
+
+        /* Verify that network requests value was saved to SharedPreferences. */
+        verifyStatic();
+        SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(false));
+
+        /* Verify that network requests value was saved to SharedPreferences. */
+        Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
+        verifyStatic();
+        SharedPreferencesManager.getBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(false));
     }
 }

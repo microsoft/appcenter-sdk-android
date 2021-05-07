@@ -25,7 +25,10 @@ import java.util.UUID;
 import static com.microsoft.appcenter.Constants.APP_SECRET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
-public class AppCenterIngestion implements Ingestion {
+/**
+ * A class to send logs to App Center ingestion service.
+ */
+public class AppCenterIngestion extends AbstractAppCenterIngestion {
 
     /**
      * Default log URL.
@@ -51,55 +54,24 @@ public class AppCenterIngestion implements Ingestion {
     private final LogSerializer mLogSerializer;
 
     /**
-     * HTTP client.
-     */
-    private final HttpClient mHttpClient;
-
-    /**
-     * Log base URL (scheme + authority).
-     */
-    private String mLogUrl;
-
-    /**
      * Init.
      *
      * @param httpClient    the HTTP client instance.
      * @param logSerializer log serializer.
      */
     public AppCenterIngestion(@NonNull HttpClient httpClient, @NonNull LogSerializer logSerializer) {
+        super(httpClient, DEFAULT_LOG_URL);
         mLogSerializer = logSerializer;
-        mHttpClient = httpClient;
-        mLogUrl = DEFAULT_LOG_URL;
-    }
-
-    /**
-     * Update log URL.
-     *
-     * @param logUrl log URL.
-     */
-    @Override
-    @SuppressWarnings("SameParameterValue")
-    public void setLogUrl(@NonNull String logUrl) {
-        mLogUrl = logUrl;
     }
 
     @Override
     public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, final ServiceCallback serviceCallback) throws IllegalArgumentException {
+        super.sendAsync(appSecret, installId, logContainer, serviceCallback);
         Map<String, String> headers = new HashMap<>();
         headers.put(INSTALL_ID, installId.toString());
         headers.put(APP_SECRET, appSecret);
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
-        return mHttpClient.callAsync(mLogUrl + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
-    }
-
-    @Override
-    public void close() throws IOException {
-        mHttpClient.close();
-    }
-
-    @Override
-    public void reopen() {
-        mHttpClient.reopen();
+        return getServiceCall(getLogUrl() + API_PATH, METHOD_POST, headers, callTemplate, serviceCallback);
     }
 
     /**

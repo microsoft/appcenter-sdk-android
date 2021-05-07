@@ -38,6 +38,7 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
+import com.microsoft.appcenter.distribute.ingestion.DistributeIngestion;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
 import com.microsoft.appcenter.http.HttpClient;
@@ -1082,10 +1083,6 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(final String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
-        HttpClient httpClient = DependencyConfiguration.getHttpClient();
-        if (httpClient == null) {
-            httpClient = createHttpClient(mContext);
-        }
         String releaseHash = computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
@@ -1098,33 +1095,7 @@ public class Distribute extends AbstractAppCenterService {
             headers.put(HEADER_API_TOKEN, updateToken);
         }
         final Object releaseCallId = mCheckReleaseCallId = new Object();
-        mCheckReleaseApiCall = httpClient.callAsync(url, METHOD_GET, headers, new HttpClient.CallTemplate() {
-
-            @Override
-            public String buildRequestBody() {
-
-                /* Only GET is used by Distribute service. This method is never getting called. */
-                return null;
-            }
-
-            @Override
-            public void onBeforeCalling(URL url, Map<String, String> headers) {
-                if (AppCenterLog.getLogLevel() <= VERBOSE) {
-
-                    /* Log url. */
-                    String urlString = url.toString().replaceAll(mAppSecret, HttpUtils.hideSecret(mAppSecret));
-                    AppCenterLog.verbose(LOG_TAG, "Calling " + urlString + "...");
-
-                    /* Log headers. */
-                    Map<String, String> logHeaders = new HashMap<>(headers);
-                    String apiToken = logHeaders.get(HEADER_API_TOKEN);
-                    if (apiToken != null) {
-                        logHeaders.put(HEADER_API_TOKEN, HttpUtils.hideSecret(apiToken));
-                    }
-                    AppCenterLog.verbose(LOG_TAG, "Headers: " + logHeaders);
-                }
-            }
-        }, new ServiceCallback() {
+        mCheckReleaseApiCall = new DistributeIngestion(mContext).checkReleaseAsync(mAppSecret, url, headers, new ServiceCallback() {
 
             @Override
             public void onCallSucceeded(final HttpResponse httpResponse) {

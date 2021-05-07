@@ -223,6 +223,11 @@ public class AppCenter {
     private OneCollectorChannelListener mOneCollectorChannelListener;
 
     /**
+     * Contains a value about allowing/disallowing network requests. Null by default if the value was not set before the start of App Center.
+     */
+    private Boolean mAllowedNetworkRequests;
+
+    /**
      * Get unique instance.
      *
      * @return unique instance.
@@ -404,6 +409,27 @@ public class AppCenter {
     }
 
     /**
+     * Allow or disallow network requests.
+     * If network requests is disallowed then SDK continue to collect data but they will be sent only when network requests will be allowed.
+     * This value is stored in SharedPreferences.
+     *
+     * @param isAllowed true to allow, false to disallow.
+     */
+    public static void setNetworkRequestsAllowed(boolean isAllowed) {
+        getInstance().setInstanceNetworkRequestsAllowed(isAllowed);
+    }
+
+    /**
+     * Check whether network requests are allowed or disallowed.
+     * Due to this value is taken from SharedPreferences, the method before the start of App Center returns the last value set or true if the value wasn't changed before App Center start.
+     *
+     * @return true if network requests are allowed, false otherwise.
+     */
+    public static boolean isNetworkRequestsAllowed() {
+        return getInstance().isInstanceNetworkRequestsAllowed();
+    }
+
+    /**
      * Check whether the SDK is enabled or not as a whole.
      * This operation is performed in background as it accesses SharedPreferences.
      *
@@ -549,6 +575,40 @@ public class AppCenter {
                 }
             });
         }
+    }
+
+    /**
+     * {@link #setNetworkRequestsAllowed(boolean)} implementation at instance level.
+     *
+     * @param isAllowed true to allow, false to disallow.
+     */
+    private synchronized void setInstanceNetworkRequestsAllowed(final boolean isAllowed) {
+        if (!AppCenter.isConfigured()) {
+            mAllowedNetworkRequests = isAllowed;
+            return;
+        }
+        if (isInstanceNetworkRequestsAllowed() == isAllowed) {
+            AppCenterLog.info(LOG_TAG, "Network requests are already " + (isAllowed ? "allowed" : "forbidden"));
+            return;
+        }
+        SharedPreferencesManager.putBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, isAllowed);
+        if (mChannel != null) {
+            mChannel.setNetworkRequests(isAllowed);
+        }
+        AppCenterLog.info(LOG_TAG, "Set network requests " + (isAllowed ? "allowed" : "forbidden"));
+    }
+
+    /**
+     * {@link #isNetworkRequestsAllowed()} implementation at instance level.
+     *
+     * @return true if network requests are allowed, false otherwise.
+     */
+    private synchronized boolean isInstanceNetworkRequestsAllowed() {
+        boolean defaultValue = mAllowedNetworkRequests == null ? true : mAllowedNetworkRequests;
+        if (!AppCenter.isConfigured()) {
+            return defaultValue;
+        }
+        return SharedPreferencesManager.getBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, defaultValue);
     }
 
     /**
@@ -786,6 +846,11 @@ public class AppCenter {
         /* If parameters are valid, init context related resources. */
         FileManager.initialize(mApplication);
         SharedPreferencesManager.initialize(mApplication);
+
+        /* Set network requests allowed. */
+        if (mAllowedNetworkRequests != null) {
+            SharedPreferencesManager.putBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, mAllowedNetworkRequests);
+        }
 
         /* Initialize session storage. */
         SessionContext.getInstance();
