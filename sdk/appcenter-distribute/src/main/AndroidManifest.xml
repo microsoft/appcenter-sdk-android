@@ -24,7 +24,8 @@
     <application>
         <activity
             android:name="com.microsoft.appcenter.distribute.DeepLinkActivity"
-            android:theme="@android:style/Theme.NoDisplay">
+            android:theme="@android:style/Theme.NoDisplay"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -38,7 +39,9 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="com.microsoft.appcenter.distribute.DownloadManagerReceiver">
+        <receiver 
+            android:name="com.microsoft.appcenter.distribute.DownloadManagerReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
                 <action android:name="android.intent.action.DOWNLOAD_NOTIFICATION_CLICKED" />
