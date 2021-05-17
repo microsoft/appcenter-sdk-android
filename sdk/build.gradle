@@ -44,7 +44,7 @@ subprojects {
             consumerProguardFiles 'proguard-rules.pro'
 
             buildConfigField 'int', "MIN_SDK_VERSION", "${ext.minSdkVersion}"
-            buildConfigField 'String', "TARGET_SDK_VERSION", "\"${ext.targetSdkVersion}\""
+            buildConfigField 'int', "TARGET_SDK_VERSION", "${ext.targetSdkVersion}"
         }
 
         buildTypes {
