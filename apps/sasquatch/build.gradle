@@ -11,6 +11,7 @@ evaluationDependsOn(':apps')
 
 android {
 
+    compileSdkVersion 'android-S'
     flavorDimensions "dependency", "distribute"
 
     defaultConfig {
@@ -20,6 +21,7 @@ android {
                 abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
             }
         }
+        targetSdkVersion "S"
     }
 
     productFlavors {

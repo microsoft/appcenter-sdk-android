@@ -158,7 +158,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
                 @Override
                 public void run() {
-                    progressDialog.hide();
+                    progressDialog.cancel();
                 }
             });
             HandlerUtils.getMainHandler().removeCallbacksAndMessages(HANDLER_TOKEN_CHECK_PROGRESS);

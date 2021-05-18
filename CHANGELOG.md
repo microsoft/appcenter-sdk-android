@@ -10,6 +10,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix crash during downloading a new release when `minifyEnabled` settings is `true`.
+* **[Fix]** Add a missing tag `android:exported` to the manifest required for Android 12.
 
 ___
 

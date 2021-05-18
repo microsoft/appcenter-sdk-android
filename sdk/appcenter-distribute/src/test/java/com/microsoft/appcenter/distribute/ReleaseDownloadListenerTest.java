@@ -305,7 +305,7 @@ public class ReleaseDownloadListenerTest {
 
         /* Verify that the dialog is hidden. */
         releaseDownloadListener.hideProgressDialog();
-        verify(mProgressDialog, times(1)).hide();
+        verify(mProgressDialog, times(1)).cancel();
         verify(mHandler).removeCallbacksAndMessages(any());
     }
 

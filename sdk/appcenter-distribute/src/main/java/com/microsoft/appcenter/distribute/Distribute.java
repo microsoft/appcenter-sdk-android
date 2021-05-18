@@ -1792,7 +1792,7 @@ public class Distribute extends AbstractAppCenterService {
                 .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentText(getInstallReadyMessage())
                 .setSmallIcon(mContext.getApplicationInfo().icon)
-                .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, 0));
+                .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, PendingIntent.FLAG_IMMUTABLE));
         builder.setStyle(new Notification.BigTextStyle().bigText(getInstallReadyMessage()));
         Notification notification = builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
