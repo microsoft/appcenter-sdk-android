@@ -63,6 +63,12 @@ class CryptoConstants {
     static final String CIPHER_AES = KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7;
 
     /**
+     * Cipher used for AES/GCM/NoPadding.
+     */
+    @RequiresApi(Build.VERSION_CODES.M)
+    static final String CIPHER_AES_GCM_NOPADDING = KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_GCM + "/" + KeyProperties.ENCRYPTION_PADDING_NONE;
+
+    /**
      * Cipher used for RSA.
      */
     @SuppressLint("InlinedApi")

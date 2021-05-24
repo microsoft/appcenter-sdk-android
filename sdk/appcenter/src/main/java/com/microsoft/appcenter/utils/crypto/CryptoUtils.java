@@ -68,7 +68,12 @@ public class CryptoUtils {
 
         @Override
         public ICipher getCipher(String transformation, String provider) throws Exception {
-            final Cipher cipher = Cipher.getInstance(transformation, provider);
+            final Cipher cipher;
+            if (provider != null) {
+                cipher = Cipher.getInstance(transformation, provider);
+            } else {
+                cipher = Cipher.getInstance(transformation);
+            }
             return new ICipher() {
 
                 @Override
@@ -176,6 +181,7 @@ public class CryptoUtils {
         /* We have to use AES to be compliant but it's available only after Android M. */
         if (keyStore != null && apiLevel >= Build.VERSION_CODES.M) {
             try {
+                registerHandler(new CryptoEtmHandler());
                 registerHandler(new CryptoAesHandler());
             } catch (Exception e) {
                 AppCenterLog.error(LOG_TAG, "Cannot use modern encryption on this device.");
