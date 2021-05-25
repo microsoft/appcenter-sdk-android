@@ -4,42 +4,33 @@ import android.content.Context;
 import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.text.TextUtils;
-import android.util.Base64;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+import androidx.annotation.VisibleForTesting;
 
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Calendar;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.AES_KEY_SIZE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ENCRYPT_KEY_LIFETIME_IN_YEARS;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.PROVIDER_ANDROID_M;
 import static javax.crypto.Cipher.DECRYPT_MODE;
 import static javax.crypto.Cipher.ENCRYPT_MODE;
 
-public class CryptoEtmHandler implements CryptoHandler {
+public class CryptoAesAndEtmHandler implements CryptoHandler {
 
-    private static final String APPCENTER_SECURE_KEY = "appCenterSecureKey";
-    private static final String APPCENTER_SECURE_KEY_IV = APPCENTER_SECURE_KEY + "-iv";
-    private static final int SECURE_KEY_LENGTH = 32;
+    private static final int ENCRYPTION_KEY_LENGTH = 16;
+    private static final int AUTHENTICATION_KEY_LENGTH = 32;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -50,59 +41,13 @@ public class CryptoEtmHandler implements CryptoHandler {
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void generateKey(CryptoUtils.ICryptoFactory cryptoFactory, String alias, Context context) throws Exception {
-
-        // Generate secret key for encoding/decoding other secret key.
         Calendar writeExpiry = Calendar.getInstance();
         writeExpiry.add(Calendar.YEAR, ENCRYPT_KEY_LIFETIME_IN_YEARS);
-        KeyGenerator keyGenerator = KeyGenerator.getInstance(
-                KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEY_STORE
-        );
-        keyGenerator.init(
-            new KeyGenParameterSpec.Builder(
-                    alias,
-                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT
-            )
-            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setKeyValidityForOriginationEnd(writeExpiry.getTime())
-            .build()
-        );
-        SecretKey secretKeyForEncryptionKey = keyGenerator.generateKey();
-
-        // Generate secret key.
-        byte[] secureKey = new byte[SECURE_KEY_LENGTH];
-        (new SecureRandom()).nextBytes(secureKey);
-
-        // Init cipher with secret key for encrypting other secret key.
-        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CryptoConstants.CIPHER_AES_GCM_NOPADDING, PROVIDER_ANDROID_M);
-        cipher.init(ENCRYPT_MODE, secretKeyForEncryptionKey);
-
-        // Encrypt secret key and save to SharedPreferences.
-        byte[] cipherOutput = cipher.doFinal(secureKey);
-        SharedPreferencesManager.putString(APPCENTER_SECURE_KEY, Base64.encodeToString(cipherOutput, Base64.DEFAULT));
-        SharedPreferencesManager.putString(APPCENTER_SECURE_KEY_IV, Base64.encodeToString(cipher.getIV(), Base64.DEFAULT));
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private byte[] getSecretKey(CryptoUtils.ICryptoFactory cryptoFactory, KeyStore.Entry keyStoreEntry) throws Exception {
-
-        // Get secret key from keystore.
-        SecretKey secretKey = ((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey();
-
-        // Load secret key and iv from SharedPreferences.
-        String secretKeyBase64 = SharedPreferencesManager.getString(APPCENTER_SECURE_KEY, null);
-        String ivBase64 = SharedPreferencesManager.getString(APPCENTER_SECURE_KEY_IV, null);
-        if (TextUtils.isEmpty(secretKeyBase64)) {
-            throw new IllegalArgumentException("Secret key shouldn't be null.");
-        }
-        if (TextUtils.isEmpty(ivBase64)) {
-            throw new IllegalArgumentException("IV shouldn't be null.");
-        }
-
-        // Init cipher with secret key for encrypting other secret key and decrypt key from SharedPreferences.
-        CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CryptoConstants.CIPHER_AES_GCM_NOPADDING, PROVIDER_ANDROID_M);
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(128, Base64.decode(ivBase64, Base64.DEFAULT)));
-        return cipher.doFinal(Base64.decode(secretKeyBase64, Base64.DEFAULT));
+        CryptoUtils.IKeyGenerator keyGenerator = cryptoFactory.getKeyGenerator(KeyProperties.KEY_ALGORITHM_HMAC_SHA256, ANDROID_KEY_STORE);
+        keyGenerator.init(new KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_SIGN)
+                        .setKeyValidityForOriginationEnd(writeExpiry.getTime())
+                        .build());
+        keyGenerator.generateKey();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -110,9 +55,8 @@ public class CryptoEtmHandler implements CryptoHandler {
     public byte[] encrypt(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, KeyStore.Entry keyStoreEntry, byte[] input) throws Exception {
 
         // Get secure key and subkeys.
-        byte[] secretKey = getSecretKey(cryptoFactory, keyStoreEntry);
-        byte[] encryptionSubkey = getEncryptionSubkey(secretKey);
-        byte[] authenticationSubkey = getAuthenticationSubkey(secretKey);
+        byte[] encryptionSubkey = getSubkey(((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), ENCRYPTION_KEY_LENGTH);
+        byte[] authenticationSubkey = getSubkey(((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), AUTHENTICATION_KEY_LENGTH);
 
         // Prepared cipher.
         CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CryptoConstants.CIPHER_AES, null);
@@ -159,9 +103,8 @@ public class CryptoEtmHandler implements CryptoHandler {
         byteBuffer.get(cipherText);
 
         // Get secure key and subkeys.
-        byte[] secretKey = getSecretKey(cryptoFactory, keyStoreEntry);
-        byte[] encryptionSubkey = getEncryptionSubkey(secretKey);
-        byte[] authenticationSubkey = getAuthenticationSubkey(secretKey);
+        byte[] encryptionSubkey = getSubkey(((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), ENCRYPTION_KEY_LENGTH);
+        byte[] authenticationSubkey = getSubkey(((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), AUTHENTICATION_KEY_LENGTH);
 
         // Calculate mac.
         byte[] expectedHMac = getMacBytes(authenticationSubkey, iv, cipherText);
@@ -177,14 +120,6 @@ public class CryptoEtmHandler implements CryptoHandler {
         return cipher.doFinal(cipherText);
     }
 
-    private byte[] getEncryptionSubkey(byte[] secretKey) {
-        return Arrays.copyOfRange(secretKey, 0,secretKey.length / 2);
-    }
-
-    private byte[] getAuthenticationSubkey(byte[] secretKey) {
-        return Arrays.copyOfRange(secretKey, secretKey.length / 2, secretKey.length);
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     private byte[] getMacBytes(byte[] authKey, byte[] iv, byte[] cipherText) throws InvalidKeyException, NoSuchAlgorithmException {
         SecretKey macSecureKey = new SecretKeySpec(authKey, KeyProperties.KEY_ALGORITHM_HMAC_SHA256);
@@ -193,5 +128,38 @@ public class CryptoEtmHandler implements CryptoHandler {
         hMac.update(iv);
         hMac.update(cipherText);
         return hMac.doFinal();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    @VisibleForTesting
+    byte[] getSubkey(@NonNull SecretKey secretKey, int outputDataLength) throws NoSuchAlgorithmException, InvalidKeyException {
+        if (outputDataLength < 1) {
+            throw new IllegalArgumentException("Output data length must be at more than zero.");
+        }
+
+        // Init mac.
+        Mac hMac = Mac.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256);
+        hMac.init(secretKey);
+
+        // Prepared array and calculate count of iterations.
+        int iterations = (int) Math.ceil(((double) outputDataLength) / ((double) hMac.getMacLength()));
+        if (iterations > 255) {
+            throw new IllegalArgumentException("Output data length must be maximal 255 * hash-length.");
+        }
+
+        // Calculate subkey.
+        byte[] tempBlock = new byte[0];
+        ByteBuffer buffer = ByteBuffer.allocate(outputDataLength);
+        int restBytes = outputDataLength;
+        int stepSize;
+        for (int i = 0; i < iterations; i++) {
+            hMac.update(tempBlock);
+            hMac.update((byte) (i + 1));
+            tempBlock = hMac.doFinal();
+            stepSize = Math.min(restBytes, tempBlock.length);
+            buffer.put(tempBlock, 0, stepSize);
+            restBytes -= stepSize;
+        }
+        return buffer.array();
     }
 }

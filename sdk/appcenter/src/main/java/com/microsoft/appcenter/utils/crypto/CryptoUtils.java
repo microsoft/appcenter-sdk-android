@@ -11,6 +11,7 @@ import android.content.Context;
 import android.os.Build;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.VisibleForTesting;
 import android.util.Base64;
 
@@ -181,7 +182,7 @@ public class CryptoUtils {
         /* We have to use AES to be compliant but it's available only after Android M. */
         if (keyStore != null && apiLevel >= Build.VERSION_CODES.M) {
             try {
-                registerHandler(new CryptoEtmHandler());
+                registerHandler(new CryptoAesAndEtmHandler());
                 registerHandler(new CryptoAesHandler());
             } catch (Exception e) {
                 AppCenterLog.error(LOG_TAG, "Cannot use modern encryption on this device.");
