@@ -29,8 +29,8 @@ import static javax.crypto.Cipher.ENCRYPT_MODE;
 
 public class CryptoAesAndEtmHandler implements CryptoHandler {
 
-    private static final int ENCRYPTION_KEY_LENGTH = 16;
-    private static final int AUTHENTICATION_KEY_LENGTH = 32;
+    private static final int ENCRYPTION_KEY_LENGTH = 32;
+    private static final int AUTHENTICATION_KEY_LENGTH = 16;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
