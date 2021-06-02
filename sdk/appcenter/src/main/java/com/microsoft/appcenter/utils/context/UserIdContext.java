@@ -5,8 +5,8 @@
 
 package com.microsoft.appcenter.utils.context;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;

@@ -7,7 +7,7 @@ package com.microsoft.appcenter.analytics;
 
 import android.annotation.SuppressLint;
 import android.provider.Settings.Secure;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.channel.AbstractChannelListener;
 import com.microsoft.appcenter.ingestion.models.Log;

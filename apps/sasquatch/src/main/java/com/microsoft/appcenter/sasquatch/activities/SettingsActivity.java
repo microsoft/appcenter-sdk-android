@@ -18,9 +18,10 @@ import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
 import android.preference.Preference;
-import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.format.Formatter;
@@ -42,6 +43,7 @@ import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -150,6 +152,40 @@ public class SettingsActivity extends AppCompatActivity {
                     onDatabaseFileChanged(dbFile);
                 }
             };
+            initCheckBoxSetting(R.string.appcenter_network_requests_allowed_key, R.string.appcenter_network_requests_allowed, R.string.appcenter_network_requests_disallowed, new HasEnabled() {
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    try {
+
+                        /*
+                         * TODO replace the next line with 'AppCenter.setNetworkRequestsAllowed(enabled);'
+                         * when updating the demo during release process.
+                         */
+                        Method setNetworkRequestsAllowedMethod = AppCenter.class.getMethod("setNetworkRequestsAllowed", boolean.class);
+                        setNetworkRequestsAllowedMethod.invoke(null, enabled);
+                    } catch (Exception e) {
+                        Log.d(LOG_TAG, "No setNetworkRequestsAllowed API in this build");
+                    }
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    try {
+
+                        /*
+                         * TODO replace the next line with 'AppCenter.isNetworkRequestsAllowed();'
+                         * when updating the demo during release process.
+                         */
+                        Method isNetworkRequestsAllowedMethod = AppCenter.class.getMethod("isNetworkRequestsAllowed");
+                        Object value = isNetworkRequestsAllowedMethod.invoke(null);
+                        return (boolean)value;
+                    } catch (Exception e) {
+                        Log.d(LOG_TAG, "No isNetworkRequestsAllowed API in this build");
+                        return true;
+                    }
+                }
+            });
 
             /* Analytics. */
             initCheckBoxSetting(R.string.appcenter_analytics_state_key, R.string.appcenter_analytics_state_summary_enabled, R.string.appcenter_analytics_state_summary_disabled, new HasEnabled() {

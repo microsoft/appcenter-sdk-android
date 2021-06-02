@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.utils;
 
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import android.util.Log;
 
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
@@ -27,7 +27,7 @@ public class IdHelperAndroidTest {
 
     @BeforeClass
     public static void setUpClass() {
-        SharedPreferencesManager.initialize(InstrumentationRegistry.getTargetContext());
+        SharedPreferencesManager.initialize(InstrumentationRegistry.getInstrumentation().getContext());
     }
 
 

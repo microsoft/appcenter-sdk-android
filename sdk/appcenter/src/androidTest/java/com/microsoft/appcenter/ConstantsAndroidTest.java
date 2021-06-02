@@ -7,7 +7,7 @@ package com.microsoft.appcenter;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
-import android.support.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,7 +26,7 @@ public class ConstantsAndroidTest {
 
     @Test
     public void loadFromContext() {
-        Constants.loadFromContext(InstrumentationRegistry.getContext());
+        Constants.loadFromContext(InstrumentationRegistry.getInstrumentation().getContext());
         Assert.assertNotNull(Constants.FILES_PATH);
     }
 

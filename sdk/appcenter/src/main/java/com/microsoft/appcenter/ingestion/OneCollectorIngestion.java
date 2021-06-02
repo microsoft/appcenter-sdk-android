@@ -5,8 +5,8 @@
 
 package com.microsoft.appcenter.ingestion;
 
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.http.HttpClient;
@@ -37,7 +37,10 @@ import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 
-public class OneCollectorIngestion implements Ingestion {
+/**
+ * A class to send logs to One Collector.
+ */
+public class OneCollectorIngestion extends AbstractAppCenterIngestion {
 
     /**
      * Default log URL.
@@ -90,29 +93,19 @@ public class OneCollectorIngestion implements Ingestion {
     private final LogSerializer mLogSerializer;
 
     /**
-     * HTTP client.
-     */
-    private final HttpClient mHttpClient;
-
-    /**
-     * Log base URL (scheme + authority).
-     */
-    private String mLogUrl;
-
-    /**
      * Init.
      *
      * @param httpClient    the HTTP client.
      * @param logSerializer log serializer.
      */
     public OneCollectorIngestion(@NonNull HttpClient httpClient, @NonNull LogSerializer logSerializer) {
+        super(httpClient, DEFAULT_LOG_URL);
         mLogSerializer = logSerializer;
-        mHttpClient = httpClient;
-        mLogUrl = DEFAULT_LOG_URL;
     }
 
     @Override
     public ServiceCall sendAsync(String appSecret, UUID installId, LogContainer logContainer, ServiceCallback serviceCallback) throws IllegalArgumentException {
+        super.sendAsync(appSecret, installId, logContainer, serviceCallback);
 
         /* Gather API keys from logs. */
         Map<String, String> headers = new HashMap<>();
@@ -172,28 +165,7 @@ public class OneCollectorIngestion implements Ingestion {
 
         /* Make the call. */
         HttpClient.CallTemplate callTemplate = new IngestionCallTemplate(mLogSerializer, logContainer);
-        return mHttpClient.callAsync(mLogUrl, METHOD_POST, headers, callTemplate, serviceCallback);
-    }
-
-    /**
-     * Update log URL.
-     *
-     * @param logUrl log URL.
-     */
-    @Override
-    @SuppressWarnings("SameParameterValue")
-    public void setLogUrl(@NonNull String logUrl) {
-        mLogUrl = logUrl;
-    }
-
-    @Override
-    public void reopen() {
-        mHttpClient.reopen();
-    }
-
-    @Override
-    public void close() throws IOException {
-        mHttpClient.close();
+        return getServiceCall(getLogUrl(), METHOD_POST, headers, callTemplate, serviceCallback);
     }
 
     /**

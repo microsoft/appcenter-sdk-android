@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.distribute.channel;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.ingestion.models.AbstractLog;
 import com.microsoft.appcenter.ingestion.models.Log;

@@ -7,8 +7,8 @@ package com.microsoft.appcenter.sasquatch.listeners;
 
 import android.content.Context;
 import android.os.SystemClock;
-import android.support.annotation.VisibleForTesting;
-import android.support.test.espresso.idling.CountingIdlingResource;
+import androidx.annotation.VisibleForTesting;
+import androidx.test.espresso.idling.CountingIdlingResource;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.analytics.ingestion.models.EventLog;

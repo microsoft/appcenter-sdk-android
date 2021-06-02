@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.crashes.model;
 
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 /**
  * Exception for test crash

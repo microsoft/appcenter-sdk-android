@@ -10,10 +10,11 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
-import android.support.annotation.NonNull;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.MediumTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.annotation.NonNull;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.microsoft.appcenter.AndroidTestUtils;
 import com.microsoft.appcenter.AppCenter;
@@ -75,7 +76,7 @@ import static org.mockito.Mockito.spy;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 @MediumTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(AndroidJUnit4ClassRunner.class)
 public class DatabasePersistenceAndroidTest {
 
     /**
@@ -92,7 +93,7 @@ public class DatabasePersistenceAndroidTest {
     @BeforeClass
     public static void setUpClass() {
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
-        sContext = InstrumentationRegistry.getTargetContext();
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
         FileManager.initialize(sContext);
         SharedPreferencesManager.initialize(sContext);
         Constants.loadFromContext(sContext);

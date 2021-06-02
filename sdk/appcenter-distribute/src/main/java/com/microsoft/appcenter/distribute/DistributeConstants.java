@@ -6,7 +6,7 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.DownloadManager;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.AppCenter;
 
@@ -24,6 +24,11 @@ public final class DistributeConstants {
      * Log tag for this service.
      */
     public static final String LOG_TAG = AppCenter.LOG_TAG + SERVICE_NAME;
+
+    /**
+     * Header used to pass token when checking latest release.
+     */
+    public static final String HEADER_API_TOKEN = "x-api-token";
 
     /**
      * Used for deep link intent from browser, string field for update token.
@@ -130,11 +135,6 @@ public final class DistributeConstants {
      * API parameter for install identifier.
      */
     static final String PARAMETER_INSTALL_ID = "install_id";
-
-    /**
-     * Header used to pass token when checking latest release.
-     */
-    static final String HEADER_API_TOKEN = "x-api-token";
 
     /**
      * Invalid download identifier.

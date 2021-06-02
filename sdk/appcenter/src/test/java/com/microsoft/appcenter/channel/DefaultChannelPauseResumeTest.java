@@ -52,6 +52,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
 
         when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), anyListOf(Log.class))).then(getGetLogsAnswer(50));
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(getSendAsyncAnswer());
+        when(mockIngestion.isEnabled()).thenReturn(true);
 
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
@@ -131,9 +132,11 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         /* Mock database and ingestion. */
         Persistence persistence = mock(Persistence.class);
         OneCollectorIngestion ingestion = mock(OneCollectorIngestion.class);
+        when(ingestion.isEnabled()).thenReturn(true);
 
         /* Create a channel with a log group that send logs 1 by 1. */
         AppCenterIngestion appCenterIngestion = mock(AppCenterIngestion.class);
+        when(appCenterIngestion.isEnabled()).thenReturn(true);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), persistence, appCenterIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, ingestion, null);
 
@@ -196,9 +199,12 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         /* Mock database and ingestion. */
         Persistence persistence = mock(Persistence.class);
         OneCollectorIngestion ingestion = mock(OneCollectorIngestion.class);
+        when(ingestion.isEnabled()).thenReturn(true);
+        AppCenterIngestion appCenterIngestion = mock(AppCenterIngestion.class);
+        when(appCenterIngestion.isEnabled()).thenReturn(true);
 
         /* Create a channel with a log group that send logs 1 by 1. */
-        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
+        DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), persistence, appCenterIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, ingestion, null);
 
         /* Pause group first. */
@@ -265,6 +271,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(TEST_GROUP)).thenReturn(0);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        when(mockIngestion.isEnabled()).thenReturn(true);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), persistence, mockIngestion, mAppCenterHandler);
         int batchTimeInterval = 10000;
         channel.addGroup(TEST_GROUP, 10, batchTimeInterval, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));
@@ -308,6 +315,7 @@ public class DefaultChannelPauseResumeTest extends AbstractDefaultChannelTest {
         Persistence persistence = mock(Persistence.class);
         when(persistence.countLogs(TEST_GROUP)).thenReturn(0);
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+        when(mockIngestion.isEnabled()).thenReturn(true);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), persistence, mockIngestion, mAppCenterHandler);
         int batchTimeInterval = 10000;
         channel.addGroup(TEST_GROUP, 10, batchTimeInterval, MAX_PARALLEL_BATCHES, mockIngestion, mock(Channel.GroupListener.class));

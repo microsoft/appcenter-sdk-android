@@ -7,10 +7,10 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 import android.os.Handler;
-import android.support.annotation.MainThread;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
-import android.support.annotation.WorkerThread;
+import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpClient;
@@ -342,6 +342,7 @@ public class DefaultChannel implements Channel {
                 checkPendingLogs(groupState);
             }
         } else {
+            mEnabled = false;
             suspend(true, new CancellationException());
         }
 
@@ -387,7 +388,6 @@ public class DefaultChannel implements Channel {
      * @param exception  the exception that caused suspension.
      */
     private void suspend(boolean deleteLogs, Exception exception) {
-        mEnabled = false;
         mDiscardLogs = deleteLogs;
         mCurrentState++;
         for (GroupState groupState : mGroupStates.values()) {
@@ -458,6 +458,10 @@ public class DefaultChannel implements Channel {
      */
     private void triggerIngestion(final @NonNull GroupState groupState) {
         if (!mEnabled) {
+            return;
+        }
+        if (!mIngestion.isEnabled()) {
+            AppCenterLog.debug(LOG_TAG, "SDK is in offline mode.");
             return;
         }
         int pendingLogCount = groupState.mPendingLogCount;
@@ -596,6 +600,7 @@ public class DefaultChannel implements Channel {
                     }
                 }
             }
+            mEnabled = false;
             suspend(!recoverableError, e);
         }
     }
@@ -795,7 +800,21 @@ public class DefaultChannel implements Channel {
 
     @Override
     public void shutdown() {
+        mEnabled = false;
         suspend(false, new CancellationException());
+    }
+
+    @Override
+    public void setNetworkRequests(boolean isAllowed) {
+        if (isAllowed) {
+            mCurrentState++;
+            for (GroupState groupState : mGroupStates.values()) {
+                checkPendingLogs(groupState);
+            }
+        } else {
+            mEnabled = true;
+            suspend(false, new CancellationException());
+        }
     }
 
     /**

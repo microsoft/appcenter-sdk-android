@@ -19,6 +19,7 @@ import com.microsoft.appcenter.ingestion.models.one.Extensions;
 import com.microsoft.appcenter.ingestion.models.one.ProtocolExtension;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.TicketCache;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,6 +49,7 @@ import java.util.UUID;
 import static com.microsoft.appcenter.BuildConfig.VERSION_NAME;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
 import static com.microsoft.appcenter.ingestion.OneCollectorIngestion.TICKETS;
+import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK_REQUEST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -71,7 +73,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest({
         AppCenterLog.class,
         JSONObject.class,
-        OneCollectorIngestion.class
+        OneCollectorIngestion.class,
+        SharedPreferencesManager.class
 })
 public class OneCollectorIngestionTest {
 
@@ -87,6 +90,8 @@ public class OneCollectorIngestionTest {
     @Before
     public void setUp() throws Exception {
         TicketCache.clear();
+        mockStatic(SharedPreferencesManager.class);
+        when(SharedPreferencesManager.getBoolean(ALLOWED_NETWORK_REQUEST, true)).thenReturn(true);
 
         /* Test JSONObject implementation. */
         JSONObject json = mock(JSONObject.class);
