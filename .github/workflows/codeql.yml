@@ -38,7 +38,6 @@ jobs:
         
     - run: |
         echo "Assemble modules"
-        ./scripts/add-gradle-property.sh
         ./gradlew :sdk:appcenter:assemble :sdk:appcenter-analytics:assemble :sdk:appcenter-crashes:assemble :sdk:appcenter-distribute:assemble :sdk:appcenter-distribute-play:assemble
 
     - name: Perform CodeQL Analysis
