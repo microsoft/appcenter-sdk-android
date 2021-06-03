@@ -55,10 +55,11 @@ public class CryptoAesAndEtmHandler implements CryptoHandler {
     public byte[] encrypt(CryptoUtils.ICryptoFactory cryptoFactory, int apiLevel, KeyStore.Entry keyStoreEntry, byte[] input) throws Exception {
 
         // Get secure key and subkeys.
-        byte[] encryptionSubkey = getSubkey(((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), ENCRYPTION_KEY_LENGTH);
-        byte[] authenticationSubkey = getSubkey(((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), AUTHENTICATION_KEY_LENGTH);
+        SecretKey key = ((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey();
+        byte[] encryptionSubkey = getSubkey(key, ENCRYPTION_KEY_LENGTH);
+        byte[] authenticationSubkey = getSubkey(key, AUTHENTICATION_KEY_LENGTH);
 
-        // Prepared cipher.
+        // Prepare cipher.
         CryptoUtils.ICipher cipher = cryptoFactory.getCipher(CryptoConstants.CIPHER_AES, null);
         cipher.init(ENCRYPT_MODE, new SecretKeySpec(encryptionSubkey, KeyProperties.KEY_ALGORITHM_AES));
         byte[] cipherIv = cipher.getIV();
@@ -103,8 +104,9 @@ public class CryptoAesAndEtmHandler implements CryptoHandler {
         byteBuffer.get(cipherText);
 
         // Get secure key and subkeys.
-        byte[] encryptionSubkey = getSubkey(((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), ENCRYPTION_KEY_LENGTH);
-        byte[] authenticationSubkey = getSubkey(((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey(), AUTHENTICATION_KEY_LENGTH);
+        SecretKey key = ((KeyStore.SecretKeyEntry) keyStoreEntry).getSecretKey();
+        byte[] encryptionSubkey = getSubkey(key, ENCRYPTION_KEY_LENGTH);
+        byte[] authenticationSubkey = getSubkey(key, AUTHENTICATION_KEY_LENGTH);
 
         // Calculate mac.
         byte[] expectedHMac = getMacBytes(authenticationSubkey, iv, cipherText);
@@ -130,21 +132,32 @@ public class CryptoAesAndEtmHandler implements CryptoHandler {
         return hMac.doFinal();
     }
 
+    /**
+     * Get subkey from the secret key.
+     * This method uses HKDF simple key derivation function (KDF) based on a hash-based message authentication code (HMAC).
+     * See more: https://en.wikipedia.org/wiki/HKDF
+     *
+     * @param secretKey - secret key.
+     * @param outputDataLength - subkey length.
+     * @return byte array of the calculated subkey.
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     */
     @RequiresApi(api = Build.VERSION_CODES.M)
     @VisibleForTesting
     byte[] getSubkey(@NonNull SecretKey secretKey, int outputDataLength) throws NoSuchAlgorithmException, InvalidKeyException {
         if (outputDataLength < 1) {
-            throw new IllegalArgumentException("Output data length must be at more than zero.");
+            throw new IllegalArgumentException("Output data length must be greater than zero.");
         }
 
         // Init mac.
         Mac hMac = Mac.getInstance(KeyProperties.KEY_ALGORITHM_HMAC_SHA256);
         hMac.init(secretKey);
 
-        // Prepared array and calculate count of iterations.
+        // Prepare array and calculate count of iterations.
         int iterations = (int) Math.ceil(((double) outputDataLength) / ((double) hMac.getMacLength()));
         if (iterations > 255) {
-            throw new IllegalArgumentException("Output data length must be maximal 255 * hash-length.");
+            throw new IllegalArgumentException("Output data length must be maximum of 255 * hash-length.");
         }
 
         // Calculate subkey.

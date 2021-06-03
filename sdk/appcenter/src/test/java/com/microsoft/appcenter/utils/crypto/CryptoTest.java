@@ -584,13 +584,13 @@ public class CryptoTest {
         whenNew(LinkedHashMap.class).withNoArguments().thenReturn(mockCryptoHandlers);
         when(mockCryptoHandlers.isEmpty()).thenReturn(true);
 
-        // Init CryptoUtils.
+        // Start encryption.
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
 
         // Remove first algorithm.
         mockCryptoHandlers.remove(algorithmName);
 
-        // Init CryptoUtils.
+        // Start encryption.
         String sourceText = "Some text!";
         String encryptedText = cryptoUtils.encrypt(sourceText);
 
@@ -617,7 +617,7 @@ public class CryptoTest {
         SecretKey secretKeyMock = new SecretKeySpec(key, "AES");
         when(mockSecretKey.getSecretKey()).thenReturn(secretKeyMock);
 
-        // Init CryptoUtils.
+        // Start encryption.
         String sourceText = "Some text!";
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
         String encryptedText = cryptoUtils.encrypt(sourceText);
@@ -652,7 +652,7 @@ public class CryptoTest {
         SecretKey secretKeyMock = new SecretKeySpec(key, "AES");
         when(mockSecretKey.getSecretKey()).thenReturn(secretKeyMock);
 
-        // Init CryptoUtils.
+        // Start encryption.
         String sourceText = "Some text!";
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
 
@@ -695,7 +695,7 @@ public class CryptoTest {
         SecretKey secretKeyMock = new SecretKeySpec(key, "AES");
         when(mockSecretKey.getSecretKey()).thenReturn(secretKeyMock);
 
-        // Init CryptoUtils.
+        // Start encryption.
         String sourceText = "Some text!";
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
 
@@ -736,18 +736,18 @@ public class CryptoTest {
 
     private void verifyExceptionDuringDecryptionAesWithEtm(int ivLength, int cipherOutputLength, int hMacLength, Class exceptionClass) throws Exception {
 
-        // Prepared MessageDigest class.
+        // Mock MessageDigest.
         mockStatic(MessageDigest.class);
 
-        // Prepared data.
+        // Prepare data.
         byte[] iv = new byte[ivLength];
         byte[] cipherOutput = new byte[cipherOutputLength];
         byte[] hMac = new byte[hMacLength];
 
-        // Init CryptoUtils.
+        // Start encryption.
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
 
-        // Prepared data for decryption.
+        // Prepare data for decryption.
         ByteBuffer byteBuffer = ByteBuffer.allocate(1 + iv.length + 1 + hMac.length + cipherOutput.length);
         byteBuffer.put((byte) iv.length);
         byteBuffer.put(iv);
@@ -758,10 +758,8 @@ public class CryptoTest {
         // Mock IV.
         when(mCipher.getIV()).thenReturn(iv);
 
-        // Catch expected error.
-        String encryptPrefix = CryptoConstants.CIPHER_AES + "/" + AES_KEY_SIZE + "/" + KeyProperties.KEY_ALGORITHM_HMAC_SHA256 + ALGORITHM_DATA_SEPARATOR;
-
         // Verify that error was thrown.
+        String encryptPrefix = CryptoConstants.CIPHER_AES + "/" + AES_KEY_SIZE + "/" + KeyProperties.KEY_ALGORITHM_HMAC_SHA256 + ALGORITHM_DATA_SEPARATOR;
         cryptoUtils.decrypt(encryptPrefix + Base64.encodeToString(byteBuffer.array(), Base64.DEFAULT));
     }
 }
