@@ -1,5 +1,9 @@
 # App Center SDK for Android Change Log
 
+## Version 4.2.1 (Under active development)
+
+___
+
 ## Version 4.2.0
 
 ### App Center

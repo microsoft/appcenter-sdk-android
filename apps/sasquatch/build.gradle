@@ -11,7 +11,6 @@ evaluationDependsOn(':apps')
 
 android {
 
-    compileSdkVersion 'android-S'
     flavorDimensions "dependency", "distribute"
 
     defaultConfig {
@@ -21,7 +20,6 @@ android {
                 abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
             }
         }
-        targetSdkVersion "30"
     }
 
     productFlavors {
@@ -90,7 +88,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
 
-    def appCenterSdkVersion = "4.1.1"
+    def appCenterSdkVersion = "4.2.0"
     mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
 
