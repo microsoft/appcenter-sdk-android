@@ -156,34 +156,12 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    try {
-
-                        /*
-                         * TODO replace the next line with 'AppCenter.setNetworkRequestsAllowed(enabled);'
-                         * when updating the demo during release process.
-                         */
-                        Method setNetworkRequestsAllowedMethod = AppCenter.class.getMethod("setNetworkRequestsAllowed", boolean.class);
-                        setNetworkRequestsAllowedMethod.invoke(null, enabled);
-                    } catch (Exception e) {
-                        Log.d(LOG_TAG, "No setNetworkRequestsAllowed API in this build");
-                    }
+                    AppCenter.setNetworkRequestsAllowed(enabled);
                 }
 
                 @Override
                 public boolean isEnabled() {
-                    try {
-
-                        /*
-                         * TODO replace the next line with 'AppCenter.isNetworkRequestsAllowed();'
-                         * when updating the demo during release process.
-                         */
-                        Method isNetworkRequestsAllowedMethod = AppCenter.class.getMethod("isNetworkRequestsAllowed");
-                        Object value = isNetworkRequestsAllowedMethod.invoke(null);
-                        return (boolean)value;
-                    } catch (Exception e) {
-                        Log.d(LOG_TAG, "No isNetworkRequestsAllowed API in this build");
-                        return true;
-                    }
+                    return AppCenter.isNetworkRequestsAllowed();
                 }
             });
 
