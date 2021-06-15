@@ -59,10 +59,18 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @WorkerThread
     @Override
-    public void onStart(long enqueueTime) {
+    public void onStart(final long enqueueTime) {
         AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Start download %s (%d) update.",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion()));
-        Distribute.getInstance().setDownloading(mReleaseDetails, enqueueTime);
+
+        // Run on the UI thread to prevent deadlock.
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                Distribute.getInstance().setDownloading(mReleaseDetails, enqueueTime);
+            }
+        });
     }
 
     @WorkerThread
@@ -71,6 +79,8 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Downloading %s (%d) update: %d KiB / %d KiB",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion(),
                 currentSize / KIBIBYTE_IN_BYTES, totalSize / KIBIBYTE_IN_BYTES));
+
+        // Run on the UI thread to prevent deadlock.
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -83,8 +93,8 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @WorkerThread
     @Override
-    public boolean onComplete(@NonNull Uri localUri) {
-        Intent intent = getInstallIntent(localUri);
+    public boolean onComplete(@NonNull final Uri localUri) {
+        final Intent intent = getInstallIntent(localUri);
         if (intent.resolveActivity(mContext.getPackageManager()) == null) {
             AppCenterLog.debug(LOG_TAG, "Cannot resolve install intent for " + localUri);
             return false;
@@ -92,22 +102,30 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Download %s (%d) update completed.",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion()));
 
-        /* Check if app should install now. */
-        if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
+        // Run on the UI thread to prevent deadlock.
+        HandlerUtils.runOnUiThread(new Runnable() {
 
-            /*
-             * This start call triggers strict mode in UI thread so it
-             * needs to be done here without synchronizing
-             * (not to block methods waiting on synchronized on UI thread)
-             * so yes we could launch install and SDK being disabled.
-             *
-             * This corner case cannot be avoided without triggering
-             * strict mode exception.
-             */
-            AppCenterLog.info(LOG_TAG, "Show install UI for " + localUri);
-            mContext.startActivity(intent);
-            Distribute.getInstance().setInstalling(mReleaseDetails);
-        }
+            @Override
+            public void run() {
+
+                /* Check if app should install now. */
+                if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
+
+                    /*
+                     * This start call triggers strict mode in UI thread so it
+                     * needs to be done here without synchronizing
+                     * (not to block methods waiting on synchronized on UI thread)
+                     * so yes we could launch install and SDK being disabled.
+                     *
+                     * This corner case cannot be avoided without triggering
+                     * strict mode exception.
+                     */
+                    AppCenterLog.info(LOG_TAG, "Show install UI for " + localUri);
+                    mContext.startActivity(intent);
+                    Distribute.getInstance().setInstalling(mReleaseDetails);
+                }
+            }
+        });
         return true;
     }
 
@@ -116,14 +134,16 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
     public void onError(@Nullable String errorMessage) {
         AppCenterLog.error(LOG_TAG, String.format(Locale.ENGLISH, "Failed to download %s (%d) update: %s",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion(), errorMessage));
+
+        // Run on the UI thread to prevent deadlock.
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
                 Toast.makeText(mContext, R.string.appcenter_distribute_downloading_error, Toast.LENGTH_SHORT).show();
+                Distribute.getInstance().completeWorkflow(mReleaseDetails);
             }
         });
-        Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
 
     /**

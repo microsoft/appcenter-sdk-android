@@ -1753,6 +1753,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param intent         prepared install intent.
      * @return false if install U.I should be shown now, true if a notification was posted or if the task was canceled.
      */
+    @UiThread
     synchronized boolean notifyDownload(ReleaseDetails releaseDetails, Intent intent) {
 
         /* Check state. */
@@ -1903,7 +1904,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param releaseDetails to check state change.
      * @param enqueueTime    timestamp in milliseconds just before enqueuing download.
      */
-    @WorkerThread
+    @UiThread
     synchronized void setDownloading(@NonNull ReleaseDetails releaseDetails, long enqueueTime) {
         if (releaseDetails != mReleaseDetails) {
             return;
@@ -1917,7 +1918,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails to check state change.
      */
-    @WorkerThread
+    @UiThread
     synchronized void setInstalling(@NonNull ReleaseDetails releaseDetails) {
         if (releaseDetails != mReleaseDetails) {
             return;
