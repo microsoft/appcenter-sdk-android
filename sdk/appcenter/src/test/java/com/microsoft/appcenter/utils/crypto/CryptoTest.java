@@ -124,7 +124,7 @@ public class CryptoTest {
             @Override
             public String answer(InvocationOnMock invocation) throws CharacterCodingException {
                 CharsetDecoder decoder = StandardCharsets.ISO_8859_1.newDecoder();
-                return decoder.decode(ByteBuffer.wrap((byte[])invocation.getArguments()[0]))
+                return decoder.decode(ByteBuffer.wrap((byte[]) invocation.getArguments()[0]))
                         .toString();
             }
         });
