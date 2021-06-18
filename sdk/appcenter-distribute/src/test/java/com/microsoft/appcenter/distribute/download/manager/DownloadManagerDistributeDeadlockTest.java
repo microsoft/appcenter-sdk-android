@@ -2,7 +2,6 @@ package com.microsoft.appcenter.distribute.download.manager;
 
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -25,7 +24,6 @@ import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,7 +42,6 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
@@ -89,6 +86,11 @@ public class DownloadManagerDistributeDeadlockTest {
 
     private static final int MIN_TIMEOUT = 5000;
 
+    private static final int RANDOM_MS_BOUND = 5;
+
+    /**
+     * Custom timeout rule here to be able to test expected timeouts.
+     */
     @Rule
     public Timeout mTimeout = new Timeout(MIN_TIMEOUT, TimeUnit.MILLISECONDS) {
         public Statement apply(Statement base, final Description description) {
@@ -154,6 +156,9 @@ public class DownloadManagerDistributeDeadlockTest {
     @Before
     public void setUp() throws Exception {
 
+        /* 'unsetInstance' has package-private visibility. We don't need to break it for the test. */
+        Whitebox.invokeMethod(Distribute.class, "unsetInstance");
+
         /* First call to com.microsoft.appcenter.AppCenter.isEnabled shall return true, initial state. */
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(true);
@@ -217,25 +222,6 @@ public class DownloadManagerDistributeDeadlockTest {
         /* Simulate we already have release details initialized, otherwise we would have to implement it naturally and the test would become unnecessarily large. */
         Whitebox.setInternalState(Distribute.getInstance(), "mReleaseDetails", mReleaseDetails);
         Whitebox.setInternalState(Distribute.getInstance(), "mReleaseDownloader", mReleaseDownloader);
-
-    }
-
-    @After
-    public void cleanUp() throws Exception {
-
-        /* 'unsetInstance' has package-private visibility. We don't need to break it for the test. */
-        Whitebox.invokeMethod(Distribute.class, "unsetInstance");
-    }
-
-    @Test
-    @TimeoutExpected
-    public void onDownloadStartedDeadlocked() throws Exception {
-        testDeadlock(false, new Runnable() {
-            @Override
-            public void run() {
-                mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
-            }
-        });
     }
 
     @Test
@@ -250,11 +236,13 @@ public class DownloadManagerDistributeDeadlockTest {
 
     @Test
     @TimeoutExpected
-    public void onDownloadCompleteDeadlocked() throws Exception {
+    public void onDownloadStartedDeadlocked() throws Exception {
+
+        /* Deadlock simulation. The same can be used for other callbacks of ReleaseDownloadListener. */
         testDeadlock(false, new Runnable() {
             @Override
             public void run() {
-                mReleaseDownloader.onDownloadComplete(mCursor);
+                mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
             }
         });
     }
@@ -265,17 +253,6 @@ public class DownloadManagerDistributeDeadlockTest {
             @Override
             public void run() {
                 mReleaseDownloader.onDownloadComplete(mCursor);
-            }
-        });
-    }
-
-    @Test
-    @TimeoutExpected
-    public void onDownloadErrorDeadlocked() throws Exception {
-        testDeadlock(false, new Runnable() {
-            @Override
-            public void run() {
-                mReleaseDownloader.onDownloadError(new RuntimeException("test"));
             }
         });
     }
@@ -366,19 +343,23 @@ public class DownloadManagerDistributeDeadlockTest {
         backgroundThread.join();
     }
 
+    /**
+     * Random pause to simulate deadlock timing.
+     */
     private void randomPause() {
         try {
-            int millis = new Random().nextInt(5);
+            int millis = new Random().nextInt(RANDOM_MS_BOUND);
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Wait for another thread to reach this point, to simulate deadlock timing.
+     */
     private void waitAnotherThreadAndStartExecution(CyclicBarrier barrier) {
         try {
-
-            /* Wait for another thread to reach this point, to simulate deadlock timing. */
             barrier.await();
         } catch (BrokenBarrierException | InterruptedException e) {
             e.printStackTrace();
