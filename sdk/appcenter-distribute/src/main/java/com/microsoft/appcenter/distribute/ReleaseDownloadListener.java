@@ -79,8 +79,6 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
         AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Downloading %s (%d) update: %d KiB / %d KiB",
                 mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion(),
                 currentSize / KIBIBYTE_IN_BYTES, totalSize / KIBIBYTE_IN_BYTES));
-
-        // Run on the UI thread to prevent deadlock.
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
