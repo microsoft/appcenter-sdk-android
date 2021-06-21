@@ -227,6 +227,7 @@ public class DownloadManagerDistributeDeadlockTest {
     @Test
     public void onDownloadStartedTest() throws Exception {
         testDeadlock(true, new Runnable() {
+
             @Override
             public void run() {
                 mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
@@ -240,6 +241,7 @@ public class DownloadManagerDistributeDeadlockTest {
 
         /* Deadlock simulation. The same can be used for other callbacks of ReleaseDownloadListener. */
         testDeadlock(false, new Runnable() {
+
             @Override
             public void run() {
                 mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
@@ -250,6 +252,7 @@ public class DownloadManagerDistributeDeadlockTest {
     @Test
     public void onDownloadCompleteTest() throws Exception {
         testDeadlock(true, new Runnable() {
+
             @Override
             public void run() {
                 mReleaseDownloader.onDownloadComplete(mCursor);
@@ -260,6 +263,7 @@ public class DownloadManagerDistributeDeadlockTest {
     @Test
     public void onDownloadErrorTest() throws Exception {
         testDeadlock(true, new Runnable() {
+
             @Override
             public void run() {
                 mReleaseDownloader.onDownloadError(new RuntimeException("test"));
