@@ -2,6 +2,10 @@
 
 ## Version 4.2.1 (Under active development)
 
+### App Center
+
+* **[Feature]** Improved `AES` token encryption algorithm using `Encrypt-then-MAC` data authentication approach.
+
 ___
 
 ## Version 4.2.0
