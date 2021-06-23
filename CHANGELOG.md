@@ -9,6 +9,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix a rare deadlock case when a new version starts downloading and at the same moment the download status is checked.
+* **[Fix]** Fix passing pending intent flag for a completed download notification on Android lower then 23 API.
 
 ___
 
