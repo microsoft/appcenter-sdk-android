@@ -6,6 +6,10 @@
 
 * **[Feature]** Improved `AES` token encryption algorithm using `Encrypt-then-MAC` data authentication approach.
 
+### App Center Distribute
+
+* **[Fix]** Fix a rare deadlock case when a new version starts downloading and at the same moment the download status is checked.
+
 ___
 
 ## Version 4.2.0
