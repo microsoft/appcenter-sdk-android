@@ -10,6 +10,7 @@ import android.content.Context;
 import android.os.Build;
 import android.security.keystore.KeyExpiredException;
 import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
 import org.junit.Before;
@@ -17,6 +18,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -24,19 +26,31 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 
 import javax.crypto.BadPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
 import static com.microsoft.appcenter.utils.crypto.CryptoConstants.AES_KEY_SIZE;
@@ -53,10 +67,12 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.isNull;
 import static org.mockito.Matchers.notNull;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
@@ -68,7 +84,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressLint("NewApi")
 @PowerMockIgnore({"javax.security.auth.x500.*"})
-@PrepareForTest({KeyStore.class, KeyPairGenerator.class, Base64.class, CryptoUtils.class, CryptoRsaHandler.class, CryptoAesHandler.class})
+@PrepareForTest({KeyStore.class, KeyPairGenerator.class, Base64.class, CryptoUtils.class, CryptoRsaHandler.class, CryptoAesHandler.class, CryptoAesAndEtmHandler.class, MessageDigest.class})
 public class CryptoTest {
 
     @Rule
@@ -85,7 +101,7 @@ public class CryptoTest {
     private android.security.KeyPairGeneratorSpec.Builder mRsaBuilder;
 
     @Mock
-    private KeyGenParameterSpec.Builder mAesBuilder;
+    private KeyGenParameterSpec.Builder mAesAndEtmBuilder;
 
     @Mock
     private Context mContext;
@@ -106,15 +122,19 @@ public class CryptoTest {
         when(Base64.encodeToString(any(byte[].class), anyInt())).thenAnswer(new Answer<String>() {
 
             @Override
-            public String answer(InvocationOnMock invocation) {
-                return new String((byte[]) invocation.getArguments()[0]);
+            public String answer(InvocationOnMock invocation) throws CharacterCodingException {
+                CharsetDecoder decoder = StandardCharsets.ISO_8859_1.newDecoder();
+                return decoder.decode(ByteBuffer.wrap((byte[]) invocation.getArguments()[0]))
+                        .toString();
             }
         });
         when(Base64.decode(anyString(), anyInt())).thenAnswer(new Answer<byte[]>() {
 
             @Override
-            public byte[] answer(InvocationOnMock invocation) {
-                return invocation.getArguments()[0].toString().getBytes();
+            public byte[] answer(InvocationOnMock invocation) throws UnsupportedEncodingException, CharacterCodingException {
+                CharsetEncoder encoder = StandardCharsets.ISO_8859_1.newEncoder();
+                return encoder.encode(CharBuffer.wrap(invocation.getArguments()[0].toString()))
+                        .array();
             }
         });
         when(KeyStore.getInstance(ANDROID_KEY_STORE)).thenReturn(mKeyStore);
@@ -146,22 +166,25 @@ public class CryptoTest {
         });
 
         /* Mock some AES specifics. */
-        KeyStore.SecretKeyEntry aesKey = mock(KeyStore.SecretKeyEntry.class);
-        whenNew(KeyGenParameterSpec.Builder.class).withAnyArguments().thenReturn(mAesBuilder);
-        when(mAesBuilder.setBlockModes(anyString())).thenReturn(mAesBuilder);
-        when(mAesBuilder.setEncryptionPaddings(anyString())).thenReturn(mAesBuilder);
-        when(mAesBuilder.setKeySize(anyInt())).thenReturn(mAesBuilder);
-        when(mAesBuilder.setKeyValidityForOriginationEnd(any(Date.class))).thenReturn(mAesBuilder);
-        when(mAesBuilder.build()).thenReturn(mock(KeyGenParameterSpec.class));
+        KeyStore.SecretKeyEntry aesAndEtmKey = mock(KeyStore.SecretKeyEntry.class);
+        byte[] array = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+        SecretKey secretKeyMock = new SecretKeySpec(array, "AES");
+        when(aesAndEtmKey.getSecretKey()).thenReturn(secretKeyMock);
+        whenNew(KeyGenParameterSpec.Builder.class).withAnyArguments().thenReturn(mAesAndEtmBuilder);
+        when(mAesAndEtmBuilder.setBlockModes(anyString())).thenReturn(mAesAndEtmBuilder);
+        when(mAesAndEtmBuilder.setEncryptionPaddings(anyString())).thenReturn(mAesAndEtmBuilder);
+        when(mAesAndEtmBuilder.setKeySize(anyInt())).thenReturn(mAesAndEtmBuilder);
+        when(mAesAndEtmBuilder.setKeyValidityForOriginationEnd(any(Date.class))).thenReturn(mAesAndEtmBuilder);
+        when(mAesAndEtmBuilder.build()).thenReturn(mock(KeyGenParameterSpec.class));
         when(mKeyStore.getEntry(argThat(new ArgumentMatcher<String>() {
 
             @Override
             public boolean matches(Object argument) {
                 return String.valueOf(argument).contains(CIPHER_AES);
             }
-        }), any(KeyStore.ProtectionParameter.class))).thenReturn(aesKey);
+        }), any(KeyStore.ProtectionParameter.class))).thenReturn(aesAndEtmKey);
         when(mCryptoFactory.getKeyGenerator(anyString(), anyString())).thenReturn(mock(CryptoUtils.IKeyGenerator.class));
-        final byte[] mockInitVector = "IV".getBytes();
+        final byte[] mockInitVector = new byte[16];
         when(mCipher.getBlockSize()).thenReturn(mockInitVector.length);
         when(mCipher.getIV()).thenReturn(mockInitVector);
         when(mCipher.doFinal(any(byte[].class), anyInt(), anyInt())).thenAnswer(new Answer<byte[]>() {
@@ -233,7 +256,7 @@ public class CryptoTest {
     }
 
     @Test
-    public void aesFailsToLoadWhenPreferred() throws Exception {
+    public void aesAndEtmFailsToLoadWhenPreferred() throws Exception {
         when(mCryptoFactory.getKeyGenerator(anyString(), anyString())).thenThrow(new NoSuchAlgorithmException());
         verifyRsaPreferred(Build.VERSION_CODES.M);
     }
@@ -291,7 +314,7 @@ public class CryptoTest {
         String data = "anythingThatWouldMakeTheCipherFailForSomeReason";
         String encryptedData = cryptoUtils.encrypt(data);
         assertNotEquals(data, encryptedData);
-        when(mCipher.doFinal(any(byte[].class), anyInt(), anyInt())).thenThrow(new BadPaddingException());
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new BadPaddingException());
         CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
 
         /* Check decryption failed (data returned as is). */
@@ -320,16 +343,12 @@ public class CryptoTest {
         /*
          * Make decrypt fail with current key and work with expired key (i.e. the second call).
          */
-        when(mCipher.doFinal(any(byte[].class), anyInt(), anyInt())).thenThrow(new BadPaddingException()).thenAnswer(new Answer<byte[]>() {
+        when(mCipher.doFinal(any(byte[].class))).thenThrow(new BadPaddingException()).thenAnswer(new Answer<byte[]>() {
 
             @Override
             public byte[] answer(InvocationOnMock invocation) {
                 byte[] input = (byte[]) invocation.getArguments()[0];
-                int offset = (int) invocation.getArguments()[1];
-                int length = (int) invocation.getArguments()[2];
-                byte[] data = new byte[length];
-                System.arraycopy(input, offset, data, 0, length);
-                return data;
+                return input;
             }
         });
         int expectedKeyStoreCalls = 3;
@@ -500,36 +519,248 @@ public class CryptoTest {
     public void aesPreferredInM() throws Exception {
 
         /* Encrypt. */
+        String sourceText = "anything";
+        when(mCipher.getIV()).thenReturn(new byte[16]);
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
-        String encrypted = cryptoUtils.encrypt("anything");
+        String encrypted = cryptoUtils.encrypt(sourceText);
 
         /* The init vector is encoded alongside data, in the mock setup it's just a word. */
-        assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "anything", encrypted);
+        String expectedPrefix = CIPHER_AES + "/" + AES_KEY_SIZE + "/" + KeyProperties.KEY_ALGORITHM_HMAC_SHA256 + ALGORITHM_DATA_SEPARATOR;
+        assertTrue(encrypted.contains(expectedPrefix) && encrypted.contains(sourceText));
         CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encrypted);
-        assertEquals("anything", decryptedData.getDecryptedData());
+        assertEquals(sourceText, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
         decryptedData = cryptoUtils.decrypt(encrypted);
-        assertEquals("anything", decryptedData.getDecryptedData());
+        assertEquals(sourceText, decryptedData.getDecryptedData());
         assertNull(decryptedData.getNewEncryptedData());
 
         /* Test old data encryption upgrade. */
-        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:oldData");
-        assertEquals("oldData", oldDecryptedData.getDecryptedData());
-        assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldData", oldDecryptedData.getNewEncryptedData());
-        oldDecryptedData = cryptoUtils.decrypt("None:oldData");
-        assertEquals("oldData", oldDecryptedData.getDecryptedData());
-        assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldData", oldDecryptedData.getNewEncryptedData());
-        CryptoUtils.DecryptedData oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData");
-        assertEquals("oldRsaData", oldDecryptedRsaData.getDecryptedData());
-        assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldRsaData", oldDecryptedRsaData.getNewEncryptedData());
-        oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "oldRsaData");
-        assertEquals("oldRsaData", oldDecryptedRsaData.getDecryptedData());
-        assertEquals(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + "oldRsaData", oldDecryptedRsaData.getNewEncryptedData());
+        String oldSourceText = "oldData";
+        CryptoUtils.DecryptedData oldDecryptedData = cryptoUtils.decrypt("None:" + oldSourceText);
+        assertEquals(oldSourceText, oldDecryptedData.getDecryptedData());
+        assertTrue(oldDecryptedData.getNewEncryptedData().contains(expectedPrefix) && oldDecryptedData.getNewEncryptedData().contains(oldSourceText));
+        oldDecryptedData = cryptoUtils.decrypt("None:" + oldSourceText);
+        assertEquals(oldSourceText, oldDecryptedData.getDecryptedData());
+        assertTrue(oldDecryptedData.getNewEncryptedData().contains(expectedPrefix) && oldDecryptedData.getNewEncryptedData().contains(oldSourceText));
+
+        /* Test old etm data encryption upgrade. */
+        String oldAesSourceText = "oldAesData";
+        when(mCipher.getBlockSize()).thenReturn(2);
+        CryptoUtils.DecryptedData oldDecryptedAesData = cryptoUtils.decrypt(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + oldAesSourceText);
+        assertEquals(oldAesSourceText, oldDecryptedAesData.getDecryptedData());
+        assertTrue(oldDecryptedAesData.getNewEncryptedData().contains(expectedPrefix) && oldDecryptedAesData.getNewEncryptedData().contains(oldAesSourceText));
+        oldDecryptedAesData = cryptoUtils.decrypt(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + oldAesSourceText);
+        String t = oldDecryptedAesData.getDecryptedData();
+        assertEquals(oldAesSourceText, oldDecryptedAesData.getDecryptedData());
+        assertTrue(oldDecryptedAesData.getNewEncryptedData().contains(expectedPrefix) && oldDecryptedAesData.getNewEncryptedData().contains(oldAesSourceText));
+
+        /* Test old rsa data encryption upgrade. */
+        String oldRsaSourceText = "oldRsaData";
+        CryptoUtils.DecryptedData oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + oldRsaSourceText);
+        assertEquals(oldRsaSourceText, oldDecryptedRsaData.getDecryptedData());
+        assertTrue(oldDecryptedRsaData.getNewEncryptedData().contains(expectedPrefix) && oldDecryptedRsaData.getNewEncryptedData().contains(oldRsaSourceText));
+        oldDecryptedRsaData = cryptoUtils.decrypt(CIPHER_RSA + "/" + RSA_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + oldRsaSourceText);
+        assertEquals(oldRsaSourceText, oldDecryptedRsaData.getDecryptedData());
+        assertTrue(oldDecryptedRsaData.getNewEncryptedData().contains(expectedPrefix) && oldDecryptedRsaData.getNewEncryptedData().contains(oldRsaSourceText));
 
         /* Verify we created the alias only for AES, RSA is read only with existing aliases only. */
         ArgumentCaptor<String> alias = ArgumentCaptor.forClass(String.class);
         verify(mKeyStore).containsAlias(alias.capture());
         assertTrue(alias.getValue().contains(CIPHER_AES));
+    }
+
+    @Test
+    public void verifyEncryptAes() throws Exception {
+
+        // Mock key store.
+        when(mKeyStore.containsAlias(anyString())).thenReturn(false);
+
+        // Mock IV value.
+        when(mCipher.getIV()).thenReturn("IV".getBytes());
+
+        // Mock collection of handlers.
+        String algorithmName = CryptoConstants.CIPHER_AES + "/" + AES_KEY_SIZE + "/" + KeyProperties.KEY_ALGORITHM_HMAC_SHA256;
+        LinkedHashMap mockCryptoHandlers = spy(LinkedHashMap.class);
+        whenNew(LinkedHashMap.class).withNoArguments().thenReturn(mockCryptoHandlers);
+        when(mockCryptoHandlers.isEmpty()).thenReturn(true);
+
+        // Start encryption.
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+
+        // Remove first algorithm.
+        mockCryptoHandlers.remove(algorithmName);
+
+        // Start encryption.
+        String sourceText = "Some text!";
+        String encryptedText = cryptoUtils.encrypt(sourceText);
+
+        // Verify that data was encoded.
+        String expectedText = CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + sourceText;
+        assertEquals(encryptedText, expectedText);
+
+        // Verify that data was decoded.
+        when(mCipher.getBlockSize()).thenReturn(2);
+        String decryptionString = cryptoUtils.decrypt(encryptedText).mDecryptedData;
+        assertEquals(decryptionString, sourceText);
+    }
+
+    @Test
+    public void verifyEncryptAesWithEtm() {
+
+        // Mock IV value.
+        byte[] mockIv = new byte[16];
+        when(mCipher.getIV()).thenReturn(mockIv);
+
+        // Mock secret key.
+        KeyStore.SecretKeyEntry mockSecretKey = mock(KeyStore.SecretKeyEntry.class);
+        byte[] key = new byte[16];
+        SecretKey secretKeyMock = new SecretKeySpec(key, "AES");
+        when(mockSecretKey.getSecretKey()).thenReturn(secretKeyMock);
+
+        // Start encryption.
+        String sourceText = "Some text!";
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+        String encryptedText = cryptoUtils.encrypt(sourceText);
+
+        // Verify that data was encoded.
+        String expectedPrefix = CIPHER_AES + "/" + AES_KEY_SIZE + "/" + KeyProperties.KEY_ALGORITHM_HMAC_SHA256 + ALGORITHM_DATA_SEPARATOR;
+        assertNotEquals(encryptedText, sourceText);
+        assertTrue(encryptedText.contains(expectedPrefix));
+        assertTrue(encryptedText.contains(sourceText));
+
+        // Verify that data was decoded.
+        String decryptionString = cryptoUtils.decrypt(encryptedText).mDecryptedData;
+        assertEquals(decryptionString, sourceText);
+    }
+
+    @Test
+    public void verifyExceptionDuringCreateSubkeyWhenOutputLengthLessOne() throws Exception {
+
+        // Mock IV value.
+        byte[] mockIv = new byte[16];
+        when(mCipher.getIV()).thenReturn(mockIv);
+
+        // Mock collection of handlers.
+        String algorithmName = CryptoConstants.CIPHER_AES + "/" + AES_KEY_SIZE + "/" + KeyProperties.KEY_ALGORITHM_HMAC_SHA256;
+        LinkedHashMap mockCryptoHandlers = spy(LinkedHashMap.class);
+        whenNew(LinkedHashMap.class).withNoArguments().thenReturn(mockCryptoHandlers);
+        when(mockCryptoHandlers.isEmpty()).thenReturn(true);
+
+        // Mock secret key.
+        KeyStore.SecretKeyEntry mockSecretKey = mock(KeyStore.SecretKeyEntry.class);
+        byte[] key = new byte[16];
+        SecretKey secretKeyMock = new SecretKeySpec(key, "AES");
+        when(mockSecretKey.getSecretKey()).thenReturn(secretKeyMock);
+
+        // Start encryption.
+        String sourceText = "Some text!";
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+
+        // Mock generate subkeys method.
+        final CryptoAesAndEtmHandler spyCryptoAesAndEtmHandler = spy((CryptoAesAndEtmHandler) ((CryptoUtils.CryptoHandlerEntry) Objects.requireNonNull(mockCryptoHandlers.get(algorithmName))).mCryptoHandler);
+        final int spyAlias = ((CryptoUtils.CryptoHandlerEntry) Objects.requireNonNull(mockCryptoHandlers.get(algorithmName))).mAliasIndex;
+        mockCryptoHandlers.replace(algorithmName, new CryptoUtils.CryptoHandlerEntry(spyAlias, spyCryptoAesAndEtmHandler));
+        doAnswer(new Answer<byte[]>() {
+
+            @Override
+            public byte[] answer(InvocationOnMock invocation) throws Throwable {
+                spyCryptoAesAndEtmHandler.getSubkey((SecretKey)invocation.getArguments()[0], 0);
+                return new byte[0];
+            }
+        }).when(spyCryptoAesAndEtmHandler).getSubkey(Matchers.<SecretKey>any(), eq(16));
+
+        // Start encryption.
+        String encryptedText = cryptoUtils.encrypt(sourceText);
+
+        // Verify that data was encoded.
+        assertEquals(encryptedText, sourceText);
+    }
+
+    @Test
+    public void verifyExceptionDuringCreateSubkeyWithTooMuchOperations() throws Exception {
+
+        // Mock IV value.
+        byte[] mockIv = new byte[16];
+        when(mCipher.getIV()).thenReturn(mockIv);
+
+        // Mock collection of handlers.
+        String algorithmName = CryptoConstants.CIPHER_AES + "/" + AES_KEY_SIZE + "/" + KeyProperties.KEY_ALGORITHM_HMAC_SHA256;
+        LinkedHashMap mockCryptoHandlers = spy(LinkedHashMap.class);
+        whenNew(LinkedHashMap.class).withNoArguments().thenReturn(mockCryptoHandlers);
+        when(mockCryptoHandlers.isEmpty()).thenReturn(true);
+
+        // Mock secret key.
+        KeyStore.SecretKeyEntry mockSecretKey = mock(KeyStore.SecretKeyEntry.class);
+        byte[] key = new byte[16];
+        SecretKey secretKeyMock = new SecretKeySpec(key, "AES");
+        when(mockSecretKey.getSecretKey()).thenReturn(secretKeyMock);
+
+        // Start encryption.
+        String sourceText = "Some text!";
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+
+        // Mock generate subkeys method.
+        final CryptoAesAndEtmHandler spyCryptoAesAndEtmHandler = spy((CryptoAesAndEtmHandler) ((CryptoUtils.CryptoHandlerEntry) Objects.requireNonNull(mockCryptoHandlers.get(algorithmName))).mCryptoHandler);
+        final int spyAlias = ((CryptoUtils.CryptoHandlerEntry) Objects.requireNonNull(mockCryptoHandlers.get(algorithmName))).mAliasIndex;
+        mockCryptoHandlers.replace(algorithmName, new CryptoUtils.CryptoHandlerEntry(spyAlias, spyCryptoAesAndEtmHandler));
+        doAnswer(new Answer<byte[]>() {
+
+            @Override
+            public byte[] answer(InvocationOnMock invocation) throws Throwable {
+                spyCryptoAesAndEtmHandler.getSubkey((SecretKey)invocation.getArguments()[0], 999999999);
+                return new byte[0];
+            }
+        }).when(spyCryptoAesAndEtmHandler).getSubkey(Matchers.<SecretKey>any(), eq(16));
+
+        // Start encryption.
+        String encryptedText = cryptoUtils.encrypt(sourceText);
+
+        // Verify that data was encoded.
+        assertEquals(encryptedText, sourceText);
+    }
+
+    @Test
+    public void verifyDecryptAesWithEtmCouldNotAuthenticateMac() throws Exception {
+        verifyExceptionDuringDecryptionAesWithEtm(16, 16, 32, SecurityException.class);
+    }
+
+    @Test
+    public void verifyDecryptAesWithEtmWhenIvLengthInvalid() throws Exception {
+        verifyExceptionDuringDecryptionAesWithEtm(0, 16, 32, IllegalArgumentException.class);
+    }
+
+    @Test
+    public void verifyDecryptAesWithEtmWhenMacLengthInvalid() throws Exception {
+        verifyExceptionDuringDecryptionAesWithEtm(16, 16, 0, IllegalArgumentException.class);
+    }
+
+    private void verifyExceptionDuringDecryptionAesWithEtm(int ivLength, int cipherOutputLength, int hMacLength, Class exceptionClass) throws Exception {
+
+        // Mock MessageDigest.
+        mockStatic(MessageDigest.class);
+
+        // Prepare data.
+        byte[] iv = new byte[ivLength];
+        byte[] cipherOutput = new byte[cipherOutputLength];
+        byte[] hMac = new byte[hMacLength];
+
+        // Start encryption.
+        CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, Build.VERSION_CODES.M);
+
+        // Prepare data for decryption.
+        ByteBuffer byteBuffer = ByteBuffer.allocate(1 + iv.length + 1 + hMac.length + cipherOutput.length);
+        byteBuffer.put((byte) iv.length);
+        byteBuffer.put(iv);
+        byteBuffer.put((byte) hMac.length);
+        byteBuffer.put(hMac);
+        byteBuffer.put(cipherOutput);
+
+        // Mock IV.
+        when(mCipher.getIV()).thenReturn(iv);
+
+        // Verify that error was thrown.
+        String encryptPrefix = CryptoConstants.CIPHER_AES + "/" + AES_KEY_SIZE + "/" + KeyProperties.KEY_ALGORITHM_HMAC_SHA256 + ALGORITHM_DATA_SEPARATOR;
+        cryptoUtils.decrypt(encryptPrefix + Base64.encodeToString(byteBuffer.array(), Base64.DEFAULT));
     }
 }
 
