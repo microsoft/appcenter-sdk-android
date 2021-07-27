@@ -10,10 +10,13 @@ COMMIT_VERSION=`git show -s --format=%h`
 ARCHIVE=AppCenter-SDK-Android-${PUBLISH_VERSION}
 ZIP_FILE=$ARCHIVE.zip
 
-if [ -z "$2" ]; then
+if [ "$2" != "release" ]; then
     COMMIT_VERSION=`git show -s --format=%h`
     ARCHIVE=${ARCHIVE}-${COMMIT_VERSION}
 fi
+
+echo $ARCHIVE
+exit
 
 # Copy release aar files from sdk
 FILES="$(find sdk -name $BINARY_FILE_FILTER)"
