@@ -15,9 +15,6 @@ if [ "$2" != "release" ]; then
     ARCHIVE=${ARCHIVE}-${COMMIT_VERSION}
 fi
 
-echo $ARCHIVE
-exit
-
 # Copy release aar files from sdk
 FILES="$(find sdk -name $BINARY_FILE_FILTER)"
 for file in $FILES
