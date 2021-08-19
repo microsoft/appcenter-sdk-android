@@ -1,6 +1,7 @@
 # App Center SDK for Android Change Log
 
 ## Version 4.2.1 (Under active development)
+* **[Feature]** Added InApp update support for more local installers 
 
 ### App Center
 
