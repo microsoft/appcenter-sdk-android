@@ -83,6 +83,14 @@ public class AppStoreDetectionTest {
     }
 
     @Test
+    public void fileManagerIsNotStore() {
+        setInstallerPackageName("com.coloros.filemanager");
+
+        /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
+    @Test
     public void localInstallerIsNotStore() {
         setInstallerPackageName("com.google.android.packageinstaller");
 
