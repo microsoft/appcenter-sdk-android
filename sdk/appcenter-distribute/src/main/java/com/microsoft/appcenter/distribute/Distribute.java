@@ -68,6 +68,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
@@ -353,6 +354,15 @@ public class Distribute extends AbstractAppCenterService {
      */
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
+    }
+
+    /**
+     * Add stores where should be available in-app updates.
+     *
+     * @param stores list of stores where should be available in-app updates.
+     */
+    public static void addStores(Set<String> stores) {
+        InstallerUtils.addLocalStores(stores);
     }
 
     /**

@@ -92,6 +92,15 @@ public class InstallerUtils {
     }
 
     /**
+     * Add new stores to local stores list.
+     *
+     * @param stores stores list.
+     */
+    public static void addLocalStores(Set<String> stores) {
+        LOCAL_STORES.addAll(stores);
+    }
+
+    /**
      * Check whether user enabled installation via unknown sources.
      *
      * @param context any context.

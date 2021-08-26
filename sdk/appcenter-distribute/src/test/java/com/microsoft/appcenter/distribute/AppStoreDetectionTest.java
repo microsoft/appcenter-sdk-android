@@ -23,6 +23,9 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @SuppressWarnings("CanBeFinal")
 @RunWith(PowerMockRunner.class)
 public class AppStoreDetectionTest {
@@ -93,6 +96,16 @@ public class AppStoreDetectionTest {
     @Test
     public void anotherLocalInstallerIsNotStore() {
         setInstallerPackageName("com.android.packageinstaller");
+
+        /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
+    @Test
+    public void addNewLocalInstaller() {
+        final String testPackageName = "com.test.packageinstaller";
+        Distribute.addStores(new HashSet<String>() {{ add(testPackageName); }});
+        setInstallerPackageName(testPackageName);
 
         /* Check cache. */
         verifyNotFromAppStore();
