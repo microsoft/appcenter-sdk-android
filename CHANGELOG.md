@@ -4,6 +4,7 @@
 
 ### App Center
 
+* **[Feature]** Add `Distribute.addStores(stores)` API for adding local stores or installers which should allow in-app updates.
 * **[Feature]** Improved `AES` token encryption algorithm using `Encrypt-then-MAC` data authentication approach.
 
 ### App Center Distribute
