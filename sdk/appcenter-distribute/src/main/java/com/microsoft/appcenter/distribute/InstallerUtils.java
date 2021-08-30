@@ -94,7 +94,7 @@ public class InstallerUtils {
     /**
      * Add new stores to local stores list.
      *
-     * @param stores stores list.
+     * @param stores list of stores.
      */
     public static void addLocalStores(Set<String> stores) {
         LOCAL_STORES.addAll(stores);

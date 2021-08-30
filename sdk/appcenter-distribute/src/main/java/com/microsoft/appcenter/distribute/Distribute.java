@@ -357,9 +357,9 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Add stores where should be available in-app updates.
+     * Add stores allowed to perform in-app updates.
      *
-     * @param stores list of stores where should be available in-app updates.
+     * @param stores list of stores allowed to perform in-app updates.
      */
     public static void addStores(Set<String> stores) {
         InstallerUtils.addLocalStores(stores);
