@@ -68,6 +68,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
@@ -353,6 +354,15 @@ public class Distribute extends AbstractAppCenterService {
      */
     public static void setApiUrl(String apiUrl) {
         getInstance().setInstanceApiUrl(apiUrl);
+    }
+
+    /**
+     * Add stores allowed to perform in-app updates.
+     *
+     * @param stores list of stores allowed to perform in-app updates.
+     */
+    public static void addStores(Set<String> stores) {
+        InstallerUtils.addLocalStores(stores);
     }
 
     /**
@@ -1753,6 +1763,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param intent         prepared install intent.
      * @return false if install U.I should be shown now, true if a notification was posted or if the task was canceled.
      */
+    @UiThread
     synchronized boolean notifyDownload(ReleaseDetails releaseDetails, Intent intent) {
 
         /* Check state. */
@@ -1788,11 +1799,15 @@ public class Distribute extends AbstractAppCenterService {
         } else {
             builder = getOldNotificationBuilder();
         }
+        int pendingIntentFlag = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            pendingIntentFlag = PendingIntent.FLAG_IMMUTABLE;
+        }
         builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentText(getInstallReadyMessage())
                 .setSmallIcon(mContext.getApplicationInfo().icon)
-                .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, PendingIntent.FLAG_IMMUTABLE));
+                .setContentIntent(PendingIntent.getActivities(mContext, 0, new Intent[]{intent}, pendingIntentFlag));
         builder.setStyle(new Notification.BigTextStyle().bigText(getInstallReadyMessage()));
         Notification notification = builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
@@ -1903,7 +1918,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param releaseDetails to check state change.
      * @param enqueueTime    timestamp in milliseconds just before enqueuing download.
      */
-    @WorkerThread
+    @UiThread
     synchronized void setDownloading(@NonNull ReleaseDetails releaseDetails, long enqueueTime) {
         if (releaseDetails != mReleaseDetails) {
             return;
@@ -1917,7 +1932,7 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails to check state change.
      */
-    @WorkerThread
+    @UiThread
     synchronized void setInstalling(@NonNull ReleaseDetails releaseDetails) {
         if (releaseDetails != mReleaseDetails) {
             return;

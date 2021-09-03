@@ -1,5 +1,19 @@
 # App Center SDK for Android Change Log
 
+## Version 4.3.0
+
+### App Center
+
+* **[Feature]** Add `Distribute.addStores(stores)` API for adding local stores or installers which should allow in-app updates.
+* **[Feature]** Improved `AES` token encryption algorithm using `Encrypt-then-MAC` data authentication approach.
+
+### App Center Distribute
+
+* **[Fix]** Fix a rare deadlock case when a new version starts downloading and at the same moment the download status is checked.
+* **[Fix]** Fix passing pending intent flag for a completed download notification on Android lower then 23 API.
+
+___
+
 ## Version 4.2.0
 
 ### App Center
