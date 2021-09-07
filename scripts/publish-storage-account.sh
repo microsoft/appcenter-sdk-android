@@ -31,5 +31,7 @@ zip -r $ZIP_FILE $ARCHIVE
 cd -
 
 # Upload file
+FILE_NAME=`echo $ZIP_FILE | cut -d \/ -f 4`
+
 AZURE_STORAGE_ACCESS_KEY=$AZURE_STORAGE_ACCESS_KEY \
-azure storage blob upload $BUILD_ARTIFACTSTAGINGDIRECTORY/$ZIP_FILE sdk
+az storage blob upload -f "$BUILD_ARTIFACTSTAGINGDIRECTORY/$ZIP_FILE" -c sdk -n "$FILE_NAME"
