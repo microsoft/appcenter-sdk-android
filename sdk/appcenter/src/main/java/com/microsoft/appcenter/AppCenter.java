@@ -301,15 +301,6 @@ public class AppCenter {
     }
 
     /**
-     * Set the custom properties.
-     *
-     * @param customProperties custom properties object.
-     */
-    public static void setCustomProperties(CustomProperties customProperties) {
-        getInstance().setInstanceCustomProperties(customProperties);
-    }
-
-    /**
      * Check whether SDK has already been configured.
      *
      * @return true if configured, false otherwise.
@@ -609,30 +600,6 @@ public class AppCenter {
             return defaultValue;
         }
         return SharedPreferencesManager.getBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, defaultValue);
-    }
-
-    /**
-     * {@link #setCustomProperties(CustomProperties)} implementation at instance level.
-     *
-     * @param customProperties custom properties object.
-     */
-    private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
-        if (customProperties == null) {
-            AppCenterLog.error(LOG_TAG, "Custom properties may not be null.");
-            return;
-        }
-        final Map<String, Object> properties = customProperties.getProperties();
-        if (properties.size() == 0) {
-            AppCenterLog.error(LOG_TAG, "Custom properties may not be empty.");
-            return;
-        }
-        handlerAppCenterOperation(new Runnable() {
-
-            @Override
-            public void run() {
-                queueCustomProperties(properties);
-            }
-        }, null);
     }
 
     /**

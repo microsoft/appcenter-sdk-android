@@ -919,52 +919,6 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
-    public void setCustomPropertiesTest() throws Exception {
-
-        /* Configure mocking. */
-        CustomPropertiesLog log = mock(CustomPropertiesLog.class);
-        whenNew(CustomPropertiesLog.class).withAnyArguments().thenReturn(log);
-
-        /* Call before start is forbidden. */
-        AppCenter.setCustomProperties(new CustomProperties().clear("test"));
-        verify(mChannel, never()).enqueue(eq(log), eq(CORE_GROUP), anyInt());
-        verifyStatic(times(1));
-        AppCenterLog.error(eq(LOG_TAG), anyString());
-
-        /* Start. */
-        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
-
-        /* Set null. */
-        AppCenter.setCustomProperties(null);
-        verify(mChannel, never()).enqueue(eq(log), eq(CORE_GROUP), anyInt());
-        verifyStatic(times(2));
-        AppCenterLog.error(eq(LOG_TAG), anyString());
-
-        /* Set empty. */
-        CustomProperties empty = new CustomProperties();
-        AppCenter.setCustomProperties(empty);
-        verify(mChannel, never()).enqueue(eq(log), eq(CORE_GROUP), anyInt());
-        verifyStatic(times(3));
-        AppCenterLog.error(eq(LOG_TAG), anyString());
-
-        /* Set normal. */
-        CustomProperties properties = new CustomProperties();
-        properties.set("test", "test");
-        AppCenter.setCustomProperties(properties);
-        verify(log).setProperties(eq(properties.getProperties()));
-        verify(mChannel).enqueue(eq(log), eq(CORE_GROUP), eq(DEFAULTS));
-
-        /* Call after disabled triggers an error. */
-        AppCenter.setEnabled(false);
-        AppCenter.setCustomProperties(properties);
-        verifyStatic(times(4));
-        AppCenterLog.error(eq(LOG_TAG), anyString());
-
-        /* No more log enqueued. */
-        verify(mChannel).enqueue(eq(log), eq(CORE_GROUP), eq(DEFAULTS));
-    }
-
-    @Test
     public void uncaughtExceptionHandler() {
 
         /* Setup mock App Center. */

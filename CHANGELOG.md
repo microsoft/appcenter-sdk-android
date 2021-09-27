@@ -2,6 +2,10 @@
 
 ## Version 4.3.2 (Under active development)
 
+### App Center
+
+* **[Breaking change]** Remove `AppCenter.setCustomProperties` API.
+
 ___
 
 ## Version 4.3.1
