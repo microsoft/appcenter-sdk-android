@@ -10,7 +10,6 @@ import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.OneCollectorChannelListener;
-import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -787,6 +786,33 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.start(mApplication, secret, DummyService.class);
         assertTrue(AppCenter.isEnabled().get());
         verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
+    }
+
+    @Test
+    public void checkStartHandlerWhenDesableRunnableIsNull() throws Exception {
+        String secret = DUMMY_APP_SECRET + PAIR_DELIMITER +
+                DUMMY_TARGET_TOKEN_STRING + PAIR_DELIMITER +
+                "unknown" + KEY_VALUE_DELIMITER + "value";
+
+        // Start App Center.
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+
+        // Disable App Center.
+        AppCenter.setEnabled(false);
+        assertFalse(AppCenter.isEnabled().get());
+
+        // Call runnable with disabledRunnable is null.
+        Runnable mockRunnable = mock(Runnable.class);
+        AppCenter.getInstance().getAppCenterHandler().post(mockRunnable, null);
+        verifyStatic();
+        AppCenterLog.error(eq(LOG_TAG), eq("App Center SDK is disabled."));
+
+        // Call App Center start with null application and verify than anything happening.
+        AppCenter.getInstance().resetApplication();
+        AppCenter.getInstance().getAppCenterHandler().post(mockRunnable, null);
+        verifyStatic();
+        AppCenterLog.error(eq(LOG_TAG), eq("App Center hasn't been configured. You need to call AppCenter.start with appSecret or AppCenter.configure first."));
     }
 
     @Test

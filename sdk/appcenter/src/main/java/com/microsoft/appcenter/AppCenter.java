@@ -21,10 +21,8 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
-import com.microsoft.appcenter.ingestion.models.json.CustomPropertiesLogFactory;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
@@ -834,7 +832,6 @@ public class AppCenter {
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
-        mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, httpClient, mHandler);
 
         /* Complete set maximum storage size future if starting from app. */
@@ -1052,19 +1049,6 @@ public class AppCenter {
     }
 
     /**
-     * Send custom properties.
-     * Unit test requires top level methods when PowerMock.whenNew.
-     *
-     * @param properties properties to send.
-     */
-    @WorkerThread
-    private void queueCustomProperties(@NonNull Map<String, Object> properties) {
-        CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
-        customPropertiesLog.setProperties(properties);
-        mChannel.enqueue(customPropertiesLog, CORE_GROUP, Flags.DEFAULTS);
-    }
-
-    /**
      * Implements {@link #isEnabled()} at instance level.
      */
     private synchronized AppCenterFuture<Boolean> isInstanceEnabledAsync() {
@@ -1221,6 +1205,16 @@ public class AppCenter {
     @VisibleForTesting
     Application getApplication() {
         return mApplication;
+    }
+
+    @VisibleForTesting
+    void resetApplication() {
+        mApplication = null;
+    }
+
+    @VisibleForTesting
+    AppCenterHandler getAppCenterHandler() {
+        return mAppCenterHandler;
     }
 
     @VisibleForTesting
