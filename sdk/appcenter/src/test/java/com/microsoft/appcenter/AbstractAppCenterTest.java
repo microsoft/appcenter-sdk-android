@@ -69,7 +69,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         DeviceInfoHelper.class,
         Thread.class,
         ShutdownHelper.class,
-        CustomProperties.class,
         InstrumentationRegistryHelper.class,
         NetworkStateHelper.class,
         JSONUtils.class
