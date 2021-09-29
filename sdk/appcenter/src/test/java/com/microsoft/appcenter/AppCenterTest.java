@@ -10,7 +10,6 @@ import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.OneCollectorChannelListener;
-import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -790,6 +789,33 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
+    public void checkStartHandlerWhenDesableRunnableIsNull() throws Exception {
+        String secret = DUMMY_APP_SECRET + PAIR_DELIMITER +
+                DUMMY_TARGET_TOKEN_STRING + PAIR_DELIMITER +
+                "unknown" + KEY_VALUE_DELIMITER + "value";
+
+        // Start App Center.
+        AppCenter.start(mApplication, secret, DummyService.class);
+        assertTrue(AppCenter.isEnabled().get());
+
+        // Disable App Center.
+        AppCenter.setEnabled(false);
+        assertFalse(AppCenter.isEnabled().get());
+
+        // Call runnable with disabledRunnable is null.
+        Runnable mockRunnable = mock(Runnable.class);
+        AppCenter.getInstance().getAppCenterHandler().post(mockRunnable, null);
+        verifyStatic();
+        AppCenterLog.error(eq(LOG_TAG), eq("App Center SDK is disabled."));
+
+        // Call App Center start with null application and verify than anything happening.
+        AppCenter.getInstance().resetApplication();
+        AppCenter.getInstance().getAppCenterHandler().post(mockRunnable, null);
+        verifyStatic();
+        AppCenterLog.error(eq(LOG_TAG), eq("App Center hasn't been configured. You need to call AppCenter.start with appSecret or AppCenter.configure first."));
+    }
+
+    @Test
     public void duplicateServiceTest() {
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class, DummyService.class);
 
@@ -916,52 +942,6 @@ public class AppCenterTest extends AbstractAppCenterTest {
     @Test
     public void getSdkVersionTest() {
         assertEquals(BuildConfig.VERSION_NAME, AppCenter.getSdkVersion());
-    }
-
-    @Test
-    public void setCustomPropertiesTest() throws Exception {
-
-        /* Configure mocking. */
-        CustomPropertiesLog log = mock(CustomPropertiesLog.class);
-        whenNew(CustomPropertiesLog.class).withAnyArguments().thenReturn(log);
-
-        /* Call before start is forbidden. */
-        AppCenter.setCustomProperties(new CustomProperties().clear("test"));
-        verify(mChannel, never()).enqueue(eq(log), eq(CORE_GROUP), anyInt());
-        verifyStatic(times(1));
-        AppCenterLog.error(eq(LOG_TAG), anyString());
-
-        /* Start. */
-        AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
-
-        /* Set null. */
-        AppCenter.setCustomProperties(null);
-        verify(mChannel, never()).enqueue(eq(log), eq(CORE_GROUP), anyInt());
-        verifyStatic(times(2));
-        AppCenterLog.error(eq(LOG_TAG), anyString());
-
-        /* Set empty. */
-        CustomProperties empty = new CustomProperties();
-        AppCenter.setCustomProperties(empty);
-        verify(mChannel, never()).enqueue(eq(log), eq(CORE_GROUP), anyInt());
-        verifyStatic(times(3));
-        AppCenterLog.error(eq(LOG_TAG), anyString());
-
-        /* Set normal. */
-        CustomProperties properties = new CustomProperties();
-        properties.set("test", "test");
-        AppCenter.setCustomProperties(properties);
-        verify(log).setProperties(eq(properties.getProperties()));
-        verify(mChannel).enqueue(eq(log), eq(CORE_GROUP), eq(DEFAULTS));
-
-        /* Call after disabled triggers an error. */
-        AppCenter.setEnabled(false);
-        AppCenter.setCustomProperties(properties);
-        verifyStatic(times(4));
-        AppCenterLog.error(eq(LOG_TAG), anyString());
-
-        /* No more log enqueued. */
-        verify(mChannel).enqueue(eq(log), eq(CORE_GROUP), eq(DEFAULTS));
     }
 
     @Test

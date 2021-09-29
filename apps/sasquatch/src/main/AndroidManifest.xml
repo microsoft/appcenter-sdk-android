@@ -54,9 +54,6 @@
             android:name=".activities.ManagedErrorActivity"
             android:label="@string/title_error" />
         <activity
-            android:name=".activities.CustomPropertiesActivity"
-            android:label="@string/title_custom_properties" />
-        <activity
             android:name=".activities.CommonSchemaPropertiesActivity"
             android:label="@string/cs_properties_title" />
         <activity

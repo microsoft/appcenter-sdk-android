@@ -6,7 +6,6 @@
 package com.microsoft.appcenter.ingestion.models.json;
 
 import com.microsoft.appcenter.AndroidTestUtils;
-import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
@@ -96,92 +95,6 @@ public class LogSerializerAndroidTest {
         Log actualLog = serializer.deserializeLog(payload, null);
         assertEquals(expectedLog, actualLog);
         assertEquals("charlie", actualLog.getUserId());
-    }
-
-    @Test
-    public void customPropertiesLog() throws JSONException {
-        CustomPropertiesLog log = new CustomPropertiesLog();
-        Map<String, Object> properties = new HashMap<>();
-        properties.put("t1", "test");
-        properties.put("t2", new Date(0));
-        properties.put("t3", 0);
-        properties.put("t4", false);
-
-        //noinspection ConstantConditions
-        properties.put("t5", null);
-        log.setProperties(properties);
-        UUID sid = UUID.randomUUID();
-        log.setSid(sid);
-        log.setTimestamp(new Date());
-
-        /* Verify serialize and deserialize. */
-        LogSerializer serializer = new DefaultLogSerializer();
-        serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        String payload = serializer.serializeLog(log);
-        Log actualContainer = serializer.deserializeLog(payload, null);
-        assertEquals(log, actualContainer);
-    }
-
-    @Test(expected = JSONException.class)
-    public void deserializeWithoutProperties() throws JSONException {
-        LogSerializer serializer = new DefaultLogSerializer();
-        serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        serializer.deserializeLog("{" +
-                "\"type\": \"customProperties\"," +
-                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"" +
-                "}", null);
-    }
-
-    @Test(expected = JSONException.class)
-    public void deserializeWithInvalidType() throws JSONException {
-        LogSerializer serializer = new DefaultLogSerializer();
-        serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        serializer.deserializeLog("{" +
-                "\"type\": \"customProperties\"," +
-                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
-                "\"properties\":[{\"name\":\"test\",\"type\":\"unknown\",\"value\":42}]" +
-                "}", null);
-    }
-
-    @Test(expected = JSONException.class)
-    public void deserializeWithInvalidDate() throws JSONException {
-        LogSerializer serializer = new DefaultLogSerializer();
-        serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        serializer.deserializeLog("{" +
-                "\"type\": \"customProperties\"," +
-                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
-                "\"properties\":[{\"name\":\"test\",\"type\":\"dateTime\",\"value\":\"today\"}]" +
-                "}", null);
-    }
-
-    @Test(expected = JSONException.class)
-    public void deserializeWithInvalidNumber() throws JSONException {
-        LogSerializer serializer = new DefaultLogSerializer();
-        serializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
-        serializer.deserializeLog("{" +
-                "\"type\": \"customProperties\"," +
-                "\"timestamp\": \"2017-07-08T00:32:58.123Z\"," +
-                "\"properties\":[{\"name\":\"test\",\"type\":\"number\",\"value\":false}]" +
-                "}", null);
-    }
-
-    @Test(expected = JSONException.class)
-    public void serializeWithoutProperties() throws JSONException {
-        LogSerializer serializer = new DefaultLogSerializer();
-        CustomPropertiesLog invalidTypeLog = new CustomPropertiesLog();
-        invalidTypeLog.setTimestamp(new Date());
-        serializer.serializeLog(invalidTypeLog);
-    }
-
-    @Test(expected = JSONException.class)
-    public void serializeWithInvalidType() throws JSONException {
-        LogSerializer serializer = new DefaultLogSerializer();
-        CustomPropertiesLog invalidTypeLog = new CustomPropertiesLog();
-        invalidTypeLog.setTimestamp(new Date());
-        Map<String, Object> invalidTypeProperties = new HashMap<>();
-        invalidTypeProperties.put("nested", new HashMap<String, Object>());
-        invalidTypeLog.setProperties(invalidTypeProperties);
-        serializer.serializeLog(invalidTypeLog);
     }
 
     @Test

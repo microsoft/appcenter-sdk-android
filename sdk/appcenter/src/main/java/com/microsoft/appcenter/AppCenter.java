@@ -21,10 +21,8 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
-import com.microsoft.appcenter.ingestion.models.json.CustomPropertiesLogFactory;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
@@ -298,15 +296,6 @@ public class AppCenter {
     @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
     public static String getSdkVersion() {
         return com.microsoft.appcenter.BuildConfig.VERSION_NAME;
-    }
-
-    /**
-     * Set the custom properties.
-     *
-     * @param customProperties custom properties object.
-     */
-    public static void setCustomProperties(CustomProperties customProperties) {
-        getInstance().setInstanceCustomProperties(customProperties);
     }
 
     /**
@@ -612,30 +601,6 @@ public class AppCenter {
     }
 
     /**
-     * {@link #setCustomProperties(CustomProperties)} implementation at instance level.
-     *
-     * @param customProperties custom properties object.
-     */
-    private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
-        if (customProperties == null) {
-            AppCenterLog.error(LOG_TAG, "Custom properties may not be null.");
-            return;
-        }
-        final Map<String, Object> properties = customProperties.getProperties();
-        if (properties.size() == 0) {
-            AppCenterLog.error(LOG_TAG, "Custom properties may not be empty.");
-            return;
-        }
-        handlerAppCenterOperation(new Runnable() {
-
-            @Override
-            public void run() {
-                queueCustomProperties(properties);
-            }
-        }, null);
-    }
-
-    /**
      * {@link #setMaxStorageSize(long)} implementation at instance level.
      *
      * @param storageSizeInBytes size to set SQLite database to in bytes.
@@ -867,7 +832,6 @@ public class AppCenter {
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
-        mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, httpClient, mHandler);
 
         /* Complete set maximum storage size future if starting from app. */
@@ -1085,19 +1049,6 @@ public class AppCenter {
     }
 
     /**
-     * Send custom properties.
-     * Unit test requires top level methods when PowerMock.whenNew.
-     *
-     * @param properties properties to send.
-     */
-    @WorkerThread
-    private void queueCustomProperties(@NonNull Map<String, Object> properties) {
-        CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
-        customPropertiesLog.setProperties(properties);
-        mChannel.enqueue(customPropertiesLog, CORE_GROUP, Flags.DEFAULTS);
-    }
-
-    /**
      * Implements {@link #isEnabled()} at instance level.
      */
     private synchronized AppCenterFuture<Boolean> isInstanceEnabledAsync() {
@@ -1254,6 +1205,16 @@ public class AppCenter {
     @VisibleForTesting
     Application getApplication() {
         return mApplication;
+    }
+
+    @VisibleForTesting
+    void resetApplication() {
+        mApplication = null;
+    }
+
+    @VisibleForTesting
+    AppCenterHandler getAppCenterHandler() {
+        return mAppCenterHandler;
     }
 
     @VisibleForTesting
