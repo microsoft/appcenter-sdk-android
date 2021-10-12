@@ -5,7 +5,7 @@
 ### App Center
 
 * **[Breaking change]** Remove `AppCenter.setCustomProperties` API.
-
+* **[Fix]** Remove `android.support.test.InstrumentationRegistry` dependency.
 ___
 
 ## Version 4.3.1
