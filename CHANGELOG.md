@@ -5,7 +5,7 @@
 ### App Center
 
 * **[Breaking change]** Remove `AppCenter.setCustomProperties` API.
-* **[Fix]** Remove `android.support.test.InstrumentationRegistry` string that caused an error when checking applications on availability android support libraries.
+* **[Fix]** Remove `android.support.test.InstrumentationRegistry` string that caused an error when checking applications on availability of android support libraries.
 ___
 
 ## Version 4.3.1
