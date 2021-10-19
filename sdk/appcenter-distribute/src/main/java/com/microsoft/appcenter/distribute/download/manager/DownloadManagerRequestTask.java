@@ -25,8 +25,7 @@ import java.util.concurrent.TimeoutException;
  * The download manager API triggers strict mode exception in UI thread.
  */
 class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
-
-    private long startDownloadingTime = 0;
+    
     private final int TIMEOUT_LIMIT = 10000;
     private final DownloadManagerReleaseDownloader mDownloader;
     private final String mTitle;
