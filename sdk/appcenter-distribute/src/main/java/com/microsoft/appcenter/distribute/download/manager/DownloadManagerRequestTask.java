@@ -59,7 +59,6 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
             final long downloadId = downloadManager.enqueue(request);
             if (!isCancelled()) {
                 mDownloader.onDownloadStarted(downloadId, enqueueTime);
-                startDownloadingTime = enqueueTime;
                 handlerCallback = new Runnable() {
 
                     @Override
@@ -68,11 +67,8 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
                         query.setFilterByStatus(DownloadManager.STATUS_PENDING);
                         Cursor c = downloadManager.query(query);
                         if (c.moveToFirst()) {
-                            int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                            if (status == DownloadManager.STATUS_PENDING) {
-                                downloadManager.remove(downloadId);
-                                mDownloader.onDownloadError(new IllegalStateException("Failed to start downloading file due to timeout exception."));
-                            }
+                            downloadManager.remove(downloadId);
+                            mDownloader.onDownloadError(new IllegalStateException("Failed to start downloading file due to timeout exception."));
                         }
                     }
                 };
