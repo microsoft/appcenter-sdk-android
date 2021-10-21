@@ -6,6 +6,8 @@
 package com.microsoft.appcenter.distribute.download;
 
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -73,11 +75,11 @@ public interface ReleaseDownloader {
         /**
          * Called when the downloading is completed.
          *
-         * @param localUri The local URI of the file.
+         * @param pfd The local URI of the file.
          * @return <code>true</code> if this file can be installed, <code>false</code> otherwise.
          */
         @WorkerThread
-        boolean onComplete(@NonNull Uri localUri);
+        boolean onComplete(@NonNull Long downloadId);
 
         /**
          * Called when an error occurs during the downloading.

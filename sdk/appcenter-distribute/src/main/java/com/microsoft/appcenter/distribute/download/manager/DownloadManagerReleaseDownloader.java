@@ -30,6 +30,8 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
 
+import java.io.FileNotFoundException;
+
 public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader {
 
     public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull Listener listener) {
@@ -178,23 +180,12 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     @WorkerThread
-    synchronized void onDownloadComplete(Cursor cursor) {
+    synchronized void onDownloadComplete() {
         if (isCancelled()) {
             return;
         }
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        Uri localUri = Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI)));
-        boolean installerFound = false;
-        if (!mListener.onComplete(localUri)) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                installerFound = mListener.onComplete(getFileUriOnOldDevices(cursor));
-            }
-        } else {
-            installerFound = true;
-        }
-        if (!installerFound) {
-            mListener.onError("Installer not found");
-        }
+        mListener.onComplete(mDownloadId);
     }
 
     @WorkerThread

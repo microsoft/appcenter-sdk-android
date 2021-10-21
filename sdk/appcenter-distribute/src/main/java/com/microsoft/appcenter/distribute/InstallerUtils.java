@@ -60,22 +60,6 @@ public class InstallerUtils {
     }
 
     /**
-     * Get the intent used to open installation UI.
-     *
-     * @param fileUri downloaded file URI from the download manager.
-     * @return intent to open installation UI.
-     */
-    @NonNull
-    static Intent getInstallIntent(Uri fileUri) {
-        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-        intent.setData(fileUri);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        return intent;
-    }
-
-    /**
      * Check if this installation was made via an application store.
      *
      * @param logTag  log tag for debug.
