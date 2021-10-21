@@ -74,7 +74,7 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
                 };
 
                 // Check that the file started to download.
-                boolean handlerResult = mHandler.postDelayed(handlerCallback, TIMEOUT_LIMIT);
+                mHandler.postDelayed(handlerCallback, TIMEOUT_LIMIT);
             }
         } catch (IllegalArgumentException e) {
 
