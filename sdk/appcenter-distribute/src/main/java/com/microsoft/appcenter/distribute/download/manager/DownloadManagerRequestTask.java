@@ -25,8 +25,7 @@ import java.util.concurrent.TimeoutException;
  * The download manager API triggers strict mode exception in UI thread.
  */
 class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
-
-    private long startDownloadingTime = 0;
+    
     private final int TIMEOUT_LIMIT = 10000;
     private final DownloadManagerReleaseDownloader mDownloader;
     private final String mTitle;
@@ -46,7 +45,6 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
         ReleaseDetails releaseDetails = mDownloader.getReleaseDetails();
         Uri downloadUrl = releaseDetails.getDownloadUrl();
         AppCenterLog.debug(LOG_TAG, "Start downloading new release from " + downloadUrl);
-
         final DownloadManager downloadManager = mDownloader.getDownloadManager();
         DownloadManager.Request request = createRequest(downloadUrl);
         request.setTitle(String.format(mTitle, releaseDetails.getShortVersion(), releaseDetails.getVersion()));
@@ -61,7 +59,6 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
             final long downloadId = downloadManager.enqueue(request);
             if (!isCancelled()) {
                 mDownloader.onDownloadStarted(downloadId, enqueueTime);
-                startDownloadingTime = enqueueTime;
                 handlerCallback = new Runnable() {
 
                     @Override
@@ -70,11 +67,8 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
                         query.setFilterByStatus(DownloadManager.STATUS_PENDING);
                         Cursor c = downloadManager.query(query);
                         if (c.moveToFirst()) {
-                            int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                            if (status == DownloadManager.STATUS_PENDING) {
-                                downloadManager.remove(downloadId);
-                                mDownloader.onDownloadError(new IllegalStateException("Failed to start downloading file due to timeout exception."));
-                            }
+                            downloadManager.remove(downloadId);
+                            mDownloader.onDownloadError(new IllegalStateException("Failed to start downloading file due to timeout exception."));
                         }
                     }
                 };
