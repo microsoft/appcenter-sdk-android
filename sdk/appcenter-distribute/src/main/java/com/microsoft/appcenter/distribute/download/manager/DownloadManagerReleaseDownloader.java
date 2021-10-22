@@ -8,8 +8,6 @@ package com.microsoft.appcenter.distribute.download.manager;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
 import android.os.SystemClock;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -29,8 +27,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOW
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
-
-import java.io.FileNotFoundException;
 
 public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader {
 
