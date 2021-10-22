@@ -39,9 +39,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
         DownloadManagerRequestTask.class,
-        AsyncTask.class,
-        DownloadManager.class,
-        DownloadManager.Request.class
+        AsyncTask.class
 })
 @RunWith(MockitoJUnitRunner.class)
 public class DownloadManagerRequestTaskTest {
@@ -149,12 +147,12 @@ public class DownloadManagerRequestTaskTest {
     }
 
     @Test
-    public void noMessagesWhenNoPendingTasks() {
+    public void noExceptionsWhenDownloadFinishedAfterTimeout() {
         when(mDownloadManager.query(Matchers.<DownloadManager.Query>any())).thenReturn(mCursor);
         when(mCursor.moveToFirst()).thenReturn(false);
         when(mRequestTask.isCancelled()).thenReturn(false);
 
-        /* Run Callback immediately */
+        /* Run Callback immediately. */
         when(mHandler.postDelayed(Matchers.<Runnable>any(), anyLong())).thenAnswer(new Answer<Object>() {
 
             @Override
@@ -168,18 +166,18 @@ public class DownloadManagerRequestTaskTest {
         mRequestTask.doInBackground();
 
         /* Verify. */
-        verify(mDownloader, never()).onDownloadError(any(IllegalStateException.class));
+        verify(mDownloader, never()).onDownloadError(new IllegalStateException(eq("Failed to start downloading file due to timeout exception.")));
     }
 
 
     @Test
-    public void throwErrorWhenPendingTask() {
+    public void throwExceptionWhenDownloadStillNotFinishedAfterTimeout() {
         when(mDownloadManager.query(Matchers.<DownloadManager.Query>any())).thenReturn(mCursor);
         when(mCursor.moveToFirst()).thenReturn(true);
         when(mCursor.getInt(anyInt())).thenReturn(1);
         when(mRequestTask.isCancelled()).thenReturn(false);
 
-        /* Run Callback immediately */
+        /* Run Callback immediately. */
         when(mHandler.postDelayed(Matchers.<Runnable>any(), anyLong())).thenAnswer(new Answer<Object>() {
 
             @Override
@@ -192,21 +190,22 @@ public class DownloadManagerRequestTaskTest {
         /* Perform background task. */
         mRequestTask.doInBackground();
 
-        /* Verify. */
+        /* Verify that exception was thrown. */
         verify(mDownloader).onDownloadError(any(IllegalStateException.class));
     }
 
     @Test
-    public void oldCallbacksRemoved() {
+    public void oldCallbacksRemovedBeforeCreatingNewDownload() {
         when(mRequestTask.isCancelled()).thenReturn(false);
         when(mRequestTask.createRequest(Matchers.<Uri>any())).thenCallRealMethod();
 
         /* Perform background task. Emulates creating callback, which would not be used */
         mRequestTask.doInBackground();
+
         /* Perform background task. Must delete old callbacks */
         mRequestTask.doInBackground();
 
-        /* Verify. */
+        /* Verify that callback was removed. */
         verify(mHandler).removeCallbacks(Matchers.<Runnable>any());
     }
 }
