@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.ReleaseInstallerListener;
 
 /**
  * Interface for downloading release.
@@ -72,10 +73,12 @@ public interface ReleaseDownloader {
         /**
          * Called when the downloading is completed.
          *
+         * @param downloadId download id.
+         * @param releaseInstallerListener listener of release installing.
          * @return <code>true</code> if this file can be installed, <code>false</code> otherwise.
          */
         @WorkerThread
-        boolean onComplete(@NonNull Long downloadId);
+        boolean onComplete(@NonNull Long downloadId, ReleaseInstallerListener releaseInstallerListener);
 
         /**
          * Called when an error occurs during the downloading.

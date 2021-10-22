@@ -113,10 +113,6 @@ public class Distribute extends AbstractAppCenterService {
     @SuppressLint("StaticFieldLeak")
     private static Distribute sInstance;
 
-    private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
-
-    private IntentFilter mPackageInstallerReceiverFilter;
-
     /**
      * Log factories managed by this service.
      */
@@ -245,9 +241,29 @@ public class Distribute extends AbstractAppCenterService {
     private ReleaseDownloadListener mReleaseDownloaderListener;
 
     /**
+     * Install release listener.
+     */
+    private ReleaseInstallerListener mReleaseInstallerListener;
+
+    /**
+     * Receiver of installing a new release.
+     */
+    private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
+
+    /**
+     * Intent filter of receiver for a new release.
+     */
+    private IntentFilter mPackageInstallerReceiverFilter;
+
+    /**
      * Remember if we checked download since our own process restarted.
      */
     private boolean mCheckedDownload;
+
+    /**
+     * Remember whether the installation of a new release is started.
+     */
+    private boolean mInstallInProgress;
 
     /**
      * True when distribute workflow reached final state.
@@ -297,8 +313,8 @@ public class Distribute extends AbstractAppCenterService {
         mFactories.put(DistributionStartSessionLog.TYPE, new DistributionStartSessionLogFactory());
         mAppCenterPackageInstallerReceiver = new AppCenterPackageInstallerReceiver();
         mPackageInstallerReceiverFilter = new IntentFilter();
-        mPackageInstallerReceiverFilter.addAction(AppCenterPackageInstallerReceiver.START_INTENT);
-        mPackageInstallerReceiverFilter.addAction(AppCenterPackageInstallerReceiver.MY_PACKAGE_REPLACED_INTENT);
+        mPackageInstallerReceiverFilter.addAction(AppCenterPackageInstallerReceiver.START_ACTION);
+        mPackageInstallerReceiverFilter.addAction(AppCenterPackageInstallerReceiver.MY_PACKAGE_REPLACED_ACTION);
     }
 
     /**
@@ -744,6 +760,7 @@ public class Distribute extends AbstractAppCenterService {
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
         mCheckedDownload = false;
+        mInstallInProgress = false;
         mManualCheckForUpdateRequested = false;
         updateReleaseDetails(null);
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
@@ -772,6 +789,11 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
                 mWorkflowCompleted = true;
                 mManualCheckForUpdateRequested = false;
+                return;
+            }
+
+            if (mInstallInProgress) {
+                AppCenterLog.info(LOG_TAG, "Installing in progress...");
                 return;
             }
 
@@ -1027,6 +1049,9 @@ public class Distribute extends AbstractAppCenterService {
         mReleaseDetails = null;
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
+        }
+        if (mReleaseInstallerListener != null) {
+            mReleaseInstallerListener.hideInstallProgressDialog();
         }
         mWorkflowCompleted = true;
         mManualCheckForUpdateRequested = false;
@@ -1286,18 +1311,23 @@ public class Distribute extends AbstractAppCenterService {
         } else if (releaseDetails == null) {
 
             /* When we disable the SDK or cancel every state, we need to clean download cache. */
-            ReleaseDownloaderFactory.create(mContext, null, null).cancel();
+            ReleaseDownloaderFactory.create(mContext, null, null, null).cancel();
         }
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
             mReleaseDownloaderListener = null;
+        }
+        if (mReleaseInstallerListener != null) {
+            mReleaseInstallerListener.hideInstallProgressDialog();
+            mReleaseInstallerListener = null;
         }
         mReleaseDetails = releaseDetails;
         if (mReleaseDetails != null) {
 
             /* Create release downloader here to be able correctly cancel downloading from previous runs. */
             mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);
-            mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
+            mReleaseInstallerListener = new ReleaseInstallerListener(mContext);
+            mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener, mReleaseInstallerListener);
         }
     }
 
@@ -1769,6 +1799,34 @@ public class Distribute extends AbstractAppCenterService {
             Intent intent = new Intent(context, DeepLinkActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
+        }
+    }
+
+    @UiThread
+    synchronized void notifyInstallProgress(boolean isInProgress) {
+        mInstallInProgress = isInProgress;
+        if (isInProgress) {
+
+            /* Do not attempt to show dialog if application is in the background. */
+            if (mForegroundActivity == null) {
+                AppCenterLog.warn(LOG_TAG, "Could not display install progress dialog in the background.");
+                return;
+            }
+            if (mReleaseInstallerListener == null) {
+                return;
+            }
+
+            /* Close to avoid dialog duplicates. */
+            mReleaseInstallerListener.hideInstallProgressDialog();
+
+            /* Create and show a new dialog. */
+            Dialog progressDialog = mReleaseInstallerListener.showInstallProgressDialog(mForegroundActivity);
+            showAndRememberDialogActivity(progressDialog);
+        } else {
+            if (mReleaseInstallerListener != null) {
+                mReleaseInstallerListener.hideInstallProgressDialog();
+                mReleaseInstallerListener = null;
+            }
         }
     }
 

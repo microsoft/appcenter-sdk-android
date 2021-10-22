@@ -98,7 +98,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @WorkerThread
     @Override
-    public boolean onComplete(@NonNull final Long downloadId) {
+    public boolean onComplete(@NonNull final Long downloadId, final ReleaseInstallerListener releaseInstallerListener) {
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -122,7 +122,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
                         DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
                         pfd = downloadManager.openDownloadedFile(downloadId);
                         InputStream data = new FileInputStream(pfd.getFileDescriptor());
-                        InstallerUtils.installPackage(data, mContext);
+                        InstallerUtils.installPackage(data, mContext, releaseInstallerListener);
                     } catch (FileNotFoundException e) {
                         AppCenterLog.error(AppCenterLog.LOG_TAG, "Can't read data due to file not found. " + e.getMessage());
                     } catch (IOException e) {

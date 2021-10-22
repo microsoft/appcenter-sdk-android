@@ -9,6 +9,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.ReleaseInstallerListener;
 
 public abstract class AbstractReleaseDownloader implements ReleaseDownloader {
 
@@ -27,12 +28,18 @@ public abstract class AbstractReleaseDownloader implements ReleaseDownloader {
      */
     protected final ReleaseDownloader.Listener mListener;
 
+    /**
+     * Listener of install status.
+     */
+    protected final ReleaseInstallerListener mReleaseInstallerListener;
+
     private boolean mCancelled;
 
-    protected AbstractReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
+    protected AbstractReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener, @NonNull ReleaseInstallerListener releaseInstallerListener) {
         mContext = context;
         mReleaseDetails = releaseDetails;
         mListener = listener;
+        mReleaseInstallerListener = releaseInstallerListener;
     }
 
     protected boolean isCancelled() {

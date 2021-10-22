@@ -37,12 +37,12 @@ public class InstallerUtils {
     static final String INSTALL_NON_MARKET_APPS_ENABLED = "1";
 
     /**
-     * TODO
+     * Name of package installer stream.
      */
     private static final String sOutputStreamName = "AppCenterPackageInstallerStream";
 
     /**
-     * TODO
+     * Buffer capacity of package installer.
      */
     private static final int sBufferCapacity = 16384;
 
@@ -126,14 +126,16 @@ public class InstallerUtils {
     /**
      * Install new release.
      * @param data input stream data from the install apk.
-     * @throws IOException
      */
-    public static void installPackage(InputStream data, Context context) throws IOException {
+    public static void installPackage(InputStream data, Context context, ReleaseInstallerListener releaseInstallerListener) throws IOException {
         PackageInstaller.Session session = null;
         try {
 
             /* Prepare package installer. */
             PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+            if (releaseInstallerListener != null) {
+                packageInstaller.registerSessionCallback(releaseInstallerListener);
+            }
             PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
                     PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
@@ -168,7 +170,8 @@ public class InstallerUtils {
 
     /**
      * Return IntentSender with the receiver that will be launched after installation.
-     * @param context context.
+     *
+     * @param context any context.
      * @param sessionId install sessionId.
      * @return IntentSender with receiver.
      */
@@ -176,7 +179,7 @@ public class InstallerUtils {
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 sessionId,
-                new Intent(AppCenterPackageInstallerReceiver.START_INTENT),
+                new Intent(AppCenterPackageInstallerReceiver.START_ACTION),
                 0);
         return pendingIntent.getIntentSender();
     }
