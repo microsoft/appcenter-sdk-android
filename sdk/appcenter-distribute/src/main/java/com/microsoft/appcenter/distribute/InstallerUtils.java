@@ -5,9 +5,13 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.content.IntentSender;
+import android.content.pm.PackageInstaller;
 import android.os.Build;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
@@ -15,6 +19,9 @@ import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,6 +35,16 @@ public class InstallerUtils {
      */
     @VisibleForTesting
     static final String INSTALL_NON_MARKET_APPS_ENABLED = "1";
+
+    /**
+     * TODO
+     */
+    private static final String sOutputStreamName = "AppCenterPackageInstallerStream";
+
+    /**
+     * TODO
+     */
+    private static final int sBufferCapacity = 16384;
 
     /**
      * Installer package names that are not app stores.
@@ -104,5 +121,63 @@ public class InstallerUtils {
         } else {
             return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Secure.getString(context.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS));
         }
+    }
+
+    /**
+     * Install new release.
+     * @param data input stream data from the install apk.
+     * @throws IOException
+     */
+    public static void installPackage(InputStream data, Context context) throws IOException {
+        PackageInstaller.Session session = null;
+        try {
+
+            /* Prepare package installer. */
+            PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
+                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+
+            /* Prepare session. */
+            int sessionId = packageInstaller.createSession(params);
+            session = packageInstaller.openSession(sessionId);
+
+            /* Start installing. */
+            OutputStream out = session.openWrite(sOutputStreamName, 0, -1);
+            byte[] buffer = new byte[sBufferCapacity];
+            int c;
+            while ((c = data.read(buffer)) != -1) {
+                out.write(buffer, 0, c);
+            }
+            session.fsync(out);
+            data.close();
+            out.close();
+            session.commit(createIntentSender(context, sessionId));
+        } catch (IOException e) {
+            AppCenterLog.error(LOG_TAG, "Couldn't install package", e);
+        } catch (RuntimeException e) {
+            if (session != null) {
+                session.abandon();
+            }
+            AppCenterLog.error(LOG_TAG, "Couldn't install package", e);
+        } finally {
+            if (session != null) {
+                session.close();
+            }
+        }
+    }
+
+    /**
+     * Return IntentSender with the receiver that will be launched after installation.
+     * @param context context.
+     * @param sessionId install sessionId.
+     * @return IntentSender with receiver.
+     */
+    public static IntentSender createIntentSender(Context context, int sessionId) {
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                sessionId,
+                new Intent(AppCenterPackageInstallerReceiver.START_INTENT),
+                0);
+        return pendingIntent.getIntentSender();
     }
 }

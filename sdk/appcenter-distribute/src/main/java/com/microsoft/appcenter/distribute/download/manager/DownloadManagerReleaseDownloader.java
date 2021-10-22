@@ -196,9 +196,4 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
         mListener.onError(e.getMessage());
     }
-
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private static Uri getFileUriOnOldDevices(Cursor cursor) throws IllegalArgumentException {
-        return Uri.parse("file://" + cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME)));
-    }
 }

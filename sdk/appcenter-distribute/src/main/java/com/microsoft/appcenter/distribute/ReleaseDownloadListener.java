@@ -9,11 +9,7 @@ import static android.content.Context.DOWNLOAD_SERVICE;
 
 import android.app.Activity;
 import android.app.DownloadManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentSender;
-import android.content.pm.PackageInstaller;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -31,7 +27,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -49,10 +44,6 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
      * Context.
      */
     private final Context mContext;
-
-    private final String mOutputStreamName = "AppCenterPackageInstallerStream";
-
-    private final int mBufferCapacity = 16384;
 
     /**
      * Private field to store information about release we are currently working with.
@@ -128,9 +119,10 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
                     AppCenterLog.info(LOG_TAG, "Show install UI.");
                     ParcelFileDescriptor pfd;
                     try {
-                        pfd = getDownloadManager().openDownloadedFile(downloadId);
+                        DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
+                        pfd = downloadManager.openDownloadedFile(downloadId);
                         InputStream data = new FileInputStream(pfd.getFileDescriptor());
-                        installPackage(data);
+                        InstallerUtils.installPackage(data, mContext);
                     } catch (FileNotFoundException e) {
                         AppCenterLog.error(AppCenterLog.LOG_TAG, "Can't read data due to file not found. " + e.getMessage());
                     } catch (IOException e) {
@@ -141,70 +133,6 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
             }
         });
         return true;
-    }
-
-    private DownloadManager getDownloadManager() {
-        return (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
-    }
-
-    /**
-     * Install new release.
-     * @param data input stream data from the install apk.
-     * @throws IOException
-     */
-    private void installPackage(InputStream data)
-            throws IOException {
-
-        PackageInstaller.Session session = null;
-        try {
-
-            // Prepare package installer.
-            PackageInstaller packageInstaller = mContext.getPackageManager().getPackageInstaller();
-            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
-                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-
-            // Prepare session.
-            int sessionId = packageInstaller.createSession(params);
-            session = packageInstaller.openSession(sessionId);
-
-            // Start installing.
-            OutputStream out = session.openWrite(mOutputStreamName, 0, -1);
-            byte[] buffer = new byte[mBufferCapacity];
-            int c;
-            while ((c = data.read(buffer)) != -1) {
-                out.write(buffer, 0, c);
-            }
-            session.fsync(out);
-            data.close();
-            out.close();
-            session.commit(createIntentSender(mContext, sessionId));
-        } catch (IOException e) {
-            AppCenterLog.error(LOG_TAG, "Couldn't install package", e);
-        } catch (RuntimeException e) {
-            if (session != null) {
-                session.abandon();
-            }
-            AppCenterLog.error(LOG_TAG, "Couldn't install package", e);
-        } finally {
-            if (session != null) {
-                session.close();
-            }
-        }
-    }
-
-    /**
-     * Return IntentSender with the receiver that will be launched after installation.
-     * @param context context.
-     * @param sessionId install sessionId.
-     * @return IntentSender with receiver.
-     */
-    private IntentSender createIntentSender(Context context, int sessionId) {
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context,
-                sessionId,
-                new Intent(AppCenterPackageInstallerReceiver.START_INTENT),
-                0);
-        return pendingIntent.getIntentSender();
     }
 
     @WorkerThread
