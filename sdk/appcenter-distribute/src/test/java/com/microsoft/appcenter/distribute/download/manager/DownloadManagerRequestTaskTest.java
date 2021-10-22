@@ -166,7 +166,7 @@ public class DownloadManagerRequestTaskTest {
         mRequestTask.doInBackground();
 
         /* Verify. */
-        verify(mDownloader, never()).onDownloadError(new IllegalStateException(eq("Failed to start downloading file due to timeout exception.")));
+        verify(mDownloader, never()).onDownloadError(any(IllegalStateException.class));
     }
 
 
