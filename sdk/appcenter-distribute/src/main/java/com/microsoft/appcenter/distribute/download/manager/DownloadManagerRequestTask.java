@@ -73,7 +73,7 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
                     }
                 };
 
-                // Check that the file started to download.
+                /* Check that the file started to download. */
                 mHandler.postDelayed(handlerCallback, TIMEOUT_LIMIT);
             }
         } catch (IllegalArgumentException e) {
