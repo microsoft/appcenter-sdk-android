@@ -6,6 +6,11 @@
 
 * **[Breaking change]** Remove `AppCenter.setCustomProperties` API.
 * **[Fix]** Remove `android.support.test.InstrumentationRegistry` string that caused an error when checking applications on availability of android support libraries.
+
+### App Center Distribute
+
+* **[Feature]** Remove the download manager task if the download doesn't start within 10 seconds.
+
 ___
 
 ## Version 4.3.1
