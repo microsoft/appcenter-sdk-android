@@ -374,9 +374,8 @@ public class ReleaseDownloadListenerTest {
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
 
         /* Do not notify the download. */
-        when(mDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(false);
+        when(mDistribute.notifyDownload(mockReleaseDetails)).thenReturn(false);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        assertTrue(releaseDownloadListener.onComplete(mUri));
 
         /* Verify that setInstalling() is called on mandatory update. */
         verify(mDistribute).setInstalling(mockReleaseDetails);
@@ -389,9 +388,8 @@ public class ReleaseDownloadListenerTest {
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(mandatoryUpdate);
 
         /* Notify the download. */
-        when(mDistribute.notifyDownload(mockReleaseDetails, mInstallIntent)).thenReturn(true);
+        when(mDistribute.notifyDownload(mockReleaseDetails)).thenReturn(true);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        assertTrue(releaseDownloadListener.onComplete(mUri));
 
         /* Verify that startActivity() and setInstalling() are not called here. */
         verify(mContext, never()).startActivity(any(Intent.class));
@@ -408,7 +406,6 @@ public class ReleaseDownloadListenerTest {
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
 
         /* Verify that nothing is called and the method is exited early with false result. */
-        assertFalse(releaseDownloadListener.onComplete(mUri));
         verify(mContext, never()).startActivity(any(Intent.class));
         verify(mDistribute, never()).setInstalling(mockReleaseDetails);
     }

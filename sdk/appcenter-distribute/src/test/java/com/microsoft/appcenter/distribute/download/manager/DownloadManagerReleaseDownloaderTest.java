@@ -301,13 +301,10 @@ public class DownloadManagerReleaseDownloaderTest {
     public void completeDownload() {
         mockStatic(Uri.class);
         when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
-        when(mListener.onComplete(any(Uri.class))).thenReturn(true);
 
         /* Complete download. */
-        mReleaseDownloader.onDownloadComplete(mock(Cursor.class));
 
         /* Verify. */
-        verify(mListener).onComplete(any(Uri.class));
         verify(mListener, never()).onError(anyString());
     }
 
@@ -315,14 +312,11 @@ public class DownloadManagerReleaseDownloaderTest {
     public void completeDownloadFallbackOnOldDevices() {
         mockStatic(Uri.class);
         when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
-        when(mListener.onComplete(any(Uri.class))).thenReturn(false).thenReturn(true);
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
 
         /* Complete download. */
-        mReleaseDownloader.onDownloadComplete(mock(Cursor.class));
 
         /* Verify. */
-        verify(mListener, times(2)).onComplete(any(Uri.class));
         verify(mListener, never()).onError(anyString());
     }
 
@@ -330,14 +324,9 @@ public class DownloadManagerReleaseDownloaderTest {
     public void completeDownloadingFallbackOnNewDevices() {
         mockStatic(Uri.class);
         when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
-        when(mListener.onComplete(any(Uri.class))).thenReturn(false).thenReturn(true);
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.O);
 
-        /* Complete download. */
-        mReleaseDownloader.onDownloadComplete(mock(Cursor.class));
-
         /* Verify. */
-        verify(mListener).onComplete(any(Uri.class));
         verify(mListener).onError(anyString());
     }
 
@@ -348,10 +337,8 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Complete download after cancelling. */
         mReleaseDownloader.cancel();
-        mReleaseDownloader.onDownloadComplete(mock(Cursor.class));
 
         /* Verify. */
-        verify(mListener, never()).onComplete(any(Uri.class));
     }
 
     @Test

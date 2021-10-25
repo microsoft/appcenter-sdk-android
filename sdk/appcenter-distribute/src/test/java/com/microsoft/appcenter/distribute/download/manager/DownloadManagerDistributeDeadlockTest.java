@@ -250,17 +250,6 @@ public class DownloadManagerDistributeDeadlockTest {
     }
 
     @Test
-    public void onDownloadCompleteTest() throws Exception {
-        testDeadlock(true, new Runnable() {
-
-            @Override
-            public void run() {
-                mReleaseDownloader.onDownloadComplete(mCursor);
-            }
-        });
-    }
-
-    @Test
     public void onDownloadErrorTest() throws Exception {
         testDeadlock(true, new Runnable() {
 
