@@ -5,6 +5,7 @@ import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiv
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,18 +47,25 @@ public class AppCenterPackageInstallerReceiverTest {
     @Mock
     private Intent mConfirmIntent;
 
+    private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
+
     @Before
     public void setUp() {
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
         when(mContext.getPackageName()).thenReturn("com.mock.package");
+
+        mAppCenterPackageInstallerReceiver = spy(new AppCenterPackageInstallerReceiver());
     }
 
     @Test
     public void onReceiveWithActionMyPackageReplace() {
         when(mIntent.getAction()).thenReturn(MY_PACKAGE_REPLACED_INTENT);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(mock(Intent.class));
-        AppCenterPackageInstallerReceiver installerReceiver = new AppCenterPackageInstallerReceiver();
-        installerReceiver.onReceive(mContext, mIntent);
+
+        /* Perform onReceive method invocation. */
+        mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
+
+        /* Verify. */
         verify(mContext).startActivity(Matchers.<Intent>any());
     }
 
@@ -67,6 +75,11 @@ public class AppCenterPackageInstallerReceiverTest {
         when(mIntent.getExtras()).thenReturn(mBundle);
         when(mBundle.getInt(eq(PackageInstaller.EXTRA_STATUS))).thenReturn(PackageInstaller.STATUS_PENDING_USER_ACTION);
         when(mBundle.get(eq(Intent.EXTRA_INTENT))).thenReturn(mConfirmIntent);
+
+        /* Perform onReceive method invocation. */
+        mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
+
+        /* Verify. */
         verify(mContext).startActivity(mConfirmIntent);
     }
 }
