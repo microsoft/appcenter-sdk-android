@@ -346,7 +346,7 @@ public class DistributeTest extends AbstractDistributeTest {
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
 
         /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mockReleaseDetails, mInstallIntent);
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mockReleaseDetails);
 
         /* Verify. */
         assertTrue(notifyDownloadResult);
@@ -366,7 +366,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
 
         /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails);
 
         /* Verify. */
         assertFalse(notifyDownloadResult);
@@ -386,7 +386,7 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails);
 
         /* Verify. */
         assertFalse(notifyDownloadResult);
@@ -398,7 +398,7 @@ public class DistributeTest extends AbstractDistributeTest {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         Distribute.getInstance().startFromBackground(mContext);
-        assertTrue(Distribute.getInstance().notifyDownload(mock(ReleaseDetails.class), mInstallIntent));
+        assertTrue(Distribute.getInstance().notifyDownload(mock(ReleaseDetails.class)));
     }
 
     @Test
@@ -856,7 +856,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
         Distribute.getInstance().startFromBackground(mContext);
         Distribute.getInstance().onStarted(mContext, mChannel, "0", "Anna", false);
-        Distribute.getInstance().notifyDownload(mReleaseDetails, mInstallIntent);
+        Distribute.getInstance().notifyDownload(mReleaseDetails);
         verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
     }
 }
