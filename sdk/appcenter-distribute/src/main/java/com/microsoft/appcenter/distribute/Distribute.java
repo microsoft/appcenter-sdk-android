@@ -534,14 +534,6 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @Override
-    public void onActivityStarted(Activity activity) {
-        super.onActivityStarted(activity);
-
-        /* Register package installer receiver. */
-        activity.registerReceiver(mAppCenterPackageInstallerReceiver, mPackageInstallerReceiverFilter);
-    }
-
-    @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
 
@@ -559,14 +551,6 @@ public class Distribute extends AbstractAppCenterService {
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
         }
-    }
-
-    @Override
-    public void onActivityStopped(Activity activity) {
-        super.onActivityStopped(activity);
-
-        /* Unregister package installer receiver. */
-        activity.unregisterReceiver(mAppCenterPackageInstallerReceiver);
     }
 
     @Override
@@ -589,6 +573,11 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Resume distribute workflow only if there is foreground activity. */
             resumeWorkflowIfForeground();
+
+            /* Register package installer receiver. */
+            if (mForegroundActivity != null) {
+                mForegroundActivity.registerReceiver(mAppCenterPackageInstallerReceiver, mPackageInstallerReceiverFilter);
+            }
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -605,6 +594,11 @@ public class Distribute extends AbstractAppCenterService {
             /* Disable the distribute info tracker. */
             mChannel.removeListener(mDistributeInfoTracker);
             mDistributeInfoTracker = null;
+
+            /* Unregister package installer receiver. */
+            if (mForegroundActivity != null) {
+                mForegroundActivity.unregisterReceiver(mAppCenterPackageInstallerReceiver);
+            }
         }
     }
 
