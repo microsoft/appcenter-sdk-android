@@ -157,6 +157,11 @@ public class Analytics extends AbstractAppCenterService {
     private boolean mAutoPageTrackingEnabled = false;
 
     /**
+     * Stores the value of whether automatic session generation value was set, null by default.
+     */
+    private Boolean isAutomaticSessionGenerationDisabled = null;
+
+    /**
      * Init.
      */
     private Analytics() {
@@ -356,6 +361,22 @@ public class Analytics extends AbstractAppCenterService {
      */
     public static void trackEvent(String name, Map<String, String> properties) {
         getInstance().trackEventAsync(name, convertProperties(properties), null, Flags.DEFAULTS);
+    }
+
+    /**
+     * Disable automatic session generation.
+     *
+     * @param isDisabled true - if automatic session generation should be disabled, otherwise false.
+     */
+    public static void disableAutomaticSessionGeneration(boolean isDisabled) {
+        getInstance().disableAutomaticSessionGenerationAsync(isDisabled);
+    }
+
+    /**
+     * Start a new session if automatic session generation was disabled.
+     */
+    public static void startSession() {
+        getInstance().startSessionAsync();
     }
 
     /**
@@ -742,6 +763,9 @@ public class Analytics extends AbstractAppCenterService {
 
             /* Start session tracker. */
             mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
+            if(isAutomaticSessionGenerationDisabled != null) {
+                mSessionTracker.disableAutomaticSessionGeneration(isAutomaticSessionGenerationDisabled);
+            }
             mChannel.addListener(mSessionTracker);
 
             /* If we are in foreground, make sure we send start session log now (and track page). */
@@ -792,6 +816,32 @@ public class Analytics extends AbstractAppCenterService {
         pageLog.setName(name);
         pageLog.setProperties(properties);
         mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULTS);
+    }
+
+    /**
+     * Implements {@link #disableAutomaticSessionGeneration(boolean)}.
+     */
+    private synchronized void disableAutomaticSessionGenerationAsync(boolean isDisabled) {
+        if (mChannel != null) {
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "The automatic session generation value should be installed before the App Center start.");
+            return;
+        }
+        if (mSessionTracker == null) {
+            isAutomaticSessionGenerationDisabled = isDisabled;
+            return;
+        }
+        mSessionTracker.disableAutomaticSessionGeneration(isDisabled);
+    }
+
+    /**
+     * Implements {@link #startSession()}.
+     */
+    private synchronized void startSessionAsync() {
+        if (mSessionTracker != null) {
+            mSessionTracker.startSession();
+        } else {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start session should be called after the App Center start.");
+        }
     }
 
     /**

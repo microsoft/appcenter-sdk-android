@@ -38,6 +38,11 @@ public class SessionTracker extends AbstractChannelListener {
     private final Channel mChannel;
 
     /**
+     * Stores the value of whether automatic session generation is enabled, false by default.
+     */
+    private boolean isAutomaticSessionGenerationDisabled;
+
+    /**
      * Group name used to send generated logs.
      */
     private final String mGroupName;
@@ -111,6 +116,16 @@ public class SessionTracker extends AbstractChannelListener {
     }
 
     /**
+     * Disable automatic session generation.
+     *
+     * @param isDisabled true - if automatic session generation should be disabled, otherwise false.
+     */
+    public void disableAutomaticSessionGeneration(boolean isDisabled) {
+        isAutomaticSessionGenerationDisabled = isDisabled;
+        AppCenterLog.debug(Analytics.LOG_TAG, String.format("Automatic session generation is %s.", isDisabled ? "disabled" : "enabled"));
+    }
+
+    /**
      * Generate a new session identifier if the first time or
      * we went in background for more X seconds before resume or
      * if enough time has elapsed since the last background usage of the API.
@@ -123,23 +138,30 @@ public class SessionTracker extends AbstractChannelListener {
     private void sendStartSessionIfNeeded() {
         if (mSid == null || hasSessionTimedOut()) {
 
-            /* New session: generate a new identifier. */
-            mSid = UUID.randomUUID();
-
-            /* Update session storage. */
-            SessionContext.getInstance().addSession(mSid);
-
             /*
              * Record queued time for the session log itself to avoid double log if resuming
              * from background after timeout and sending a log at same time we resume like a page.
              */
             mLastQueuedLogTime = SystemClock.elapsedRealtime();
 
-            /* Enqueue a start session log. */
-            StartSessionLog startSessionLog = new StartSessionLog();
-            startSessionLog.setSid(mSid);
-            mChannel.enqueue(startSessionLog, mGroupName, Flags.DEFAULTS);
+            /* Generate and send start session log. */
+            sendStartSession();
         }
+    }
+
+    /**
+     * Generate session and send start session log.
+     */
+    private void sendStartSession() {
+        mSid = UUID.randomUUID();
+
+        /* Update session storage. */
+        SessionContext.getInstance().addSession(mSid);
+
+        /* Enqueue a start session log. */
+        StartSessionLog startSessionLog = new StartSessionLog();
+        startSessionLog.setSid(mSid);
+        mChannel.enqueue(startSessionLog, mGroupName, Flags.DEFAULTS);
     }
 
     /**
@@ -147,9 +169,12 @@ public class SessionTracker extends AbstractChannelListener {
      */
     @WorkerThread
     public void onActivityResumed() {
+        if (isAutomaticSessionGenerationDisabled) {
+            AppCenterLog.debug(Analytics.LOG_TAG, "Automatic session generation is disabled. Skip tracking a session status request.");
+            return;
+        }
 
         /* Record resume time for session timeout management. */
-        AppCenterLog.debug(Analytics.LOG_TAG, "onActivityResumed");
         mLastResumedTime = SystemClock.elapsedRealtime();
         sendStartSessionIfNeeded();
     }
@@ -159,9 +184,12 @@ public class SessionTracker extends AbstractChannelListener {
      */
     @WorkerThread
     public void onActivityPaused() {
+        if (isAutomaticSessionGenerationDisabled) {
+            AppCenterLog.debug(Analytics.LOG_TAG, "Automatic session generation is disabled. Skip tracking a session status request.");
+            return;
+        }
 
         /* Record pause time for session timeout management. */
-        AppCenterLog.debug(Analytics.LOG_TAG, "onActivityPaused");
         mLastPausedTime = SystemClock.elapsedRealtime();
     }
 
@@ -194,5 +222,17 @@ public class SessionTracker extends AbstractChannelListener {
         boolean wasBackgroundForLong = mLastResumedTime - Math.max(mLastPausedTime, mLastQueuedLogTime) >= SESSION_TIMEOUT;
         AppCenterLog.debug(Analytics.LOG_TAG, "noLogSentForLong=" + noLogSentForLong + " wasBackgroundForLong=" + wasBackgroundForLong);
         return noLogSentForLong && wasBackgroundForLong;
+    }
+
+    /**
+     * Start a new session if automatic session generation was disabled, otherwise nothing.
+     */
+    public void startSession() {
+        if(!isAutomaticSessionGenerationDisabled) {
+            AppCenterLog.debug(Analytics.LOG_TAG, "Automatic session generation is enabled. Skip start a new session request.");
+            return;
+        }
+        sendStartSession();
+        AppCenterLog.debug(Analytics.LOG_TAG, String.format("Start a new session with id: %s.", mSid));
     }
 }
