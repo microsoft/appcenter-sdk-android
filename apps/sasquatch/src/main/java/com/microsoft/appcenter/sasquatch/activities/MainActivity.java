@@ -12,14 +12,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.Log;
@@ -47,7 +44,6 @@ import com.microsoft.appcenter.sasquatch.listeners.SasquatchAnalyticsListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchCrashesListener;
 import com.microsoft.appcenter.sasquatch.listeners.SasquatchDistributeListener;
 import com.microsoft.appcenter.sasquatch.util.AttachmentsUtil;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 
 import java.util.UUID;
@@ -82,8 +78,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String SENDER_ID = "177539951155";
 
     private static final int DATABASE_SIZE_MULTIPLE = 4096;
-
-    private static int SYSTEM_ALERT_WINDOW_REQUEST_CODE= 1000;
 
     public static SharedPreferences sSharedPreferences;
 
@@ -203,20 +197,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == SYSTEM_ALERT_WINDOW_REQUEST_CODE) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (!Settings.canDrawOverlays(getApplicationContext())) {
-                    AppCenterLog.debug(AppCenterLog.LOG_TAG, "Permission request denied.");
-                } else {
-                    AppCenterLog.debug(AppCenterLog.LOG_TAG, "The permission request was successfully set.");
-                }
-            }
-        }
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
@@ -256,16 +236,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        /* Ask permission to open app after updating on Android 10 or higher. */
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                !Settings.canDrawOverlays(getApplicationContext())) {
-
-            /* Open settings activity. */
-            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:" + getApplicationContext().getPackageName()));
-            startActivityForResult(intent, SYSTEM_ALERT_WINDOW_REQUEST_CODE);
-        }
 
         sSharedPreferences = getSharedPreferences("Sasquatch", Context.MODE_PRIVATE);
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().detectDiskReads().detectDiskWrites().build());

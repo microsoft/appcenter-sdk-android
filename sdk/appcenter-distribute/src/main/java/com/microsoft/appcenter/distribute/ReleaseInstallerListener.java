@@ -5,18 +5,25 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.DownloadManager;
 import android.content.Context;
 import android.content.pm.PackageInstaller;
+import android.os.ParcelFileDescriptor;
 
 import androidx.annotation.UiThread;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -31,6 +38,11 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     private final Context mContext;
 
     /**
+     * Download id.
+     */
+    private long mDownloadId;
+
+    /**
      * Last download progress dialog that was shown.
      * Android 8 deprecates this dialog but only reason is that they want us to use a non modal
      * progress indicator while we actually use it to be a modal dialog for forced update.
@@ -41,6 +53,25 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
 
     public ReleaseInstallerListener(Context context) {
         mContext = context;
+    }
+
+    public void setDownloadId(long downloadId) {
+        mDownloadId = downloadId;
+    }
+
+    public void startInstall() {
+        AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
+        ParcelFileDescriptor pfd;
+        try {
+            DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
+            pfd = downloadManager.openDownloadedFile(mDownloadId);
+            InputStream data = new FileInputStream(pfd.getFileDescriptor());
+            InstallerUtils.installPackage(data, mContext, this);
+        } catch (FileNotFoundException e) {
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "Can't read data due to file not found. " + e.getMessage());
+        } catch (IOException e) {
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed due to error: " + e.getMessage());
+        }
     }
 
     @Override

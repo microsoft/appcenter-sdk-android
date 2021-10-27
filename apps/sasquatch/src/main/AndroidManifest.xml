@@ -7,8 +7,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.microsoft.appcenter.sasquatch">
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
     <application
         android:name=".SasquatchApplication"
         android:allowBackup="false"

@@ -12,6 +12,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
@@ -121,6 +122,25 @@ public class InstallerUtils {
         } else {
             return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Secure.getString(context.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS));
         }
+    }
+
+    /**
+     * Check whether user enabled start activity from the background.
+     *
+     * @param context any context.
+     * @return true if start activity from the background is enabled, false otherwise.
+     */
+    public static boolean isSystemAlertWindowsEnabled(@NonNull Context context) {
+
+        /*
+        * From Android 10 (29 API level) or higher we have to
+        * use this permission for restarting activity after update.
+        * See more about restrictions on starting activities from the background:
+        * - https://developer.android.com/guide/components/activities/background-starts
+        * - https://developer.android.com/about/versions/10/behavior-changes-all#sysalert-go
+        */
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+                Settings.canDrawOverlays(context);
     }
 
     /**

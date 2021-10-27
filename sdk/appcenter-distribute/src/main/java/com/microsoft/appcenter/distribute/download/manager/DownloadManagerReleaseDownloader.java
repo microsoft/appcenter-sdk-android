@@ -15,7 +15,6 @@ import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.ReleaseInstallerListener;
 import com.microsoft.appcenter.distribute.download.AbstractReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
@@ -31,8 +30,8 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROG
 
 public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader {
 
-    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull Listener listener, @NonNull ReleaseInstallerListener releaseInstallerListener) {
-        super(context, releaseDetails, listener, releaseInstallerListener);
+    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull Listener listener) {
+        super(context, releaseDetails, listener);
     }
 
     private long mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;
@@ -182,7 +181,7 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
             return;
         }
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        mListener.onComplete(mDownloadId, mReleaseInstallerListener);
+        mListener.onComplete(mDownloadId);
     }
 
     @WorkerThread

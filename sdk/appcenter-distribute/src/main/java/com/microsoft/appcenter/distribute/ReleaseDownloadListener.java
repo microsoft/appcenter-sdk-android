@@ -5,10 +5,7 @@
 
 package com.microsoft.appcenter.distribute;
 
-import static android.content.Context.DOWNLOAD_SERVICE;
-
 import android.app.Activity;
-import android.app.DownloadManager;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -16,17 +13,12 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 
-import android.os.ParcelFileDescriptor;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.NumberFormat;
 import java.util.Locale;
 
@@ -98,7 +90,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @WorkerThread
     @Override
-    public boolean onComplete(@NonNull final Long downloadId, final ReleaseInstallerListener releaseInstallerListener) {
+    public boolean onComplete(@NonNull final Long downloadId) {
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -106,29 +98,9 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
                 /* Check if app should install now. */
                 if (!Distribute.getInstance().notifyDownload(mReleaseDetails)) {
-
-                    /*
-                     * This start call triggers strict mode in UI thread so it
-                     * needs to be done here without synchronizing
-                     * (not to block methods waiting on synchronized on UI thread)
-                     * so yes we could launch install and SDK being disabled.
-                     *
-                     * This corner case cannot be avoided without triggering
-                     * strict mode exception.
-                     */
-                    AppCenterLog.info(LOG_TAG, "Show install UI.");
-                    ParcelFileDescriptor pfd;
-                    try {
-                        DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
-                        pfd = downloadManager.openDownloadedFile(downloadId);
-                        InputStream data = new FileInputStream(pfd.getFileDescriptor());
-                        InstallerUtils.installPackage(data, mContext, releaseInstallerListener);
-                    } catch (FileNotFoundException e) {
-                        AppCenterLog.error(AppCenterLog.LOG_TAG, "Can't read data due to file not found. " + e.getMessage());
-                    } catch (IOException e) {
-                        AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed due to error: " + e.getMessage());
-                    }
+                    AppCenterLog.info(LOG_TAG, "Download was completed. Start to install new update.");
                     Distribute.getInstance().setInstalling(mReleaseDetails);
+                    Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(downloadId);
                 }
             }
         });

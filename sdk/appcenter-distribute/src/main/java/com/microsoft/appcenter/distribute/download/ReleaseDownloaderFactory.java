@@ -8,7 +8,6 @@ package com.microsoft.appcenter.distribute.download;
 import android.content.Context;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.ReleaseInstallerListener;
 import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader;
 
 /**
@@ -24,7 +23,7 @@ public class ReleaseDownloaderFactory {
      * @param listener       listener to be notified of status.
      * @return release downloader instance.
      */
-    public static ReleaseDownloader create(Context context, ReleaseDetails releaseDetails, ReleaseDownloader.Listener listener, ReleaseInstallerListener releaseInstallerListener) {
-        return new DownloadManagerReleaseDownloader(context, releaseDetails, listener, releaseInstallerListener);
+    public static ReleaseDownloader create(Context context, ReleaseDetails releaseDetails, ReleaseDownloader.Listener listener) {
+        return new DownloadManagerReleaseDownloader(context, releaseDetails, listener);
     }
 }
