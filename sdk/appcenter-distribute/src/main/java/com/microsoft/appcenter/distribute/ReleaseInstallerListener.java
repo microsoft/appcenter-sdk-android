@@ -14,6 +14,7 @@ import android.app.DownloadManager;
 import android.content.Context;
 import android.content.pm.PackageInstaller;
 import android.os.ParcelFileDescriptor;
+import android.widget.Toast;
 
 import androidx.annotation.UiThread;
 
@@ -31,6 +32,11 @@ import java.util.Locale;
  * Listener for installation progress.
  */
 public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
+
+    /**
+     * Total progress size.
+     */
+    private final int mTotalProgressSize = 100;
 
     /**
      * Context.
@@ -76,7 +82,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
             InputStream data = new FileInputStream(pfd.getFileDescriptor());
             InstallerUtils.installPackage(data, mContext, this);
         } catch (IOException e) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed due to error: " + e.getMessage());
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed.", e);
         }
     }
 
@@ -96,20 +102,19 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
 
     @Override
     public void onProgressChanged(int sessionId, float progress) {
-        final int totalSize = 100;
         final int downloadProgress = (int)(progress * 100);
-        AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Installing progress %d of %d is done.", downloadProgress, totalSize));
+        AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Installing progress %d of 100 is done.", downloadProgress));
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                updateInstallProgressDialog(downloadProgress, totalSize);
+                updateInstallProgressDialog(downloadProgress);
             }
         });
     }
 
     @Override
-    public void onFinished(int sessionId, boolean success) {
+    public void onFinished(int sessionId, final boolean success) {
         AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH,"The installation of the new version is complete with the result: %s.", success ? "successful" : "failure"));
 
         // Run on the UI thread to prevent deadlock.
@@ -117,6 +122,9 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
 
             @Override
             public void run() {
+                if (!success && mContext != null) {
+                    Toast.makeText(mContext, mContext.getString(R.string.something_goes_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
+                }
                 Distribute.getInstance().notifyInstallProgress(false);
             }
         });
@@ -144,16 +152,16 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
 
     /**
      * Update progress on the install progress dialog.
-     * @param currentSize
-     * @param totalSize
+     *
+     * @param currentSize current progress status.
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @UiThread
-    private synchronized void updateInstallProgressDialog(final int currentSize, final int totalSize) {
+    private synchronized void updateInstallProgressDialog(final int currentSize) {
         AppCenterLog.debug(LOG_TAG, "Update the install progress dialog.");
 
         /* If file size is known update downloadProgress bar. */
-        if (mProgressDialog != null && totalSize >= 0) {
+        if (mProgressDialog != null) {
 
             /* When we switch from indeterminate to determinate */
             if (mProgressDialog.isIndeterminate()) {
@@ -162,7 +170,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
                 mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
                 mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_install_progress_number_format));
                 mProgressDialog.setIndeterminate(false);
-                mProgressDialog.setMax(totalSize);
+                mProgressDialog.setMax(mTotalProgressSize);
             }
             mProgressDialog.setProgress(currentSize);
         }
@@ -170,8 +178,9 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
 
     /**
      * Show the install progress dialog.
-     * @param foregroundActivity
-     * @return
+     *
+     * @param foregroundActivity any activity.
+     * @return install progress dialog.
      */
     @UiThread
     public synchronized Dialog showInstallProgressDialog(Activity foregroundActivity) {
