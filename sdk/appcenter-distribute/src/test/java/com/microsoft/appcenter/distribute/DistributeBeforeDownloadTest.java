@@ -980,7 +980,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(mReleaseDetails.getId()).thenReturn(1);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         ReleaseDownloader cachedReleaseDownloader = mock(ReleaseDownloader.class);
-        when(ReleaseDownloaderFactory.create(any(Context.class), same(mReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(cachedReleaseDownloader);
+//        when(ReleaseDownloaderFactory.create(any(Context.class), same(mReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(cachedReleaseDownloader);
         when(cachedReleaseDownloader.getReleaseDetails()).thenReturn(mReleaseDetails);
 
         /* Mock next release. */
@@ -989,7 +989,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(nextReleaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(nextReleaseDetails);
         ReleaseDownloader nextReleaseDownloader = mock(ReleaseDownloader.class);
-        when(ReleaseDownloaderFactory.create(any(Context.class), same(nextReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(nextReleaseDownloader);
+//        when(ReleaseDownloaderFactory.create(any(Context.class), same(nextReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(nextReleaseDownloader);
         when(nextReleaseDownloader.getReleaseDetails()).thenReturn(nextReleaseDetails);
 
         /* Simulate cache update. */
@@ -1038,7 +1038,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(nextReleaseDetails.getVersion()).thenReturn(7);
         when(ReleaseDetails.parse(anyString())).thenReturn(nextReleaseDetails);
         ReleaseDownloader nextReleaseDownloader = mock(ReleaseDownloader.class);
-        when(ReleaseDownloaderFactory.create(any(Context.class), same(nextReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(nextReleaseDownloader);
+//        when(ReleaseDownloaderFactory.create(any(Context.class), same(nextReleaseDetails), any(ReleaseDownloadListener.class))).thenReturn(nextReleaseDownloader);
         when(nextReleaseDownloader.getReleaseDetails()).thenReturn(nextReleaseDetails);
 
         /* Simulate cache update. */
@@ -1072,7 +1072,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Disable SDK. */
         ReleaseDownloader cleanupReleaseDownloader = mock(ReleaseDownloader.class);
-        when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
+//        when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
         Distribute.setEnabled(false).get();
         Distribute.setEnabled(true).get();
 

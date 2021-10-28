@@ -106,7 +106,7 @@ public class DownloadManagerReleaseDownloaderTest {
         });
 
         /* Create release downloader. */
-        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, mListener);
+//        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, mListener);
     }
 
     @Test

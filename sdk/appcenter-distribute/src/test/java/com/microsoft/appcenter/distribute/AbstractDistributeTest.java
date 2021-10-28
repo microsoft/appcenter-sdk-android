@@ -305,7 +305,7 @@ public class AbstractDistributeTest {
 
         /* Mock Release Downloader. */
         mockStatic(ReleaseDownloaderFactory.class);
-        when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(mReleaseDownloader);
+//        when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(mReleaseDownloader);
         when(mReleaseDownloader.getReleaseDetails()).thenReturn(mReleaseDetails);
 
         /* Mock Release Downloader Listener. */

@@ -216,7 +216,7 @@ public class DownloadManagerDistributeDeadlockTest {
         ReleaseDownloader.Listener releaseDownloadListener = (ReleaseDownloader.Listener) listenerConstructor.newInstance(mContext, mReleaseDetails);
 
         /* Init release downloader. */
-        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, releaseDownloadListener);
+//        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, releaseDownloadListener);
         Whitebox.setInternalState(mReleaseDownloader, "mDownloadId", DOWNLOAD_ID);
 
         /* Simulate we already have release details initialized, otherwise we would have to implement it naturally and the test would become unnecessarily large. */

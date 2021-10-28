@@ -369,7 +369,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         AppCenterLog.error(anyString(), anyString());
 
         /* mReleaseListener is null. */
-        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(null);
+//        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(null);
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
@@ -378,7 +378,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Enable the service. */
         ReleaseDownloader cleanupReleaseDownloader = mock(ReleaseDownloader.class);
-        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
+//        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
         distribute.setInstanceEnabled(true);
 
         /* Verify the method is called by resumeDistributeWorkflow. */
