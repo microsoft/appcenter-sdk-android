@@ -144,11 +144,13 @@ public class InstallerUtils {
     }
 
     /**
-     * Install new release.
-     * @param data input stream data from the install apk.
+     * Install a new release.
+     *
+     * @param data input stream data from the installing apk file.
      */
-    public static void installPackage(InputStream data, Context context, ReleaseInstallerListener releaseInstallerListener) throws IOException {
+    public static void installPackage(@NonNull InputStream data, Context context, ReleaseInstallerListener releaseInstallerListener) throws IOException {
         PackageInstaller.Session session = null;
+        OutputStream out = null;
         try {
 
             /* Prepare package installer. */
@@ -163,8 +165,8 @@ public class InstallerUtils {
             int sessionId = packageInstaller.createSession(params);
             session = packageInstaller.openSession(sessionId);
 
-            /* Start installing. */
-            OutputStream out = session.openWrite(sOutputStreamName, 0, -1);
+            /* Start to install a new release. */
+            out = session.openWrite(sOutputStreamName, 0, -1);
             byte[] buffer = new byte[sBufferCapacity];
             int c;
             while ((c = data.read(buffer)) != -1) {
@@ -174,22 +176,24 @@ public class InstallerUtils {
             data.close();
             out.close();
             session.commit(createIntentSender(context, sessionId));
-        } catch (IOException e) {
-            AppCenterLog.error(LOG_TAG, "Couldn't install package", e);
-        } catch (RuntimeException e) {
+        } catch (IOException | RuntimeException e) {
             if (session != null) {
                 session.abandon();
             }
-            AppCenterLog.error(LOG_TAG, "Couldn't install package", e);
+            AppCenterLog.error(LOG_TAG, "Couldn't install a new release.", e);
         } finally {
             if (session != null) {
                 session.close();
             }
+            if (out != null) {
+                out.close();
+            }
+            data.close();
         }
     }
 
     /**
-     * Return IntentSender with the receiver that will be launched after installation.
+     * Return IntentSender with the receiver that listens to the package installer session status.
      *
      * @param context any context.
      * @param sessionId install sessionId.

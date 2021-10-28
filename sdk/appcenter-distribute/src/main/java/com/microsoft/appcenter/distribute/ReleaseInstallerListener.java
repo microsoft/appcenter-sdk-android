@@ -55,10 +55,18 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         mContext = context;
     }
 
+    /**
+     * Set the downloadId of the downloaded file to be installed.
+     *
+     * @param downloadId downloadId of the downloaded file.
+     */
     public void setDownloadId(long downloadId) {
         mDownloadId = downloadId;
     }
 
+    /**
+     * Start to install a new release.
+     */
     public void startInstall() {
         AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
         ParcelFileDescriptor pfd;
@@ -67,8 +75,6 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
             pfd = downloadManager.openDownloadedFile(mDownloadId);
             InputStream data = new FileInputStream(pfd.getFileDescriptor());
             InstallerUtils.installPackage(data, mContext, this);
-        } catch (FileNotFoundException e) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "Can't read data due to file not found. " + e.getMessage());
         } catch (IOException e) {
             AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed due to error: " + e.getMessage());
         }
@@ -92,7 +98,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     public void onProgressChanged(int sessionId, float progress) {
         final int totalSize = 100;
         final int downloadProgress = (int)(progress * 100);
-        AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Installing %d of %d done.", downloadProgress, totalSize));
+        AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Installing progress %d of %d is done.", downloadProgress, totalSize));
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -116,8 +122,11 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         });
     }
 
+    /**
+     * Hide the install progress dialog.
+     */
     public synchronized void hideInstallProgressDialog() {
-        AppCenterLog.debug(LOG_TAG, "Hide install progress dialog.");
+        AppCenterLog.debug(LOG_TAG, "Hide the install progress dialog.");
         if (mProgressDialog != null) {
             final android.app.ProgressDialog progressDialog = mProgressDialog;
             mProgressDialog = null;
@@ -133,10 +142,15 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         }
     }
 
+    /**
+     * Update progress on the install progress dialog.
+     * @param currentSize
+     * @param totalSize
+     */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @UiThread
     private synchronized void updateInstallProgressDialog(final int currentSize, final int totalSize) {
-        AppCenterLog.debug(LOG_TAG, "Show installation progress dialog.");
+        AppCenterLog.debug(LOG_TAG, "Update the install progress dialog.");
 
         /* If file size is known update downloadProgress bar. */
         if (mProgressDialog != null && totalSize >= 0) {
@@ -154,9 +168,14 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         }
     }
 
+    /**
+     * Show the install progress dialog.
+     * @param foregroundActivity
+     * @return
+     */
     @UiThread
     public synchronized Dialog showInstallProgressDialog(Activity foregroundActivity) {
-        AppCenterLog.debug(LOG_TAG, "Show installation progress dialog.");
+        AppCenterLog.debug(LOG_TAG, "Show the install progress dialog.");
         mProgressDialog = new android.app.ProgressDialog(foregroundActivity);
         mProgressDialog.setTitle(mContext.getString(R.string.appcenter_distribute_install_dialog));
         mProgressDialog.setCancelable(false);

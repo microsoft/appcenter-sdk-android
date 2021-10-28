@@ -28,7 +28,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Bundle extras = intent.getExtras();
         if (MY_PACKAGE_REPLACED_ACTION.equals(intent.getAction())) {
-            AppCenterLog.debug(AppCenterLog.LOG_TAG, "Restart application after installing the new release.");
+            AppCenterLog.debug(AppCenterLog.LOG_TAG, "Restart application after installing a new release.");
             Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             context.startActivity(launchIntent);
@@ -39,7 +39,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
                 case PackageInstaller.STATUS_PENDING_USER_ACTION:
                     AppCenterLog.debug(AppCenterLog.LOG_TAG, "Ask confirmation to install a new release.");
 
-                    // This test app isn't privileged, so the user has to confirm the install.
+                    /* This test app isn't privileged, so the user has to confirm the install. */
                     Intent confirmIntent = (Intent) extras.get(Intent.EXTRA_INTENT);
                     context.startActivity(confirmIntent);
                     break;
@@ -53,7 +53,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
                 case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
                 case PackageInstaller.STATUS_FAILURE_INVALID:
                 case PackageInstaller.STATUS_FAILURE_STORAGE:
-                    AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format(Locale.ENGLISH, "Failed to install new release with status: %s. Error message: %s.", status, message));
+                    AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format(Locale.ENGLISH, "Failed to install a new release with status: %s. Error message: %s.", status, message));
                     Toast.makeText(context, "Failed during installing new release.", Toast.LENGTH_SHORT).show();
                     break;
                 default:
