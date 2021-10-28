@@ -90,7 +90,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @WorkerThread
     @Override
-    public boolean onComplete(@NonNull final Long downloadId) {
+    public void onComplete(@NonNull final Long downloadId) {
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -104,7 +104,6 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
                 }
             }
         });
-        return true;
     }
 
     @WorkerThread

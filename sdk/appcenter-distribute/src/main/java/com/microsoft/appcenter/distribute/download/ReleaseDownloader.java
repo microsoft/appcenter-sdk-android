@@ -76,7 +76,7 @@ public interface ReleaseDownloader {
          * @return <code>true</code> if this file can be installed, <code>false</code> otherwise.
          */
         @WorkerThread
-        boolean onComplete(@NonNull Long downloadId);
+        void onComplete(@NonNull Long downloadId);
 
         /**
          * Called when an error occurs during the downloading.
