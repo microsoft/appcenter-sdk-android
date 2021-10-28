@@ -148,15 +148,15 @@ public class InstallerUtils {
      *
      * @param data input stream data from the installing apk file.
      */
-    public synchronized static void installPackage(@NonNull InputStream data, Context context, ReleaseInstallerListener releaseInstallerListener) throws IOException {
+    public synchronized static void installPackage(@NonNull InputStream data, Context context, PackageInstaller.SessionCallback sessionCallback) throws IOException {
         PackageInstaller.Session session = null;
         OutputStream out = null;
         try {
 
             /* Prepare package installer. */
             PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
-            if (releaseInstallerListener != null) {
-                packageInstaller.registerSessionCallback(releaseInstallerListener);
+            if (sessionCallback != null) {
+                packageInstaller.registerSessionCallback(sessionCallback);
             }
             PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
                     PackageInstaller.SessionParams.MODE_FULL_INSTALL);
