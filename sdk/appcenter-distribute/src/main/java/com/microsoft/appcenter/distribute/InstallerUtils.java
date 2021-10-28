@@ -130,7 +130,7 @@ public class InstallerUtils {
      * @param context any context.
      * @return true if start activity from the background is enabled, false otherwise.
      */
-    public static boolean isSystemAlertWindowsEnabled(@NonNull Context context) {
+    public synchronized static boolean isSystemAlertWindowsEnabled(@NonNull Context context) {
 
         /*
         * From Android 10 (29 API level) or higher we have to
@@ -148,7 +148,7 @@ public class InstallerUtils {
      *
      * @param data input stream data from the installing apk file.
      */
-    public static void installPackage(@NonNull InputStream data, Context context, ReleaseInstallerListener releaseInstallerListener) throws IOException {
+    public synchronized static void installPackage(@NonNull InputStream data, Context context, ReleaseInstallerListener releaseInstallerListener) throws IOException {
         PackageInstaller.Session session = null;
         OutputStream out = null;
         try {
@@ -199,7 +199,7 @@ public class InstallerUtils {
      * @param sessionId install sessionId.
      * @return IntentSender with receiver.
      */
-    public static IntentSender createIntentSender(Context context, int sessionId) {
+    public synchronized static IntentSender createIntentSender(Context context, int sessionId) {
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 sessionId,

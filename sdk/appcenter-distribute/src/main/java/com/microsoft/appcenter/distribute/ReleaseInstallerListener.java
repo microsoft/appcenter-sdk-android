@@ -60,14 +60,14 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
      *
      * @param downloadId downloadId of the downloaded file.
      */
-    public void setDownloadId(long downloadId) {
+    public synchronized void setDownloadId(long downloadId) {
         mDownloadId = downloadId;
     }
 
     /**
      * Start to install a new release.
      */
-    public void startInstall() {
+    public synchronized void startInstall() {
         AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
         ParcelFileDescriptor pfd;
         try {

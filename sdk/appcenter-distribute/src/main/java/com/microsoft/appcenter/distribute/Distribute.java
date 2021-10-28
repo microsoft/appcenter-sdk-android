@@ -608,7 +608,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Register package installer receiver.
      */
-    private void registerReceiver() {
+    private synchronized void registerReceiver() {
         if (mForegroundActivity != null) {
             try {
                 mForegroundActivity.registerReceiver(mAppCenterPackageInstallerReceiver, mPackageInstallerReceiverFilter);
@@ -624,7 +624,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Unregister package installer receiver.
      */
-    private void unregisterReceiver() {
+    private synchronized void unregisterReceiver() {
         if (mForegroundActivity != null) {
             try {
                 mForegroundActivity.unregisterReceiver(mAppCenterPackageInstallerReceiver);
@@ -824,6 +824,7 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Continue to install a new release if before resume was shown dialog. */
             if (mAlertSystemWindowsDialog != null) {
+                mAlertSystemWindowsDialog.dismiss();
                 mAlertSystemWindowsDialog = null;
                 installingUpdate();
                 return;
