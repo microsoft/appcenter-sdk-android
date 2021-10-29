@@ -145,6 +145,7 @@ public class DownloadManagerUpdateTaskTest {
         mUpdateTask.doInBackground();
 
         /* Verify. */
+        verify(mDownloader).onDownloadComplete();
         verify(mDownloader, never()).onDownloadError(any(RuntimeException.class));
         verify(mCursor).close();
     }

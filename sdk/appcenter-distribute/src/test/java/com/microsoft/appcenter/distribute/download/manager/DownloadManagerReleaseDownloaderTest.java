@@ -106,7 +106,7 @@ public class DownloadManagerReleaseDownloaderTest {
         });
 
         /* Create release downloader. */
-//        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, mListener);
+        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, mListener);
     }
 
     @Test
@@ -303,8 +303,10 @@ public class DownloadManagerReleaseDownloaderTest {
         when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
 
         /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
+        verify(mListener).onComplete(anyLong());
         verify(mListener, never()).onError(anyString());
     }
 
@@ -315,19 +317,11 @@ public class DownloadManagerReleaseDownloaderTest {
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
 
         /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
+        verify(mListener).onComplete(anyLong());
         verify(mListener, never()).onError(anyString());
-    }
-
-    @Test
-    public void completeDownloadingFallbackOnNewDevices() {
-        mockStatic(Uri.class);
-        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.O);
-
-        /* Verify. */
-        verify(mListener).onError(anyString());
     }
 
     @Test
@@ -337,8 +331,10 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Complete download after cancelling. */
         mReleaseDownloader.cancel();
+        mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
+        verify(mListener, never()).onComplete(anyLong());
     }
 
     @Test

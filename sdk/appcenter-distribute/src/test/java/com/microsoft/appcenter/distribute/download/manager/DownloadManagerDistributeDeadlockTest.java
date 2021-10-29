@@ -197,7 +197,6 @@ public class DownloadManagerDistributeDeadlockTest {
         when(mInstallIntent.getData()).thenReturn(mUri);
         when(mInstallIntent.resolveActivity(eq(mPackageManager))).thenReturn(mock(ComponentName.class));
         mockStatic(InstallerUtils.class);
-        PowerMockito.when(InstallerUtils.class, "getInstallIntent", Matchers.<Object[]>any()).thenReturn(mInstallIntent);
 
         /* Mock app name and other string resources. */
         mockStatic(AppNameHelper.class);
@@ -216,7 +215,7 @@ public class DownloadManagerDistributeDeadlockTest {
         ReleaseDownloader.Listener releaseDownloadListener = (ReleaseDownloader.Listener) listenerConstructor.newInstance(mContext, mReleaseDetails);
 
         /* Init release downloader. */
-//        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, releaseDownloadListener);
+        mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, releaseDownloadListener);
         Whitebox.setInternalState(mReleaseDownloader, "mDownloadId", DOWNLOAD_ID);
 
         /* Simulate we already have release details initialized, otherwise we would have to implement it naturally and the test would become unnecessarily large. */
@@ -245,6 +244,17 @@ public class DownloadManagerDistributeDeadlockTest {
             @Override
             public void run() {
                 mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
+            }
+        });
+    }
+
+    @Test
+    public void onDownloadCompleteTest() throws Exception {
+        testDeadlock(true, new Runnable() {
+
+            @Override
+            public void run() {
+                mReleaseDownloader.onDownloadComplete();
             }
         });
     }
