@@ -49,6 +49,11 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     private long mDownloadId;
 
     /**
+     * Total size of the file..
+     */
+    private long mTotalSize;
+
+    /**
      * Last download progress dialog that was shown.
      * Android 8 deprecates this dialog but only reason is that they want us to use a non modal
      * progress indicator while we actually use it to be a modal dialog for forced update.
@@ -71,19 +76,33 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     }
 
     /**
+     * Set the total size of the downloaded file.
+     *
+     * @param totalSize downloadId of the downloaded file.
+     */
+    public synchronized void setTotalSize(long totalSize) {
+        mTotalSize = totalSize;
+    }
+
+    /**
      * Start to install a new release.
      */
-    public synchronized void startInstall() {
+    public synchronized boolean startInstall() {
         AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
         ParcelFileDescriptor pfd;
         try {
             DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
             pfd = downloadManager.openDownloadedFile(mDownloadId);
             InputStream data = new FileInputStream(pfd.getFileDescriptor());
+            if (pfd.getStatSize() != mTotalSize) {
+                throw new IOException("The file is invalid.");
+            }
             InstallerUtils.installPackage(data, mContext, this);
         } catch (IOException e) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed.", e);
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release.", e);
+            return false;
         }
+        return true;
     }
 
     @Override

@@ -1941,18 +1941,21 @@ public class Distribute extends AbstractAppCenterService {
             AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
             return;
         }
-        mReleaseInstallerListener.startInstall();
+        if (!mReleaseInstallerListener.startInstall()) {
+            Toast.makeText(mContext, R.string.something_goes_wrong_during_installing_new_release, Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
      * Ask permission on start application after update or start to install a new update.
      */
-    synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId) {
+    synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId, long totalSize) {
         if (mReleaseInstallerListener == null) {
             AppCenterLog.debug(LOG_TAG, "Couldn't set 'downloadId' value due to the release installer wasn't initialized.");
             return;
         }
         mReleaseInstallerListener.setDownloadId(downloadId);
+        mReleaseInstallerListener.setTotalSize(totalSize);
 
         /* Check permission on start application after update. */
         if (InstallerUtils.isSystemAlertWindowsEnabled(mContext)) {

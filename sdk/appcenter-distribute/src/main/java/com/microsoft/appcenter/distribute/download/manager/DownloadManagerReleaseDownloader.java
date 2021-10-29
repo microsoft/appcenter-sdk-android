@@ -176,12 +176,12 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     @WorkerThread
-    synchronized void onDownloadComplete() {
+    synchronized void onDownloadComplete(long totalSize) {
         if (isCancelled()) {
             return;
         }
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        mListener.onComplete(mDownloadId);
+        mListener.onComplete(mDownloadId, totalSize);
     }
 
     @WorkerThread

@@ -58,7 +58,8 @@ class DownloadManagerUpdateTask extends AsyncTask<Void, Void, Void> {
                 }
 
                 /* Complete download. */
-                mDownloader.onDownloadComplete();
+                long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                mDownloader.onDownloadComplete(totalSize);
             } finally {
                 cursor.close();
             }
