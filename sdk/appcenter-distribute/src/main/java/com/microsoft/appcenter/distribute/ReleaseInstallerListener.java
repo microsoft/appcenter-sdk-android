@@ -122,7 +122,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
 
             @Override
             public void run() {
-                if (!success && mContext != null) {
+                if (!success) {
                     Toast.makeText(mContext, mContext.getString(R.string.something_goes_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
                 }
                 Distribute.getInstance().notifyInstallProgress(false);

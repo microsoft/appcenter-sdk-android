@@ -12,7 +12,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
-import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
@@ -148,9 +147,9 @@ public class InstallerUtils {
      *
      * @param data input stream data from the installing apk file.
      */
-    public synchronized static void installPackage(@NonNull InputStream data, Context context, PackageInstaller.SessionCallback sessionCallback) throws IOException {
+    public synchronized static void installPackage(@NonNull InputStream data, Context context, PackageInstaller.SessionCallback sessionCallback) {
         PackageInstaller.Session session = null;
-        OutputStream out = null;
+        OutputStream out;
         try {
 
             /* Prepare package installer. */
@@ -176,7 +175,7 @@ public class InstallerUtils {
             data.close();
             out.close();
             session.commit(createIntentSender(context, sessionId));
-        } catch (IOException | RuntimeException e) {
+        } catch (IOException e) {
             if (session != null) {
                 session.abandon();
             }
@@ -185,10 +184,6 @@ public class InstallerUtils {
             if (session != null) {
                 session.close();
             }
-            if (out != null) {
-                out.close();
-            }
-            data.close();
         }
     }
 
