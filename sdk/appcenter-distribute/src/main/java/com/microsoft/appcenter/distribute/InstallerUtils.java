@@ -173,15 +173,12 @@ public class InstallerUtils {
             data.close();
             out.close();
             session.commit(createIntentSender(context, sessionId));
+            session.close();
         } catch (IOException e) {
             if (session != null) {
                 session.abandon();
             }
             AppCenterLog.error(LOG_TAG, "Couldn't install a new release.", e);
-        } finally {
-            if (session != null) {
-                session.close();
-            }
         }
     }
 

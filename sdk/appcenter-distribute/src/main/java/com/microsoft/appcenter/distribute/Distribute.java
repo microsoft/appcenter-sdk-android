@@ -836,9 +836,6 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Do nothing during installing a new release. */
             if (mInstallInProgress) {
-                if (mReleaseInstallerListener != null) {
-                    mReleaseInstallerListener.showInstallProgressDialog(mForegroundActivity);
-                }
                 AppCenterLog.info(LOG_TAG, "Installing in progress...");
                 return;
             }
