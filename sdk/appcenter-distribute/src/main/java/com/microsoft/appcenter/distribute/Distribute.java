@@ -609,6 +609,10 @@ public class Distribute extends AbstractAppCenterService {
      * Register package installer receiver.
      */
     private synchronized void registerReceiver() {
+        if (!isInstanceEnabled()) {
+            AppCenterLog.warn(LOG_TAG, "Couldn't register receiver due to Distribute module is disabled.");
+            return;
+        }
         if (mForegroundActivity != null) {
             try {
                 mForegroundActivity.registerReceiver(mAppCenterPackageInstallerReceiver, mPackageInstallerReceiverFilter);

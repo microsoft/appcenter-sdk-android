@@ -149,7 +149,6 @@ public class InstallerUtils {
      */
     public synchronized static void installPackage(@NonNull InputStream data, Context context, PackageInstaller.SessionCallback sessionCallback) {
         PackageInstaller.Session session = null;
-        OutputStream out;
         try {
 
             /* Prepare package installer. */
@@ -157,15 +156,14 @@ public class InstallerUtils {
             if (sessionCallback != null) {
                 packageInstaller.registerSessionCallback(sessionCallback);
             }
-            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(
-                    PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
 
             /* Prepare session. */
             int sessionId = packageInstaller.createSession(params);
             session = packageInstaller.openSession(sessionId);
 
             /* Start to install a new release. */
-            out = session.openWrite(sOutputStreamName, 0, -1);
+            OutputStream out = session.openWrite(sOutputStreamName, 0, -1);
             byte[] buffer = new byte[sBufferCapacity];
             int c;
             while ((c = data.read(buffer)) != -1) {
