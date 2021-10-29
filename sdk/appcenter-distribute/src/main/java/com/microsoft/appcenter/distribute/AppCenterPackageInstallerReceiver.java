@@ -26,13 +26,13 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Bundle extras = intent.getExtras();
         if (MY_PACKAGE_REPLACED_ACTION.equals(intent.getAction())) {
             AppCenterLog.debug(AppCenterLog.LOG_TAG, "Restart application after installing a new release.");
             Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
             launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
             context.startActivity(launchIntent);
         } else if (START_ACTION.equals(intent.getAction())) {
+            Bundle extras = intent.getExtras();
             int status = extras.getInt(PackageInstaller.EXTRA_STATUS);
             String message = extras.getString(PackageInstaller.EXTRA_STATUS_MESSAGE);
             switch (status) {
@@ -60,6 +60,8 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
                     AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized status received from installer: %s", status));
                     Toast.makeText(context, context.getString(R.string.something_goes_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
             }
+        } else {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized action %s - do nothing.", intent.getAction()));
         }
     }
 }
