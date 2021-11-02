@@ -1906,6 +1906,7 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @UiThread
+    @VisibleForTesting
     synchronized void notifyInstallProgress(boolean isInProgress) {
         mInstallInProgress = isInProgress;
         if (isInProgress) {

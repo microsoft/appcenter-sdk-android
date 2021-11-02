@@ -33,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,7 +58,8 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("CanBeFinal")
-@RunWith(Parameterized.class)
+@PrepareForTest({ Build.class, AsyncTaskUtils.class })
+@RunWith(PowerMockRunner.class)
 public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
     @Parameterized.Parameter
@@ -304,7 +306,6 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     }
 
     @Test
-    @PrepareForTest(Build.class)
     @SuppressLint("InlinedApi")
     public void clickSettingsOnAndroidO() throws Exception {
 
@@ -331,7 +332,6 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
     }
 
     @Test
-    @PrepareForTest(AsyncTaskUtils.class)
     public void clickSettingsThenEnableThenBack() throws Exception {
 
         /* Click settings. */

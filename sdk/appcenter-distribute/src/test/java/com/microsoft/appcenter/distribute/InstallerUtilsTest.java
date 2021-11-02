@@ -108,7 +108,6 @@ public class InstallerUtilsTest {
         /* Verify. */
         verify(mData, never()).close();
         verify(mSession).abandon();
-        verify(mSession).close();
     }
 
     @Test
