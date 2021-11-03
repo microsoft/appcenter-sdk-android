@@ -6,6 +6,11 @@
 
 * **[Breaking change]** Remove `AppCenter.setCustomProperties` API.
 * **[Fix]** Remove `android.support.test.InstrumentationRegistry` string that caused an error when checking applications on availability of android support libraries.
+
+### App Center Distribute
+
+* **[Feature]** Replace install a new release from deprecated intent action [ACTION_INSTALL_PACKAGE](https://developer.android.com/reference/android/content/Intent#ACTION_INSTALL_PACKAGE) to `PackageInstaller` API.
+
 ___
 
 ## Version 4.3.1
