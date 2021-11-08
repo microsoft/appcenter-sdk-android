@@ -41,6 +41,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
 
                     /* This test app isn't privileged, so the user has to confirm the install. */
                     Intent confirmIntent = (Intent) extras.get(Intent.EXTRA_INTENT);
+                    confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(confirmIntent);
                     break;
                 case PackageInstaller.STATUS_SUCCESS:
