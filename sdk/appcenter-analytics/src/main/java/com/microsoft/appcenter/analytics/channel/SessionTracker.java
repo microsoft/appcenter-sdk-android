@@ -38,9 +38,9 @@ public class SessionTracker extends AbstractChannelListener {
     private final Channel mChannel;
 
     /**
-     * Stores the value of whether automatic session generation is enabled, false by default.
+     * Stores the value of whether manual session tracker value was enabled, false by default.
      */
-    private boolean isAutomaticSessionGenerationDisabled;
+    private boolean isManualSessionTrackerEnabled = false;;
 
     /**
      * Group name used to send generated logs.
@@ -116,16 +116,6 @@ public class SessionTracker extends AbstractChannelListener {
     }
 
     /**
-     * Disable automatic session generation.
-     *
-     * @param isDisabled true - if automatic session generation should be disabled, otherwise false.
-     */
-    public void disableAutomaticSessionGeneration(boolean isDisabled) {
-        isAutomaticSessionGenerationDisabled = isDisabled;
-        AppCenterLog.debug(Analytics.LOG_TAG, String.format("Automatic session generation is %s.", isDisabled ? "disabled" : "enabled"));
-    }
-
-    /**
      * Generate a new session identifier if the first time or
      * we went in background for more X seconds before resume or
      * if enough time has elapsed since the last background usage of the API.
@@ -169,8 +159,8 @@ public class SessionTracker extends AbstractChannelListener {
      */
     @WorkerThread
     public void onActivityResumed() {
-        if (isAutomaticSessionGenerationDisabled) {
-            AppCenterLog.debug(Analytics.LOG_TAG, "Automatic session generation is disabled. Skip tracking a session status request.");
+        if (isManualSessionTrackerEnabled) {
+            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request.");
             return;
         }
 
@@ -184,8 +174,8 @@ public class SessionTracker extends AbstractChannelListener {
      */
     @WorkerThread
     public void onActivityPaused() {
-        if (isAutomaticSessionGenerationDisabled) {
-            AppCenterLog.debug(Analytics.LOG_TAG, "Automatic session generation is disabled. Skip tracking a session status request.");
+        if (isManualSessionTrackerEnabled) {
+            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request.");
             return;
         }
 
@@ -198,6 +188,26 @@ public class SessionTracker extends AbstractChannelListener {
      */
     public void clearSessions() {
         SessionContext.getInstance().clearSessions();
+    }
+
+    /**
+     * Enable manual session tracker.
+     */
+    public void enableManualSessionTracker() {
+        isManualSessionTrackerEnabled = true;
+        AppCenterLog.debug(Analytics.LOG_TAG,"Manual session tracker is enabled.");
+    }
+
+    /**
+     * Start a new session if manual session tracker was enabled.
+     */
+    public void startSession() {
+        if(!isManualSessionTrackerEnabled) {
+            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is disabled. Skip start a new session request.");
+            return;
+        }
+        sendStartSession();
+        AppCenterLog.debug(Analytics.LOG_TAG, String.format("Start a new session with id: %s.", mSid));
     }
 
     /**
@@ -222,17 +232,5 @@ public class SessionTracker extends AbstractChannelListener {
         boolean wasBackgroundForLong = mLastResumedTime - Math.max(mLastPausedTime, mLastQueuedLogTime) >= SESSION_TIMEOUT;
         AppCenterLog.debug(Analytics.LOG_TAG, "noLogSentForLong=" + noLogSentForLong + " wasBackgroundForLong=" + wasBackgroundForLong);
         return noLogSentForLong && wasBackgroundForLong;
-    }
-
-    /**
-     * Start a new session if automatic session generation was disabled, otherwise nothing.
-     */
-    public void startSession() {
-        if(!isAutomaticSessionGenerationDisabled) {
-            AppCenterLog.debug(Analytics.LOG_TAG, "Automatic session generation is enabled. Skip start a new session request.");
-            return;
-        }
-        sendStartSession();
-        AppCenterLog.debug(Analytics.LOG_TAG, String.format("Start a new session with id: %s.", mSid));
     }
 }

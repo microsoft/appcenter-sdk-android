@@ -157,9 +157,9 @@ public class Analytics extends AbstractAppCenterService {
     private boolean mAutoPageTrackingEnabled = false;
 
     /**
-     * Stores the value of whether automatic session generation value was set, null by default.
+     * Stores the value of whether manual session tracker was enabled, false by default.
      */
-    private Boolean isAutomaticSessionGenerationDisabled = null;
+    private boolean isManualSessionTrackerEnabled = false;
 
     /**
      * Init.
@@ -364,16 +364,14 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Disable automatic session generation.
-     *
-     * @param isDisabled true - if automatic session generation should be disabled, otherwise false.
+     * Enable manual session tracker.
      */
-    public static void disableAutomaticSessionGeneration(boolean isDisabled) {
-        getInstance().disableAutomaticSessionGenerationAsync(isDisabled);
+    public static void enableManualSessionTracker() {
+        getInstance().enableManualSessionTrackerAsync();
     }
 
     /**
-     * Start a new session if automatic session generation was disabled.
+     * Start a new session if manual session tracker was enabled.
      */
     public static void startSession() {
         getInstance().startSessionAsync();
@@ -763,8 +761,8 @@ public class Analytics extends AbstractAppCenterService {
 
             /* Start session tracker. */
             mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
-            if(isAutomaticSessionGenerationDisabled != null) {
-                mSessionTracker.disableAutomaticSessionGeneration(isAutomaticSessionGenerationDisabled);
+            if (isManualSessionTrackerEnabled) {
+                mSessionTracker.enableManualSessionTracker();
             }
             mChannel.addListener(mSessionTracker);
 
@@ -819,29 +817,29 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Implements {@link #disableAutomaticSessionGeneration(boolean)}.
+     * Implements {@link #enableManualSessionTracker()}.
      */
-    private synchronized void disableAutomaticSessionGenerationAsync(boolean isDisabled) {
+    private synchronized void enableManualSessionTrackerAsync() {
         if (mChannel != null) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "The automatic session generation value should be installed before the App Center start.");
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "The manual session tracker should be installed before the App Center start.");
             return;
         }
         if (mSessionTracker == null) {
-            isAutomaticSessionGenerationDisabled = isDisabled;
+            isManualSessionTrackerEnabled = true;
             return;
         }
-        mSessionTracker.disableAutomaticSessionGeneration(isDisabled);
+        mSessionTracker.enableManualSessionTracker();
     }
 
     /**
      * Implements {@link #startSession()}.
      */
     private synchronized void startSessionAsync() {
-        if (mSessionTracker != null) {
-            mSessionTracker.startSession();
-        } else {
-            AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start session should be called after the App Center start.");
+        if (mSessionTracker == null) {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start session should be called after the Analytics start.");
+            return;
         }
+        mSessionTracker.startSession();
     }
 
     /**
