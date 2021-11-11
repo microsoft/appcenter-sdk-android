@@ -13,9 +13,7 @@ import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Collections;
 
@@ -34,7 +32,6 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
  * before we introduced the switch.
  * This test class focuses on the getter and switching the value.
  */
-@RunWith(PowerMockRunner.class)
 public class DistributeUpdateTrackTest extends AbstractDistributeTest {
 
     @Test

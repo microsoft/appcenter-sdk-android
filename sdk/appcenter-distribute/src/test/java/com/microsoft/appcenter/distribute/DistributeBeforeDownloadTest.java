@@ -31,14 +31,12 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -77,8 +75,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest({DistributeUtils.class, SessionContext.class, AsyncTaskUtils.class, ProgressDialog.class})
-@RunWith(PowerMockRunner.class)
+@PrepareForTest({DistributeUtils.class, SessionContext.class})
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
     private void mockSessionContext() {
@@ -508,6 +505,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
+    @PrepareForTest(AsyncTaskUtils.class)
     public void disableBeforeDownload() throws Exception {
 
         /* Mock we already have redirection parameters. */
@@ -562,6 +560,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
+    @PrepareForTest({AsyncTaskUtils.class, ProgressDialog.class})
     public void pauseBeforeDownload() throws Exception {
 
         /* Mock ProgressDialog. */

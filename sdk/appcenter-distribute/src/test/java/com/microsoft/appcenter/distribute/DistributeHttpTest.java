@@ -18,10 +18,8 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -42,7 +40,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@RunWith(PowerMockRunner.class)
 public class DistributeHttpTest extends AbstractDistributeTest {
 
     @Test

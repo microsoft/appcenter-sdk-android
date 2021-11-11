@@ -58,7 +58,6 @@ import org.powermock.reflect.Whitebox;
         AppCenterLog.class,
         Build.class
 })
-@RunWith(PowerMockRunner.class)
 public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest {
 
     @Mock
@@ -76,9 +75,6 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         /* Mock static classes. */
         mockStatic(Settings.class);
         mockStatic(AppCenterLog.class);
-
-        /* Reset mock installer utils. */
-        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenCallRealMethod();
 
         /* Reset mock release listener methods. */
         doCallRealMethod().when(mReleaseDownloaderListener).onComplete(anyLong());
@@ -124,20 +120,11 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         verify(mAlertWindowsDialog, never()).show();
     }
 
-    @After
-    public void tearDown() {
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 0);
-    }
-
-    private static void mockApiLevel(int apiLevel) {
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
-    }
-
     @Test
     public void showAndEnableAlertWindowsDialogQ() {
 
         /* Mock permission state for Android Q. */
-        mockApiLevel(Build.VERSION_CODES.Q);
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
         /* Notify about complete download. */
@@ -179,6 +166,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         Distribute.getInstance().onApplicationEnterBackground();
         Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityResumed(mActivity);
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(true);
 
         /* Verify that after resume do nothing. */
         verifyStatic();
@@ -198,7 +186,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
     private void showAndEnableAlertWindowsDialogLowQ(boolean isEnabled) {
 
         /* Mock permission state for Android M. */
-        mockApiLevel(Build.VERSION_CODES.M);
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(true);
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(isEnabled);
 
         /* Notify about complete download. */
@@ -233,7 +221,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
     public void showAndDisableAlertWindowsDialogQ() {
 
         /* Mock permission state for Android Q. */
-        mockApiLevel(Build.VERSION_CODES.Q);
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
         /* Notify about complete download. */
@@ -258,7 +246,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
     public void showAndCancelAlertWindowsDialog() {
 
         /* Mock permission state for Android Q. */
-        mockApiLevel(Build.VERSION_CODES.Q);
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
         /* Notify about complete download. */

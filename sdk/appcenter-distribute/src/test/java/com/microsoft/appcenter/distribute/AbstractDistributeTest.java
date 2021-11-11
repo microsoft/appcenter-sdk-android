@@ -39,13 +39,12 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.internal.stubbing.answers.Returns;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
 import java.util.UUID;
@@ -85,7 +84,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         ReleaseDownloaderFactory.class,
         SharedPreferencesManager.class,
         TextUtils.class,
-        AppCenterLog.class,
         Toast.class
 })
 public class AbstractDistributeTest {
@@ -95,6 +93,9 @@ public class AbstractDistributeTest {
     private static final String DISTRIBUTE_ENABLED_KEY = KEY_ENABLED + "_Distribute";
 
     private static final String LOCAL_FILENAME_PATH_MOCK = "ANSWER_IS_42";
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     /**
      * Use a timeout to fail test if deadlocks happen due to a code change.

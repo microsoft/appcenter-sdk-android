@@ -23,13 +23,11 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
@@ -57,7 +55,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @SuppressWarnings("unused")
 @PrepareForTest({ErrorDetails.class, DistributeUtils.class, DeviceInfoHelper.class})
-@RunWith(PowerMockRunner.class)
 public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     private void start(Distribute distribute) {

@@ -10,9 +10,7 @@ import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCallback;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Collections;
 
@@ -25,7 +23,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@RunWith(PowerMockRunner.class)
 public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
 
     @Test
