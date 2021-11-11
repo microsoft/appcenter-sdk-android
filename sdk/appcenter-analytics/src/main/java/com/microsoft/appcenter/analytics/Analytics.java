@@ -821,14 +821,10 @@ public class Analytics extends AbstractAppCenterService {
      */
     private synchronized void enableManualSessionTrackerAsync() {
         if (mChannel != null) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "The manual session tracker should be installed before the App Center start.");
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "The manual session tracker should be set before the App Center start.");
             return;
         }
-        if (mSessionTracker == null) {
-            isManualSessionTrackerEnabled = true;
-            return;
-        }
-        mSessionTracker.enableManualSessionTracker();
+        isManualSessionTrackerEnabled = true;
     }
 
     /**

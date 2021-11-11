@@ -598,6 +598,61 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     }
 
     @Test
+    public void setManualSessionTracker() {
+
+        /* Set manual session tracker. */
+        Analytics.enableManualSessionTracker();
+
+        /* Before start it does not work to change state, it's disabled. */
+        Analytics analytics = Analytics.getInstance();
+
+        /* Prepared channel. */
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+
+        /* Verify that start session log wasn't sent. */
+        ArgumentCaptor<StartSessionLog> log = ArgumentCaptor.forClass(StartSessionLog.class);
+        verify(channel, never()).enqueue(log.capture(), eq(analytics.getGroupName()), anyInt());
+
+        /* Verify that start session log was sent. */
+        Analytics.startSession();
+        verify(channel).enqueue(log.capture(), eq(analytics.getGroupName()), anyInt());
+        assertNotNull(log.getValue());
+        assertNotNull(log.getValue().getSid());
+    }
+
+    @Test
+    public void enableManualSessionTrackerAfterAnalyticsStart() {
+
+        /* Before start it does not work to change state, it's disabled. */
+        Analytics analytics = Analytics.getInstance();
+
+        /* Prepared channel. */
+        Channel channel = mock(Channel.class);
+        analytics.onStarting(mAppCenterHandler);
+        analytics.onStarted(mock(Context.class), channel, "", null, true);
+        analytics.onActivityResumed(mock(Activity.class));
+
+        /* Verify that start session log was sent. */
+        verify(channel, times(2)).enqueue(any(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
+
+        /* Set manual session tracker and start session. */
+        Analytics.enableManualSessionTracker();
+        Analytics.startSession();
+
+        /* Verify that start session log wasn't sent. */
+        verify(channel, times(2)).enqueue(any(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
+
+        /* Disable Analytics ans call start session. */
+        Analytics.setEnabled(false);
+        Analytics.startSession();
+
+        /* Verify that start session log wasn't sent. */
+        verify(channel, times(2)).enqueue(any(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
+    }
+
+    @Test
     public void pauseResumeWhileDisabled() {
 
         /* Before start it does not work to change state, it's disabled. */
