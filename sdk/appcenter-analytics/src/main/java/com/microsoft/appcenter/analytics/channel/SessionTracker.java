@@ -38,7 +38,7 @@ public class SessionTracker extends AbstractChannelListener {
     private final Channel mChannel;
 
     /**
-     * Stores the value of whether manual session tracker value was enabled, false by default.
+     * Stores the value of whether manual session tracker is enabled, false by default.
      */
     private boolean isManualSessionTrackerEnabled = false;;
 
@@ -114,7 +114,6 @@ public class SessionTracker extends AbstractChannelListener {
 
                 /* Record queued time only if the log is using current session. */
                 mLastQueuedLogTime = SystemClock.elapsedRealtime();
-                return;
             }
         }
     }
@@ -138,13 +137,13 @@ public class SessionTracker extends AbstractChannelListener {
              */
             mLastQueuedLogTime = SystemClock.elapsedRealtime();
 
-            /* Generate and send start session log. */
+            /* Generate session id and send start session log. */
             sendStartSession();
         }
     }
 
     /**
-     * Generate session and send start session log.
+     * Generate session id and send start session log.
      */
     private void sendStartSession() {
         mSid = UUID.randomUUID();
@@ -164,7 +163,7 @@ public class SessionTracker extends AbstractChannelListener {
     @WorkerThread
     public void onActivityResumed() {
         if (isManualSessionTrackerEnabled) {
-            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request.");
+            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request after resumed activity.");
             return;
         }
 
@@ -179,7 +178,7 @@ public class SessionTracker extends AbstractChannelListener {
     @WorkerThread
     public void onActivityPaused() {
         if (isManualSessionTrackerEnabled) {
-            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request.");
+            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request after paused activity.");
             return;
         }
 
@@ -203,7 +202,7 @@ public class SessionTracker extends AbstractChannelListener {
     }
 
     /**
-     * Start a new session if manual session tracker was enabled.
+     * Start a new session if manual session tracker is enabled, otherwise do nothing.
      */
     public void startSession() {
         if(!isManualSessionTrackerEnabled) {
@@ -211,7 +210,7 @@ public class SessionTracker extends AbstractChannelListener {
             return;
         }
         sendStartSession();
-        AppCenterLog.debug(Analytics.LOG_TAG, String.format("Start a new session with id: %s.", mSid));
+        AppCenterLog.debug(Analytics.LOG_TAG, String.format("Started a new session with id: %s.", mSid));
     }
 
     /**

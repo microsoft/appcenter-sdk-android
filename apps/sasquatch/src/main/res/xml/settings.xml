@@ -36,8 +36,8 @@
             android:key="@string/appcenter_auto_page_tracking_key"
             android:title="@string/appcenter_auto_page_tracking_title" />
         <CheckBoxPreference
-            android:key="@string/appcenter_analytics_session_generation_state_key"
-            android:title="@string/appcenter_analytics_session_generation_title" />
+            android:key="@string/appcenter_analytics_session_tracker_state_key"
+            android:title="@string/appcenter_analytics_session_tracker_title" />
         <Preference
             android:key="@string/appcenter_analytics_start_session_key"
             android:title="@string/appcenter_analytics_start_session_title" />

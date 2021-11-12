@@ -606,7 +606,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Before start it does not work to change state, it's disabled. */
         Analytics analytics = Analytics.getInstance();
 
-        /* Prepared channel. */
+       /* Prepare channel. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
@@ -628,7 +628,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Before start it does not work to change state, it's disabled. */
         Analytics analytics = Analytics.getInstance();
 
-        /* Prepared channel. */
+       /* Prepare channel. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);

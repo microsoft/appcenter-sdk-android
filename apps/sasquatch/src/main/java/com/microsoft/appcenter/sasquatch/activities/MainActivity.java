@@ -114,10 +114,10 @@ public class MainActivity extends AppCompatActivity {
     static void startAppCenter(Application application, String startTypeString) {
 
         /* Set session generation value. */
-        boolean isAutomaticSessionDisabled = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_analytics_session_generation_state_key), false);
+        boolean isManualSessionTrackerEnabled = sSharedPreferences.getBoolean(application.getString(R.string.appcenter_analytics_session_tracker_state_key), false);
 
         // TODO uncomment after release
-        if (isAutomaticSessionDisabled) {
+        if (isManualSessionTrackerEnabled) {
             // Analytics.enableManualSessionTracker();
         }
 

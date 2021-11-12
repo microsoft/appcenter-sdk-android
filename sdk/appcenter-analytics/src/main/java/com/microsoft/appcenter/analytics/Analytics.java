@@ -157,7 +157,7 @@ public class Analytics extends AbstractAppCenterService {
     private boolean mAutoPageTrackingEnabled = false;
 
     /**
-     * Stores the value of whether manual session tracker was enabled, false by default.
+     * Stores the value of whether manual session tracker is enabled, false by default.
      */
     private boolean isManualSessionTrackerEnabled = false;
 
@@ -371,7 +371,7 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
-     * Start a new session if manual session tracker was enabled.
+     * Start a new session if manual session tracker is enabled, otherwise do nothing.
      */
     public static void startSession() {
         getInstance().startSessionAsync();
@@ -821,7 +821,7 @@ public class Analytics extends AbstractAppCenterService {
      */
     private synchronized void enableManualSessionTrackerAsync() {
         if (mChannel != null) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "The manual session tracker should be set before the App Center start.");
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "The manual session tracker state should be set before the App Center start.");
             return;
         }
         isManualSessionTrackerEnabled = true;

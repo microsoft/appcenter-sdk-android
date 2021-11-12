@@ -658,11 +658,11 @@ public class SessionTrackerTest {
         mSessionTracker.onPreparingLog(log, TEST_GROUP);
         assertNull(log.getSid());
 
-        /* Verify that method didn't called. */
+        /* Verify that method wasn't called. */
         verifyStatic();
         SystemClock.elapsedRealtime();
 
-        /* Call pause and verify that method didn't called again. */
+        /* Call pause and verify that method wasn't called again. */
         mSessionTracker.onActivityPaused();
         verifyStatic();
         SystemClock.elapsedRealtime();
@@ -672,7 +672,7 @@ public class SessionTrackerTest {
         mSessionTracker.onPreparingLog(log, TEST_GROUP);
         assertNotNull(log.getSid());
 
-        /* Verify that method didn't called. */
+        /* Verify that method wasn't called. */
         verifyStatic();
         SystemClock.elapsedRealtime();
     }

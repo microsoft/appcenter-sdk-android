@@ -250,18 +250,18 @@ public class SettingsActivity extends AppCompatActivity {
                     AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
                 }
             });
-            initCheckBoxSetting(R.string.appcenter_analytics_session_generation_state_key, R.string.appcenter_analytics_session_generation_state_enable, R.string.appcenter_analytics_session_generation_state_disable, new HasEnabled() {
+            initCheckBoxSetting(R.string.appcenter_analytics_session_tracker_state_key, R.string.appcenter_analytics_session_tracker_state_enable, R.string.appcenter_analytics_session_tracker_state_disable, new HasEnabled() {
 
                 @Override
                 public void setEnabled(boolean enabled) {
                     // TODO uncomment after release
                     // Analytics.enableManualSessionTracker();
-                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_analytics_session_generation_state_key), enabled).apply();
+                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_analytics_session_tracker_state_key), enabled).apply();
                 }
 
                 @Override
                 public boolean isEnabled() {
-                    return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_analytics_session_generation_state_key), false);
+                    return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_analytics_session_tracker_state_key), false);
                 }
             });
             initClickableSetting(R.string.appcenter_analytics_start_session_key, new Preference.OnPreferenceClickListener() {

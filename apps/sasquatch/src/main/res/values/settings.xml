@@ -23,14 +23,14 @@
     <string name="analytics_key" tools:ignore="MissingTranslation">appcenter_analytics</string>
     <string name="analytics_title" tools:ignore="MissingTranslation">Analytics</string>
 
-    <string name="appcenter_analytics_session_generation_state_key" tools:ignore="MissingTranslation">appcenter_analytics_disable_session_generation_key</string>
+    <string name="appcenter_analytics_session_tracker_state_key" tools:ignore="MissingTranslation">appcenter_analytics_session_tracker_state_key</string>
     <string name="appcenter_analytics_state_key" tools:ignore="MissingTranslation">appcenter_analytics_state_key</string>
     <string name="appcenter_analytics_state_title" tools:ignore="MissingTranslation">Analytics state</string>
     <string name="appcenter_analytics_state_summary_enabled" tools:ignore="MissingTranslation">Analytics is enabled</string>
     <string name="appcenter_analytics_state_summary_disabled" tools:ignore="MissingTranslation">Analytics is disabled</string>
-    <string name="appcenter_analytics_session_generation_title" tools:ignore="MissingTranslation">Automatic session generation</string>
-    <string name="appcenter_analytics_session_generation_state_disable" tools:ignore="MissingTranslation">Automatic session generation is disabled</string>
-    <string name="appcenter_analytics_session_generation_state_enable" tools:ignore="MissingTranslation">Automatic session generation is enabled</string>
+    <string name="appcenter_analytics_session_tracker_title" tools:ignore="MissingTranslation">Automatic session generation</string>
+    <string name="appcenter_analytics_session_tracker_state_disable" tools:ignore="MissingTranslation">Automatic session tracker is disabled</string>
+    <string name="appcenter_analytics_session_tracker_state_enable" tools:ignore="MissingTranslation">Automatic session tracker is enabled</string>
     <string name="appcenter_analytics_start_session_key" tools:ignore="MissingTranslation">appcenter_analytics_start_session_generation_key</string>
     <string name="appcenter_analytics_start_session_title" tools:ignore="MissingTranslation">Start session</string>
 

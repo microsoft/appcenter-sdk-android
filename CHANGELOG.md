@@ -9,7 +9,7 @@
 
 ### App Center Analytics
 
-* **[Feature]** Add `Analytics.enableManualSessionTracker` and `Analytics.startSession` APIs for control start session time manually.
+* **[Feature]** Add `Analytics.enableManualSessionTracker` and `Analytics.startSession` APIs for tracking session manually.
 
 ### App Center Distribute
 
