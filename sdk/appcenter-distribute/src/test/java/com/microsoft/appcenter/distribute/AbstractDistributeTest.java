@@ -90,7 +90,7 @@ public class AbstractDistributeTest {
 
     static final String TEST_HASH = HashUtils.sha256("com.contoso:1.2.3:6");
 
-    private static final String DISTRIBUTE_ENABLED_KEY = KEY_ENABLED + "_Distribute";
+    public static final String DISTRIBUTE_ENABLED_KEY = KEY_ENABLED + "_Distribute";
 
     private static final String LOCAL_FILENAME_PATH_MOCK = "ANSWER_IS_42";
 
@@ -146,6 +146,9 @@ public class AbstractDistributeTest {
 
     @Mock
     ReleaseDownloadListener mReleaseDownloaderListener;
+
+    @Mock
+    ReleaseInstallerListener mReleaseInstallerListener;
 
     @Mock
     ReleaseDetails mReleaseDetails;
@@ -311,6 +314,10 @@ public class AbstractDistributeTest {
         /* Mock Release Downloader Listener. */
         mReleaseDownloaderListener = spy(new ReleaseDownloadListener(mContext, mReleaseDetails));
         whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class), any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
+
+        /* Mock Release Installer Listener. */
+        mReleaseInstallerListener = mock(ReleaseInstallerListener.class);
+        whenNew(ReleaseInstallerListener.class).withArguments(any(Context.class)).thenReturn(mReleaseInstallerListener);
 
         /* Mock Uri. */
         when(mUri.toString()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
