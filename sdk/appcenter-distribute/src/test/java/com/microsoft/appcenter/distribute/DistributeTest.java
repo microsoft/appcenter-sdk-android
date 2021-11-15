@@ -856,7 +856,7 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void checkRegisterReceiver() {
+    public void checkRegisterAndUnregisterReceiver() {
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(false).thenReturn(true);
 
@@ -870,26 +870,47 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Check that receiver was registered. */
         verify(mActivity).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
 
-        /* Emulate lifecycle behaviour. */
+        /* Stop activity. */
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityStopped(mActivity);
 
-        /* Mock throwing exception. */
-        when(mActivity.registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any())).thenThrow(new IllegalArgumentException());
+        /* Check that receiver was not unregistered on activity pause and stop. */
+        verify(mActivity, never()).unregisterReceiver(Matchers.<BroadcastReceiver>any());
+
+        /* Resume activity */
         Distribute.getInstance().onActivityResumed(mActivity);
 
-        /* Check that receiver was not registered again. */
+        /* Verify that register receiver was called again after activity is resumed. */
         verify(mActivity, times(2)).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
+
+        /* Disable Distribute. */
+        Distribute.setEnabled(false);
+
+        /* Check that receiver was unregistered. */
+        verify(mActivity).unregisterReceiver(Matchers.<BroadcastReceiver>any());
+    }
+
+    @Test
+    public void checkRegisterReceiverWhenActivityRegisterReceiverThrowsException() {
+        /* Mock throwing exception. */
+        when(mActivity.registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any())).thenThrow(new IllegalArgumentException());
+        willThrow(new IllegalArgumentException()).given(mActivity).unregisterReceiver(Matchers.<BroadcastReceiver>any());
+
+        /* Start Distribute. */
+        start();
+
+        /* Resume and set activity */
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify that register receiver throw exception. */
+        verify(mActivity).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
         verifyStatic();
         AppCenterLog.error(eq(LOG_TAG), eq("The receiver wasn't registered."), Matchers.<IllegalArgumentException>any());
 
-        /* Disable distribute and verify that receiver was unregistered. */
+        /* Disable Distribute. */
         Distribute.setEnabled(false);
-        verify(mActivity).unregisterReceiver(Matchers.<BroadcastReceiver>any());
 
-        /* Disable distribute again and verify that unregister receiver throw exception. */
-        willThrow(new IllegalArgumentException()).given(mActivity).unregisterReceiver(Matchers.<BroadcastReceiver>any());
-        Distribute.getInstance().applyEnabledState(false);
+        /* Verify that unregister receiver throw exception. */
         verifyStatic();
         AppCenterLog.error(eq(LOG_TAG), eq("The receiver wasn't unregistered."), Matchers.<IllegalArgumentException>any());
     }
