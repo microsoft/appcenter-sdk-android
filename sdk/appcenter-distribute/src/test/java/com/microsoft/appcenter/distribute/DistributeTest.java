@@ -876,11 +876,10 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Mock throwing exception. */
         when(mActivity.registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any())).thenThrow(new IllegalArgumentException());
-        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Check that receiver was not registered again. */
-        verify(mActivity).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
+        verify(mActivity, times(2)).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
         verifyStatic();
         AppCenterLog.error(eq(LOG_TAG), eq("The receiver wasn't registered."), Matchers.<IllegalArgumentException>any());
 
@@ -892,7 +891,7 @@ public class DistributeTest extends AbstractDistributeTest {
         willThrow(new IllegalArgumentException()).given(mActivity).unregisterReceiver(Matchers.<BroadcastReceiver>any());
         Distribute.getInstance().applyEnabledState(false);
         verifyStatic();
-        AppCenterLog.error(eq(LOG_TAG), eq("Couldn't register unregister due to activity is null."), Matchers.<IllegalArgumentException>any());
+        AppCenterLog.error(eq(LOG_TAG), eq("The receiver wasn't unregistered."), Matchers.<IllegalArgumentException>any());
     }
 
     @Test
