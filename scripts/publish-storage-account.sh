@@ -6,14 +6,14 @@ AZURE_STORAGE_ACCESS_KEY=${1:-$AZURE_STORAGE_ACCESS_KEY}
 BINARY_FILE_FILTER="*.aar"
 FULL_VERSION="$(grep "versionName = '" *.gradle | awk -F "[']" '{print $2}')"
 PUBLISH_VERSION=`echo $FULL_VERSION | cut -d'-' -f 1`
-COMMIT_VERSION=`git show -s --format=%h`
 ARCHIVE=AppCenter-SDK-Android-${PUBLISH_VERSION}
-ZIP_FILE=$ARCHIVE.zip
 
 if [ "$2" != "release" ]; then
     COMMIT_VERSION=`git show -s --format=%h`
     ARCHIVE=${ARCHIVE}-${COMMIT_VERSION}
 fi
+
+ZIP_FILE=$ARCHIVE.zip
 
 # Copy release aar files from sdk
 FILES="$(find sdk -name $BINARY_FILE_FILTER)"
