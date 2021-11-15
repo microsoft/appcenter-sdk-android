@@ -909,7 +909,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify that receiver was not registered. */
         verifyStatic();
-        AppCenterLog.warn(eq(LOG_TAG), eq("Couldn't register receiver due to activity is null."));
+        AppCenterLog.warn(eq(LOG_TAG), eq("Couldn't unregister due to activity is null."));
     }
 
     @Test
