@@ -103,7 +103,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     @Override
     public void onProgressChanged(int sessionId, float progress) {
         final int downloadProgress = (int)(progress * 100);
-        AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Installing progress %d of 100 is done.", downloadProgress));
+        AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Installation progress: %d / 100.", downloadProgress));
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -115,7 +115,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
 
     @Override
     public void onFinished(int sessionId, final boolean success) {
-        AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH,"The installation of the new version is complete with the result: %s.", success ? "successful" : "failure"));
+        AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH,"The installation of the new version is completed with the result: %s.", success ? "successful" : "failure"));
 
         // Run on the UI thread to prevent deadlock.
         HandlerUtils.runOnUiThread(new Runnable() {

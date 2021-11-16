@@ -637,7 +637,7 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.error(LOG_TAG, "The receiver wasn't unregistered.", e);
             }
         } else {
-            AppCenterLog.warn(LOG_TAG, "Couldn't register unregister due to activity is null.");
+            AppCenterLog.warn(LOG_TAG, "Couldn't unregister due to activity is null.");
         }
     }
 
@@ -826,7 +826,7 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
 
-            /* Continue to install a new release if before resume was shown dialog. */
+            /* Continue installing a new release if the dialog was shown before resumeDistributeWorkflow. */
             if (mAlertSystemWindowsDialog != null) {
                 mAlertSystemWindowsDialog.dismiss();
                 mAlertSystemWindowsDialog = null;
