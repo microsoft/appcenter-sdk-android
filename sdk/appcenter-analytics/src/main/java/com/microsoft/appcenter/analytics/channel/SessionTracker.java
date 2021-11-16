@@ -40,7 +40,7 @@ public class SessionTracker extends AbstractChannelListener {
     /**
      * Stores the value of whether manual session tracker is enabled, false by default.
      */
-    private boolean isManualSessionTrackerEnabled = false;;
+    private boolean isManualSessionTrackerEnabled = false;
 
     /**
      * Group name used to send generated logs.
@@ -163,11 +163,12 @@ public class SessionTracker extends AbstractChannelListener {
     @WorkerThread
     public void onActivityResumed() {
         if (isManualSessionTrackerEnabled) {
-            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request after resumed activity.");
+            AppCenterLog.verbose(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request after resumed activity.");
             return;
         }
 
         /* Record resume time for session timeout management. */
+        AppCenterLog.debug(Analytics.LOG_TAG, "onActivityResumed");
         mLastResumedTime = SystemClock.elapsedRealtime();
         sendStartSessionIfNeeded();
     }
@@ -178,11 +179,12 @@ public class SessionTracker extends AbstractChannelListener {
     @WorkerThread
     public void onActivityPaused() {
         if (isManualSessionTrackerEnabled) {
-            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request after paused activity.");
+            AppCenterLog.verbose(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request after paused activity.");
             return;
         }
 
         /* Record pause time for session timeout management. */
+        AppCenterLog.debug(Analytics.LOG_TAG, "onActivityPaused");
         mLastPausedTime = SystemClock.elapsedRealtime();
     }
 
@@ -198,7 +200,7 @@ public class SessionTracker extends AbstractChannelListener {
      */
     public void enableManualSessionTracker() {
         isManualSessionTrackerEnabled = true;
-        AppCenterLog.debug(Analytics.LOG_TAG,"Manual session tracker is enabled.");
+        AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled.");
     }
 
     /**
