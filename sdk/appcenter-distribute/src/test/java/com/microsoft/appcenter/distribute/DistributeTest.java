@@ -944,7 +944,7 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void checkProgressWhenReleaseInstallerNull() {
+    public void checkProgressWhenReleaseInstallerIsNull() {
 
         /* Start distribute. */
         start();
@@ -956,8 +956,11 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Remove listener if it is not null. */
-        Distribute.getInstance().notifyInstallProgress(false);
         Distribute.getInstance().notifyInstallProgress(true);
+        verify(mReleaseInstallerListener, never()).showInstallProgressDialog(any(Activity.class));
+        verify(mReleaseInstallerListener, never()).hideInstallProgressDialog();
+
+        Distribute.getInstance().notifyInstallProgress(false);
         verify(mReleaseInstallerListener, never()).hideInstallProgressDialog();
     }
 
