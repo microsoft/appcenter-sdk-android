@@ -174,7 +174,7 @@ public class ReleaseInstallerListenerTest {
         verifyStatic();
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
-        /* Verify that progress dialog was closed after finish install process*/
+        /* Verify that progress dialog was closed after finish install process. */
         sessionListener.getValue().onFinished(mMockSessionId, false);
 
         /* Verify that the handler was called again. */
@@ -227,7 +227,7 @@ public class ReleaseInstallerListenerTest {
         /* Verify that the progress dialog was updated. */
         verify(mMockProgressDialog, never()).setProgress(anyInt());
 
-        /* Verify that progress dialog was closed after finish install process*/
+        /* Verify that progress dialog was closed after finish install process. */
         sessionListener.getValue().onFinished(mMockSessionId, true);
 
         /* Verify that the handler was called again. */
@@ -277,7 +277,7 @@ public class ReleaseInstallerListenerTest {
         verify(mMockProgressDialog, times(2)).setProgressNumberFormat(anyString());
         verify(mMockProgressDialog, times(2)).setIndeterminate(anyBoolean());
 
-        /* Verify that progress dialog was closed after finish install process*/
+        /* Verify that progress dialog was closed after finish install process. */
         sessionListener.getValue().onFinished(mMockSessionId, true);
 
         /* Verify that the handler was called again. */
@@ -320,7 +320,7 @@ public class ReleaseInstallerListenerTest {
         /* Verify that the progress dialog was updated. */
         verify(mMockProgressDialog).setProgress(anyInt());
 
-        /* Verify that progress dialog was closed after finish install process*/
+        /* Verify that progress dialog was closed after finish install process. */
         sessionListener.getValue().onFinished(mMockSessionId, true);
 
         /* Verify that the handler was called again. */
@@ -341,13 +341,11 @@ public class ReleaseInstallerListenerTest {
         /* Hide dialog. */
         mReleaseInstallerListener.hideInstallProgressDialog();
 
-        /* Try to hide dialog again */
+        /* Try to hide dialog again. */
         mReleaseInstallerListener.hideInstallProgressDialog();
 
         /* Verify that runnable was called once only. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(times(1));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic();
+        HandlerUtils.runOnUiThread(any(Runnable.class));
     }
 }

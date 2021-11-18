@@ -892,6 +892,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void checkRegisterReceiverWhenActivityRegisterReceiverThrowsException() {
+
         /* Mock throwing exception. */
         when(mActivity.registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any())).thenThrow(new IllegalArgumentException());
         willThrow(new IllegalArgumentException()).given(mActivity).unregisterReceiver(Matchers.<BroadcastReceiver>any());
@@ -938,7 +939,11 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Start distribute. */
         start();
+
+        /* Notify install progress. */
         Distribute.getInstance().notifyInstallProgress(true);
+
+        /* Verify that progress dialog was not trying to display. */
         verifyStatic();
         AppCenterLog.warn(eq(LOG_TAG), eq("Could not display install progress dialog in the background."));
     }
@@ -960,6 +965,7 @@ public class DistributeTest extends AbstractDistributeTest {
         verify(mReleaseInstallerListener, never()).showInstallProgressDialog(any(Activity.class));
         verify(mReleaseInstallerListener, never()).hideInstallProgressDialog();
 
+        /* Verify hide install progress was not invoked. */
         Distribute.getInstance().notifyInstallProgress(false);
         verify(mReleaseInstallerListener, never()).hideInstallProgressDialog();
     }

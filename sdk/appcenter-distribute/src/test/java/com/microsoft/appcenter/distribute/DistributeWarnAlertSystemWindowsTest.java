@@ -294,7 +294,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityResumed(mActivity);
 
-        /* Verify that installation process is trying to resume but installer is null because release details was not loaded */
+        /* Verify that installation process is trying to resume but installer is null because release details was not loaded. */
         verifyStatic();
         AppCenterLog.debug(eq(LOG_TAG), eq("Installing couldn't start due to the release installer wasn't initialized."));
     }
@@ -306,10 +306,10 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
-        /* Set activity null in Distribute */
+        /* Set activity null in Distribute. */
         Distribute.getInstance().onActivityPaused(mActivity);
 
-        /* Moke download state notified */
+        /* Moke download state notified. */
         Mockito.when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
 
         /* Mock notification manager to avoid NRE. */
