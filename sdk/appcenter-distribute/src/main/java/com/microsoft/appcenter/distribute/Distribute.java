@@ -830,7 +830,7 @@ public class Distribute extends AbstractAppCenterService {
             if (mAlertSystemWindowsDialog != null) {
                 mAlertSystemWindowsDialog.dismiss();
                 mAlertSystemWindowsDialog = null;
-                installingUpdate();
+                installUpdate();
                 return;
             }
 
@@ -1662,7 +1662,7 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Permission request on alert system windows denied. Continue installing...");
 
                 /* It is optional and installing can be continued if customer reject permission request. */
-                installingUpdate();
+                installUpdate();
             }
         });
         dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
@@ -1673,7 +1673,7 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Permission request on alert system windows denied. Continue installing...");
 
                 /* It is optional and installing can be continued if customer reject permission request. */
-                installingUpdate();
+                installUpdate();
             }
         });
         dialogBuilder.setPositiveButton(R.string.appcenter_distribute_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
@@ -1936,7 +1936,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Start to install a new update.
      */
-    synchronized private void installingUpdate() {
+    synchronized private void installUpdate() {
         if (mReleaseInstallerListener == null) {
             AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
             return;
@@ -1952,7 +1952,7 @@ public class Distribute extends AbstractAppCenterService {
 
         /* Check permission on start application after update. */
         if (InstallerUtils.isSystemAlertWindowsEnabled(mContext)) {
-            installingUpdate();
+            installUpdate();
         } else {
             showSystemAlertsWindowsSettingsDialog();
         }
