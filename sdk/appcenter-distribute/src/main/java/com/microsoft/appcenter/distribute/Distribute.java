@@ -1948,10 +1948,6 @@ public class Distribute extends AbstractAppCenterService {
      * Ask permission on start application after update or start to install a new update.
      */
     synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId) {
-        if (mReleaseInstallerListener == null) {
-            AppCenterLog.debug(LOG_TAG, "Couldn't set 'downloadId' value due to the release installer wasn't initialized.");
-            return;
-        }
         mReleaseInstallerListener.setDownloadId(downloadId);
 
         /* Check permission on start application after update. */
