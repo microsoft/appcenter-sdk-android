@@ -331,4 +331,22 @@ public class ReleaseInstallerListenerTest {
         /* Verify that installer process was triggered in the Distribute again. */
         verify(mDistribute).notifyInstallProgress(eq(false));
     }
+
+    @Test
+    public void releaseInstallerHideDialogTwice() {
+        /* Start install process. */
+        mReleaseInstallerListener.startInstall();
+
+        /* Hide dialog. */
+        mReleaseInstallerListener.hideInstallProgressDialog();
+
+        /* Try to hide dialog again */
+        mReleaseInstallerListener.hideInstallProgressDialog();
+
+        /* Verify that runnable was called once only. */
+        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
+        verifyStatic(times(1));
+        HandlerUtils.runOnUiThread(runnable.capture());
+        runnable.getValue().run();
+    }
 }
