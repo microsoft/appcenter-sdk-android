@@ -285,9 +285,8 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         /* Make release details NULL to make installer listener NULL too. */
         Mockito.when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
 
-        /* Start distribute with app secret NULL to make sure updateReleaseDetails is called on
-           startFromBackground.
-         */
+        /* Start distribute with app secret NULL to make sure updateReleaseDetails is called on startFromBackground. */
+        Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onStarted(mContext, mChannel, null, null, true);
         Distribute.getInstance().startFromBackground(mContext);
 
@@ -301,15 +300,16 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
     }
 
     @Test
-    public void showSettingsDialogWhenActivityIsNull() throws Exception {
+    public void showSettingsDialogWhenActivityIsNullOnAndroidQ() throws Exception {
 
         /* Mock permission state for Android Q. */
         when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
-        /* Set Activity NULL */
+        /* Set activity null in Distribute */
         Distribute.getInstance().onActivityPaused(mActivity);
 
+        /* Moke download state notified */
         Mockito.when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
 
         /* Mock notification manager to avoid NRE. */
@@ -324,18 +324,19 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         /* Verify that dialog was not shown. */
         verify(mAlertWindowsDialog, never()).show();
 
-        /* Verify system alert window is not trying to display if activity is null */
+        /* Verify system alert window is not trying to display if activity is null. */
         verifyStatic();
         AppCenterLog.warn(eq(LOG_TAG), eq("The application is in background mode, the system alerts windows won't be displayed."));
     }
 
     @Test
-    public void needRefreshDialogWhenStartInstallation() throws Exception {
+    public void needRefreshDialogWhenStartInstallationOnAndroidQ() throws Exception {
 
         /* Mock permission state for Android Q. */
         when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
+        /* Moke download state notified */
         Mockito.when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
 
         /* Mock notification manager to avoid NRE. */
@@ -347,21 +348,21 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         /* Notify about complete download. */
         mReleaseDownloaderListener.onComplete(1L);
 
-        /* Start distribute with app secret NULL to make sure updateReleaseDetails is called on
-           startFromBackground.
-         */
+        /* Start distribute with app secret NULL to make sure updateReleaseDetails is called on startFromBackground. */
+        Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onStarted(mContext, mChannel, null, null, true);
         Distribute.getInstance().startFromBackground(mContext);
 
-        /* isMandatoryUpdate should be mocked to avoid completion installation workflow */
+        /* Release details should be mandatory to avoid completion installation workflow. */
         Mockito.when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
+        /* Start installation */
         mReleaseDownloaderListener.onComplete(1L);
 
         /* Verify that dialog was shown once only. */
         verify(mAlertWindowsDialog).show();
 
-        /* Verify system alert window is not trying to display if activity is null */
+        /* Verify system alert window is not trying to display if it is already shown. */
         verifyStatic(never());
         AppCenterLog.warn(eq(LOG_TAG), eq("Show new system alerts windows dialog."));
     }

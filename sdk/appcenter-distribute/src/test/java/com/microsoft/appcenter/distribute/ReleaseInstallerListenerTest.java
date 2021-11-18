@@ -334,6 +334,7 @@ public class ReleaseInstallerListenerTest {
 
     @Test
     public void releaseInstallerHideDialogTwice() {
+
         /* Start install process. */
         mReleaseInstallerListener.startInstall();
 
