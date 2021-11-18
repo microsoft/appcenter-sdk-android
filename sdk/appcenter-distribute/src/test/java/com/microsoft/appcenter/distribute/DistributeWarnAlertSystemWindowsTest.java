@@ -5,10 +5,13 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static android.content.Context.NOTIFICATION_SERVICE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -24,6 +27,8 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -191,7 +196,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         /* Verify that downloadId was set. */
         verify(mReleaseInstallerListener).setDownloadId(anyLong());
 
-        /* Verify that dialog was shown. */
+        /* Verify that dialog was not shown. */
         verify(mAlertWindowsDialog, never()).show();
 
         /* Emulate behavior that settings was enabled. */
@@ -295,5 +300,70 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         AppCenterLog.debug(eq(LOG_TAG), eq("Installing couldn't start due to the release installer wasn't initialized."));
     }
 
+    @Test
+    public void showSettingsDialogWhenActivityIsNull() throws Exception {
+
+        /* Mock permission state for Android Q. */
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
+        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
+
+        /* Set Activity NULL */
+        Distribute.getInstance().onActivityPaused(mActivity);
+
+        Mockito.when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
+
+        /* Mock notification manager to avoid NRE. */
+        NotificationManager manager = Mockito.mock(NotificationManager.class);
+        whenNew(Notification.Builder.class).withAnyArguments()
+                .thenReturn(Mockito.mock(Notification.Builder.class, RETURNS_MOCKS));
+        Mockito.when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
+
+        /* Notify about complete download. */
+        mReleaseDownloaderListener.onComplete(1L);
+
+        /* Verify that dialog was not shown. */
+        verify(mAlertWindowsDialog, never()).show();
+
+        /* Verify system alert window is not trying to display if activity is null */
+        verifyStatic();
+        AppCenterLog.warn(eq(LOG_TAG), eq("The application is in background mode, the system alerts windows won't be displayed."));
+    }
+
+    @Test
+    public void needRefreshDialogWhenStartInstallation() throws Exception {
+
+        /* Mock permission state for Android Q. */
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
+        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
+
+        Mockito.when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
+
+        /* Mock notification manager to avoid NRE. */
+        NotificationManager manager = Mockito.mock(NotificationManager.class);
+        whenNew(Notification.Builder.class).withAnyArguments()
+                .thenReturn(Mockito.mock(Notification.Builder.class, RETURNS_MOCKS));
+        Mockito.when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
+
+        /* Notify about complete download. */
+        mReleaseDownloaderListener.onComplete(1L);
+
+        /* Start distribute with app secret NULL to make sure updateReleaseDetails is called on
+           startFromBackground.
+         */
+        Distribute.getInstance().onStarted(mContext, mChannel, null, null, true);
+        Distribute.getInstance().startFromBackground(mContext);
+
+        /* isMandatoryUpdate should be mocked to avoid completion installation workflow */
+        Mockito.when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+
+        mReleaseDownloaderListener.onComplete(1L);
+
+        /* Verify that dialog was shown once only. */
+        verify(mAlertWindowsDialog).show();
+
+        /* Verify system alert window is not trying to display if activity is null */
+        verifyStatic(never());
+        AppCenterLog.warn(eq(LOG_TAG), eq("Show new system alerts windows dialog."));
+    }
 }
 

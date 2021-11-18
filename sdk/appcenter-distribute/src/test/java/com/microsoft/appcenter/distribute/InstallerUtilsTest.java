@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -22,6 +24,8 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.os.Build;
+import android.provider.Settings;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -34,8 +38,14 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
-@PrepareForTest(PendingIntent.class)
+@PrepareForTest({
+        PendingIntent.class,
+        Settings.class
+})
+
 public class InstallerUtilsTest {
 
     @Rule
@@ -121,5 +131,62 @@ public class InstallerUtilsTest {
 
         /* Verify that the session wasn't created. */
         verify(mMockPackageInstaller, never()).openSession(anyInt());
+    }
+
+    @Test
+    public void isSystemAlertWindowsEnabledReturnsTrueIfBuildVersionLowerQ() throws Exception {
+        /* Mock SDK_INT to P */
+        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.P);
+
+        /* Set canDrawOverlays to false */
+        mockStatic(Settings.class);
+        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
+
+        /* Check if system alert windows is enabled */
+        assertTrue(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
+
+        /* Set canDrawOverlays to true and make sure it doesn't affect
+        * the return value of isSystemAlertWindowsEnabled.
+        * */
+        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(true);
+
+        /* Check if system alert windows is enabled */
+        assertTrue(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
+    }
+
+    @Test
+    public void isSystemAlertWindowsEnabledReturnsFalseIfBuildVersionHigherQAndCanDrawOverlay() throws Exception {
+        /* Mock SDK_INT to P */
+        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.Q);
+
+        /* Set canDrawOverlays to false */
+        mockStatic(Settings.class);
+        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(true);
+
+        /* Check if system alert windows is enabled */
+        assertTrue(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
+    }
+
+    @Test
+    public void isSystemAlertWindowsEnabledReturnsFalseIfBuildVersionHigherQAndCannotDrawOverlay() throws Exception {
+        /* Mock SDK_INT to P */
+        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.Q);
+
+        /* Set canDrawOverlays to false */
+        mockStatic(Settings.class);
+        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
+
+        /* Check if system alert windows is enabled */
+        assertFalse(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
+    }
+
+    static void setFinalStatic(Field field, Object newValue) throws Exception {
+        field.setAccessible(true);
+
+        Field modifiersField = Field.class.getDeclaredField("modifiers");
+        modifiersField.setAccessible(true);
+        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+        field.set(null, newValue);
     }
 }
