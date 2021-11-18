@@ -7,12 +7,12 @@ package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
+
 import android.widget.Toast;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -26,7 +26,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOK
 import static com.microsoft.appcenter.distribute.DistributeConstants.KIBIBYTE_IN_BYTES;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.InstallerUtils.getInstallIntent;
 
 /**
  * Listener for downloading progress.
@@ -91,40 +90,20 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @WorkerThread
     @Override
-    public boolean onComplete(@NonNull final Uri localUri) {
-        final Intent intent = getInstallIntent(localUri);
-        if (intent.resolveActivity(mContext.getPackageManager()) == null) {
-            AppCenterLog.debug(LOG_TAG, "Cannot resolve install intent for " + localUri);
-            return false;
-        }
-        AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Download %s (%d) update completed.",
-                mReleaseDetails.getShortVersion(), mReleaseDetails.getVersion()));
-
-        // Run on the UI thread to prevent deadlock.
+    public void onComplete(@NonNull final Long downloadId) {
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
 
                 /* Check if app should install now. */
-                if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
-
-                    /*
-                     * This start call triggers strict mode in UI thread so it
-                     * needs to be done here without synchronizing
-                     * (not to block methods waiting on synchronized on UI thread)
-                     * so yes we could launch install and SDK being disabled.
-                     *
-                     * This corner case cannot be avoided without triggering
-                     * strict mode exception.
-                     */
-                    AppCenterLog.info(LOG_TAG, "Show install UI for " + localUri);
-                    mContext.startActivity(intent);
+                if (!Distribute.getInstance().notifyDownload(mReleaseDetails)) {
+                    AppCenterLog.info(LOG_TAG, "Release is download. Starting to install it.");
                     Distribute.getInstance().setInstalling(mReleaseDetails);
+                    Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(downloadId);
                 }
             }
         });
-        return true;
     }
 
     @WorkerThread

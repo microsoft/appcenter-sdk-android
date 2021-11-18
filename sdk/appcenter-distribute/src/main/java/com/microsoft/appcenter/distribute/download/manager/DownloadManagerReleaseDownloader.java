@@ -8,8 +8,6 @@ package com.microsoft.appcenter.distribute.download.manager;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
 import android.os.SystemClock;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -178,23 +176,12 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     @WorkerThread
-    synchronized void onDownloadComplete(Cursor cursor) {
+    synchronized void onDownloadComplete() {
         if (isCancelled()) {
             return;
         }
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        Uri localUri = Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI)));
-        boolean installerFound = false;
-        if (!mListener.onComplete(localUri)) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                installerFound = mListener.onComplete(getFileUriOnOldDevices(cursor));
-            }
-        } else {
-            installerFound = true;
-        }
-        if (!installerFound) {
-            mListener.onError("Installer not found");
-        }
+        mListener.onComplete(mDownloadId);
     }
 
     @WorkerThread
@@ -204,10 +191,5 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         }
         AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
         mListener.onError(e.getMessage());
-    }
-
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private static Uri getFileUriOnOldDevices(Cursor cursor) throws IllegalArgumentException {
-        return Uri.parse("file://" + cursor.getString(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME)));
     }
 }

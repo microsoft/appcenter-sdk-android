@@ -58,7 +58,7 @@ class DownloadManagerUpdateTask extends AsyncTask<Void, Void, Void> {
                 }
 
                 /* Complete download. */
-                mDownloader.onDownloadComplete(cursor);
+                mDownloader.onDownloadComplete();
             } finally {
                 cursor.close();
             }
