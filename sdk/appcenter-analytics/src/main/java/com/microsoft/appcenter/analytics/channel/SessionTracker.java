@@ -109,7 +109,6 @@ public class SessionTracker extends AbstractChannelListener {
 
             /* Set current session identifier. */
             log.setSid(mSid);
-
             if (!isManualSessionTrackerEnabled) {
 
                 /* Record queued time only if the log is using current session. */

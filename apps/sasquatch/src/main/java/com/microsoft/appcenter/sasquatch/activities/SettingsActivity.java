@@ -254,8 +254,6 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void setEnabled(boolean enabled) {
-                    // TODO uncomment after release
-                    // Analytics.enableManualSessionTracker();
                     MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_analytics_session_tracker_state_key), enabled).apply();
                 }
 
