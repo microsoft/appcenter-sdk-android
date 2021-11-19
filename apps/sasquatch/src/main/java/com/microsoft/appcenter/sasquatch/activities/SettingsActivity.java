@@ -255,6 +255,7 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_analytics_session_tracker_state_key), enabled).apply();
+                    Toast.makeText(getActivity(), R.string.appcenter_analytics_start_session_toast, Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
