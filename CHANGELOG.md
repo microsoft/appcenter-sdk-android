@@ -7,6 +7,10 @@
 * **[Breaking change]** Remove `AppCenter.setCustomProperties` API.
 * **[Fix]** Remove `android.support.test.InstrumentationRegistry` string that caused an error when checking applications on availability of android support libraries.
 
+### App Center Analytics
+
+* **[Feature]** Increase the interval between sending logs from 3 to 6 seconds for the backend load optimization.
+
 ### App Center Distribute
 
 * **[Feature]** Remove the download manager task if the download doesn't start within 10 seconds.
