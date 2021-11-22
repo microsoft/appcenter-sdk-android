@@ -637,7 +637,7 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.error(LOG_TAG, "The receiver wasn't unregistered.", e);
             }
         } else {
-            AppCenterLog.warn(LOG_TAG, "Couldn't register unregister due to activity is null.");
+            AppCenterLog.warn(LOG_TAG, "Couldn't unregister due to activity is null.");
         }
     }
 
@@ -826,11 +826,11 @@ public class Distribute extends AbstractAppCenterService {
                 return;
             }
 
-            /* Continue to install a new release if before resume was shown dialog. */
+            /* Continue installing a new release if the dialog was shown before resumeDistributeWorkflow. */
             if (mAlertSystemWindowsDialog != null) {
                 mAlertSystemWindowsDialog.dismiss();
                 mAlertSystemWindowsDialog = null;
-                installingUpdate();
+                installUpdate();
                 return;
             }
 
@@ -1662,7 +1662,7 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Permission request on alert system windows denied. Continue installing...");
 
                 /* It is optional and installing can be continued if customer reject permission request. */
-                installingUpdate();
+                installUpdate();
             }
         });
         dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
@@ -1673,7 +1673,7 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.debug(LOG_TAG, "Permission request on alert system windows denied. Continue installing...");
 
                 /* It is optional and installing can be continued if customer reject permission request. */
-                installingUpdate();
+                installUpdate();
             }
         });
         dialogBuilder.setPositiveButton(R.string.appcenter_distribute_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
@@ -1906,6 +1906,7 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @UiThread
+    @VisibleForTesting
     synchronized void notifyInstallProgress(boolean isInProgress) {
         mInstallInProgress = isInProgress;
         if (isInProgress) {
@@ -1936,30 +1937,27 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Start to install a new update.
      */
-    synchronized private void installingUpdate() {
+    synchronized private void installUpdate() {
         if (mReleaseInstallerListener == null) {
             AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
             return;
         }
-        if (!mReleaseInstallerListener.startInstall()) {
-            Toast.makeText(mContext, R.string.something_goes_wrong_during_installing_new_release, Toast.LENGTH_SHORT).show();
-        }
+        mReleaseInstallerListener.startInstall();
     }
 
     /**
      * Ask permission on start application after update or start to install a new update.
+     * 
+     * @param downloadId
+     * @param totalSize
      */
     synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId, long totalSize) {
-        if (mReleaseInstallerListener == null) {
-            AppCenterLog.debug(LOG_TAG, "Couldn't set 'downloadId' value due to the release installer wasn't initialized.");
-            return;
-        }
         mReleaseInstallerListener.setDownloadId(downloadId);
         mReleaseInstallerListener.setTotalSize(totalSize);
 
         /* Check permission on start application after update. */
         if (InstallerUtils.isSystemAlertWindowsEnabled(mContext)) {
-            installingUpdate();
+            installUpdate();
         } else {
             showSystemAlertsWindowsSettingsDialog();
         }

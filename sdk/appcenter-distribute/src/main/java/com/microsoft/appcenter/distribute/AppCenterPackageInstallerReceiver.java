@@ -38,9 +38,8 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
             switch (status) {
                 case PackageInstaller.STATUS_PENDING_USER_ACTION:
                     AppCenterLog.debug(AppCenterLog.LOG_TAG, "Ask confirmation to install a new release.");
-
-                    /* This test app isn't privileged, so the user has to confirm the install. */
                     Intent confirmIntent = (Intent) extras.get(Intent.EXTRA_INTENT);
+                    confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(confirmIntent);
                     break;
                 case PackageInstaller.STATUS_SUCCESS:
