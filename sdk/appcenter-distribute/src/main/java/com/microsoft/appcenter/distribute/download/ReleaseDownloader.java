@@ -72,8 +72,8 @@ public interface ReleaseDownloader {
         /**
          * Called when the downloading is completed.
          *
-         * @param totalSize total size of downloaded file.
          * @param downloadId downloadId of downloaded file.
+         * @param totalSize total size of downloaded file.
          */
         @WorkerThread
         void onComplete(@NonNull long downloadId, long totalSize);
