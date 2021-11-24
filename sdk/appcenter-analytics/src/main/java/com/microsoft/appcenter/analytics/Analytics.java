@@ -86,7 +86,7 @@ public class Analytics extends AbstractAppCenterService {
      * Transmission interval minimum value.
      */
     @VisibleForTesting
-    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 3;
+    static final int MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS = 6;
 
     /**
      * Transmission interval maximum value.
