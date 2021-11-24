@@ -38,6 +38,11 @@ public class SessionTracker extends AbstractChannelListener {
     private final Channel mChannel;
 
     /**
+     * Stores the value of whether manual session tracker is enabled, false by default.
+     */
+    private boolean isManualSessionTrackerEnabled = false;
+
+    /**
      * Group name used to send generated logs.
      */
     private final String mGroupName;
@@ -104,9 +109,11 @@ public class SessionTracker extends AbstractChannelListener {
 
             /* Set current session identifier. */
             log.setSid(mSid);
+            if (!isManualSessionTrackerEnabled) {
 
-            /* Record queued time only if the log is using current session. */
-            mLastQueuedLogTime = SystemClock.elapsedRealtime();
+                /* Record queued time only if the log is using current session. */
+                mLastQueuedLogTime = SystemClock.elapsedRealtime();
+            }
         }
     }
 
@@ -123,23 +130,30 @@ public class SessionTracker extends AbstractChannelListener {
     private void sendStartSessionIfNeeded() {
         if (mSid == null || hasSessionTimedOut()) {
 
-            /* New session: generate a new identifier. */
-            mSid = UUID.randomUUID();
-
-            /* Update session storage. */
-            SessionContext.getInstance().addSession(mSid);
-
             /*
              * Record queued time for the session log itself to avoid double log if resuming
              * from background after timeout and sending a log at same time we resume like a page.
              */
             mLastQueuedLogTime = SystemClock.elapsedRealtime();
 
-            /* Enqueue a start session log. */
-            StartSessionLog startSessionLog = new StartSessionLog();
-            startSessionLog.setSid(mSid);
-            mChannel.enqueue(startSessionLog, mGroupName, Flags.DEFAULTS);
+            /* Generate session id and send start session log. */
+            sendStartSession();
         }
+    }
+
+    /**
+     * Generate session id and send start session log.
+     */
+    private void sendStartSession() {
+        mSid = UUID.randomUUID();
+
+        /* Update session storage. */
+        SessionContext.getInstance().addSession(mSid);
+
+        /* Enqueue a start session log. */
+        StartSessionLog startSessionLog = new StartSessionLog();
+        startSessionLog.setSid(mSid);
+        mChannel.enqueue(startSessionLog, mGroupName, Flags.DEFAULTS);
     }
 
     /**
@@ -147,6 +161,10 @@ public class SessionTracker extends AbstractChannelListener {
      */
     @WorkerThread
     public void onActivityResumed() {
+        if (isManualSessionTrackerEnabled) {
+            AppCenterLog.verbose(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request after resumed activity.");
+            return;
+        }
 
         /* Record resume time for session timeout management. */
         AppCenterLog.debug(Analytics.LOG_TAG, "onActivityResumed");
@@ -159,6 +177,10 @@ public class SessionTracker extends AbstractChannelListener {
      */
     @WorkerThread
     public void onActivityPaused() {
+        if (isManualSessionTrackerEnabled) {
+            AppCenterLog.verbose(Analytics.LOG_TAG, "Manual session tracker is enabled. Skip tracking a session status request after paused activity.");
+            return;
+        }
 
         /* Record pause time for session timeout management. */
         AppCenterLog.debug(Analytics.LOG_TAG, "onActivityPaused");
@@ -170,6 +192,26 @@ public class SessionTracker extends AbstractChannelListener {
      */
     public void clearSessions() {
         SessionContext.getInstance().clearSessions();
+    }
+
+    /**
+     * Enable manual session tracker.
+     */
+    public void enableManualSessionTracker() {
+        isManualSessionTrackerEnabled = true;
+        AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is enabled.");
+    }
+
+    /**
+     * Start a new session if manual session tracker is enabled, otherwise do nothing.
+     */
+    public void startSession() {
+        if(!isManualSessionTrackerEnabled) {
+            AppCenterLog.debug(Analytics.LOG_TAG, "Manual session tracker is disabled. Skip start a new session request.");
+            return;
+        }
+        sendStartSession();
+        AppCenterLog.debug(Analytics.LOG_TAG, String.format("Started a new session with id: %s.", mSid));
     }
 
     /**

@@ -157,6 +157,11 @@ public class Analytics extends AbstractAppCenterService {
     private boolean mAutoPageTrackingEnabled = false;
 
     /**
+     * Stores the value of whether manual session tracker is enabled, false by default.
+     */
+    private boolean isManualSessionTrackerEnabled = false;
+
+    /**
      * Init.
      */
     private Analytics() {
@@ -356,6 +361,20 @@ public class Analytics extends AbstractAppCenterService {
      */
     public static void trackEvent(String name, Map<String, String> properties) {
         getInstance().trackEventAsync(name, convertProperties(properties), null, Flags.DEFAULTS);
+    }
+
+    /**
+     * Enable manual session tracker.
+     */
+    public static void enableManualSessionTracker() {
+        getInstance().enableManualSessionTrackerAsync();
+    }
+
+    /**
+     * Start a new session if manual session tracker is enabled, otherwise do nothing.
+     */
+    public static void startSession() {
+        getInstance().startSessionAsync();
     }
 
     /**
@@ -742,6 +761,9 @@ public class Analytics extends AbstractAppCenterService {
 
             /* Start session tracker. */
             mSessionTracker = new SessionTracker(mChannel, ANALYTICS_GROUP);
+            if (isManualSessionTrackerEnabled) {
+                mSessionTracker.enableManualSessionTracker();
+            }
             mChannel.addListener(mSessionTracker);
 
             /* If we are in foreground, make sure we send start session log now (and track page). */
@@ -792,6 +814,28 @@ public class Analytics extends AbstractAppCenterService {
         pageLog.setName(name);
         pageLog.setProperties(properties);
         mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULTS);
+    }
+
+    /**
+     * Implements {@link #enableManualSessionTracker()}.
+     */
+    private synchronized void enableManualSessionTrackerAsync() {
+        if (mChannel != null) {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG, "The manual session tracker state should be set before the App Center start.");
+            return;
+        }
+        isManualSessionTrackerEnabled = true;
+    }
+
+    /**
+     * Implements {@link #startSession()}.
+     */
+    private synchronized void startSessionAsync() {
+        if (mSessionTracker == null) {
+            AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start session should be called after the Analytics start.");
+            return;
+        }
+        mSessionTracker.startSession();
     }
 
     /**

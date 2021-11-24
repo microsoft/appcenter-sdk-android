@@ -13,6 +13,7 @@ import com.microsoft.appcenter.analytics.ingestion.models.StartSessionLog;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -57,7 +58,7 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SessionTracker.class, SessionContext.class, SharedPreferencesManager.class, SystemClock.class})
+@PrepareForTest({SessionTracker.class, SessionContext.class, SharedPreferencesManager.class, SystemClock.class, AppCenterLog.class})
 public class SessionTrackerTest {
 
     private final static String TEST_GROUP = "group_test";
@@ -87,6 +88,7 @@ public class SessionTrackerTest {
     public void setUp() {
         mockStatic(System.class);
         mockStatic(SystemClock.class);
+        mockStatic(AppCenterLog.class);
         mockStatic(SharedPreferencesManager.class);
         PowerMockito.doAnswer(new Answer<Void>() {
 
@@ -631,5 +633,47 @@ public class SessionTrackerTest {
         mSessionTracker.onPreparingLog(log2, TEST_GROUP);
         assertNotEquals(log.getSid(), log2.getSid());
         assertNull(log2.getSid());
+    }
+
+    @Test
+    public void setManualSessionTracker() {
+
+        /* Call start session when manual session tracker is disabled. */
+        mSessionTracker.startSession();
+
+        /* Verify that log doesn't have session id. */
+        Log log = newEvent();
+        mSessionTracker.onPreparingLog(log, TEST_GROUP);
+        assertNull(log.getSid());
+
+        /* Verify that method was called. */
+        verifyStatic();
+        SystemClock.elapsedRealtime();
+
+        /* Set manual session tracker. */
+        mSessionTracker.enableManualSessionTracker();
+
+        /* Call resume and verify that log doesn't have session id. */
+        mSessionTracker.onActivityResumed();
+        mSessionTracker.onPreparingLog(log, TEST_GROUP);
+        assertNull(log.getSid());
+
+        /* Verify that method wasn't called. */
+        verifyStatic();
+        SystemClock.elapsedRealtime();
+
+        /* Call pause and verify that method wasn't called again. */
+        mSessionTracker.onActivityPaused();
+        verifyStatic();
+        SystemClock.elapsedRealtime();
+
+        /* Call start session and verify that log has session id. */
+        mSessionTracker.startSession();
+        mSessionTracker.onPreparingLog(log, TEST_GROUP);
+        assertNotNull(log.getSid());
+
+        /* Verify that method wasn't called. */
+        verifyStatic();
+        SystemClock.elapsedRealtime();
     }
 }
