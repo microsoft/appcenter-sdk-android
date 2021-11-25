@@ -13,7 +13,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
@@ -43,7 +42,6 @@ import com.microsoft.appcenter.sasquatch.eventfilter.EventFilter;
 import com.microsoft.appcenter.utils.PrefStorageConstants;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -250,6 +248,28 @@ public class SettingsActivity extends AppCompatActivity {
                 @Override
                 public void setEnabled(boolean enabled) {
                     AnalyticsPrivateHelper.setAutoPageTrackingEnabled(enabled);
+                }
+            });
+            initCheckBoxSetting(R.string.appcenter_analytics_session_tracker_state_key, R.string.appcenter_analytics_session_tracker_state_enable, R.string.appcenter_analytics_session_tracker_state_disable, new HasEnabled() {
+
+                @Override
+                public void setEnabled(boolean enabled) {
+                    MainActivity.sSharedPreferences.edit().putBoolean(getString(R.string.appcenter_analytics_session_tracker_state_key), enabled).apply();
+                    Toast.makeText(getActivity(), R.string.appcenter_analytics_start_session_toast, Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public boolean isEnabled() {
+                    return MainActivity.sSharedPreferences.getBoolean(getString(R.string.appcenter_analytics_session_tracker_state_key), false);
+                }
+            });
+            initClickableSetting(R.string.appcenter_analytics_start_session_key, new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    // TODO uncomment after release
+                    // Analytics.startSession();
+                    return true;
                 }
             });
 
