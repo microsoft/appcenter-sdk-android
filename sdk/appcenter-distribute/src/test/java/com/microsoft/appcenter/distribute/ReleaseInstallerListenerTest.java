@@ -43,6 +43,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -330,6 +331,25 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that installer process was triggered in the Distribute again. */
         verify(mDistribute).notifyInstallProgress(eq(false));
+    }
+
+    @Test
+    public void startInstallWhenFileIsInvalid() throws FileNotFoundException {
+
+        /* Mock file description. */
+        ParcelFileDescriptor mockFileDescriptor = mock(ParcelFileDescriptor.class);
+        when(mockFileDescriptor.getStatSize()).thenReturn(0L);
+        when(mDownloadManager.openDownloadedFile(anyLong())).thenReturn(mockFileDescriptor);
+
+        /* Set total size. */
+        mReleaseInstallerListener.setTotalSize(1L);
+
+        /* Start install process. */
+        mReleaseInstallerListener.startInstall();
+
+        /* Verify that the install process never starts. */
+        verifyStatic(never());
+        InstallerUtils.installPackage(Matchers.<InputStream>any(), Matchers.<Context>any(), any(PackageInstaller.SessionCallback.class));
     }
 
     @Test

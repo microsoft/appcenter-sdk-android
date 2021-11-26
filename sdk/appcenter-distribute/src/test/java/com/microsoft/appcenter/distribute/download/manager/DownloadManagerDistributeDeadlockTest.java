@@ -58,6 +58,7 @@ import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -254,7 +255,7 @@ public class DownloadManagerDistributeDeadlockTest {
 
             @Override
             public void run() {
-                mReleaseDownloader.onDownloadComplete();
+                mReleaseDownloader.onDownloadComplete(anyLong());
             }
         });
     }

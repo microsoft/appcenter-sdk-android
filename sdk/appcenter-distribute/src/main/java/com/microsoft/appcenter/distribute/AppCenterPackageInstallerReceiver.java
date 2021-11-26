@@ -53,11 +53,11 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
                 case PackageInstaller.STATUS_FAILURE_INVALID:
                 case PackageInstaller.STATUS_FAILURE_STORAGE:
                     AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format(Locale.ENGLISH, "Failed to install a new release with status: %s. Error message: %s.", status, message));
-                    Toast.makeText(context, context.getString(R.string.something_goes_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
                     break;
                 default:
                     AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized status received from installer: %s", status));
-                    Toast.makeText(context, context.getString(R.string.something_goes_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
             }
         } else {
             AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized action %s - do nothing.", intent.getAction()));

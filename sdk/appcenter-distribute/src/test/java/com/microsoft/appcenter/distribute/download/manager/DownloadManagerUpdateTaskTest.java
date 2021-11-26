@@ -19,6 +19,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOW
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.ignoreStubs;
 import static org.mockito.Mockito.never;
@@ -145,7 +146,7 @@ public class DownloadManagerUpdateTaskTest {
         mUpdateTask.doInBackground();
 
         /* Verify. */
-        verify(mDownloader).onDownloadComplete();
+        verify(mDownloader).onDownloadComplete(anyLong());
         verify(mDownloader, never()).onDownloadError(any(RuntimeException.class));
         verify(mCursor).close();
     }

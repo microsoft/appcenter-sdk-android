@@ -1947,9 +1947,13 @@ public class Distribute extends AbstractAppCenterService {
 
     /**
      * Ask permission on start application after update or start to install a new update.
+     *
+     * @param downloadId downloadId of downloaded file.
+     * @param totalSize total size of downloaded file.
      */
-    synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId) {
+    synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId, long totalSize) {
         mReleaseInstallerListener.setDownloadId(downloadId);
+        mReleaseInstallerListener.setTotalSize(totalSize);
 
         /* Check permission on start application after update. */
         if (InstallerUtils.isSystemAlertWindowsEnabled(mContext)) {

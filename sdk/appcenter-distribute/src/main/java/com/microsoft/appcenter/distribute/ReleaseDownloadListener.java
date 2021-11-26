@@ -90,7 +90,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @WorkerThread
     @Override
-    public void onComplete(@NonNull final Long downloadId) {
+    public void onComplete(@NonNull final long downloadId, final long totalSize) {
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -98,9 +98,9 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
                 /* Check if app should install now. */
                 if (!Distribute.getInstance().notifyDownload(mReleaseDetails)) {
-                    AppCenterLog.info(LOG_TAG, "Release is download. Starting to install it.");
+                    AppCenterLog.info(LOG_TAG, "Release is downloaded. Starting to install it.");
                     Distribute.getInstance().setInstalling(mReleaseDetails);
-                    Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(downloadId);
+                    Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(downloadId, totalSize);
                 }
             }
         });

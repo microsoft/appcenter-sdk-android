@@ -78,7 +78,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         mockStatic(AppCenterLog.class);
 
         /* Reset mock release listener methods. */
-        doCallRealMethod().when(mReleaseDownloaderListener).onComplete(anyLong());
+        doCallRealMethod().when(mReleaseDownloaderListener).onComplete(anyLong(), anyLong());
         when(mReleaseInstallerListener.showInstallProgressDialog(any(Activity.class))).thenReturn(mock(Dialog.class));
 
         /* Mock release installer listener. */
@@ -129,7 +129,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
         /* Notify about complete download. */
-        mReleaseDownloaderListener.onComplete(1L);
+        mReleaseDownloaderListener.onComplete(1L, 1L);
 
         /* Verify that downloadId was set. */
         verify(mReleaseInstallerListener).setDownloadId(anyLong());
@@ -191,7 +191,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(isEnabled);
 
         /* Notify about complete download. */
-        mReleaseDownloaderListener.onComplete(1L);
+        mReleaseDownloaderListener.onComplete(1L, 1L);
 
         /* Verify that downloadId was set. */
         verify(mReleaseInstallerListener).setDownloadId(anyLong());
@@ -226,7 +226,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
         /* Notify about complete download. */
-        mReleaseDownloaderListener.onComplete(1L);
+        mReleaseDownloaderListener.onComplete(1L, 1L);
 
         /* Verify that downloadId was set. */
         verify(mReleaseInstallerListener).setDownloadId(anyLong());
@@ -251,7 +251,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
         /* Notify about complete download. */
-        mReleaseDownloaderListener.onComplete(1L);
+        mReleaseDownloaderListener.onComplete(1L, 1L);
 
         /* Verify that downloadId was set. */
         verify(mReleaseInstallerListener).setDownloadId(anyLong());
@@ -276,7 +276,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
 
         /* Notify about complete download. */
-        mReleaseDownloaderListener.onComplete(1L);
+        mReleaseDownloaderListener.onComplete(1L, 1L);
 
         /* Emulate behavior that settings was enabled via dialog. */
         Distribute.getInstance().onActivityPaused(mActivity);
@@ -319,7 +319,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         Mockito.when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
 
         /* Notify about complete download. */
-        mReleaseDownloaderListener.onComplete(1L);
+        mReleaseDownloaderListener.onComplete(1L, 1L);
 
         /* Verify that dialog was not shown. */
         verify(mAlertWindowsDialog, never()).show();
@@ -346,7 +346,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         Mockito.when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
 
         /* Notify about complete download. */
-        mReleaseDownloaderListener.onComplete(1L);
+        mReleaseDownloaderListener.onComplete(1L, 1L);
 
         /* Start distribute with app secret NULL to make sure updateReleaseDetails is called on startFromBackground. */
         Distribute.getInstance().onStarting(mAppCenterHandler);
@@ -357,7 +357,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         Mockito.when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
 
         /* Start installation */
-        mReleaseDownloaderListener.onComplete(1L);
+        mReleaseDownloaderListener.onComplete(1L, 1L);
 
         /* Verify that dialog was shown once only. */
         verify(mAlertWindowsDialog).show();

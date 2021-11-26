@@ -22,7 +22,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.NumberFormat;
@@ -49,6 +48,11 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     private long mDownloadId;
 
     /**
+     * Total size of the file.
+     */
+    private long mTotalSize;
+
+    /**
      * Last download progress dialog that was shown.
      * Android 8 deprecates this dialog but only reason is that they want us to use a non modal
      * progress indicator while we actually use it to be a modal dialog for forced update.
@@ -71,6 +75,15 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     }
 
     /**
+     * Set the total size of the downloaded file.
+     *
+     * @param totalSize downloadId of the downloaded file.
+     */
+    public synchronized void setTotalSize(long totalSize) {
+        mTotalSize = totalSize;
+    }
+
+    /**
      * Start to install a new release.
      */
     public synchronized void startInstall() {
@@ -79,6 +92,11 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         try {
             DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
             pfd = downloadManager.openDownloadedFile(mDownloadId);
+            if (pfd.getStatSize() != mTotalSize) {
+                AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
+                Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
+                return;
+            }
             InputStream data = new FileInputStream(pfd.getFileDescriptor());
             InstallerUtils.installPackage(data, mContext, this);
         } catch (IOException e) {
@@ -123,7 +141,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
             @Override
             public void run() {
                 if (!success) {
-                    Toast.makeText(mContext, mContext.getString(R.string.something_goes_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
                 }
                 Distribute.getInstance().notifyInstallProgress(false);
             }
