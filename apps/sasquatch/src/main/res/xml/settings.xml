@@ -9,6 +9,9 @@
         android:key="@string/appcenter_state_key"
         android:title="@string/appcenter_state_title" />
     <Preference
+        android:key="@string/country_code_key"
+        android:title="@string/country_code_title" />
+    <Preference
         android:key="@string/storage_size_key"
         android:title="@string/storage_size_title" />
     <Preference

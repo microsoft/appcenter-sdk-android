@@ -846,6 +846,18 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
+    public void setCountryCode() {
+
+        /* Set country code. */
+        String expectedCountryCode = "aa";
+        AppCenter.setCountryCode(expectedCountryCode);
+
+        /* Check that method was called. */
+        verifyStatic();
+        DeviceInfoHelper.setCountryCode(eq(expectedCountryCode));
+    }
+
+    @Test
     public void setDefaultLogLevelRelease() {
         mApplicationInfo.flags = 0;
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);

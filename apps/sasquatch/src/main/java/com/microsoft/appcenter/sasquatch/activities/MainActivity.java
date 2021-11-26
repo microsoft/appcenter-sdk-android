@@ -121,6 +121,13 @@ public class MainActivity extends AppCompatActivity {
             // Analytics.enableManualSessionTracker();
         }
 
+        /* Set country code. */
+        String countryCode = MainActivity.sSharedPreferences.getString(application.getString(R.string.country_code_key), null);
+        if (countryCode != null) {
+            // TODO uncomment after release
+            // AppCenter.setCountryCode(countryCode);
+        }
+
         /* Set the track explicitly only if we set it in settings, to test the initial public by default at first launch. */
         int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_track_state_key), 0);
         if (savedTrack != 0) {

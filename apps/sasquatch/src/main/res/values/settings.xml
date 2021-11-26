@@ -12,6 +12,10 @@
     <string name="storage_size_key" tools:ignore="MissingTranslation">storage_size_key</string>
     <string name="storage_size_title" tools:ignore="MissingTranslation">Storage Max Size</string>
 
+    <string name="country_code_key" tools:ignore="MissingTranslation">country_code_key</string>
+    <string name="country_code_title" tools:ignore="MissingTranslation">Country Code</string>
+    <string name="country_code_save_message" tools:ignore="MissingTranslation">Country code value will be applied after the application restart.</string>
+
     <string name="storage_file_size_key" tools:ignore="MissingTranslation">storage_file_size_key</string>
     <string name="storage_file_size_title" tools:ignore="MissingTranslation">Storage File Size</string>
 
