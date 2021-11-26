@@ -141,7 +141,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
             @Override
             public void run() {
                 if (!success) {
-                    Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_something_goes_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
                 }
                 Distribute.getInstance().notifyInstallProgress(false);
             }

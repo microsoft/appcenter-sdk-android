@@ -22,7 +22,7 @@
     <string name="appcenter_distribute_downloading_error" tools:ignore="MissingTranslation">Failed to download app update</string>
     <string name="appcenter_distribute_download_progress_number_format">%1$d MB of %2$d MB</string>
     <string name="appcenter_distribute_install_progress_number_format" tools:ignore="MissingTranslation">%1$d of %2$d</string>
-    <string name="appcenter_distribute_something_goes_wrong_during_installing_new_release" tools:ignore="MissingTranslation">Something went wrong. Update was not installed.</string>
+    <string name="appcenter_distribute_something_went_wrong_during_installing_new_release" tools:ignore="MissingTranslation">Something went wrong. Update was not installed.</string>
     <string name="appcenter_distribute_failed_file_during_install_update" tools:ignore="MissingTranslation">Failed to start installing new release. The file is invalid.</string>
     <string name="appcenter_distribute_install_dialog" tools:ignore="MissingTranslation">Installing...</string>
     <string name="appcenter_distribute_install_ready_title">App update downloaded</string>
