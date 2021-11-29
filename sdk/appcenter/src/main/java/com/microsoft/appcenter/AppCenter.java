@@ -1024,6 +1024,7 @@ public class AppCenter {
             mStartedServicesNamesToLog.clear();
             StartServiceLog startServiceLog = new StartServiceLog();
             startServiceLog.setServices(allServiceNamesToStart);
+            startServiceLog.oneCollectorEnabled(mTransmissionTargetToken != null);
             mChannel.enqueue(startServiceLog, CORE_GROUP, Flags.DEFAULTS);
         }
     }
