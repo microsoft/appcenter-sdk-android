@@ -61,35 +61,35 @@ public class AppCenterLogTest {
 
     private static void verifyError(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.e("my-tag", "error with my-tag");
+        Log.e(eq("my-tag"), eq("error with my-tag"));
         verifyStatic(verificationMode);
         Log.e(eq("my-tag"), eq("error with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyWarn(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.w("my-tag", "warn with my-tag");
+        Log.w(eq("my-tag"), eq("warn with my-tag"));
         verifyStatic(verificationMode);
         Log.w(eq("my-tag"), eq("warn with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyInfo(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.i("my-tag", "info with my-tag");
+        Log.i(eq("my-tag"), eq("info with my-tag"));
         verifyStatic(verificationMode);
         Log.i(eq("my-tag"), eq("info with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyDebug(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.d("my-tag", "debug with my-tag");
+        Log.d(eq("my-tag"), eq("debug with my-tag"));
         verifyStatic(verificationMode);
         Log.d(eq("my-tag"), eq("debug with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyVerbose(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.v("my-tag", "verbose with my-tag");
+        Log.v(eq("my-tag"), eq("verbose with my-tag"));
         verifyStatic(verificationMode);
         Log.v(eq("my-tag"), eq("verbose with my-tag with exception"), any(Exception.class));
     }
@@ -104,6 +104,7 @@ public class AppCenterLogTest {
 
     @Before
     public void setUp() {
+        AppCenter.setLogger(null);
         mockStatic(Log.class);
         when(Log.getStackTraceString(any(Throwable.class))).thenReturn("mock stack trace");
     }
@@ -118,7 +119,6 @@ public class AppCenterLogTest {
         verifyInfo(never());
         verifyWarn(never());
         verifyError(never());
-        verifyAssert(never());
     }
 
     @Test
@@ -131,7 +131,6 @@ public class AppCenterLogTest {
         verifyInfo(never());
         verifyWarn(never());
         verifyError(never());
-        verifyAssert(times(1));
     }
 
     @Test
@@ -144,7 +143,6 @@ public class AppCenterLogTest {
         verifyInfo(never());
         verifyWarn(never());
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
@@ -157,7 +155,6 @@ public class AppCenterLogTest {
         verifyInfo(never());
         verifyWarn(times(1));
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
@@ -170,7 +167,6 @@ public class AppCenterLogTest {
         verifyInfo(times(1));
         verifyWarn(times(1));
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
@@ -183,7 +179,6 @@ public class AppCenterLogTest {
         verifyInfo(times(1));
         verifyWarn(times(1));
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
@@ -196,7 +191,6 @@ public class AppCenterLogTest {
         verifyInfo(times(1));
         verifyWarn(times(1));
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
