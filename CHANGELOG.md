@@ -6,7 +6,7 @@
 
 * **[Breaking change]** Remove `AppCenter.setCustomProperties` API.
 * **[Fix]** Remove `android.support.test.InstrumentationRegistry` string that caused an error when checking applications on availability of android support libraries.
-* **[Feature]** Add method to manually set the country code `AppCenter.setCountryCode(string)`.
+* **[Feature]** Add `AppCenter.setCountryCode(string)` API to set the country code manually.
 
 ### App Center Analytics
 

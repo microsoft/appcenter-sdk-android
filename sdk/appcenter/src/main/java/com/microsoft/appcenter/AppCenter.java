@@ -289,7 +289,7 @@ public class AppCenter {
     }
 
     /**
-     * Set the two-letter ISO country code to send to the backend.
+     * Set the two-letter ISO country code.
      *
      * @param countryCode the two-letter ISO country code. See <code>https://www.iso.org/obp/ui/#search</code> for more information.
      */

@@ -116,7 +116,7 @@ public class SettingsActivity extends AppCompatActivity {
                     input.setHint(R.string.country_code_title);
                     input.setText(MainActivity.sSharedPreferences.getString(getActivity().getString(R.string.country_code_key), ""));
                     input.setSelection(input.getText().length());
-                    new AlertDialog.Builder(getActivity()).setTitle(R.string.storage_size_title).setView(input)
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.country_code_title).setView(input)
                             .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
 
                                 @SuppressLint("CommitPrefEdits")
