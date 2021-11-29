@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
@@ -395,6 +396,15 @@ public class AppCenter {
     @SafeVarargs
     public static void startFromLibrary(Context context, Class<? extends AppCenterService>... services) {
         getInstance().startInstanceFromLibrary(context, services);
+    }
+
+    /**
+     * Set custom logger for logs output.
+     *
+     * @param logger custom logger.
+     */
+    public static void setLogger(Logger logger) {
+        AppCenterLog.setLogger(logger);
     }
 
     /**
