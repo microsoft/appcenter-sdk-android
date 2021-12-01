@@ -17,7 +17,6 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Surface;
-import android.view.WindowManager;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Device;
@@ -40,6 +39,11 @@ public class DeviceInfoHelper {
      * Wrapper SDK information to use when building device properties.
      */
     private static WrapperSdk sWrapperSdk;
+
+    /**
+     * Country code.
+     */
+    private static String mCountryCode;
 
     /**
      * Gets device information.
@@ -79,6 +83,11 @@ public class DeviceInfoHelper {
             }
         } catch (Exception e) {
             AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve carrier info", e);
+        }
+
+        /* Set country code. */
+        if (mCountryCode != null) {
+            device.setCarrierCountry(mCountryCode);
         }
 
         /* Locale. */
@@ -178,6 +187,20 @@ public class DeviceInfoHelper {
      */
     public static synchronized void setWrapperSdk(WrapperSdk wrapperSdk) {
         sWrapperSdk = wrapperSdk;
+    }
+
+    /**
+     * Set the two-letter ISO country code.
+     *
+     * @param countryCode the two-letter ISO country code.
+     */
+    public static void setCountryCode(String countryCode) {
+        if (countryCode != null && countryCode.length() != 2) {
+            AppCenterLog.error(AppCenterLog.LOG_TAG, "App Center accepts only the two-letter ISO country code.");
+            return;
+        }
+        mCountryCode = countryCode;
+        AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format("Set country code: %s", countryCode));
     }
 
     /**
