@@ -399,7 +399,7 @@ public class AppCenter {
     }
 
     /**
-     * Set custom logger for logs output.
+     * Set custom logger.
      *
      * @param logger custom logger.
      */
