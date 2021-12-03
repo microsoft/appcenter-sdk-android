@@ -45,11 +45,13 @@ public class StartServiceLogTest {
         services.add("FIRST");
         services.add("SECOND");
         a.setServices(services);
+        a.oneCollectorEnabled(true);
         checkEquals(a.getServices(), services);
         checkNotEquals(a, b);
         b.setServices(new ArrayList<String>());
         checkNotEquals(a, b);
         b.setServices(services);
+        b.oneCollectorEnabled(true);
         checkEquals(a, b);
     }
 }

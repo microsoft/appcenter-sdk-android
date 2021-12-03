@@ -109,6 +109,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
+        verify(mStartServiceLog).oneCollectorEnabled(eq(false));
     }
 
     @Test
@@ -140,6 +141,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         services.add(service.getServiceName());
         services.add(anotherService.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
+        verify(mStartServiceLog).oneCollectorEnabled(eq(false));
     }
 
     @Test
@@ -160,6 +162,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
+        verify(mStartServiceLog).oneCollectorEnabled(eq(false));
     }
 
     @Test
@@ -179,6 +182,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
+        verify(mStartServiceLog).oneCollectorEnabled(eq(false));
     }
 
     @Test
@@ -198,6 +202,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
+        verify(mStartServiceLog).oneCollectorEnabled(eq(true));
     }
 
     @Test
@@ -217,6 +222,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         List<String> services = new ArrayList<>();
         services.add(service.getServiceName());
         verify(mStartServiceLog).setServices(eq(services));
+        verify(mStartServiceLog).oneCollectorEnabled(eq(false));
     }
 
     @Test
