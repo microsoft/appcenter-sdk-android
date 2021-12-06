@@ -30,7 +30,7 @@ import static org.hamcrest.Matchers.not;
 public final class EspressoUtils {
 
     public static final int CHECK_DELAY = 50;
-    public static final int TOAST_DELAY = 2000;
+    public static final int TOAST_DELAY = 3000;
 
     private EspressoUtils() {
     }
