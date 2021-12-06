@@ -295,8 +295,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    // TODO uncomment after release
-                    // Analytics.startSession();
+                    Analytics.startSession();
                     return true;
                 }
             });
