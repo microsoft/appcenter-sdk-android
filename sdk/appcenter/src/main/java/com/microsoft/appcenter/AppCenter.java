@@ -21,10 +21,8 @@ import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.channel.DefaultChannel;
 import com.microsoft.appcenter.channel.OneCollectorChannelListener;
 import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.ingestion.models.CustomPropertiesLog;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
-import com.microsoft.appcenter.ingestion.models.json.CustomPropertiesLogFactory;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
@@ -50,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
@@ -291,6 +290,15 @@ public class AppCenter {
     }
 
     /**
+     * Set the two-letter ISO country code.
+     *
+     * @param countryCode the two-letter ISO country code. See <code>https://www.iso.org/obp/ui/#search</code> for more information.
+     */
+    public static void setCountryCode(String countryCode) {
+        DeviceInfoHelper.setCountryCode(countryCode);
+    }
+
+    /**
      * Get the current version of App Center SDK.
      *
      * @return The current version of App Center SDK.
@@ -298,15 +306,6 @@ public class AppCenter {
     @SuppressWarnings({"WeakerAccess", "SameReturnValue"})
     public static String getSdkVersion() {
         return com.microsoft.appcenter.BuildConfig.VERSION_NAME;
-    }
-
-    /**
-     * Set the custom properties.
-     *
-     * @param customProperties custom properties object.
-     */
-    public static void setCustomProperties(CustomProperties customProperties) {
-        getInstance().setInstanceCustomProperties(customProperties);
     }
 
     /**
@@ -406,6 +405,15 @@ public class AppCenter {
     @SafeVarargs
     public static void startFromLibrary(Context context, Class<? extends AppCenterService>... services) {
         getInstance().startInstanceFromLibrary(context, services);
+    }
+
+    /**
+     * Set custom logger.
+     *
+     * @param logger custom logger.
+     */
+    public static void setLogger(Logger logger) {
+        AppCenterLog.setLogger(logger);
     }
 
     /**
@@ -609,30 +617,6 @@ public class AppCenter {
             return defaultValue;
         }
         return SharedPreferencesManager.getBoolean(PrefStorageConstants.ALLOWED_NETWORK_REQUEST, defaultValue);
-    }
-
-    /**
-     * {@link #setCustomProperties(CustomProperties)} implementation at instance level.
-     *
-     * @param customProperties custom properties object.
-     */
-    private synchronized void setInstanceCustomProperties(CustomProperties customProperties) {
-        if (customProperties == null) {
-            AppCenterLog.error(LOG_TAG, "Custom properties may not be null.");
-            return;
-        }
-        final Map<String, Object> properties = customProperties.getProperties();
-        if (properties.size() == 0) {
-            AppCenterLog.error(LOG_TAG, "Custom properties may not be empty.");
-            return;
-        }
-        handlerAppCenterOperation(new Runnable() {
-
-            @Override
-            public void run() {
-                queueCustomProperties(properties);
-            }
-        }, null);
     }
 
     /**
@@ -867,7 +851,6 @@ public class AppCenter {
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
-        mLogSerializer.addLogFactory(CustomPropertiesLog.TYPE, new CustomPropertiesLogFactory());
         mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, httpClient, mHandler);
 
         /* Complete set maximum storage size future if starting from app. */
@@ -1060,6 +1043,7 @@ public class AppCenter {
             mStartedServicesNamesToLog.clear();
             StartServiceLog startServiceLog = new StartServiceLog();
             startServiceLog.setServices(allServiceNamesToStart);
+            startServiceLog.oneCollectorEnabled(mTransmissionTargetToken != null);
             mChannel.enqueue(startServiceLog, CORE_GROUP, Flags.DEFAULTS);
         }
     }
@@ -1082,19 +1066,6 @@ public class AppCenter {
         if (configuredSuccessfully) {
             startServices(startFromApp, services);
         }
-    }
-
-    /**
-     * Send custom properties.
-     * Unit test requires top level methods when PowerMock.whenNew.
-     *
-     * @param properties properties to send.
-     */
-    @WorkerThread
-    private void queueCustomProperties(@NonNull Map<String, Object> properties) {
-        CustomPropertiesLog customPropertiesLog = new CustomPropertiesLog();
-        customPropertiesLog.setProperties(properties);
-        mChannel.enqueue(customPropertiesLog, CORE_GROUP, Flags.DEFAULTS);
     }
 
     /**
@@ -1254,6 +1225,16 @@ public class AppCenter {
     @VisibleForTesting
     Application getApplication() {
         return mApplication;
+    }
+
+    @VisibleForTesting
+    void resetApplication() {
+        mApplication = null;
+    }
+
+    @VisibleForTesting
+    AppCenterHandler getAppCenterHandler() {
+        return mAppCenterHandler;
     }
 
     @VisibleForTesting

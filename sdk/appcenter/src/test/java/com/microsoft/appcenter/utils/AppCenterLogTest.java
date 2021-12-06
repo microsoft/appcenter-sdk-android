@@ -13,18 +13,25 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.verification.VerificationMode;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -32,8 +39,6 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class AppCenterLogTest {
 
     private static void callLogs() {
-        AppCenterLog.logAssert("my-tag", "error with my-tag");
-        AppCenterLog.logAssert("my-tag", "error with my-tag with exception", new Exception());
         AppCenterLog.error("my-tag", "error with my-tag");
         AppCenterLog.error("my-tag", "error with my-tag with exception", new Exception());
         AppCenterLog.warn("my-tag", "warn with my-tag");
@@ -56,35 +61,35 @@ public class AppCenterLogTest {
 
     private static void verifyError(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.e("my-tag", "error with my-tag");
+        Log.e(eq("my-tag"), eq("error with my-tag"));
         verifyStatic(verificationMode);
         Log.e(eq("my-tag"), eq("error with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyWarn(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.w("my-tag", "warn with my-tag");
+        Log.w(eq("my-tag"), eq("warn with my-tag"));
         verifyStatic(verificationMode);
         Log.w(eq("my-tag"), eq("warn with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyInfo(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.i("my-tag", "info with my-tag");
+        Log.i(eq("my-tag"), eq("info with my-tag"));
         verifyStatic(verificationMode);
         Log.i(eq("my-tag"), eq("info with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyDebug(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.d("my-tag", "debug with my-tag");
+        Log.d(eq("my-tag"), eq("debug with my-tag"));
         verifyStatic(verificationMode);
         Log.d(eq("my-tag"), eq("debug with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyVerbose(VerificationMode verificationMode) {
         verifyStatic(verificationMode);
-        Log.v("my-tag", "verbose with my-tag");
+        Log.v(eq("my-tag"), eq("verbose with my-tag"));
         verifyStatic(verificationMode);
         Log.v(eq("my-tag"), eq("verbose with my-tag with exception"), any(Exception.class));
     }
@@ -99,6 +104,7 @@ public class AppCenterLogTest {
 
     @Before
     public void setUp() {
+        AppCenter.setLogger(null);
         mockStatic(Log.class);
         when(Log.getStackTraceString(any(Throwable.class))).thenReturn("mock stack trace");
     }
@@ -113,7 +119,6 @@ public class AppCenterLogTest {
         verifyInfo(never());
         verifyWarn(never());
         verifyError(never());
-        verifyAssert(never());
     }
 
     @Test
@@ -126,7 +131,6 @@ public class AppCenterLogTest {
         verifyInfo(never());
         verifyWarn(never());
         verifyError(never());
-        verifyAssert(times(1));
     }
 
     @Test
@@ -139,7 +143,6 @@ public class AppCenterLogTest {
         verifyInfo(never());
         verifyWarn(never());
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
@@ -152,7 +155,6 @@ public class AppCenterLogTest {
         verifyInfo(never());
         verifyWarn(times(1));
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
@@ -165,7 +167,6 @@ public class AppCenterLogTest {
         verifyInfo(times(1));
         verifyWarn(times(1));
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
@@ -178,7 +179,6 @@ public class AppCenterLogTest {
         verifyInfo(times(1));
         verifyWarn(times(1));
         verifyError(times(1));
-        verifyAssert(times(1));
     }
 
     @Test
@@ -191,6 +191,45 @@ public class AppCenterLogTest {
         verifyInfo(times(1));
         verifyWarn(times(1));
         verifyError(times(1));
-        verifyAssert(times(1));
+    }
+
+    @Test
+    public void setCustomLogger() {
+        AppCenter.setLogLevel(Log.VERBOSE);
+        Logger mockLogger = mock(Logger.class);
+        AppCenter.setLogger(mockLogger);
+        callLogs();
+        verify(mockLogger).log(eq(Level.ALL), anyString());
+        verify(mockLogger).log(eq(Level.ALL), anyString(), any(Throwable.class));
+        verify(mockLogger).log(eq(Level.INFO), anyString());
+        verify(mockLogger).log(eq(Level.INFO), anyString(), any(Throwable.class));
+        verify(mockLogger).log(eq(Level.FINE), anyString());
+        verify(mockLogger).log(eq(Level.FINE), anyString(), any(Throwable.class));
+        verify(mockLogger).log(eq(Level.SEVERE), anyString());
+        verify(mockLogger).log(eq(Level.SEVERE), anyString(), any(Throwable.class));
+        verify(mockLogger).log(eq(Level.WARNING), anyString());
+        verify(mockLogger).log(eq(Level.WARNING), anyString(), any(Throwable.class));
+    }
+
+    @Test
+    public void checkPrintLogWithMessageAndTag() {
+
+        /* Prepare data. */
+        String mockTag = "my-tag";
+        String mockMessage = "message";
+        String expectedMessage = String.format("%s: %s", mockTag, mockMessage);
+
+        /* Prepare logger. */
+        AppCenter.setLogLevel(Log.VERBOSE);
+        Logger mockLogger = mock(Logger.class);
+        AppCenter.setLogger(mockLogger);
+
+        /* Call print log. */
+        AppCenterLog.verbose(mockTag, mockMessage);
+
+        /* Verify. */
+        ArgumentCaptor<String> captorMessage = ArgumentCaptor.forClass(String.class);
+        verify(mockLogger).log(eq(Level.ALL), captorMessage.capture());
+        assertEquals(captorMessage.getValue(), expectedMessage);
     }
 }

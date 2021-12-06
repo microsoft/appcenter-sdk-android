@@ -11,8 +11,6 @@
     <string name="add" tools:ignore="MissingTranslation">Add</string>
     <string name="title_crashes" tools:ignore="MissingTranslation">Crashes</string>
     <string name="description_crashes" tools:ignore="MissingTranslation">Test crashes</string>
-    <string name="title_custom_properties" tools:ignore="MissingTranslation">Custom properties</string>
-    <string name="description_custom_properties" tools:ignore="MissingTranslation">Send a custom properties</string>
     <string name="title_auth" tools:ignore="MissingTranslation">User Authentication</string>
     <string name="description_auth" tools:ignore="MissingTranslation">Associate telemetry with user information</string>
     <string name="title_device_info" tools:ignore="MissingTranslation">Device info</string>

@@ -58,6 +58,7 @@ import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -197,7 +198,6 @@ public class DownloadManagerDistributeDeadlockTest {
         when(mInstallIntent.getData()).thenReturn(mUri);
         when(mInstallIntent.resolveActivity(eq(mPackageManager))).thenReturn(mock(ComponentName.class));
         mockStatic(InstallerUtils.class);
-        PowerMockito.when(InstallerUtils.class, "getInstallIntent", Matchers.<Object[]>any()).thenReturn(mInstallIntent);
 
         /* Mock app name and other string resources. */
         mockStatic(AppNameHelper.class);
@@ -255,7 +255,7 @@ public class DownloadManagerDistributeDeadlockTest {
 
             @Override
             public void run() {
-                mReleaseDownloader.onDownloadComplete(mCursor);
+                mReleaseDownloader.onDownloadComplete(anyLong());
             }
         });
     }

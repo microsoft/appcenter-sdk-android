@@ -12,6 +12,10 @@
     <string name="storage_size_key" tools:ignore="MissingTranslation">storage_size_key</string>
     <string name="storage_size_title" tools:ignore="MissingTranslation">Storage Max Size</string>
 
+    <string name="country_code_key" tools:ignore="MissingTranslation">country_code_key</string>
+    <string name="country_code_title" tools:ignore="MissingTranslation">Country Code</string>
+    <string name="country_code_save_message" tools:ignore="MissingTranslation">Country code value will be applied after the application restart.</string>
+
     <string name="storage_file_size_key" tools:ignore="MissingTranslation">storage_file_size_key</string>
     <string name="storage_file_size_title" tools:ignore="MissingTranslation">Storage File Size</string>
 
@@ -23,10 +27,17 @@
     <string name="analytics_key" tools:ignore="MissingTranslation">appcenter_analytics</string>
     <string name="analytics_title" tools:ignore="MissingTranslation">Analytics</string>
 
+    <string name="appcenter_analytics_session_tracker_state_key" tools:ignore="MissingTranslation">appcenter_analytics_session_tracker_state_key</string>
     <string name="appcenter_analytics_state_key" tools:ignore="MissingTranslation">appcenter_analytics_state_key</string>
     <string name="appcenter_analytics_state_title" tools:ignore="MissingTranslation">Analytics state</string>
     <string name="appcenter_analytics_state_summary_enabled" tools:ignore="MissingTranslation">Analytics is enabled</string>
     <string name="appcenter_analytics_state_summary_disabled" tools:ignore="MissingTranslation">Analytics is disabled</string>
+    <string name="appcenter_analytics_session_tracker_title" tools:ignore="MissingTranslation">Manual session tracker</string>
+    <string name="appcenter_analytics_session_tracker_state_disable" tools:ignore="MissingTranslation">Manual session tracker is disabled</string>
+    <string name="appcenter_analytics_session_tracker_state_enable" tools:ignore="MissingTranslation">Manual session tracker is enabled</string>
+    <string name="appcenter_analytics_start_session_key" tools:ignore="MissingTranslation">appcenter_analytics_start_session_generation_key</string>
+    <string name="appcenter_analytics_start_session_title" tools:ignore="MissingTranslation">Start session</string>
+    <string name="appcenter_analytics_start_session_toast" tools:ignore="MissingTranslation">Manual start session tracker will be changed only when the application is restarted.</string>
 
     <string name="appcenter_analytics_pause_key" tools:ignore="MissingTranslation">appcenter_analytics_pause_resume_key</string>
     <string name="appcenter_analytics_pause_title" tools:ignore="MissingTranslation">Analytics paused state</string>

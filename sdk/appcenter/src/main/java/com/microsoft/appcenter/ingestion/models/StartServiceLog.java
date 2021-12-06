@@ -26,6 +26,13 @@ public class StartServiceLog extends AbstractLog {
 
     private static final String SERVICES = "services";
 
+    private static final String IS_ONE_COLLECTOR_ENABLED = "isOneCollectorEnabled";
+
+    /**
+     * OneCollector usage status.
+     */
+    private boolean isOneCollectorEnabled = false;
+
     /**
      * The list of services of the AppCenter start call.
      */
@@ -54,16 +61,26 @@ public class StartServiceLog extends AbstractLog {
         this.services = services;
     }
 
+    public void oneCollectorEnabled(boolean isEnabled) {
+        isOneCollectorEnabled = isEnabled;
+    }
+
+    public boolean isOneCollectorEnabled() {
+        return isOneCollectorEnabled;
+    }
+
     @Override
     public void read(JSONObject object) throws JSONException {
         super.read(object);
         setServices(JSONUtils.readStringArray(object, SERVICES));
+        oneCollectorEnabled(JSONUtils.readBoolean(object, IS_ONE_COLLECTOR_ENABLED));
     }
 
     @Override
     public void write(JSONStringer writer) throws JSONException {
         super.write(writer);
         JSONUtils.writeStringArray(writer, SERVICES, getServices());
+        JSONUtils.write(writer, IS_ONE_COLLECTOR_ENABLED, isOneCollectorEnabled());
     }
 
     @Override

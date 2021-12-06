@@ -84,6 +84,7 @@ public class DeviceInfoHelperTest {
 
     @Before
     public void setup() {
+        DeviceInfoHelper.setCountryCode(null);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
     }
 
@@ -289,5 +290,77 @@ public class DeviceInfoHelperTest {
         assertNull(device.getScreenSize());
         verifyStatic();
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(Exception.class));
+    }
+
+    @Test
+    public void setCountryCode() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
+
+        /* Mock system calls. */
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
+        when(mTelephonyManager.getNetworkCountryIso()).thenReturn("");
+        when(mTelephonyManager.getNetworkOperatorName()).thenReturn("");
+        when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mTelephonyManager);
+
+        /* Set invalid country code. */
+        String expectedCountryCode = "aa";
+        DeviceInfoHelper.setCountryCode(expectedCountryCode);
+
+        /* Get device info. */
+        Device device = DeviceInfoHelper.getDeviceInfo(mContext);
+        assertEquals(device.getCarrierCountry(), expectedCountryCode);
+    }
+
+    @Test
+    public void setNullCountryCode() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
+
+        /* Mock system calls. */
+        String expectedCountryCode = "aa";
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
+        when(mTelephonyManager.getNetworkCountryIso()).thenReturn(expectedCountryCode);
+        when(mTelephonyManager.getNetworkOperatorName()).thenReturn(expectedCountryCode);
+        when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mTelephonyManager);
+
+        /* Set country code. */
+        DeviceInfoHelper.setCountryCode(null);
+
+        /* Verify that system method was called. */
+        Device device = DeviceInfoHelper.getDeviceInfo(mContext);
+        verify(mTelephonyManager).getNetworkCountryIso();
+        assertEquals(device.getCarrierCountry(), expectedCountryCode);
+    }
+
+    @Test
+    public void setShortCountryCode() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
+        verifyCountryCodeWithInvalidLength("a");
+    }
+
+    @Test
+    public void setLongCountryCode() throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
+        verifyCountryCodeWithInvalidLength("abc");
+    }
+
+    public void verifyCountryCodeWithInvalidLength(String countryCode) throws DeviceInfoHelper.DeviceInfoException, PackageManager.NameNotFoundException {
+
+        /* Mock system calls. */
+        String expectedCountryCode = "aa";
+        when(mPackageManager.getPackageInfo(anyString(), anyInt())).thenReturn(mPackageInfo);
+        when(mTelephonyManager.getNetworkCountryIso()).thenReturn(expectedCountryCode);
+        when(mTelephonyManager.getNetworkOperatorName()).thenReturn(expectedCountryCode);
+        when(mContext.getSystemService(Context.TELEPHONY_SERVICE)).thenReturn(mTelephonyManager);
+
+        /* Mocking instances. */
+        mockStatic(AppCenterLog.class);
+
+        /* Set invalid country code. */
+        DeviceInfoHelper.setCountryCode(countryCode);
+
+        /* Verify that log was called.*/
+        verifyStatic();
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), eq("App Center accepts only the two-letter ISO country code."));
+
+        /* Verify that invalid value wasn't set. */
+        Device device = DeviceInfoHelper.getDeviceInfo(mContext);
+        assertEquals(device.getCarrierCountry(), expectedCountryCode);
+        verify(mTelephonyManager).getNetworkCountryIso();
     }
 }

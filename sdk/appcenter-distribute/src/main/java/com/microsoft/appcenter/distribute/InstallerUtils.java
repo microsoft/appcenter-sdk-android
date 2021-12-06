@@ -5,9 +5,13 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
+import android.content.IntentSender;
+import android.content.pm.PackageInstaller;
 import android.os.Build;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
@@ -15,6 +19,9 @@ import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,6 +35,16 @@ public class InstallerUtils {
      */
     @VisibleForTesting
     static final String INSTALL_NON_MARKET_APPS_ENABLED = "1";
+
+    /**
+     * Name of package installer stream.
+     */
+    private static final String sOutputStreamName = "AppCenterPackageInstallerStream";
+
+    /**
+     * Buffer capacity of package installer.
+     */
+    private static final int sBufferCapacity = 16384;
 
     /**
      * Installer package names that are not app stores.
@@ -57,22 +74,6 @@ public class InstallerUtils {
     InstallerUtils() {
 
         /* Hide constructor in utils pattern. */
-    }
-
-    /**
-     * Get the intent used to open installation UI.
-     *
-     * @param fileUri downloaded file URI from the download manager.
-     * @return intent to open installation UI.
-     */
-    @NonNull
-    static Intent getInstallIntent(Uri fileUri) {
-        Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
-        intent.setData(fileUri);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        return intent;
     }
 
     /**
@@ -120,5 +121,80 @@ public class InstallerUtils {
         } else {
             return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Secure.getString(context.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS));
         }
+    }
+
+    /**
+     * Check whether user enabled start activity from the background.
+     *
+     * @param context any context.
+     * @return true if start activity from the background is enabled, false otherwise.
+     */
+    public synchronized static boolean isSystemAlertWindowsEnabled(@NonNull Context context) {
+
+        /*
+        * From Android 10 (29 API level) or higher we have to
+        * use this permission for restarting activity after update.
+        * See more about restrictions on starting activities from the background:
+        * - https://developer.android.com/guide/components/activities/background-starts
+        * - https://developer.android.com/about/versions/10/behavior-changes-all#sysalert-go
+        */
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+                Settings.canDrawOverlays(context);
+    }
+
+    /**
+     * Install a new release.
+     *
+     * @param data input stream data from the installing apk file.
+     */
+    public synchronized static void installPackage(@NonNull InputStream data, Context context, PackageInstaller.SessionCallback sessionCallback) {
+        PackageInstaller.Session session = null;
+        try {
+
+            /* Prepare package installer. */
+            PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
+            if (sessionCallback != null) {
+                packageInstaller.registerSessionCallback(sessionCallback);
+            }
+            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+
+            /* Prepare session. */
+            int sessionId = packageInstaller.createSession(params);
+            session = packageInstaller.openSession(sessionId);
+
+            /* Start to install a new release. */
+            OutputStream out = session.openWrite(sOutputStreamName, 0, -1);
+            byte[] buffer = new byte[sBufferCapacity];
+            int c;
+            while ((c = data.read(buffer)) != -1) {
+                out.write(buffer, 0, c);
+            }
+            session.fsync(out);
+            data.close();
+            out.close();
+            session.commit(createIntentSender(context, sessionId));
+            session.close();
+        } catch (IOException e) {
+            if (session != null) {
+                session.abandon();
+            }
+            AppCenterLog.error(LOG_TAG, "Couldn't install a new release.", e);
+        }
+    }
+
+    /**
+     * Return IntentSender with the receiver that listens to the package installer session status.
+     *
+     * @param context any context.
+     * @param sessionId install sessionId.
+     * @return IntentSender with receiver.
+     */
+    public synchronized static IntentSender createIntentSender(Context context, int sessionId) {
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                sessionId,
+                new Intent(AppCenterPackageInstallerReceiver.START_ACTION),
+                0);
+        return pendingIntent.getIntentSender();
     }
 }

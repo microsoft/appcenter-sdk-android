@@ -1,5 +1,27 @@
 # App Center SDK for Android Change Log
 
+## Version 4.4.0
+
+### App Center
+
+* **[Breaking change]** Remove `AppCenter.setCustomProperties` API.
+* **[Fix]** Remove `android.support.test.InstrumentationRegistry` string that caused an error when checking applications on availability of android support libraries.
+* **[Feature]** Add `AppCenter.setCountryCode(string)` API to set the country code manually.
+
+### App Center Analytics
+
+* **[Feature]** Increase the interval between sending logs from 3 to 6 seconds for the backend load optimization.
+* **[Feature]** Add `Analytics.enableManualSessionTracker` and `Analytics.startSession` APIs for tracking session manually.
+* **[Feature]** Add `AppCenter.setLogger` API to set custom logger.
+
+### App Center Distribute
+
+* **[Feature]** Remove the download manager task if the download doesn't start within 10 seconds.
+* **[Feature]** Replace installing a new release using the deprecated intent action [ACTION_INSTALL_PACKAGE](https://developer.android.com/reference/android/content/Intent#ACTION_INSTALL_PACKAGE) with the `PackageInstaller` API.
+* **[Feature]** Add sumcheck on the downloaded file before starting the install process.
+
+___
+
 ## Version 4.3.1
 
 ### App Center
