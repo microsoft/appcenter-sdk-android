@@ -43,7 +43,7 @@
         <receiver
             android:name="com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="com.microsoft.appcenter.action.START" />
