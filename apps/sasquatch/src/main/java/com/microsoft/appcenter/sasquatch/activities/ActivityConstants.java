@@ -20,5 +20,5 @@ final class ActivityConstants {
     /**
      * Default Analytics transmission interval in seconds.
      */
-    static final int DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS = 3;
+    static final int DEFAULT_TRANSMISSION_INTERVAL_IN_SECONDS = 6;
 }

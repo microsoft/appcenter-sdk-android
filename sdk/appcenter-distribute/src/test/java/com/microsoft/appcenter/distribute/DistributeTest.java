@@ -996,6 +996,17 @@ public class DistributeTest extends AbstractDistributeTest {
         verify(mReleaseInstallerListener, times(2)).hideInstallProgressDialog();
     }
 
+    @Test
+    public void showSystemSettingsDialogWhenPackageInstallerNull() {
+
+        /* Try to show dialog. */
+        Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(1L, 1L);
+
+        /* Verify that log was called. */
+        verifyStatic();
+        AppCenterLog.debug(eq(LOG_TAG), eq("Installing couldn't start due to the release installer wasn't initialized."));
+    }
+
     private void firstDownloadNotification(int apiLevel) throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
         mockStatic(DistributeUtils.class);
