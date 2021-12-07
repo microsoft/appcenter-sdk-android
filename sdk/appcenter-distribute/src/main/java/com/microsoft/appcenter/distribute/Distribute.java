@@ -1540,7 +1540,7 @@ public class Distribute extends AbstractAppCenterService {
             }
             mUsingDefaultUpdateDialog = !customized;
         }
-        if (mUsingDefaultUpdateDialog) {
+        if (mUsingDefaultUpdateDialog != null && mUsingDefaultUpdateDialog) {
             if (!shouldRefreshDialog(mUpdateDialog)) {
                 return;
             }
