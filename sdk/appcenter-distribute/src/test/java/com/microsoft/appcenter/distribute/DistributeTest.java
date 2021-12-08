@@ -40,6 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
+import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -1005,6 +1006,54 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Verify that log was called. */
         verifyStatic();
         AppCenterLog.debug(eq(LOG_TAG), eq("Installing couldn't start due to the release installer wasn't initialized."));
+    }
+
+    @Test
+    public void showUpdateDialogAfterShowingInstallReleaseDialogTest() {
+
+        /* Mock App Center log. */
+        mockStatic(AppCenterLog.class);
+
+        /* Mock system alert settings. */
+        mockStatic(InstallerUtils.class);
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
+
+        /* Mock distribute utils. */
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1).thenReturn(1);
+
+        /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
+
+        /* mReleaseDetails is not null and it's a mandatory update. */
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+        when(mReleaseDownloader.isDownloading()).thenReturn(false);
+
+        /* Prepare distribute listener. */
+        Distribute.setListener(Mockito.mock(DistributeListener.class));
+
+        /* Show install settings dialog. */
+        Distribute.getInstance().startFromBackground(mContext);
+        resumeWorkflow(mActivity);
+        Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(1L, 1L);
+
+        /* Emulate that settings was applied. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityStopped(mActivity);
+        resumeWorkflow(mActivity);
+
+        /* Verify that install progress was started. */
+        verify(mReleaseInstallerListener).startInstall();
+
+        /* Emulate system confirmation dialog about installing new release. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityStopped(mActivity);
+        resumeWorkflow(mActivity);
+
+        /* Verify that SDK wasn't crash with NPE and don't show dialog. */
+        verifyStatic(never());
+        AppCenterLog.debug(eq(LOG_TAG), eq("Show default update dialog."));
     }
 
     private void firstDownloadNotification(int apiLevel) throws Exception {
