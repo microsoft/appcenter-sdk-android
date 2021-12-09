@@ -1540,7 +1540,7 @@ public class Distribute extends AbstractAppCenterService {
             }
             mUsingDefaultUpdateDialog = !customized;
         }
-        if (mUsingDefaultUpdateDialog) {
+        if (mUsingDefaultUpdateDialog != null && mUsingDefaultUpdateDialog) {
             if (!shouldRefreshDialog(mUpdateDialog)) {
                 return;
             }
@@ -1952,6 +1952,10 @@ public class Distribute extends AbstractAppCenterService {
      * @param totalSize total size of downloaded file.
      */
     synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId, long totalSize) {
+        if (mReleaseInstallerListener == null) {
+            AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
+            return;
+        }
         mReleaseInstallerListener.setDownloadId(downloadId);
         mReleaseInstallerListener.setTotalSize(totalSize);
 

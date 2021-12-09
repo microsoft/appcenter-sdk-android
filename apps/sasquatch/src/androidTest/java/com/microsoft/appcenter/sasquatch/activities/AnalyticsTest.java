@@ -41,7 +41,7 @@ public class AnalyticsTest {
     /**
      * The same setting as SDK that is package private. Module default batching interval.
      */
-    private static final int DEFAULT_TRIGGER_INTERVAL = 3000;
+    private static final int DEFAULT_TRIGGER_INTERVAL = 5000;
 
     @Rule
     public final ActivityTestRule<MainActivity> mActivityTestRule = new ActivityTestRule<>(MainActivity.class);
