@@ -31,7 +31,7 @@ public class StartServiceLog extends AbstractLog {
     /**
      * OneCollector usage status.
      */
-    private boolean isOneCollectorEnabled = false;
+    private Boolean isOneCollectorEnabled = null;
 
     /**
      * The list of services of the AppCenter start call.
@@ -61,11 +61,11 @@ public class StartServiceLog extends AbstractLog {
         this.services = services;
     }
 
-    public void oneCollectorEnabled(boolean isEnabled) {
+    public void oneCollectorEnabled(Boolean isEnabled) {
         isOneCollectorEnabled = isEnabled;
     }
 
-    public boolean isOneCollectorEnabled() {
+    public Boolean isOneCollectorEnabled() {
         return isOneCollectorEnabled;
     }
 

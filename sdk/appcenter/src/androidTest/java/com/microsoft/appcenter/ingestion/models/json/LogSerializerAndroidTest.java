@@ -11,6 +11,7 @@ import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.ingestion.models.StartServiceLog;
 
 import org.json.JSONException;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -61,6 +62,36 @@ public class LogSerializerAndroidTest {
         String payload = serializer.serializeLog(log);
         android.util.Log.v(TAG, payload);
         new DefaultLogSerializer().deserializeLog(payload, null);
+    }
+
+    @Test
+    public void readJsonWhenIsOneCollectorPropertyEnabledIsNull() throws JSONException {
+
+        // Prepare start service log.
+        StartServiceLog serviceLog = new StartServiceLog();
+        List<String> services = new ArrayList<>();
+        services.add("FIRST");
+        services.add("SECOND");
+        serviceLog.setServices(services);
+        UUID sid = UUID.randomUUID();
+        serviceLog.setSid(sid);
+        serviceLog.setTimestamp(new Date());
+
+        // Prepare log container.
+        ArrayList<Log> logArrayList = new ArrayList<>();
+        logArrayList.add(serviceLog);
+        LogContainer serializerContainer = new LogContainer();
+        serializerContainer.setLogs(logArrayList);
+
+        // Serializer log container.
+        LogSerializer serializer = new DefaultLogSerializer();
+        serializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
+        String payload = serializer.serializeContainer(serializerContainer);
+
+        // Deserialize log container.
+        LogContainer deserializeContainer = serializer.deserializeContainer(payload, null);
+        StartServiceLog deserializeStartServiceLog = (StartServiceLog) deserializeContainer.getLogs().get(0);
+        Assert.assertNull(deserializeStartServiceLog.isOneCollectorEnabled());
     }
 
     @Test
