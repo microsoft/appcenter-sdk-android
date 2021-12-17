@@ -249,6 +249,33 @@ public class AppCenterLog {
         }
     }
 
+    /**
+     * Log a message with level ASSERT
+     *
+     * @param tag     the log tag for your message
+     * @param message the log message
+     */
+    @SuppressWarnings("WeakerAccess")
+    public static void logAssert(@NonNull String tag, @NonNull String message) {
+        if (sLogLevel <= Log.ASSERT) {
+            Log.println(Log.ASSERT, tag, message);
+        }
+    }
+
+    /**
+     * Log a message with level ASSERT
+     *
+     * @param tag       the log tag for your message
+     * @param message   the log message
+     * @param throwable the throwable you want to log
+     */
+    @SuppressWarnings({"WeakerAccess", "SameParameterValue"})
+    public static void logAssert(@NonNull String tag, @NonNull String message, Throwable throwable) {
+        if (sLogLevel <= Log.ASSERT) {
+            Log.println(Log.ASSERT, tag, message + "\n" + Log.getStackTraceString(throwable));
+        }
+    }
+
     private static String getMessageWithTag(String tag, String message) {
         return String.format("%s: %s", tag, message);
     }

@@ -2,6 +2,8 @@
 
 ## Version 4.4.2 (Under active development)
 
+* **[Fix]** Fix print logs with `ASSERT` level.
+
 ___
 
 ## Version 4.4.1
