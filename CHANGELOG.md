@@ -5,6 +5,7 @@
 ### App Center
 
 * **[Fix]** Fix print logs with `ASSERT` level.
+* **[Fix]** Fix a crash during trying to get `startServiceLog` from the database after upgrading App Center SDK from the old versions.
 
 ### App Center Distribute
 
