@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static android.app.PendingIntent.FLAG_MUTABLE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -27,11 +28,14 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -184,6 +188,37 @@ public class InstallerUtilsTest {
 
         /* Verify that system alert windows is not enabled. */
         assertFalse(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
+    }
+
+    @Test
+    public void createIntentSenderOnAndroidS() throws Exception {
+
+        /* Mock SDK_INT to S. */
+        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.S);
+        createIntentSender(FLAG_MUTABLE);
+    }
+
+    @Test
+    public void createIntentSenderOnAndroidLowS() throws Exception {
+
+        /* Mock SDK_INT to M. */
+        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.M);
+        createIntentSender(0);
+    }
+
+    private void createIntentSender(final int expectedFlag) {
+        mockStatic(PendingIntent.class);
+        final PendingIntent mockIntent = mock(PendingIntent.class);
+        when(mockIntent.getIntentSender()).thenReturn(mock(IntentSender.class));
+        when(PendingIntent.getBroadcast(any(Context.class), anyInt(), any(Intent.class), anyInt())).then(new Answer<PendingIntent>() {
+            @Override
+            public PendingIntent answer(InvocationOnMock invocation) throws Throwable {
+                int flag = (int)invocation.getArguments()[3];
+                Assert.assertEquals(flag, expectedFlag);
+                return mockIntent;
+            }
+        });
+        InstallerUtils.createIntentSender(mContext, 1);
     }
 
     /**
