@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static android.app.PendingIntent.FLAG_MUTABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 import android.app.PendingIntent;
@@ -190,11 +191,15 @@ public class InstallerUtils {
      * @return IntentSender with receiver.
      */
     public synchronized static IntentSender createIntentSender(Context context, int sessionId) {
+        int flag = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flag = FLAG_MUTABLE;
+        }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 sessionId,
                 new Intent(AppCenterPackageInstallerReceiver.START_ACTION),
-                0);
+                flag);
         return pendingIntent.getIntentSender();
     }
 }

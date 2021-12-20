@@ -2,7 +2,14 @@
 
 ## Version 4.4.2 (Under active development)
 
+### App Center
+
+* **[Fix]** Fix print logs with `ASSERT` level.
 * **[Fix]** Fix a crash during trying to get `startServiceLog` from the database after upgrading App Center SDK from the old versions.
+
+### App Center Distribute
+
+* **[Fix]** Fix missing required flag on Android 31 API for `PendingIntent` which is used for starting the process of installing a new release.
 
 ___
 
