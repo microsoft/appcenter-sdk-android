@@ -7,6 +7,7 @@ package com.microsoft.appcenter.distribute;
 
 import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.MY_PACKAGE_REPLACED_ACTION;
 import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.START_ACTION;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -130,7 +131,7 @@ public class AppCenterPackageInstallerReceiverTest {
 
         /* Verify. */
         verifyStatic();
-        AppCenterLog.debug(eq(AppCenterLog.LOG_TAG), eq("Application was successfully updated."));
+        AppCenterLog.debug(eq(LOG_TAG), eq("Application was successfully updated."));
     }
 
     @Test
@@ -179,7 +180,7 @@ public class AppCenterPackageInstallerReceiverTest {
 
         /* Verify that log was called. */
         verifyStatic();
-        AppCenterLog.debug(eq(AppCenterLog.LOG_TAG), eq("Failed to install a new release with status: " + status + ". Error message: null."));
+        AppCenterLog.debug(eq(LOG_TAG), eq("Failed to install a new release with status: " + status + ". Error message: null."));
     }
 
     @Test
@@ -198,7 +199,7 @@ public class AppCenterPackageInstallerReceiverTest {
 
         /* Verify that log was called. */
         verifyStatic();
-        AppCenterLog.debug(eq(AppCenterLog.LOG_TAG), eq("Unrecognized status received from installer: " + status));
+        AppCenterLog.debug(eq(LOG_TAG), eq("Unrecognized status received from installer: " + status));
     }
 
     @Test
@@ -210,7 +211,7 @@ public class AppCenterPackageInstallerReceiverTest {
 
         /* Verify that log was called. */
         verifyStatic();
-        AppCenterLog.debug(eq(AppCenterLog.LOG_TAG), eq("Unrecognized action UnknownAction - do nothing."));
+        AppCenterLog.debug(eq(LOG_TAG), eq("Unrecognized action UnknownAction - do nothing."));
     }
 }
 
