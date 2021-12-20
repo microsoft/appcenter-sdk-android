@@ -39,6 +39,8 @@ import java.util.logging.Logger;
 public class AppCenterLogTest {
 
     private static void callLogs() {
+        AppCenterLog.logAssert("my-tag", "error with my-tag");
+        AppCenterLog.logAssert("my-tag", "error with my-tag with exception", new Exception());
         AppCenterLog.error("my-tag", "error with my-tag");
         AppCenterLog.error("my-tag", "error with my-tag with exception", new Exception());
         AppCenterLog.warn("my-tag", "warn with my-tag");

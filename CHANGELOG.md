@@ -2,6 +2,10 @@
 
 ## Version 4.4.2 (Under active development)
 
+### App Center
+
+* **[Fix]** Fix print logs with `ASSERT` level.
+
 ### App Center Distribute
 
 * **[Fix]** Fix missing required flag on Android 31 API for `PendingIntent` which is used for starting the process of installing a new release.
