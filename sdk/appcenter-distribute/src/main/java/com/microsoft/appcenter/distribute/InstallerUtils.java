@@ -88,7 +88,7 @@ public class InstallerUtils {
         if (sInstalledFromAppStore == null) {
             String installer = context.getPackageManager().getInstallerPackageName(context.getPackageName());
             AppCenterLog.debug(logTag, "InstallerPackageName=" + installer);
-            sInstalledFromAppStore = installer != null && !LOCAL_STORES.contains(installer);
+            sInstalledFromAppStore = installer != null && !LOCAL_STORES.contains(installer) && !installer.equals(context.getPackageName());
         }
         return sInstalledFromAppStore;
     }

@@ -2,6 +2,10 @@
 
 ## Version 4.4.3 (Under active development)
 
+### App Center Distribute
+
+* **[Fix]** Fix checking a new release if the application was already updated before.
+
 ___
 
 ## Version 4.4.2
