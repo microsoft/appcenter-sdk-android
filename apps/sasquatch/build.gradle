@@ -26,10 +26,20 @@ android {
         projectDependency {
             dimension "dependency"
             applicationIdSuffix ".project"
+            buildConfigField "String", "APP_SECRET", "\"${System.getenv("ANDROID_INT")}\""
+            buildConfigField "String", "TARGET_TOKEN", "\"${System.getenv("ANDROID_TARGET_TOKEN_INT")}\""
+            buildConfigField "String", "TARGET_TOKEN1", "\"${System.getenv("ANDROID_TARGET_TOKEN1_INT")}\""
+            buildConfigField "String", "TARGET_TOKEN2", "\"${System.getenv("ANDROID_TARGET_TOKEN2_INT")}\""
+            buildConfigField "String", "TARGET_TOKEN3", "\"${System.getenv("ANDROID_TARGET_TOKEN3_INT")}\""
         }
         mavenCentralDependency {
             dimension "dependency"
             applicationIdSuffix ".mavenCentral"
+            buildConfigField "String", "APP_SECRET", "\"${System.getenv("ANDROID_PROD")}\""
+            buildConfigField "String", "TARGET_TOKEN", "\"${System.getenv("ANDROID_TARGET_TOKEN_PROD")}\""
+            buildConfigField "String", "TARGET_TOKEN1", "\"${System.getenv("ANDROID_TARGET_TOKEN1_PROD")}\""
+            buildConfigField "String", "TARGET_TOKEN2", "\"${System.getenv("ANDROID_TARGET_TOKEN2_PROD")}\""
+            buildConfigField "String", "TARGET_TOKEN3", "\"${System.getenv("ANDROID_TARGET_TOKEN3_PROD")}\""
         }
         appCenter {
             dimension "distribute"
