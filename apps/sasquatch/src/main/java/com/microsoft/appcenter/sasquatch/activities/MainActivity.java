@@ -36,6 +36,7 @@ import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.CrashesListener;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.distribute.Distribute;
+import com.microsoft.appcenter.sasquatch.BuildConfig;
 import com.microsoft.appcenter.sasquatch.MSAAuthenticationProvider;
 import com.microsoft.appcenter.sasquatch.R;
 import com.microsoft.appcenter.sasquatch.features.TestFeatures;
@@ -54,6 +55,12 @@ import static com.microsoft.appcenter.sasquatch.activities.ActivityConstants.DEF
 public class MainActivity extends AppCompatActivity {
 
     public static final String LOG_TAG = "AppCenterSasquatch";
+
+    public static String[] mAppSecretsArray = {BuildConfig.APP_SECRET, "Custom"};
+
+    public static String mTargetToken = BuildConfig.TARGET_TOKEN;
+
+    public static String[] mTargetTokenArray = {BuildConfig.TARGET_TOKEN1, BuildConfig.TARGET_TOKEN2, BuildConfig.TARGET_TOKEN3};
 
     static final String APP_SECRET_KEY = "appSecret";
 
@@ -153,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         String appId = sSharedPreferences.getString(APP_SECRET_KEY, getDefaultAppSecret(application.getResources()));
-        String targetId = sSharedPreferences.getString(TARGET_KEY, application.getString(R.string.target_id));
+        String targetId = sSharedPreferences.getString(TARGET_KEY, MainActivity.mTargetToken);
         String appIdArg = "";
         switch (startType) {
             case APP_SECRET:
@@ -355,13 +362,11 @@ public class MainActivity extends AppCompatActivity {
 
     /* Get the default app secret from the app secret array. */
     static String getDefaultAppSecret(Resources resources) {
-        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
-        return secretValuesArray[0];
+        return mAppSecretsArray[0];
     }
 
     static String getCustomAppSecretString(Resources resources) {
-        final String[] secretValuesArray = resources.getStringArray(R.array.appcenter_secrets);
-        return secretValuesArray[secretValuesArray.length - 1];
+        return mAppSecretsArray[mAppSecretsArray.length - 1];
     }
 
     private void setDistributeEnabledForDebuggableBuild() {
