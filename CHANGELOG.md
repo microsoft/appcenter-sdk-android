@@ -2,6 +2,10 @@
 
 ## Version 4.4.3 (Under active development)
 
+### App Center Crashes
+
+* **[Fix]** Fix `Crashes.trackError` with `null` exception.
+
 ### App Center Distribute
 
 * **[Fix]** Fix checking a new release if the application was already updated before.

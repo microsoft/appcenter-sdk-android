@@ -283,6 +283,10 @@ public class Crashes extends AbstractAppCenterService {
      * @param attachments Optional attachments.
      */
     public static void trackError(Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
+        if (throwable == null) {
+            AppCenterLog.warn(LOG_TAG, "The exception shouldn't be null.");
+            return;
+        }
         getInstance().queueException(throwable, properties, attachments);
     }
 

@@ -1651,6 +1651,22 @@ public class CrashesTest extends AbstractCrashesTest {
         assertEquals(expectedStacktrace, stacktrace);
     }
 
+    @Test
+    public void trackErrorWithNullException() {
+
+        /* Prepare channel. */
+        Crashes crashes = Crashes.getInstance();
+        Channel mockChannel = mock(Channel.class);
+        crashes.onStarting(mAppCenterHandler);
+        crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
+
+        /* Track error with null exception. */
+        crashes.trackError(null);
+
+        /* Verify that channel is never called. */
+        verify(mockChannel, never()).enqueue(isA(HandledErrorLog.class), eq(crashes.getGroupName()), eq(DEFAULTS));
+    }
+
     private void checkHasReceivedMemoryWarningInLastSession(boolean expected) {
         Crashes crashes = Crashes.getInstance();
         crashes.onStarting(mAppCenterHandler);
