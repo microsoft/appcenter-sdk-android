@@ -4,7 +4,7 @@
 
 ### App Center Crashes
 
-* **[Fix]** Fix `Crashes.trackError` with `null` exception.
+* **[Fix]** Add exception null check for `Crashes.trackError` API.
 
 ### App Center Distribute
 
