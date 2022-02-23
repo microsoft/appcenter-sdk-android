@@ -6,6 +6,10 @@
 
 * **[Fix]** Fix checking a new release if the application was already updated before.
 
+### App Center Distribute Play
+
+* **[Fix]** Add missing `Distribute.addStores` API.
+
 ___
 
 ## Version 4.4.2
