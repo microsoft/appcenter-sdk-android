@@ -9,6 +9,7 @@
 ### App Center Distribute Play
 
 * **[Fix]** Add missing `Distribute.addStores` API.
+* **[Known issue]** After the first in-app update App Center doesn't indicate the next releases. Use a [workaround](https://github.com/microsoft/appcenter-sdk-android/issues/1594#issuecomment-1006313019) to avoid this issue.
 
 ___
 
