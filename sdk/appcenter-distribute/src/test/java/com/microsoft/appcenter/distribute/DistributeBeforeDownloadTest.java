@@ -468,7 +468,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Trigger call. */
         start();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
@@ -494,8 +494,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mToast).show();
 
         /* Verify no more calls, e.g. happened only once. */
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verify(mDialog).show();
         verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();
@@ -528,7 +528,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Trigger call. */
         start();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify dialog. */
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
@@ -548,8 +548,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mToast).show();
 
         /* Verify no more calls, e.g. happened only once. */
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
         verify(mDialog).show();
         verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verifyStatic();

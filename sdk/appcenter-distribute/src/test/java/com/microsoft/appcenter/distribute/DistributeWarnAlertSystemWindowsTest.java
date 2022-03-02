@@ -96,6 +96,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         start();
 
         /* Resume distribute. */
+        when(mFirstActivity.getApplicationContext()).thenReturn(mContext);
         Distribute.getInstance().onActivityResumed(mFirstActivity);
 
         /* Mock system alert windows dialog. */
