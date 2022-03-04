@@ -331,8 +331,8 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         /* Resume activity again to invoke update request. */
         Distribute.getInstance().onActivityResumed(mActivity);
 
-        /* Verify the listener gets called. */
-        verify(listener).onReleaseAvailable(mActivity, details);
+        /* Verify the listener gets called twice. */
+        verify(listener, times(2)).onReleaseAvailable(mActivity, details);
 
         /* Verify the default update dialog is NOT built. The count includes previous call. */
         verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));

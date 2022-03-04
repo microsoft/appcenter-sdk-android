@@ -9,6 +9,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix checking a new release if the application was already updated before.
+* **[Fix]** Fix show custom in-app update dialog after opening release details.
 
 ### App Center Distribute Play
 
