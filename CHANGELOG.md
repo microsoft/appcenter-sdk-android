@@ -9,6 +9,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix checking a new release if the application was already updated before.
+* **[Fix]** Fix superfluous register/unregister receiver for installing new release.
 
 ### App Center Distribute Play
 

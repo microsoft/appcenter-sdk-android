@@ -29,7 +29,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
 
     public static final String START_ACTION = "com.microsoft.appcenter.action.START";
     public static final String MY_PACKAGE_REPLACED_ACTION = "android.intent.action.MY_PACKAGE_REPLACED";
-    private Boolean isReceiverRegistered;
+    private boolean isReceiverRegistered;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -72,7 +72,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
     }
 
     public void tryRegisterReceiver(@NonNull Context context, @NonNull IntentFilter intentFilter) {
-        if (isReceiverRegistered != null && isReceiverRegistered) {
+        if (isReceiverRegistered) {
             return;
         }
         isReceiverRegistered = true;
@@ -81,7 +81,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
     }
 
     public void tryUnregisterReceiver(@NonNull Context context) {
-        if (isReceiverRegistered == null || !isReceiverRegistered) {
+        if (!isReceiverRegistered) {
             return;
         }
         isReceiverRegistered = false;
