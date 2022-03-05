@@ -1527,7 +1527,7 @@ public class Distribute extends AbstractAppCenterService {
         if (mListener == null && mUsingDefaultUpdateDialog == null) {
             mUsingDefaultUpdateDialog = true;
         }
-        if (mListener != null && mForegroundActivity != mLastActivityWithDialog.get()) {
+        if (mListener != null) {
             AppCenterLog.debug(LOG_TAG, "Calling listener.onReleaseAvailable.");
             boolean customized = mListener.onReleaseAvailable(mForegroundActivity, mReleaseDetails);
             if (customized) {
@@ -1535,7 +1535,7 @@ public class Distribute extends AbstractAppCenterService {
             }
             mUsingDefaultUpdateDialog = !customized;
         }
-        if (mUsingDefaultUpdateDialog != null && mUsingDefaultUpdateDialog) {
+        if (mUsingDefaultUpdateDialog) {
             if (!shouldRefreshDialog(mUpdateDialog)) {
                 return;
             }
