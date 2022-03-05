@@ -1051,8 +1051,8 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityStopped(mActivity);
         resumeWorkflow(mActivity);
 
-        /* Verify that SDK wasn't crash with NPE and don't show dialog. */
-        verifyStatic(never());
+        /* Verify that SDK wasn't crashed with NPE and showed dialog. */
+        verifyStatic();
         AppCenterLog.debug(eq(LOG_TAG), eq("Show default update dialog."));
     }
 

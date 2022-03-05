@@ -7,6 +7,7 @@ package com.microsoft.appcenter.sasquatch.listeners;
 
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -20,7 +21,7 @@ import com.microsoft.appcenter.sasquatch.R;
 public class SasquatchDistributeListener implements DistributeListener {
 
     @Override
-    public boolean onReleaseAvailable(Activity activity, ReleaseDetails releaseDetails) {
+    public boolean onReleaseAvailable(final Activity activity, final ReleaseDetails releaseDetails) {
         final String releaseNotes = releaseDetails.getReleaseNotes();
         boolean custom = releaseNotes != null && releaseNotes.toLowerCase().contains("custom");
         if (custom) {
@@ -44,6 +45,12 @@ public class SasquatchDistributeListener implements DistributeListener {
                     }
                 });
             }
+            dialogBuilder.setNeutralButton(R.string.appcenter_distribute_update_dialog_view_release_notes, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    activity.startActivity(new Intent(Intent.ACTION_VIEW, releaseDetails.getReleaseNotesUrl()));
+                }
+            });
             dialogBuilder.create().show();
         }
         return custom;
