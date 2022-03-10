@@ -104,7 +104,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
         verifyStatic(never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
 
@@ -118,7 +118,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.unsetInstance();
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
         verify(mHttpClient, never()).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
@@ -129,7 +129,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Trigger call. */
         start();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify dialog. */
         verify(mDialogBuilder).setCancelable(false);
@@ -1060,7 +1060,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* The call is only triggered when app is resumed. */
         start();
         verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify cancel on disabling. */
@@ -1285,7 +1285,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Trigger call. */
         start();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Disable before it fails. */
         Distribute.setEnabled(false);
@@ -1299,8 +1299,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
     }
 
     @Test
@@ -1311,7 +1311,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
         /* Trigger call. */
         start();
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Disable before it succeeds. */
         Distribute.setEnabled(false);
@@ -1325,8 +1325,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* After that if we resume app nothing happens. */
-        Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onActivityResumed(mActivity);
     }
 
     @Test

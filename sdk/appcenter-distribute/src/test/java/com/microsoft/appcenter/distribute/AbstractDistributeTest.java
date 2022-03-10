@@ -209,6 +209,7 @@ public class AbstractDistributeTest {
         when(mContext.getApplicationContext()).thenReturn(mContext);
         when(mContext.getPackageName()).thenReturn("com.contoso");
         when(mActivity.getPackageName()).thenReturn("com.contoso");
+        when(mActivity.getApplicationContext()).thenReturn(mContext);
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(mActivity.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
