@@ -540,6 +540,12 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @Override
+    public void onActivityStarted(Activity activity) {
+        super.onActivityStarted(activity);
+        registerReceiver(activity);
+    }
+
+    @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
 
@@ -547,7 +553,6 @@ public class Distribute extends AbstractAppCenterService {
         if (mChannel != null) {
             resumeDistributeWorkflow();
         }
-        registerReceiver();
     }
 
     @Override
@@ -582,7 +587,7 @@ public class Distribute extends AbstractAppCenterService {
             resumeWorkflowIfForeground();
 
             /* Register package installer receiver. */
-            registerReceiver();
+            registerReceiver(mForegroundActivity);
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -601,25 +606,20 @@ public class Distribute extends AbstractAppCenterService {
             mDistributeInfoTracker = null;
 
             /* Unregister package installer receiver. */
-            unregisterReceiver();
+            unregisterReceiver(mForegroundActivity);
         }
     }
 
     /**
      * Register package installer receiver.
      */
-    private synchronized void registerReceiver() {
+    private synchronized void registerReceiver(Activity activity) {
         if (!isInstanceEnabled()) {
             AppCenterLog.warn(LOG_TAG, "Couldn't register receiver due to Distribute module is disabled.");
             return;
         }
-        if (mForegroundActivity != null) {
-            try {
-                mForegroundActivity.registerReceiver(mAppCenterPackageInstallerReceiver, mPackageInstallerReceiverFilter);
-                AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was registered.");
-            } catch (IllegalArgumentException e) {
-                AppCenterLog.error(LOG_TAG, "The receiver wasn't registered.", e);
-            }
+        if (activity != null) {
+            mAppCenterPackageInstallerReceiver.tryRegisterReceiver(activity.getApplicationContext(), mPackageInstallerReceiverFilter);
         } else {
             AppCenterLog.warn(LOG_TAG, "Couldn't register receiver due to activity is null.");
         }
@@ -628,14 +628,9 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Unregister package installer receiver.
      */
-    private synchronized void unregisterReceiver() {
-        if (mForegroundActivity != null) {
-            try {
-                mForegroundActivity.unregisterReceiver(mAppCenterPackageInstallerReceiver);
-                AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was unregistered.");
-            } catch (IllegalArgumentException e) {
-                AppCenterLog.error(LOG_TAG, "The receiver wasn't unregistered.", e);
-            }
+    private synchronized void unregisterReceiver(Activity activity) {
+        if (activity != null) {
+            mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(activity.getApplicationContext());
         } else {
             AppCenterLog.warn(LOG_TAG, "Couldn't unregister due to activity is null.");
         }
@@ -1532,7 +1527,7 @@ public class Distribute extends AbstractAppCenterService {
         if (mListener == null && mUsingDefaultUpdateDialog == null) {
             mUsingDefaultUpdateDialog = true;
         }
-        if (mListener != null && mForegroundActivity != mLastActivityWithDialog.get()) {
+        if (mListener != null) {
             AppCenterLog.debug(LOG_TAG, "Calling listener.onReleaseAvailable.");
             boolean customized = mListener.onReleaseAvailable(mForegroundActivity, mReleaseDetails);
             if (customized) {
@@ -1540,7 +1535,7 @@ public class Distribute extends AbstractAppCenterService {
             }
             mUsingDefaultUpdateDialog = !customized;
         }
-        if (mUsingDefaultUpdateDialog != null && mUsingDefaultUpdateDialog) {
+        if (mUsingDefaultUpdateDialog) {
             if (!shouldRefreshDialog(mUpdateDialog)) {
                 return;
             }

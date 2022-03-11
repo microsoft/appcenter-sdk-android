@@ -10,6 +10,7 @@ import android.app.Activity;
 import com.microsoft.appcenter.analytics.Analytics;
 import com.microsoft.appcenter.analytics.AnalyticsTransmissionTarget;
 import com.microsoft.appcenter.sasquatch.R;
+import com.microsoft.appcenter.sasquatch.activities.MainActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public class EventActivityUtil {
          * The second one is the parent transmission target, the third one is a child,
          * the forth is a grandchild, etc...
          */
-        String[] targetTokens = activity.getResources().getStringArray(R.array.target_id_values);
+        String[] targetTokens = MainActivity.mTargetTokenArray;
         targets.add(null);
         targets.add(Analytics.getTransmissionTarget(targetTokens[1]));
         for (int i = 2; i < targetTokens.length; i++) {

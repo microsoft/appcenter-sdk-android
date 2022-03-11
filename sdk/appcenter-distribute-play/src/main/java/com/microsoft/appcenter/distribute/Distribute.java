@@ -18,6 +18,7 @@ import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
@@ -144,6 +145,14 @@ public class Distribute extends AbstractAppCenterService {
      * Disable automatic check for update before the service starts.
      */
     public static void disableAutomaticCheckForUpdate() {
+    }
+
+    /**
+     * Add stores allowed to perform in-app updates.
+     *
+     * @param stores list of stores allowed to perform in-app updates.
+     */
+    public static void addStores(Set<String> stores) {
     }
 
     @Override

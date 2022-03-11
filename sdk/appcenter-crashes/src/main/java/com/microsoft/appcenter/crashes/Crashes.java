@@ -266,7 +266,7 @@ public class Crashes extends AbstractAppCenterService {
      * @param throwable The throwable describing the handled error.
      */
     @SuppressWarnings({"SameParameterValue", "WeakerAccess"})
-    public static void trackError(Throwable throwable) {
+    public static void trackError(@NonNull Throwable throwable) {
         trackError(throwable, null, null);
     }
 
@@ -282,7 +282,7 @@ public class Crashes extends AbstractAppCenterService {
      * @param properties  Optional properties.
      * @param attachments Optional attachments.
      */
-    public static void trackError(Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
+    public static void trackError(@NonNull Throwable throwable, Map<String, String> properties, Iterable<ErrorAttachmentLog> attachments) {
         getInstance().queueException(throwable, properties, attachments);
     }
 

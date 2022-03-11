@@ -7,12 +7,16 @@ package com.microsoft.appcenter.distribute;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
 import android.os.Bundle;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
@@ -25,6 +29,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
 
     public static final String START_ACTION = "com.microsoft.appcenter.action.START";
     public static final String MY_PACKAGE_REPLACED_ACTION = "android.intent.action.MY_PACKAGE_REPLACED";
+    private boolean isReceiverRegistered;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -64,5 +69,23 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
         } else {
             AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized action %s - do nothing.", intent.getAction()));
         }
+    }
+
+    public void tryRegisterReceiver(@NonNull Context context, @NonNull IntentFilter intentFilter) {
+        if (isReceiverRegistered) {
+            return;
+        }
+        isReceiverRegistered = true;
+        context.registerReceiver(this, intentFilter);
+        AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was registered.");
+    }
+
+    public void tryUnregisterReceiver(@NonNull Context context) {
+        if (!isReceiverRegistered) {
+            return;
+        }
+        isReceiverRegistered = false;
+        context.unregisterReceiver(this);
+        AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was unregistered.");
     }
 }

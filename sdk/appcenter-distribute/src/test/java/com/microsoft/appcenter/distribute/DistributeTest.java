@@ -862,59 +862,35 @@ public class DistributeTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(false).thenReturn(true);
 
         /* Verify that when distribute disabled no receivers was registered. */
+        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mActivity, never()).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
+        verify(mContext, never()).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
 
         /* Start distribute. */
         start();
 
         /* Check that receiver was registered. */
-        verify(mActivity).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
+        verify(mContext).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
 
         /* Stop activity. */
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityStopped(mActivity);
 
         /* Check that receiver was not unregistered on activity pause and stop. */
-        verify(mActivity, never()).unregisterReceiver(Matchers.<BroadcastReceiver>any());
+        verify(mContext, never()).unregisterReceiver(Matchers.<BroadcastReceiver>any());
 
         /* Resume activity */
+        Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify that register receiver was called again after activity is resumed. */
-        verify(mActivity, times(2)).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
+        verify(mContext).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
 
         /* Disable Distribute. */
         Distribute.setEnabled(false);
 
         /* Check that receiver was unregistered. */
-        verify(mActivity).unregisterReceiver(Matchers.<BroadcastReceiver>any());
-    }
-
-    @Test
-    public void checkRegisterReceiverWhenActivityRegisterReceiverThrowsException() {
-
-        /* Mock throwing exception. */
-        when(mActivity.registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any())).thenThrow(new IllegalArgumentException());
-        willThrow(new IllegalArgumentException()).given(mActivity).unregisterReceiver(Matchers.<BroadcastReceiver>any());
-
-        /* Start Distribute. */
-        start();
-
-        /* Resume and set activity */
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Verify that register receiver throw exception. */
-        verify(mActivity).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
-        verifyStatic();
-        AppCenterLog.error(eq(LOG_TAG), eq("The receiver wasn't registered."), Matchers.<IllegalArgumentException>any());
-
-        /* Disable Distribute. */
-        Distribute.setEnabled(false);
-
-        /* Verify that unregister receiver throw exception. */
-        verifyStatic();
-        AppCenterLog.error(eq(LOG_TAG), eq("The receiver wasn't unregistered."), Matchers.<IllegalArgumentException>any());
+        verify(mContext).unregisterReceiver(Matchers.<BroadcastReceiver>any());
     }
 
     @Test
@@ -1051,8 +1027,8 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityStopped(mActivity);
         resumeWorkflow(mActivity);
 
-        /* Verify that SDK wasn't crash with NPE and don't show dialog. */
-        verifyStatic(never());
+        /* Verify that SDK wasn't crashed with NPE and showed dialog. */
+        verifyStatic();
         AppCenterLog.debug(eq(LOG_TAG), eq("Show default update dialog."));
     }
 

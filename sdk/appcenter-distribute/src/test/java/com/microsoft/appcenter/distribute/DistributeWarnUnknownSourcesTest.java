@@ -93,6 +93,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         when(releaseDetails.getVersion()).thenReturn(7);
         when(releaseDetails.isMandatoryUpdate()).thenReturn(mMandatoryUpdate);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+        when(mFirstActivity.getApplicationContext()).thenReturn(mContext);
 
         /* Trigger call. */
         start();

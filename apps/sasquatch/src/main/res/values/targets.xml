@@ -5,13 +5,6 @@
   -->
 
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="TypographyDashes">
-    <string name="target_id" tools:ignore="MissingTranslation">89e889ccbe864ad6b924246d7045d55f-2d2d17d9-184c-4749-84a2-3fd0b3856ee1-7620</string>
-    <string-array name="target_id_values" tools:ignore="InconsistentArrays,MissingTranslation">
-        <item />
-        <item>c86c1b0383d149f6969b80462b250e62-e3c516ac-ae36-4776-b3eb-9c21116a756c-7045</item>
-        <item>739fadd014d642809473cdde9d1177d1-4477e206-0087-4d70-b810-229652426c89-7219</item>
-        <item>518cb8157cb743be9f7a921a46fda15d-5c9111b6-2c0f-417e-95f9-2241235db0b6-6776</item>
-    </string-array>
     <string-array name="target_id_names" tools:ignore="InconsistentArrays,MissingTranslation">
         <item>Default transmission</item>
         <item>Sasquatch Android 2</item>

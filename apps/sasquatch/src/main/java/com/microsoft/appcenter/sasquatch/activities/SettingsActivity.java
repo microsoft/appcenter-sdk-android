@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
+import android.preference.ListPreference;
 import android.preference.Preference;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
@@ -479,6 +480,8 @@ public class SettingsActivity extends AppCompatActivity {
             });
             final String defaultAppSecret = MainActivity.getDefaultAppSecret(getActivity().getResources());
             final String appSecret = MainActivity.sSharedPreferences.getString(APP_SECRET_KEY, defaultAppSecret);
+            final ListPreference listOfAppSecrets = (ListPreference) findPreference(getString(R.string.app_secret_key));
+            listOfAppSecrets.setEntryValues(MainActivity.mAppSecretsArray);
             initChangeableSetting(R.string.app_secret_key, appSecret, new Preference.OnPreferenceChangeListener() {
 
                 @Override
@@ -556,7 +559,7 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
-            initEditText(R.string.target_id_key, R.string.target_id_title, TARGET_KEY, getString(R.string.target_id), new EditTextListener() {
+            initEditText(R.string.target_id_key, R.string.target_id_title, TARGET_KEY, MainActivity.mTargetToken, new EditTextListener() {
 
                 @Override
                 public void onSave(String value) {
@@ -570,7 +573,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                 @Override
                 public void onReset() {
-                    String defaultTargetId = getString(R.string.target_id);
+                    String defaultTargetId = MainActivity.mTargetToken;
                     setKeyValue(TARGET_KEY, defaultTargetId);
                     Toast.makeText(getActivity(), String.format(getActivity().getString(R.string.target_id_changed_format), defaultTargetId), Toast.LENGTH_SHORT).show();
                 }

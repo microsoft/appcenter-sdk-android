@@ -20,6 +20,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -80,6 +81,23 @@ public class AppStoreDetectionTest {
     @Test
     public void adbIsNotStore() {
         setInstallerPackageName("adb");
+
+        /* Check cache. */
+        verifyNotFromAppStore();
+    }
+
+    @Test
+    public void applicationInstallerIsNotStore() {
+        String mockPackage = "mock.package.name";
+
+        /* Mock context. */
+        Context mockContext = mock(Context.class);
+        when(mockContext.getPackageName()).thenReturn(mockPackage);
+        when(mockContext.getPackageManager()).thenReturn(mPackageManager);
+        mContext = mockContext;
+
+        /* Mock installer package name. */
+        setInstallerPackageName(mockPackage);
 
         /* Check cache. */
         verifyNotFromAppStore();

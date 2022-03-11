@@ -1,5 +1,23 @@
 # App Center SDK for Android Change Log
 
+## Version 4.4.3
+
+### App Center Crashes
+
+* **[Fix]** Add exception null check for `Crashes.trackError` API.
+
+### App Center Distribute
+
+* **[Fix]** Fix checking a new release if the application was already updated before.
+* **[Fix]** Fix superfluous register/unregister receiver for installing new release.
+* **[Fix]** Fix show custom in-app update dialog after opening release details.
+
+### App Center Distribute Play
+
+* **[Fix]** Add missing `Distribute.addStores` API.
+
+___
+
 ## Version 4.4.2
 
 ### App Center
@@ -10,6 +28,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix missing required flag on Android 31 API for `PendingIntent` which is used for starting the process of installing a new release.
+* **[Known issue]** After the first in-app update App Center doesn't indicate the next releases. Use a [workaround](https://github.com/microsoft/appcenter-sdk-android/issues/1594#issuecomment-1006313019) to avoid this issue.
 
 ___
 
