@@ -1,6 +1,6 @@
 # App Center SDK for Android Change Log
 
-## Version 4.4.3 (Under active development)
+## Version 4.4.3
 
 ### App Center Crashes
 
