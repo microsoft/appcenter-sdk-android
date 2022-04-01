@@ -35,7 +35,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     /**
      * Total progress size.
      */
-    private final int mTotalProgressSize = 100;
+    private static final int TOTAL_PROGRESS_SIZE = 100;
 
     /**
      * Context.
@@ -88,17 +88,15 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
      */
     public synchronized void startInstall() {
         AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
-        ParcelFileDescriptor pfd;
         try {
             DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
-            pfd = downloadManager.openDownloadedFile(mDownloadId);
-            if (pfd.getStatSize() != mTotalSize) {
+            ParcelFileDescriptor fileDescriptor = downloadManager.openDownloadedFile(mDownloadId);
+            if (fileDescriptor.getStatSize() != mTotalSize) {
                 AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
                 Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
                 return;
             }
-            InputStream data = new FileInputStream(pfd.getFileDescriptor());
-            InstallerUtils.installPackage(data, mContext, this);
+            InstallerUtils.installPackage(fileDescriptor, mContext, this);
         } catch (IOException e) {
             AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed.", e);
         }
@@ -188,7 +186,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
                 mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
                 mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_install_progress_number_format));
                 mProgressDialog.setIndeterminate(false);
-                mProgressDialog.setMax(mTotalProgressSize);
+                mProgressDialog.setMax(TOTAL_PROGRESS_SIZE);
             }
             mProgressDialog.setProgress(currentSize);
         }

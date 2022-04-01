@@ -14,12 +14,15 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
+import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,7 +48,7 @@ public class InstallerUtils {
     /**
      * Buffer capacity of package installer.
      */
-    private static final int sBufferCapacity = 16384;
+    private static final int BUFFER_CAPACITY = 64 * 1024;
 
     /**
      * Installer package names that are not app stores.
@@ -84,7 +87,7 @@ public class InstallerUtils {
      * @param context any context.
      * @return true if the application was installed from an app store, false if it was installed via adb or via unknown source.
      */
-    static synchronized boolean isInstalledFromAppStore(@NonNull String logTag, @NonNull Context context) {
+    static boolean isInstalledFromAppStore(@NonNull String logTag, @NonNull Context context) {
         if (sInstalledFromAppStore == null) {
             String installer = context.getPackageManager().getInstallerPackageName(context.getPackageName());
             AppCenterLog.debug(logTag, "InstallerPackageName=" + installer);
@@ -130,7 +133,7 @@ public class InstallerUtils {
      * @param context any context.
      * @return true if start activity from the background is enabled, false otherwise.
      */
-    public synchronized static boolean isSystemAlertWindowsEnabled(@NonNull Context context) {
+    public static boolean isSystemAlertWindowsEnabled(@NonNull Context context) {
 
         /*
         * From Android 10 (29 API level) or higher we have to
@@ -145,10 +148,9 @@ public class InstallerUtils {
 
     /**
      * Install a new release.
-     *
-     * @param data input stream data from the installing apk file.
      */
-    public synchronized static void installPackage(@NonNull InputStream data, Context context, PackageInstaller.SessionCallback sessionCallback) {
+    @WorkerThread
+    public static void installPackage(ParcelFileDescriptor fileDescriptor, Context context, PackageInstaller.SessionCallback sessionCallback) {
         PackageInstaller.Session session = null;
         try {
 
@@ -162,17 +164,9 @@ public class InstallerUtils {
             /* Prepare session. */
             int sessionId = packageInstaller.createSession(params);
             session = packageInstaller.openSession(sessionId);
+            addFileToInstallSession(fileDescriptor, session);
 
             /* Start to install a new release. */
-            OutputStream out = session.openWrite(sOutputStreamName, 0, -1);
-            byte[] buffer = new byte[sBufferCapacity];
-            int c;
-            while ((c = data.read(buffer)) != -1) {
-                out.write(buffer, 0, c);
-            }
-            session.fsync(out);
-            data.close();
-            out.close();
             session.commit(createIntentSender(context, sessionId));
             session.close();
         } catch (IOException e) {
@@ -190,16 +184,30 @@ public class InstallerUtils {
      * @param sessionId install sessionId.
      * @return IntentSender with receiver.
      */
-    public synchronized static IntentSender createIntentSender(Context context, int sessionId) {
-        int flag = 0;
+    public static IntentSender createIntentSender(Context context, int sessionId) {
+        int broadcastFlags = 0;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            flag = FLAG_MUTABLE;
+            broadcastFlags |= FLAG_MUTABLE;
         }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 sessionId,
                 new Intent(AppCenterPackageInstallerReceiver.START_ACTION),
-                flag);
+                broadcastFlags);
         return pendingIntent.getIntentSender();
+    }
+
+    @WorkerThread
+    private static void addFileToInstallSession(ParcelFileDescriptor fileDescriptor, PackageInstaller.Session session)
+            throws IOException {
+        try (OutputStream out = session.openWrite(sOutputStreamName, 0, fileDescriptor.getStatSize());
+             InputStream in = new FileInputStream(fileDescriptor.getFileDescriptor())) {
+            byte[] buffer = new byte[BUFFER_CAPACITY];
+            int read;
+            while ((read = in.read(buffer)) >= 0) {
+                out.write(buffer, 0, read);
+            }
+            session.fsync(out);
+        }
     }
 }
