@@ -93,7 +93,8 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
             ParcelFileDescriptor fileDescriptor = downloadManager.openDownloadedFile(mDownloadId);
             if (fileDescriptor.getStatSize() != mTotalSize) {
                 AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
-                Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
+                // FIXME: Call from UI thread
+                // Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
                 return;
             }
             InstallerUtils.installPackage(fileDescriptor, mContext, this);

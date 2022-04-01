@@ -1898,12 +1898,18 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Start to install a new update.
      */
-    synchronized private void installUpdate() {
+    @UiThread
+    private synchronized void installUpdate() {
         if (mReleaseInstallerListener == null) {
             AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
             return;
         }
-        mReleaseInstallerListener.startInstall();
+        post(new Runnable() {
+            @Override
+            public void run() {
+                mReleaseInstallerListener.startInstall();
+            }
+        });
     }
 
     /**
