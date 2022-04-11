@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
@@ -29,6 +30,7 @@ public class DownloadManagerReceiver extends BroadcastReceiver {
          * Another option would be to open download list.
          */
         String action = intent.getAction();
+        AppCenterLog.debug(LOG_TAG, "Receive broadcast action: " + action);
         if (DownloadManager.ACTION_NOTIFICATION_CLICKED.equals(action)) {
             Distribute.getInstance().resumeApp(context);
         }

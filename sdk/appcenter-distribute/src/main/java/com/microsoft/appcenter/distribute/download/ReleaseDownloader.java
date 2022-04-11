@@ -76,7 +76,7 @@ public interface ReleaseDownloader {
          * @param totalSize total size of downloaded file.
          */
         @WorkerThread
-        void onComplete(@NonNull long downloadId, long totalSize);
+        void onComplete(long downloadId, long totalSize);
 
         /**
          * Called when an error occurs during the downloading.

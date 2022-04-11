@@ -68,10 +68,12 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
                 case PackageInstaller.STATUS_FAILURE_INVALID:
                 case PackageInstaller.STATUS_FAILURE_STORAGE:
                     AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Failed to install a new release with status: %s. Error message: %s.", status, message));
+                    // FIXME: StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
                     Toast.makeText(context, context.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
                     break;
                 default:
                     AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized status received from installer: %s", status));
+                    // FIXME: StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
                     Toast.makeText(context, context.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
             }
         } else {

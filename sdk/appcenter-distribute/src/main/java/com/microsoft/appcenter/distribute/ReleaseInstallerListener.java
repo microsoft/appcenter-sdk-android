@@ -70,7 +70,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
      *
      * @param downloadId downloadId of the downloaded file.
      */
-    public synchronized void setDownloadId(long downloadId) {
+    public void setDownloadId(long downloadId) {
         mDownloadId = downloadId;
     }
 
@@ -79,22 +79,21 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
      *
      * @param totalSize downloadId of the downloaded file.
      */
-    public synchronized void setTotalSize(long totalSize) {
+    public void setTotalSize(long totalSize) {
         mTotalSize = totalSize;
     }
 
     /**
      * Start to install a new release.
      */
-    public synchronized void startInstall() {
+    public void startInstall() {
         AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
         try {
             DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
+            // FIXME: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released.
             ParcelFileDescriptor fileDescriptor = downloadManager.openDownloadedFile(mDownloadId);
             if (fileDescriptor.getStatSize() != mTotalSize) {
-                AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
-                // FIXME: Call from UI thread
-                // Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
+                onInvalidFile();
                 return;
             }
             InstallerUtils.installPackage(fileDescriptor, mContext, this);
@@ -140,6 +139,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
             @Override
             public void run() {
                 if (!success) {
+                    // FIXME: StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
                     Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
                 }
                 Distribute.getInstance().notifyInstallProgress(false);
@@ -147,10 +147,21 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         });
     }
 
+    private void onInvalidFile() {
+        AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     /**
      * Hide the install progress dialog.
      */
-    public synchronized void hideInstallProgressDialog() {
+    public void hideInstallProgressDialog() {
         AppCenterLog.debug(LOG_TAG, "Hide the install progress dialog.");
         if (mProgressDialog != null) {
             final android.app.ProgressDialog progressDialog = mProgressDialog;
@@ -174,7 +185,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @UiThread
-    private synchronized void updateInstallProgressDialog(final int currentSize) {
+    private void updateInstallProgressDialog(final int currentSize) {
         AppCenterLog.debug(LOG_TAG, "Update the install progress dialog.");
 
         /* If file size is known update downloadProgress bar. */
@@ -200,7 +211,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
      * @return install progress dialog.
      */
     @UiThread
-    public synchronized Dialog showInstallProgressDialog(Activity foregroundActivity) {
+    public Dialog showInstallProgressDialog(Activity foregroundActivity) {
         AppCenterLog.debug(LOG_TAG, "Show the install progress dialog.");
         mProgressDialog = new android.app.ProgressDialog(foregroundActivity);
         mProgressDialog.setTitle(mContext.getString(R.string.appcenter_distribute_install_dialog));

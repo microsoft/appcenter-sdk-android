@@ -1461,6 +1461,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param dialog existing dialog if any, always returning true when null.
      * @return true if a new dialog should be displayed, false otherwise.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean shouldRefreshDialog(@Nullable Dialog dialog) {
 
         /* We could be in another activity now, refresh dialog. */
@@ -1867,7 +1868,6 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @UiThread
-    @VisibleForTesting
     synchronized void notifyInstallProgress(boolean isInProgress) {
         mInstallInProgress = isInProgress;
         if (isInProgress) {
@@ -1905,6 +1905,7 @@ public class Distribute extends AbstractAppCenterService {
             return;
         }
         post(new Runnable() {
+
             @Override
             public void run() {
                 mReleaseInstallerListener.startInstall();
