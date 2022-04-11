@@ -13,6 +13,7 @@ import android.app.DownloadManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -1999,22 +2000,26 @@ public class Distribute extends AbstractAppCenterService {
             NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
                     mContext.getString(R.string.appcenter_distribute_notification_category),
                     NotificationManager.IMPORTANCE_DEFAULT);
-
-            //noinspection ConstantConditions
             notificationManager.createNotificationChannel(channel);
             builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
         } else {
             builder = getOldNotificationBuilder();
         }
+
+        // TODO: Combine this and code from resumeApp.
+        Intent intent = new Intent(mContext, DeepLinkActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                mContext, 0, intent, 0);
+
         builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
                 .setContentText(getInstallReadyMessage())
-                .setSmallIcon(mContext.getApplicationInfo().icon);
-        builder.setStyle(new Notification.BigTextStyle().bigText(getInstallReadyMessage()));
+                .setSmallIcon(mContext.getApplicationInfo().icon)
+                .setStyle(new Notification.BigTextStyle().bigText(getInstallReadyMessage()))
+                .setContentIntent(pendingIntent);
         Notification notification = builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
-
-        //noinspection ConstantConditions
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
 
