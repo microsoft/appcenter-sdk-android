@@ -13,6 +13,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -96,8 +98,13 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
             @Override
             public void run() {
 
+                /* Use intent to just resume app instead on install intent. */
+                // TODO: Combine with Distribute.resumeApp()
+                Intent intent = new Intent(mContext, DeepLinkActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
                 /* Check if app should install now. */
-                if (!Distribute.getInstance().notifyDownload(mReleaseDetails)) {
+                if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
                     AppCenterLog.info(LOG_TAG, "Release is downloaded. Starting to install it.");
                     Distribute.getInstance().setInstalling(mReleaseDetails);
                     Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(downloadId, totalSize);

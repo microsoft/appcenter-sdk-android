@@ -10,10 +10,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DownloadManager;
-import android.app.Notification;
-import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -81,7 +78,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_
 import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT;
 import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
@@ -1064,11 +1060,8 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void cancelNotification() {
         if (getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
-            AppCenterLog.debug(LOG_TAG, "Delete notification");
-            NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-
-            //noinspection ConstantConditions
-            notificationManager.cancel(DistributeUtils.getNotificationId());
+            AppCenterLog.debug(LOG_TAG, "Cancel download notification.");
+            DistributeUtils.cancelDownloadNotification(mContext);
         }
     }
 
@@ -1969,10 +1962,11 @@ public class Distribute extends AbstractAppCenterService {
      * when download completes, it will not notify and return that the install U.I. should be shown now.
      *
      * @param releaseDetails release details to check state.
+     * @param intent         notification click intent.
      * @return false if install U.I should be shown now, true if a notification was posted or if the task was canceled.
      */
     @UiThread
-    synchronized boolean notifyDownload(ReleaseDetails releaseDetails) {
+    synchronized boolean notifyDownload(ReleaseDetails releaseDetails, Intent intent) {
 
         /* Check state. */
         if (releaseDetails != mReleaseDetails) {
@@ -1992,46 +1986,12 @@ public class Distribute extends AbstractAppCenterService {
 
         /* Post notification. */
         AppCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
-        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification.Builder builder;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            /* Create or update notification channel (mandatory on Android 8 target). */
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                    mContext.getString(R.string.appcenter_distribute_notification_category),
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            notificationManager.createNotificationChannel(channel);
-            builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
-        } else {
-            builder = getOldNotificationBuilder();
-        }
-
-        // TODO: Combine this and code from resumeApp.
-        Intent intent = new Intent(mContext, DeepLinkActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                mContext, 0, intent, 0);
-
-        builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
-                .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
-                .setContentText(getInstallReadyMessage())
-                .setSmallIcon(mContext.getApplicationInfo().icon)
-                .setStyle(new Notification.BigTextStyle().bigText(getInstallReadyMessage()))
-                .setContentIntent(pendingIntent);
-        Notification notification = builder.build();
-        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        notificationManager.notify(DistributeUtils.getNotificationId(), notification);
+        DistributeUtils.postDownloadNotification(mContext, getInstallReadyMessage(), intent);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
 
         /* Reset check download flag to show install U.I. on resume if notification ignored. */
         mCheckedDownload = false;
         return true;
-    }
-
-    @NonNull
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private Notification.Builder getOldNotificationBuilder() {
-        return new Notification.Builder(mContext);
     }
 
     /**
