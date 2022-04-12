@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
+import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
@@ -150,7 +151,7 @@ public class InstallerUtils {
      * Install a new release.
      */
     @WorkerThread
-    public static void installPackage(ParcelFileDescriptor fileDescriptor, Context context, PackageInstaller.SessionCallback sessionCallback) {
+    public static void installPackage(@NonNull Uri localUri, Context context, PackageInstaller.SessionCallback sessionCallback) {
         PackageInstaller.Session session = null;
         try {
 
@@ -164,7 +165,11 @@ public class InstallerUtils {
             /* Prepare session. */
             int sessionId = packageInstaller.createSession(params);
             session = packageInstaller.openSession(sessionId);
+
+            // FIXME: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released.
+            ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(localUri, "r");
             addFileToInstallSession(fileDescriptor, session);
+            fileDescriptor.close(); // TODO: finally
 
             /* Start to install a new release. */
             session.commit(createIntentSender(context, sessionId));

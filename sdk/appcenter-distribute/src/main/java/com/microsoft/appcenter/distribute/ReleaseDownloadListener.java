@@ -92,7 +92,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
     @WorkerThread
     @Override
-    public void onComplete(final long downloadId, final long totalSize) {
+    public void onComplete(@NonNull final Uri localUri) {
         HandlerUtils.runOnUiThread(new Runnable() {
 
             @Override
@@ -104,8 +104,8 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
                 /* Check if app should install now. */
                 if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
                     AppCenterLog.info(LOG_TAG, "Release is downloaded. Starting to install it.");
+                    Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(localUri);
                     Distribute.getInstance().setInstalling(mReleaseDetails);
-                    Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(downloadId, totalSize);
                 }
             }
         });
@@ -122,6 +122,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
             @Override
             public void run() {
+                // FIXME: StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
                 Toast.makeText(mContext, R.string.appcenter_distribute_downloading_error, Toast.LENGTH_SHORT).show();
                 Distribute.getInstance().completeWorkflow(mReleaseDetails);
             }

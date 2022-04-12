@@ -8,7 +8,11 @@ package com.microsoft.appcenter.distribute.download.manager;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.os.SystemClock;
+import android.widget.Toast;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
@@ -176,12 +180,20 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     @WorkerThread
-    synchronized void onDownloadComplete(long totalSize) {
+    synchronized void onDownloadComplete() {
         if (isCancelled()) {
             return;
         }
+        // TODO: Add file check (mReleaseDetails.size)
+        // AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
+        // Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        mListener.onComplete(mDownloadId, totalSize);
+        Uri localUri = getDownloadManager().getUriForDownloadedFile(mDownloadId);
+        if (localUri != null) {
+            mListener.onComplete(localUri);
+        } else {
+            mListener.onError("Downloaded file not found");
+        }
     }
 
     @WorkerThread

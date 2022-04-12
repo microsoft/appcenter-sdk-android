@@ -43,16 +43,6 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     private final Context mContext;
 
     /**
-     * Download id.
-     */
-    private long mDownloadId;
-
-    /**
-     * Total size of the file.
-     */
-    private long mTotalSize;
-
-    /**
      * Last download progress dialog that was shown.
      * Android 8 deprecates this dialog but only reason is that they want us to use a non modal
      * progress indicator while we actually use it to be a modal dialog for forced update.
@@ -63,43 +53,6 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
 
     public ReleaseInstallerListener(Context context) {
         mContext = context;
-    }
-
-    /**
-     * Set the downloadId of the downloaded file to be installed.
-     *
-     * @param downloadId downloadId of the downloaded file.
-     */
-    public void setDownloadId(long downloadId) {
-        mDownloadId = downloadId;
-    }
-
-    /**
-     * Set the total size of the downloaded file.
-     *
-     * @param totalSize downloadId of the downloaded file.
-     */
-    public void setTotalSize(long totalSize) {
-        mTotalSize = totalSize;
-    }
-
-    /**
-     * Start to install a new release.
-     */
-    public void startInstall() {
-        AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
-        try {
-            DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
-            // FIXME: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released.
-            ParcelFileDescriptor fileDescriptor = downloadManager.openDownloadedFile(mDownloadId);
-            if (fileDescriptor.getStatSize() != mTotalSize) {
-                onInvalidFile();
-                return;
-            }
-            InstallerUtils.installPackage(fileDescriptor, mContext, this);
-        } catch (IOException e) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed.", e);
-        }
     }
 
     @Override
@@ -143,17 +96,6 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
                     Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
                 }
                 Distribute.getInstance().notifyInstallProgress(false);
-            }
-        });
-    }
-
-    private void onInvalidFile() {
-        AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
-        HandlerUtils.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
             }
         });
     }

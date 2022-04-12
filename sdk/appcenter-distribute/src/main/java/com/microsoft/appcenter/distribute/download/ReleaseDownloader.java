@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.distribute.download;
 
+import android.net.Uri;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -72,11 +74,10 @@ public interface ReleaseDownloader {
         /**
          * Called when the downloading is completed.
          *
-         * @param downloadId downloadId of downloaded file.
-         * @param totalSize total size of downloaded file.
+         * @param localUri The local URI of the file.
          */
         @WorkerThread
-        void onComplete(long downloadId, long totalSize);
+        void onComplete(@NonNull Uri localUri);
 
         /**
          * Called when an error occurs during the downloading.
