@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * Installer utils.
  */
-public class InstallerUtils {
+class InstallerUtils {
 
     /**
      * Value when {@link Settings.Secure#INSTALL_NON_MARKET_APPS} setting is enabled.
@@ -165,11 +165,9 @@ public class InstallerUtils {
             /* Prepare session. */
             int sessionId = packageInstaller.createSession(params);
             session = packageInstaller.openSession(sessionId);
-
-            // FIXME: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released.
-            ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(localUri, "r");
-            addFileToInstallSession(fileDescriptor, session);
-            fileDescriptor.close(); // TODO: finally
+            try (ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(localUri, "r")) {
+                addFileToInstallSession(fileDescriptor, session);
+            }
 
             /* Start to install a new release. */
             session.commit(createIntentSender(context, sessionId));

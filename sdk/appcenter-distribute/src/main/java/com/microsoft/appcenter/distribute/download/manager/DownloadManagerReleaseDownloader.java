@@ -10,6 +10,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.widget.Toast;
 
@@ -31,6 +32,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOW
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader {
 
@@ -184,11 +188,18 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         if (isCancelled()) {
             return;
         }
-        // TODO: Add file check (mReleaseDetails.size)
-        // AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
-        // Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
+        DownloadManager downloadManager = getDownloadManager();
+        try (ParcelFileDescriptor fileDescriptor = downloadManager.openDownloadedFile(mDownloadId)) {
+            if (fileDescriptor.getStatSize() != mReleaseDetails.getSize()) {
+                mListener.onError("The file is invalid");
+                return;
+            }
+        } catch (IOException e) {
+            mListener.onError("Cannot check file size: " + e.getMessage());
+            return;
+        }
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        Uri localUri = getDownloadManager().getUriForDownloadedFile(mDownloadId);
+        Uri localUri = downloadManager.getUriForDownloadedFile(mDownloadId);
         if (localUri != null) {
             mListener.onComplete(localUri);
         } else {
