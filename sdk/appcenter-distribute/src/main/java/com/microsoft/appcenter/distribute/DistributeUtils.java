@@ -118,6 +118,17 @@ class DistributeUtils {
         return SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_COMPLETED);
     }
 
+    static Intent getResumeAppIntent(@NonNull Context context) {
+
+        /*
+         * Use our deep link activity with no parameter just to resume app correctly
+         * without duplicating activities or clearing task.
+         */
+        Intent intent = new Intent(context, DeepLinkActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return intent;
+    }
+
     @NonNull
     static String computeReleaseHash(@NonNull PackageInfo packageInfo) {
         return HashUtils.sha256(packageInfo.packageName + ":" + packageInfo.versionName + ":" + DeviceInfoHelper.getVersionCode(packageInfo));

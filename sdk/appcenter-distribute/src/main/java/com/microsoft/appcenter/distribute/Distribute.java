@@ -1883,13 +1883,7 @@ public class Distribute extends AbstractAppCenterService {
 
         /* Nothing to do if already in foreground. */
         if (mForegroundActivity == null) {
-
-            /*
-             * Use our deep link activity with no parameter just to resume app correctly
-             * without duplicating activities or clearing task.
-             */
-            Intent intent = new Intent(context, DeepLinkActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Intent intent = DistributeUtils.getResumeAppIntent(context);
             context.startActivity(intent);
         }
     }

@@ -99,9 +99,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
             public void run() {
 
                 /* Use intent to just resume app instead on install intent. */
-                // TODO: Combine with Distribute.resumeApp()
-                Intent intent = new Intent(mContext, DeepLinkActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                Intent intent = DistributeUtils.getResumeAppIntent(mContext);
 
                 /* Check if app should install now. */
                 if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
