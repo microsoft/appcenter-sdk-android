@@ -63,13 +63,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -149,13 +150,7 @@ public class CryptoTest {
         when(mRsaBuilder.setKeySize(anyInt())).thenReturn(mRsaBuilder);
         when(KeyPairGenerator.getInstance(anyString(), anyString())).thenReturn(mock(KeyPairGenerator.class));
         KeyStore.PrivateKeyEntry rsaKey = mock(KeyStore.PrivateKeyEntry.class);
-        when(mKeyStore.getEntry(argThat(new ArgumentMatcher<String>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return String.valueOf(argument).contains(CIPHER_RSA);
-            }
-        }), any(KeyStore.ProtectionParameter.class))).thenReturn(rsaKey);
+        when(mKeyStore.getEntry(contains(CIPHER_RSA), isNull())).thenReturn(rsaKey);
         when(rsaKey.getCertificate()).thenReturn(mRsaCert);
         when(mCipher.doFinal(any(byte[].class))).thenAnswer(new Answer<byte[]>() {
 
@@ -176,13 +171,7 @@ public class CryptoTest {
         when(mAesAndEtmBuilder.setKeySize(anyInt())).thenReturn(mAesAndEtmBuilder);
         when(mAesAndEtmBuilder.setKeyValidityForOriginationEnd(any(Date.class))).thenReturn(mAesAndEtmBuilder);
         when(mAesAndEtmBuilder.build()).thenReturn(mock(KeyGenParameterSpec.class));
-        when(mKeyStore.getEntry(argThat(new ArgumentMatcher<String>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return String.valueOf(argument).contains(CIPHER_AES);
-            }
-        }), any(KeyStore.ProtectionParameter.class))).thenReturn(aesAndEtmKey);
+        when(mKeyStore.getEntry(contains(CIPHER_AES), isNull())).thenReturn(aesAndEtmKey);
         when(mCryptoFactory.getKeyGenerator(anyString(), anyString())).thenReturn(mock(CryptoUtils.IKeyGenerator.class));
         final byte[] mockInitVector = new byte[16];
         when(mCipher.getBlockSize()).thenReturn(mockInitVector.length);
@@ -208,9 +197,10 @@ public class CryptoTest {
         });
 
         /* Mock ciphers. */
-        when(mCryptoFactory.getCipher(anyString(), anyString())).thenReturn(mCipher);
+        when(mCryptoFactory.getCipher(anyString(), any())).thenReturn(mCipher);
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void initCryptoConstants() {
         new CryptoConstants();
@@ -228,6 +218,7 @@ public class CryptoTest {
         assertNull(nullDecryptedData.getNewEncryptedData());
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void verifyNoCrypto(int apiLevel) {
         CryptoUtils cryptoUtils = new CryptoUtils(mContext, mCryptoFactory, apiLevel);
         String encrypted = cryptoUtils.encrypt("anything");
@@ -243,7 +234,7 @@ public class CryptoTest {
     public void keyStoreNotFound() throws Exception {
         when(KeyStore.getInstance(ANDROID_KEY_STORE)).thenThrow(new KeyStoreException());
         verifyNoCrypto(Build.VERSION_CODES.LOLLIPOP);
-        verifyStatic();
+        verifyStatic(KeyStore.class);
         KeyStore.getInstance(anyString());
     }
 
@@ -251,7 +242,7 @@ public class CryptoTest {
     public void rsaFailsToLoadWhenPreferred() throws Exception {
         when(KeyPairGenerator.getInstance(anyString(), anyString())).thenThrow(new NoSuchAlgorithmException());
         verifyNoCrypto(Build.VERSION_CODES.LOLLIPOP);
-        verifyStatic();
+        verifyStatic(KeyStore.class);
         KeyStore.getInstance(anyString());
     }
 
@@ -463,7 +454,7 @@ public class CryptoTest {
 
         /* Count how many times alias0 was used to test interactions after more easily... */
         alias = ArgumentCaptor.forClass(String.class);
-        verify(mKeyStore, atLeastOnce()).getEntry(alias.capture(), any(KeyStore.ProtectionParameter.class));
+        verify(mKeyStore, atLeastOnce()).getEntry(alias.capture(), isNull());
         int alias0count = 0;
         for (String aliasValue : alias.getAllValues()) {
             if (aliasValue.equals(alias0)) {
@@ -596,7 +587,7 @@ public class CryptoTest {
 
         // Verify that data was encoded.
         String expectedText = CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + sourceText;
-        assertEquals(encryptedText, expectedText);
+        assertEquals(expectedText, encryptedText);
 
         // Verify that data was decoded.
         when(mCipher.getBlockSize()).thenReturn(2);

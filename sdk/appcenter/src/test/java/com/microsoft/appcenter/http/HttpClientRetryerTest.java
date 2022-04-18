@@ -5,6 +5,18 @@
 
 package com.microsoft.appcenter.http;
 
+import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
+import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
+import static com.microsoft.appcenter.http.DefaultHttpClient.X_MS_RETRY_AFTER_MS_HEADER;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
 import android.os.Handler;
 
 import org.junit.Test;
@@ -16,20 +28,6 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_KEY;
-import static com.microsoft.appcenter.http.DefaultHttpClient.CONTENT_TYPE_VALUE;
-import static com.microsoft.appcenter.http.DefaultHttpClient.X_MS_RETRY_AFTER_MS_HEADER;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.longThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 @SuppressWarnings("unused")
 public class HttpClientRetryerTest {
@@ -50,23 +48,15 @@ public class HttpClientRetryerTest {
         verify(handler).postDelayed(any(Runnable.class), longThat(new ArgumentMatcher<Long>() {
 
             @Override
-            public boolean matches(Object argument) {
-                long interval = (Long) argument;
+            public boolean matches(Long interval) {
                 long retryInterval = HttpClientRetryer.RETRY_INTERVALS[retryIndex];
                 return interval >= retryInterval / 2 && interval <= retryInterval;
             }
         }));
     }
 
-    private static void verifyDelayFromHeader(Handler handler, final long retryAfter) {
-        verify(handler).postDelayed(any(Runnable.class), longThat(new ArgumentMatcher<Long>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                long interval = (Long) argument;
-                return interval == retryAfter;
-            }
-        }));
+    private static void verifyDelayFromHeader(Handler handler, long retryAfter) {
+        verify(handler).postDelayed(any(Runnable.class), eq(retryAfter));
     }
 
     @Test
@@ -81,7 +71,7 @@ public class HttpClientRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
                 return call;
             }
-        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(any(), any(), any(), any(), any(ServiceCallback.class));
         HttpClientRetryer retryer = new HttpClientRetryer(httpClient);
         retryer.callAsync(null, null, null, null, callback);
         verify(callback).onCallSucceeded(eq(new HttpResponse(200, "mockSuccessPayload")));
@@ -107,7 +97,7 @@ public class HttpClientRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
                 return mock(ServiceCall.class);
             }
-        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(any(), any(), any(), any(), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         simulateRetryAfterDelay(handler);
@@ -137,7 +127,7 @@ public class HttpClientRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(expectedException);
                 return mock(ServiceCall.class);
             }
-        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(any(), any(), any(), any(), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         simulateRetryAfterDelay(handler);
@@ -161,7 +151,7 @@ public class HttpClientRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new HttpException(new HttpResponse(408)));
                 return call;
             }
-        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(any(), any(), any(), any(), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         simulateRetryAfterDelay(handler);
@@ -201,7 +191,7 @@ public class HttpClientRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, "mockSuccessPayload"));
                 return mock(ServiceCall.class);
             }
-        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(any(), any(), any(), any(), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         simulateRetryAfterDelay(handler);
@@ -228,7 +218,7 @@ public class HttpClientRetryerTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallFailed(new HttpException(new HttpResponse(503)));
                 return call;
             }
-        }).when(httpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(httpClient).callAsync(any(), any(), any(), any(), any(ServiceCallback.class));
         Handler handler = mock(Handler.class);
         HttpClient retryer = new HttpClientRetryer(httpClient, handler);
         retryer.callAsync(null, null, null, null, callback).cancel();

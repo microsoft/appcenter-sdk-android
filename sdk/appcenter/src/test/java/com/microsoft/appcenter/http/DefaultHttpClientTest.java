@@ -42,7 +42,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,7 +49,6 @@ import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSocketFactory;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_POST;
@@ -58,19 +56,21 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyMapOf;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -118,7 +118,7 @@ public class DefaultHttpClientTest {
                         (ServiceCallback) invocation.getArguments()[4],
                         (DefaultHttpClientCallTask.Tracker) invocation.getArguments()[5],
                         (boolean) invocation.getArguments()[6]));
-                when(call.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClientCallTask>() {
+                when(call.executeOnExecutor(any())).then(new Answer<DefaultHttpClientCallTask>() {
 
                     @Override
                     public DefaultHttpClientCallTask answer(InvocationOnMock invocation) {
@@ -181,13 +181,7 @@ public class DefaultHttpClientTest {
         DefaultHttpClient httpClient = new DefaultHttpClient();
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
         httpClient.callAsync(urlString, METHOD_POST, new HashMap<String, String>(), null, mock(ServiceCallback.class));
-        verify(urlConnection, times(tlsSetExpectedCalls)).setSSLSocketFactory(argThat(new ArgumentMatcher<SSLSocketFactory>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof TLS1_2SocketFactory;
-            }
-        }));
+        verify(urlConnection, times(tlsSetExpectedCalls)).setSSLSocketFactory(isA(TLS1_2SocketFactory.class));
     }
 
     @Test
@@ -244,13 +238,13 @@ public class DefaultHttpClientTest {
         assertEquals("{a:1,b:2}", sentPayload);
 
         /* Verify socket tagged to avoid strict mode error. */
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.setThreadStatsTag(anyInt());
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.clearThreadStatsTag();
 
         /* We enabled verbose and it's json, check pretty print. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(AppCenterLog.LOG_TAG, prettyString);
     }
 
@@ -461,14 +455,8 @@ public class DefaultHttpClientTest {
         httpClient.close();
 
         /* Test binary placeholder used in logging code instead of real payload. */
-        verifyStatic();
-        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument.toString().contains(payload);
-            }
-        }));
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.verbose(anyString(), contains(payload));
     }
 
     @Test
@@ -521,14 +509,8 @@ public class DefaultHttpClientTest {
         httpClient.close();
 
         /* Test binary placeholder used in logging code instead of real payload. */
-        verifyStatic();
-        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument.toString().contains(expectedResponseString);
-            }
-        }));
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.verbose(anyString(), contains(expectedResponseString));
     }
 
     @Test
@@ -575,12 +557,11 @@ public class DefaultHttpClientTest {
         httpClient.close();
 
         /* Test binary placeholder used in logging code instead of real payload. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
 
             @Override
-            public boolean matches(Object argument) {
-                String logMessage = argument.toString();
+            public boolean matches(String logMessage) {
                 return logMessage.contains("<binary>") && !logMessage.contains("fake binary");
             }
         }));
@@ -646,9 +627,9 @@ public class DefaultHttpClientTest {
         verify(urlConnection).disconnect();
 
         /* Verify socket tagged to avoid strict mode error. */
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.setThreadStatsTag(anyInt());
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.clearThreadStatsTag();
     }
 
@@ -687,7 +668,7 @@ public class DefaultHttpClientTest {
                         (DefaultHttpClientCallTask.Tracker) invocation.getArguments()[5],
                         (boolean) invocation.getArguments()[6]));
                 callTask.set(call);
-                when(call.executeOnExecutor(any(Executor.class))).then(new Answer<DefaultHttpClientCallTask>() {
+                when(call.executeOnExecutor(any())).then(new Answer<DefaultHttpClientCallTask>() {
 
                     @Override
                     public DefaultHttpClientCallTask answer(InvocationOnMock invocation) {
@@ -855,8 +836,8 @@ public class DefaultHttpClientTest {
         mockCall();
         httpClient.callAsync(urlString, "", new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(exception);
-        verifyZeroInteractions(callTemplate);
-        verifyZeroInteractions(serviceCallback);
+        verifyNoInteractions(callTemplate);
+        verifyNoMoreInteractions(serviceCallback);
     }
 
     @Test
@@ -878,11 +859,11 @@ public class DefaultHttpClientTest {
         mockCall();
         httpClient.callAsync(urlString, METHOD_POST, new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(exception);
-        verifyZeroInteractions(serviceCallback);
+        verifyNoMoreInteractions(serviceCallback);
         verify(out).close();
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.setThreadStatsTag(anyInt());
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.clearThreadStatsTag();
     }
 
@@ -907,11 +888,11 @@ public class DefaultHttpClientTest {
         mockCall();
         httpClient.callAsync(urlString, "", new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(exception);
-        verifyZeroInteractions(serviceCallback);
+        verifyNoMoreInteractions(serviceCallback);
         verify(inputStream).close();
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.setThreadStatsTag(anyInt());
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.clearThreadStatsTag();
     }
 
@@ -931,10 +912,10 @@ public class DefaultHttpClientTest {
             fail();
         } catch (Error ignored) {
         }
-        verifyZeroInteractions(serviceCallback);
-        verifyStatic();
+        verifyNoInteractions(serviceCallback);
+        verifyStatic(TrafficStats.class);
         TrafficStats.setThreadStatsTag(anyInt());
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.clearThreadStatsTag();
     }
 
@@ -958,13 +939,13 @@ public class DefaultHttpClientTest {
         verify(serviceCallback).onCallFailed(exception);
         verifyNoMoreInteractions(serviceCallback);
         verify(urlConnection).disconnect();
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.setThreadStatsTag(anyInt());
-        verifyStatic();
+        verifyStatic(TrafficStats.class);
         TrafficStats.clearThreadStatsTag();
     }
 
-    @Test
+    @Test(timeout = 5000)
     @PrepareForTest(HandlerUtils.class)
     public void rejectedAsyncTask() throws Exception {
 
@@ -992,7 +973,7 @@ public class DefaultHttpClientTest {
         DefaultHttpClientCallTask call = mock(DefaultHttpClientCallTask.class);
         whenNew(DefaultHttpClientCallTask.class).withAnyArguments().thenReturn(call);
         RejectedExecutionException exception = new RejectedExecutionException();
-        when(call.executeOnExecutor(any(Executor.class))).thenThrow(exception);
+        when(call.executeOnExecutor(any())).thenThrow(exception);
         DefaultHttpClient httpClient = new DefaultHttpClient();
 
         /* Test. */
@@ -1065,13 +1046,8 @@ public class DefaultHttpClientTest {
         assertArrayEquals(compressedBytes, buffer.toByteArray());
 
         /* Check no payload logging since log level not enabled. */
-        verifyStatic(never());
-        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
-            @Override
-            public boolean matches(Object argument) {
-                return argument.toString().contains(payload);
-            }
-        }));
+        verifyStatic(AppCenterLog.class, never());
+        AppCenterLog.verbose(anyString(), contains(payload));
     }
 
     @Test
@@ -1127,13 +1103,8 @@ public class DefaultHttpClientTest {
         assertEquals(payload, buffer.toString());
 
         /* Check payload logged but not as JSON since different content type. */
-        verifyStatic();
-        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
-            @Override
-            public boolean matches(Object argument) {
-                return argument.toString().contains(payload);
-            }
-        }));
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.verbose(anyString(), contains(payload));
     }
 
     @Test
@@ -1189,13 +1160,8 @@ public class DefaultHttpClientTest {
         assertEquals(payload, buffer.toString());
 
         /* Check payload logged but not as JSON since different content type. */
-        verifyStatic();
-        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
-            @Override
-            public boolean matches(Object argument) {
-                return argument.toString().contains(payload);
-            }
-        }));
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.verbose(anyString(), contains(payload));
     }
 
     @Test
@@ -1258,13 +1224,8 @@ public class DefaultHttpClientTest {
         assertArrayEquals(compressedBytes, buffer.toByteArray());
 
         /* Check payload logged. */
-        verifyStatic();
-        AppCenterLog.verbose(anyString(), argThat(new ArgumentMatcher<String>() {
-            @Override
-            public boolean matches(Object argument) {
-                return argument.toString().contains(payload);
-            }
-        }));
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.verbose(anyString(), contains(payload));
     }
 
     @Test
@@ -1279,8 +1240,8 @@ public class DefaultHttpClientTest {
         mockCall();
         httpClient.callAsync(urlString, "", new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(any(IOException.class));
-        verifyZeroInteractions(callTemplate);
-        verifyZeroInteractions(serviceCallback);
+        verifyNoInteractions(callTemplate);
+        verifyNoMoreInteractions(serviceCallback);
     }
 
     @Test
@@ -1295,8 +1256,8 @@ public class DefaultHttpClientTest {
         mockCall();
         httpClient.callAsync(urlString, "", new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(any(IOException.class));
-        verifyZeroInteractions(callTemplate);
-        verifyZeroInteractions(serviceCallback);
+        verifyNoInteractions(callTemplate);
+        verifyNoMoreInteractions(serviceCallback);
     }
 
     @Test
@@ -1313,7 +1274,7 @@ public class DefaultHttpClientTest {
         mockCall();
         httpClient.callAsync(urlString, "", new HashMap<String, String>(), callTemplate, serviceCallback);
         verify(serviceCallback).onCallFailed(any(IOException.class));
-        verifyZeroInteractions(callTemplate);
-        verifyZeroInteractions(serviceCallback);
+        verifyNoInteractions(callTemplate);
+        verifyNoMoreInteractions(serviceCallback);
     }
 }

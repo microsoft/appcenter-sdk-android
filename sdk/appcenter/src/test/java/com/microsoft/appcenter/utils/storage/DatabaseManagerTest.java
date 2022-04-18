@@ -27,9 +27,10 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -61,7 +62,7 @@ public class DatabaseManagerTest {
     public void putFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.put(new ContentValues(), "priority");
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -69,7 +70,7 @@ public class DatabaseManagerTest {
     public void deleteFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.delete(0);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -77,7 +78,7 @@ public class DatabaseManagerTest {
     public void clearFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.clear();
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -88,7 +89,7 @@ public class DatabaseManagerTest {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         databaseManagerMock.setSQLiteOpenHelper(helperMock);
         databaseManagerMock.close();
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -96,7 +97,7 @@ public class DatabaseManagerTest {
     public void rowCountFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         assertEquals(-1, databaseManagerMock.getRowCount());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -104,7 +105,7 @@ public class DatabaseManagerTest {
     public void setMaxSizeFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         assertFalse(databaseManagerMock.setMaxSize(1024 * 1024));
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -112,7 +113,7 @@ public class DatabaseManagerTest {
     public void getMaxSizeFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
         assertEquals(-1, databaseManagerMock.getMaxSize());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -188,11 +189,12 @@ public class DatabaseManagerTest {
         Cursor cursor = mock(Cursor.class);
         SQLiteDiskIOException fatalException = new SQLiteDiskIOException();
         when(cursor.moveToNext()).thenThrow(fatalException);
-        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
+        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class);
+        when(sqLiteQueryBuilder.query(any(), any(), any(), any(), any(), any(), any())).thenReturn(cursor);
         when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
 
         /* Simulate that database is full and that deletes fail because of the cursor. */
-        when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException());
+        when(sqLiteDatabase.insertOrThrow(anyString(), isNull(), any(ContentValues.class))).thenThrow(new SQLiteFullException());
 
         /* Instantiate real instance for DatabaseManager. */
         DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
@@ -217,11 +219,12 @@ public class DatabaseManagerTest {
         SQLiteDiskIOException exception = new SQLiteDiskIOException();
         doThrow(exception).when(cursor).close();
         when(cursor.moveToNext()).thenReturn(true).thenReturn(false);
-        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class, new Returns(cursor));
+        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class);
+        when(sqLiteQueryBuilder.query(any(), any(), any(), any(), any(), any(), any())).thenReturn(cursor);
         when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
 
         /* Simulate that database is full only once (will work after purging 1 log). */
-        when(sqLiteDatabase.insertOrThrow(anyString(), anyString(), any(ContentValues.class))).thenThrow(new SQLiteFullException()).thenReturn(1L);
+        when(sqLiteDatabase.insertOrThrow(anyString(), isNull(), any(ContentValues.class))).thenThrow(new SQLiteFullException()).thenReturn(1L);
 
         /* Instantiate real instance for DatabaseManager. */
         DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);

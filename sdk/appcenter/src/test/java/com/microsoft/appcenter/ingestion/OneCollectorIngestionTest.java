@@ -55,17 +55,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.anyMapOf;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -90,6 +91,7 @@ public class OneCollectorIngestionTest {
     @Before
     public void setUp() throws Exception {
         TicketCache.clear();
+        spy(AppCenterLog.class);
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(ALLOWED_NETWORK_REQUEST, true)).thenReturn(true);
 
@@ -342,12 +344,12 @@ public class OneCollectorIngestionTest {
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(url.toString()));
 
         /* Verify header log. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
-            verifyStatic();
+            verifyStatic(AppCenterLog.class);
             AppCenterLog.verbose(anyString(), contains(header.getValue()));
         }
 
@@ -356,13 +358,13 @@ public class OneCollectorIngestionTest {
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify api key is in log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(obfuscatedApiKeys));
 
         /* Add ticket to header and check the same way as api key. */
         headers.put(OneCollectorIngestion.TICKETS, tickets);
         callTemplate.onBeforeCalling(url, headers);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(obfuscatedTickets));
     }
 
@@ -381,7 +383,7 @@ public class OneCollectorIngestionTest {
         callTemplate.onBeforeCalling(mock(URL.class), mock(Map.class));
 
         /* Verify. */
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.verbose(anyString(), anyString());
     }
 

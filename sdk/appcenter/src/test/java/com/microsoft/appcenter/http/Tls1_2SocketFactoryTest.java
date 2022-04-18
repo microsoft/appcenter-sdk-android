@@ -5,6 +5,7 @@
 
 package com.microsoft.appcenter.http;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -26,10 +27,11 @@ import javax.net.ssl.TrustManager;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -48,8 +50,12 @@ public class Tls1_2SocketFactoryTest {
 
     private static final String[] SUPPORTED_CIPHER_SUITES = {"mockCipher1", "mockCipher2"};
 
-    private TLS1_2SocketFactory getFactory() throws IOException {
+    @Before
+    public void setUp() {
         mockStatic(HttpsURLConnection.class);
+    }
+
+    private TLS1_2SocketFactory getFactory() throws IOException {
         SSLSocketFactory sslSocketFactory = mock(SSLSocketFactory.class);
         when(HttpsURLConnection.getDefaultSSLSocketFactory()).thenReturn(sslSocketFactory);
         when(sslSocketFactory.getDefaultCipherSuites()).thenReturn(DEFAULT_CIPHER_SUITES);
@@ -73,7 +79,7 @@ public class Tls1_2SocketFactoryTest {
     public void createFactory() throws Exception {
         SSLContext sslContext = mock(SSLContext.class);
         doNothing().doThrow(new KeyManagementException())
-                .when(sslContext).init(any(KeyManager[].class), any(TrustManager[].class), any(SecureRandom.class));
+                .when(sslContext).init(isNull(), isNull(), isNull());
         SSLSocketFactory sslSocketFactory = mock(SSLSocketFactory.class);
         when(sslContext.getSocketFactory())
                 .thenReturn(sslSocketFactory);
@@ -90,17 +96,17 @@ public class Tls1_2SocketFactoryTest {
 
         /* Get factory from context. */
         assertNotNull(new TLS1_2SocketFactory());
-        verifyStatic(never());
+        verifyStatic(HttpsURLConnection.class, never());
         HttpsURLConnection.getDefaultSSLSocketFactory();
 
         /* KeyManagementException */
         assertNotNull(new TLS1_2SocketFactory());
-        verifyStatic(times(1));
+        verifyStatic(HttpsURLConnection.class, times(1));
         HttpsURLConnection.getDefaultSSLSocketFactory();
 
         /* NoSuchAlgorithmException */
         assertNotNull(new TLS1_2SocketFactory());
-        verifyStatic(times(2));
+        verifyStatic(HttpsURLConnection.class, times(2));
         HttpsURLConnection.getDefaultSSLSocketFactory();
     }
 

@@ -48,16 +48,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -491,7 +491,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         }
         dummyService.setInstanceEnabledAsync(true);
         assertFalse(dummyService.isInstanceEnabledAsync().get());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString());
         assertFalse(AppCenter.isEnabled().get());
         verify(mChannel, times(2)).setEnabled(false);
@@ -542,7 +542,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         assertFalse(AppCenter.isEnabled().get());
         AppCenter.setEnabled(true);
         assertFalse(AppCenter.isEnabled().get());
-        verifyStatic(times(3));
+        verifyStatic(AppCenterLog.class, times(3));
         AppCenterLog.error(eq(LOG_TAG), anyString());
     }
 
@@ -615,7 +615,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
     @Test
     public void invalidServiceTest() {
         AppCenter.start(mApplication, DUMMY_APP_SECRET, InvalidService.class);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString(), any(NoSuchMethodException.class));
     }
 
@@ -625,7 +625,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         /* First verify start from application. */
         AppCenter.start(null, DUMMY_APP_SECRET, DummyService.class);
         verify(DummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString());
     }
 
@@ -695,7 +695,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.start(mApplication, "", DummyService.class, AnotherDummyService.class);
 
         /* Verify start not called again (1 total call). */
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), any(), any(), anyBoolean());
 
         /* And not updated either. */
         verify(DummyService.getInstance(), never()).onConfigurationUpdated(anyString(), anyString());
@@ -811,13 +811,13 @@ public class AppCenterTest extends AbstractAppCenterTest {
         // Call runnable with disabledRunnable is null.
         Runnable mockRunnable = mock(Runnable.class);
         AppCenter.getInstance().getAppCenterHandler().post(mockRunnable, null);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), eq("App Center SDK is disabled."));
 
         // Call App Center start with null application and verify than anything happening.
         AppCenter.getInstance().resetApplication();
         AppCenter.getInstance().getAppCenterHandler().post(mockRunnable, null);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), eq("App Center hasn't been configured. You need to call AppCenter.start with appSecret or AppCenter.configure first."));
     }
 
@@ -838,7 +838,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.setWrapperSdk(wrapperSdk);
 
         /* Check propagation. */
-        verifyStatic();
+        verifyStatic(DeviceInfoHelper.class);
         DeviceInfoHelper.setWrapperSdk(wrapperSdk);
 
         /* Since the channel was not created when setting wrapper, no need to refresh channel after start. */
@@ -859,7 +859,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.setCountryCode(expectedCountryCode);
 
         /* Check that method was called. */
-        verifyStatic();
+        verifyStatic(DeviceInfoHelper.class);
         DeviceInfoHelper.setCountryCode(eq(expectedCountryCode));
     }
 
@@ -867,24 +867,24 @@ public class AppCenterTest extends AbstractAppCenterTest {
     public void setDefaultLogLevelRelease() {
         mApplicationInfo.flags = 0;
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.setLogLevel(anyInt());
     }
 
     @Test
     public void setDefaultLogLevelDebug() {
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.setLogLevel(android.util.Log.WARN);
     }
 
     @Test
     public void doNotSetDefaultLogLevel() {
         AppCenter.setLogLevel(android.util.Log.VERBOSE);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.setLogLevel(android.util.Log.VERBOSE);
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.setLogLevel(android.util.Log.WARN);
     }
 
@@ -972,7 +972,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
         assertNotNull(handler);
         assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
-        verifyStatic();
+        verifyStatic(Thread.class);
         Thread.setDefaultUncaughtExceptionHandler(eq(handler));
 
         /* Crash an verify. */
@@ -984,7 +984,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
 
         /* But we don't do it if App Center is disabled. */
         AppCenter.setEnabled(false);
-        verifyStatic();
+        verifyStatic(Thread.class);
         Thread.setDefaultUncaughtExceptionHandler(eq(defaultUncaughtExceptionHandler));
         handler.uncaughtException(thread, exception);
         verify(mChannel, times(1)).shutdown();
@@ -994,7 +994,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.setEnabled(true);
         assertNull(handler.getDefaultUncaughtExceptionHandler());
         handler.uncaughtException(thread, exception);
-        verifyStatic();
+        verifyStatic(ShutdownHelper.class);
         ShutdownHelper.shutdown(10);
     }
 
@@ -1022,7 +1022,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
         assertNotNull(handler);
         assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
-        verifyStatic();
+        verifyStatic(Thread.class);
         Thread.setDefaultUncaughtExceptionHandler(eq(handler));
 
         /* Simulate crash to shutdown channel. */
@@ -1037,7 +1037,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         verify(defaultUncaughtExceptionHandler).uncaughtException(eq(thread), eq(exception));
 
         /* Verify we log an error on timeout. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString());
     }
 
@@ -1056,7 +1056,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         UncaughtExceptionHandler handler = AppCenter.getInstance().getUncaughtExceptionHandler();
         assertNotNull(handler);
         assertEquals(defaultUncaughtExceptionHandler, handler.getDefaultUncaughtExceptionHandler());
-        verifyStatic();
+        verifyStatic(Thread.class);
         Thread.setDefaultUncaughtExceptionHandler(eq(handler));
 
         /* Simulate crash to shutdown channel. */
@@ -1071,26 +1071,14 @@ public class AppCenterTest extends AbstractAppCenterTest {
         verify(defaultUncaughtExceptionHandler).uncaughtException(eq(thread), eq(exception));
 
         /* Verify we log a warning on interruption. */
-        verifyStatic();
-        AppCenterLog.warn(eq(LOG_TAG), anyString(), argThat(new ArgumentMatcher<Throwable>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof InterruptedException;
-            }
-        }));
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.warn(eq(LOG_TAG), anyString(), isA(InterruptedException.class));
     }
 
     @Test
     public void addOneCollectorListenerOnStart() {
         AppCenter.start(mApplication, DUMMY_TARGET_TOKEN_STRING, DummyService.class);
-        verify(mChannel).addListener(argThat(new ArgumentMatcher<Channel.Listener>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof OneCollectorChannelListener;
-            }
-        }));
+        verify(mChannel).addListener(isA(OneCollectorChannelListener.class));
     }
 
     @Test
@@ -1166,7 +1154,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.configure(mApplication);
 
         /* Check that this value wasn't saved to SharedPreferences. */
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
 
         /* Set channel. */
@@ -1191,7 +1179,7 @@ public class AppCenterTest extends AbstractAppCenterTest {
         /* Configure App Center. */
         AppCenter.configure(mApplication);
         AppCenter.getInstance().setChannel(null);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
 
         /* Verify that default value is true. */
@@ -1201,18 +1189,18 @@ public class AppCenterTest extends AbstractAppCenterTest {
         AppCenter.setNetworkRequestsAllowed(true);
 
         /* Verify that value wasn't saved. */
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
 
         /* Disallow network requests. */
         AppCenter.setNetworkRequestsAllowed(false);
         assertFalse(AppCenter.isNetworkRequestsAllowed());
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
 
         /* Disallow network again requests. */
         AppCenter.setNetworkRequestsAllowed(false);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), anyBoolean());
     }
 
@@ -1229,24 +1217,24 @@ public class AppCenterTest extends AbstractAppCenterTest {
         Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
 
         /* Check that this value wasn't saved to SharedPreferences. */
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(false));
 
         /* Verify that network requests value was saved to local variable. */
         Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.getBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(true));
 
         /* Configure App Center. */
         AppCenter.configure(mApplication);
 
         /* Verify that network requests value was saved to SharedPreferences. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(false));
 
         /* Verify that network requests value was saved to SharedPreferences. */
         Assert.assertFalse(AppCenter.isNetworkRequestsAllowed());
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.getBoolean(eq(PrefStorageConstants.ALLOWED_NETWORK_REQUEST), eq(false));
     }
 }

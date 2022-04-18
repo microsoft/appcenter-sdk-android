@@ -41,17 +41,18 @@ import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.anyMapOf;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
@@ -70,6 +71,7 @@ public class AppCenterIngestionTest {
 
     @Before
     public void setUp() {
+        spy(AppCenterLog.class);
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(ALLOWED_NETWORK_REQUEST, true)).thenReturn(true);
     }
@@ -180,7 +182,6 @@ public class AppCenterIngestionTest {
         URL url = new URL("http://mock/path/file");
         String appSecret = UUID.randomUUID().toString();
         String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
-        String obfuscatedToken = "Bearer ***";
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret);
@@ -191,12 +192,12 @@ public class AppCenterIngestionTest {
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(url.toString()));
 
         /* Verify header log. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
-            verifyStatic();
+            verifyStatic(AppCenterLog.class);
             AppCenterLog.verbose(anyString(), contains(header.getValue()));
         }
 
@@ -205,9 +206,8 @@ public class AppCenterIngestionTest {
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(obfuscatedSecret));
-        AppCenterLog.verbose(anyString(), contains(obfuscatedToken));
     }
 
     @Test
@@ -225,12 +225,12 @@ public class AppCenterIngestionTest {
         callTemplate.onBeforeCalling(mock(URL.class), mock(Map.class));
 
         /* Verify. */
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.verbose(anyString(), anyString());
     }
 
     @Test
-    public void sendLogsWhenIngestionDisable() throws JSONException, IOException {
+    public void sendLogsWhenIngestionDisable() throws JSONException {
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(ALLOWED_NETWORK_REQUEST, true)).thenReturn(false);
 

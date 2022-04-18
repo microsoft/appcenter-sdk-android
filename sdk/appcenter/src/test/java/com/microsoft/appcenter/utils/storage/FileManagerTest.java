@@ -32,8 +32,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -61,7 +61,7 @@ public class FileManagerTest {
         whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
         assertNull(FileManager.read(new File("")));
         verify(fileReader).close();
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
@@ -75,7 +75,7 @@ public class FileManagerTest {
         when(reader.readLine()).thenThrow(new EOFException());
         assertNull(FileManager.read(new File("")));
         verify(reader).close();
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
@@ -86,7 +86,7 @@ public class FileManagerTest {
         whenNew(FileReader.class).withAnyArguments().thenReturn(fileReader);
         assertNull(FileManager.read(new File("")));
         verify(fileReader).close();
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
@@ -144,7 +144,7 @@ public class FileManagerTest {
         doThrow(new IOException("mock")).when(dataInputStream).readFully(any(byte[].class));
         assertNull(FileManager.readBytes(new File("")));
         verify(fileInputStream).close();
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
@@ -159,7 +159,7 @@ public class FileManagerTest {
         doThrow(new IOException("mock")).when(dataInputStream).readFully(any(byte[].class));
         assertNull(FileManager.readBytes(new File("")));
         verify(fileInputStream).close();
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), anyString(), any(IOException.class));
     }
 
@@ -176,7 +176,7 @@ public class FileManagerTest {
 
         /* Verify. */
         assertFalse(folder.exists());
-        verifyStatic();
+        verifyStatic(FileManager.class);
         FileManager.deleteDirectory(any(File.class));
     }
 
@@ -205,7 +205,7 @@ public class FileManagerTest {
         assertFalse(folder.exists());
 
         /* Verify. */
-        verifyStatic(times(4));
+        verifyStatic(FileManager.class, times(4));
         FileManager.deleteDirectory(any(File.class));
     }
 

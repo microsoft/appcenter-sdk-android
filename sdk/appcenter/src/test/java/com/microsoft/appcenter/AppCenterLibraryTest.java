@@ -23,12 +23,12 @@ import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -41,7 +41,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
     public void nullApplicationTest() {
         AppCenter.startFromLibrary(null, DummyService.class);
         verify(DummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString());
     }
 
@@ -263,7 +263,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         AppCenter.startFromLibrary(mApplication, AnotherDummyService.class, DummyService.class);
 
         /* We get no warnings as app started those. */
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
 
         /* Check nothing changes as everything was already initialized by app start. */
@@ -356,7 +356,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         verify(DummyService.getInstance()).onConfigurationUpdated(DUMMY_APP_SECRET, DUMMY_TRANSMISSION_TARGET_TOKEN);
 
         /* And not call onStarted again (verify 1 total call). */
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), anyBoolean());
     }
 
     @Test
