@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
@@ -64,7 +65,8 @@ class DistributeUtils {
      *
      * @return notification identifier for downloads.
      */
-    private static int getNotificationId() {
+    @VisibleForTesting
+    static int getNotificationId() {
         return Distribute.class.getName().hashCode();
     }
 

@@ -50,14 +50,6 @@ public class DistributeUtilsTest {
     }
 
     @Test
-    public void getNotificationId() {
-
-        /* Coverage fix. */
-        int notificationId = DistributeUtils.getNotificationId();
-        Assert.assertNotEquals(0, notificationId);
-    }
-
-    @Test
     public void loadCachedReleaseDetails() throws JSONException {
         ReleaseDetails mock = mock(ReleaseDetails.class);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_RELEASE_DETAILS)).thenReturn("test");
