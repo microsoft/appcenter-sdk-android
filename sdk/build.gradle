@@ -11,10 +11,11 @@ allprojects {
     apply plugin: 'jacoco'
 
     jacoco {
-        toolVersion '0.7.9'
+        toolVersion '0.8.8'
     }
     tasks.withType(Test) {
         jacoco.includeNoLocationClasses = true
+        jacoco.excludes = ['jdk.internal.*']
     }
 
     //noinspection GroovyAssignabilityCheck
@@ -61,7 +62,7 @@ subprojects {
         testOptions {
             unitTests {
                 all {
-                    jvmArgs '-noverify'
+                    jvmArgs '-noverify', '-Djdk.attach.allowAttachSelf=true'
                 }
                 returnDefaultValues = true
             }
@@ -86,17 +87,18 @@ subprojects {
             }
         }
 
-        testImplementation 'org.powermock:powermock-api-mockito:1.6.5'
-        testImplementation 'org.powermock:powermock-module-junit4:1.6.5'
-        testImplementation 'org.powermock:powermock-module-junit4-rule-agent:1.6.5'
+        testImplementation 'org.powermock:powermock-api-mockito2:2.0.9'
+        testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
+        testImplementation 'org.powermock:powermock-module-junit4-rule-agent:2.0.9'
+        testImplementation 'org.powermock:powermock-classloading-xstream:2.0.9'
         testImplementation "androidx.annotation:annotation:${ext.annotationVersion}"
         testImplementation project(':test')
 
         androidTestImplementation 'com.crittercism.dexmaker:dexmaker-dx:1.4'
         androidTestImplementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
-        androidTestImplementation 'androidx.test:core:1.2.0'
-        androidTestImplementation 'androidx.test:rules:1.2.0'
-        androidTestImplementation 'androidx.test:runner:1.3.0'
+        androidTestImplementation 'androidx.test:core:1.4.0'
+        androidTestImplementation 'androidx.test:rules:1.4.0'
+        androidTestImplementation 'androidx.test:runner:1.4.0'
         androidTestImplementation ("androidx.annotation:annotation:${ext.annotationVersion}") {
             force = true
         }
