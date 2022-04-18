@@ -6,13 +6,11 @@
 apply plugin: 'com.android.library'
 
 android {
-
-    //noinspection GroovyMissingReturnStatement
-    lintOptions {
+    lint {
         disable 'InvalidPackage'
     }
 }
 
 dependencies {
-    implementation 'junit:junit:4.12'
+    implementation 'junit:junit:4.13.2'
 }
