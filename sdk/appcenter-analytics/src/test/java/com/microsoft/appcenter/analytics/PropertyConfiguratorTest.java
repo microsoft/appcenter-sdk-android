@@ -49,10 +49,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -242,7 +242,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Mock context. */
         mockStatic(Secure.class);
-        when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
+        when(Secure.getString(any(), any())).thenReturn("mockDeviceId");
 
         /* Get property configurator and collect device ID. */
         PropertyConfigurator pc = Analytics.getTransmissionTarget("test").getPropertyConfigurator();
@@ -265,7 +265,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Mock context. */
         mockStatic(Secure.class);
-        when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
+        when(Secure.getString(any(), any())).thenReturn("mockDeviceId");
 
         /* Disable Analytics. */
         Analytics.setEnabled(false).get();
@@ -722,7 +722,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
 
         /* Mock deviceId. */
         mockStatic(Secure.class);
-        when(Secure.getString(any(ContentResolver.class), anyString())).thenReturn("mockDeviceId");
+        when(Secure.getString(any(), any())).thenReturn("mockDeviceId");
 
         /* Start analytics and simulate background thread handler (we hold the thread command and run it in the test). */
         Analytics analytics = Analytics.getInstance();
@@ -735,7 +735,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
                 backgroundCommands.add((Runnable) invocation.getArguments()[0]);
                 return null;
             }
-        }).when(handler).post(notNull(Runnable.class), any(Runnable.class));
+        }).when(handler).post(notNull(), any());
         analytics.onStarting(handler);
         analytics.onStarted(mock(Context.class), mChannel, null, null, true);
 

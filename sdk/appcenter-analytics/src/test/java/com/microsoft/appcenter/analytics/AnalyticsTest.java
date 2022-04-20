@@ -58,21 +58,22 @@ import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GRO
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
 import static com.microsoft.appcenter.analytics.Analytics.MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
 import static com.microsoft.appcenter.analytics.Analytics.MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
+import static com.microsoft.appcenter.analytics.LogNameMatcher.logName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -125,7 +126,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.trackPage("test", null);
 
         /* Verify we just get an error every time. */
-        verifyStatic(times(9));
+        verifyStatic(AppCenterLog.class, times(9));
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -138,10 +139,10 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         analytics.onActivityResumed(new Activity());
         assertNull(analytics.getCurrentActivity());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), anyString());
         analytics.onActivityPaused(new Activity());
-        verifyStatic(times(2));
+        verifyStatic(AppCenterLog.class, times(2));
         AppCenterLog.error(anyString(), anyString());
 
         /* Start. */
@@ -152,17 +153,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Test resume/pause. */
         analytics.onActivityResumed(activity);
         analytics.onActivityPaused(activity);
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    return expectedName.equals(pageLog.getName());
-                }
-                return false;
-            }
-        }), eq(analytics.getGroupName()), eq(DEFAULTS));
+        verify(channel).enqueue(logName(PageLog.class, expectedName), eq(analytics.getGroupName()), eq(DEFAULTS));
     }
 
     @Test
@@ -190,34 +181,12 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         analytics.onActivityResumed(new MyActivity());
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof StartSessionLog;
-            }
-        }), anyString(), eq(DEFAULTS));
-        verify(channel, never()).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof PageLog;
-            }
-        }), anyString(), anyInt());
+        verify(channel).enqueue(isA(StartSessionLog.class), anyString(), eq(DEFAULTS));
+        verify(channel, never()).enqueue(isA(PageLog.class), anyString(), anyInt());
         Analytics.setAutoPageTrackingEnabled(true);
         assertTrue(Analytics.isAutoPageTrackingEnabled());
         analytics.onActivityResumed(new SomeScreen());
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    return "SomeScreen".equals(pageLog.getName());
-                }
-                return false;
-            }
-        }), eq(analytics.getGroupName()), eq(DEFAULTS));
+        verify(channel).enqueue(logName(PageLog.class, "SomeScreen"), eq(analytics.getGroupName()), eq(DEFAULTS));
     }
 
     @Test
@@ -380,7 +349,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Analytics.trackEvent("eventName1", (Map<String, String>) null, 0x03);
         Analytics.trackEvent("eventName2", (EventProperties) null, 0x03);
         verify(channel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
-        verifyStatic(times(2));
+        verifyStatic(AppCenterLog.class, times(2));
         AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -500,7 +469,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel).removeGroup(eq(ANALYTICS_CRITICAL_GROUP));
         verify(channel, times(2)).removeGroup(eq(ANALYTICS_GROUP));
         verify(channel).clear(analytics.getGroupName());
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove("sessions");
 
         /* Now try to use all methods. Should not work. */
@@ -628,28 +597,28 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         /* Before start it does not work to change state, it's disabled. */
         Analytics analytics = Analytics.getInstance();
 
-       /* Prepare channel. */
+        /* Prepare channel. */
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         analytics.onActivityResumed(mock(Activity.class));
 
         /* Verify that start session log was sent. */
-        verify(channel, times(2)).enqueue(any(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
+        verify(channel).enqueue(isA(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
 
         /* Set manual session tracker and start session. */
         Analytics.enableManualSessionTracker();
         Analytics.startSession();
 
         /* Verify that start session log wasn't sent. */
-        verify(channel, times(2)).enqueue(any(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
+        verify(channel).enqueue(isA(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
 
         /* Disable Analytics ans call start session. */
         Analytics.setEnabled(false);
         Analytics.startSession();
 
         /* Verify that start session log wasn't sent. */
-        verify(channel, times(2)).enqueue(any(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
+        verify(channel).enqueue(isA(StartSessionLog.class), eq(analytics.getGroupName()), anyInt());
     }
 
     @Test
@@ -711,20 +680,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
         /* Enable: start session sent retroactively. */
         Analytics.setEnabled(true);
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof StartSessionLog;
-            }
-        }), eq(analytics.getGroupName()), eq(DEFAULTS));
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof PageLog;
-            }
-        }), eq(analytics.getGroupName()), eq(DEFAULTS));
+        verify(channel).enqueue(isA(StartSessionLog.class), eq(analytics.getGroupName()), eq(DEFAULTS));
+        verify(channel).enqueue(isA(PageLog.class), eq(analytics.getGroupName()), eq(DEFAULTS));
 
         /* Go background. */
         analytics.onActivityPaused(new Activity());
@@ -879,17 +836,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         verify(channel).enqueue(isA(StartSessionLog.class), anyString(), eq(DEFAULTS));
 
         /* Verify last page tracked as still in foreground. */
-        verify(channel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof PageLog) {
-                    PageLog pageLog = (PageLog) item;
-                    return "My".equals(pageLog.getName());
-                }
-                return false;
-            }
-        }), eq(analytics.getGroupName()), eq(DEFAULTS));
+        verify(channel).enqueue(logName(PageLog.class, "My"), eq(analytics.getGroupName()), eq(DEFAULTS));
 
         /* Check that was the only page sent. */
         verify(channel).enqueue(isA(PageLog.class), eq(analytics.getGroupName()), eq(DEFAULTS));
@@ -916,7 +863,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         assertNull(Analytics.getTransmissionTarget("t1"));
 
         /* And prints an error. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), contains("AppCenter is not configured"));
     }
 
