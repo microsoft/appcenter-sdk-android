@@ -5,6 +5,26 @@
 
 package com.microsoft.appcenter.crashes;
 
+import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.test.TestUtils.generateString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static java.util.Collections.singletonList;
+
 import android.content.Context;
 
 import com.microsoft.appcenter.AppCenter;
@@ -13,7 +33,6 @@ import com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
 import com.microsoft.appcenter.crashes.ingestion.models.HandledErrorLog;
 import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
-import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -21,7 +40,7 @@ import com.microsoft.appcenter.utils.context.UserIdContext;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
+import org.mockito.Captor;
 import org.mockito.Mock;
 
 import java.util.Arrays;
@@ -29,32 +48,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static com.microsoft.appcenter.test.TestUtils.generateString;
-import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-
 public class HandledErrorTest extends AbstractCrashesTest {
 
     private Crashes mCrashes;
 
     @Mock
     private Channel mChannel;
+
+    @Captor
+    private ArgumentCaptor<Log> mLog;
 
     private void startCrashes() {
         mCrashes = Crashes.getInstance();
@@ -65,94 +67,96 @@ public class HandledErrorTest extends AbstractCrashesTest {
     @Test
     public void notInit() {
         Crashes.trackError(EXCEPTION, null, null);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
-    public void trackError() {
+    public void trackErrorWithoutProperties() {
         startCrashes();
         Crashes.trackError(EXCEPTION);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+        verify(mChannel).enqueue(mLog.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertTrue(mLog.getValue() instanceof HandledErrorLog);
+        HandledErrorLog errorLog = (HandledErrorLog) mLog.getValue();
+        assertEquals(EXCEPTION.getMessage(), errorLog.getException().getMessage());
+        assertNull(errorLog.getProperties());
+    }
 
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
-                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage());
-            }
-        }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
-        reset(mChannel);
+    @Test
+    public void trackErrorWithInvalidProperties() {
+        startCrashes();
         Crashes.trackError(EXCEPTION, new HashMap<String, String>() {{
             put(null, null);
             put("", null);
             put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
             put("1", null);
         }}, null);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+        verify(mChannel).enqueue(mLog.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertTrue(mLog.getValue() instanceof HandledErrorLog);
+        HandledErrorLog errorLog = (HandledErrorLog) mLog.getValue();
+        assertEquals(EXCEPTION.getMessage(), errorLog.getException().getMessage());
+        assertNotNull(errorLog.getProperties());
+        assertEquals(0, errorLog.getProperties().size());
+    }
 
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
-                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
-                        && ((HandledErrorLog) item).getProperties().size() == 0;
-            }
-        }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
-        reset(mChannel);
+    @Test
+    public void trackErrorWithTooManyProperties() {
+        startCrashes();
         Crashes.trackError(EXCEPTION, new HashMap<String, String>() {{
             for (int i = 0; i < 30; i++) {
                 put("valid" + i, "valid");
             }
         }}, null);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+        verify(mChannel).enqueue(mLog.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertTrue(mLog.getValue() instanceof HandledErrorLog);
+        HandledErrorLog errorLog = (HandledErrorLog) mLog.getValue();
+        assertEquals(EXCEPTION.getMessage(), errorLog.getException().getMessage());
+        assertNotNull(errorLog.getProperties());
+        assertEquals(20, errorLog.getProperties().size());
+    }
 
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && EXCEPTION.getMessage() != null
-                        && EXCEPTION.getMessage().equals(((HandledErrorLog) item).getException().getMessage())
-                        && ((HandledErrorLog) item).getProperties().size() == 20;
-            }
-        }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
-        reset(mChannel);
+    @Test
+    public void trackErrorWithTooLongProperty() {
+        startCrashes();
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         Crashes.trackError(EXCEPTION, new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
         }}, null);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
+        verify(mChannel).enqueue(mLog.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertTrue(mLog.getValue() instanceof HandledErrorLog);
+        HandledErrorLog errorLog = (HandledErrorLog) mLog.getValue();
+        assertEquals(EXCEPTION.getMessage(), errorLog.getException().getMessage());
+        assertNotNull(errorLog.getProperties());
+        assertEquals(1, errorLog.getProperties().size());
+        Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
+        assertEquals(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, entry.getKey().length());
+        assertEquals(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, entry.getValue().length());
+    }
 
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof HandledErrorLog) {
-                    HandledErrorLog errorLog = (HandledErrorLog) item;
-                    if (EXCEPTION.getMessage() != null && EXCEPTION.getMessage().equals((errorLog.getException().getMessage()))) {
-                        if (errorLog.getProperties().size() == 1) {
-                            Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
-                            return entry.getKey().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH;
-                        }
-                    }
-                }
-                return false;
-            }
-        }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
-
-        HandledErrorLog mockLog = mock(HandledErrorLog.class);
+    @Test
+    public void noCallbacksOnHandledErrorLog() {
+        startCrashes();
         CrashesListener mockListener = mock(CrashesListener.class);
         mCrashes.setInstanceListener(mockListener);
+        Channel.GroupListener channelListener = mCrashes.getChannelListener();
+        HandledErrorLog errorLogLog = mock(HandledErrorLog.class);
+        channelListener.onBeforeSending(errorLogLog);
+        channelListener.onSuccess(errorLogLog);
+        channelListener.onFailure(errorLogLog, EXCEPTION);
+        verifyNoInteractions(mockListener);
+    }
 
-        /* mCrashes callback test for trackError. */
-        mCrashes.getChannelListener().onBeforeSending(mockLog);
-        verify(mockListener, never()).onBeforeSending(any(ErrorReport.class));
-        mCrashes.getChannelListener().onSuccess(mockLog);
-        verify(mockListener, never()).onSendingSucceeded(any(ErrorReport.class));
-        mCrashes.getChannelListener().onFailure(mockLog, EXCEPTION);
-        verify(mockListener, never()).onSendingFailed(any(ErrorReport.class), eq(EXCEPTION));
-
+    @Test
+    public void noCallbacksOnErrorAttachmentLog() {
+        startCrashes();
+        CrashesListener mockListener = mock(CrashesListener.class);
+        mCrashes.setInstanceListener(mockListener);
+        Channel.GroupListener channelListener = mCrashes.getChannelListener();
         ErrorAttachmentLog attachmentLog = mock(ErrorAttachmentLog.class);
-        mCrashes.getChannelListener().onBeforeSending(attachmentLog);
-        verify(mockListener, never()).onBeforeSending(any(ErrorReport.class));
-        mCrashes.getChannelListener().onSuccess(attachmentLog);
-        verify(mockListener, never()).onSendingSucceeded(any(ErrorReport.class));
-        mCrashes.getChannelListener().onFailure(attachmentLog, EXCEPTION);
-        verify(mockListener, never()).onSendingFailed(any(ErrorReport.class), eq(EXCEPTION));
+        channelListener.onBeforeSending(attachmentLog);
+        channelListener.onSuccess(attachmentLog);
+        channelListener.onFailure(attachmentLog, EXCEPTION);
+        verifyNoInteractions(mockListener);
     }
 
     @Test
@@ -175,63 +179,53 @@ public class HandledErrorTest extends AbstractCrashesTest {
         mCrashes.onStarting(mAppCenterHandler);
         mCrashes.onStarted(mock(Context.class), mChannel, "", null, true);
         WrapperSdkExceptionManager.trackException(exception, null, null);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException());
-            }
-        }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(mLog.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertTrue(mLog.getValue() instanceof HandledErrorLog);
+        HandledErrorLog errorLog = (HandledErrorLog) mLog.getValue();
+        assertEquals(exception, errorLog.getException());
+        assertNull(errorLog.getProperties());
         reset(mChannel);
+
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             put(null, null);
             put("", null);
             put(generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*'), null);
             put("1", null);
         }}, null);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
-                        && ((HandledErrorLog) item).getProperties().size() == 0;
-            }
-        }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(mLog.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertTrue(mLog.getValue() instanceof HandledErrorLog);
+        errorLog = (HandledErrorLog) mLog.getValue();
+        assertEquals(exception, errorLog.getException());
+        assertNotNull(errorLog.getProperties());
+        assertEquals(0, errorLog.getProperties().size());
         reset(mChannel);
+
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             for (int i = 0; i < 30; i++) {
                 put("valid" + i, "valid");
             }
         }}, null);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                return item instanceof HandledErrorLog && exception.equals(((HandledErrorLog) item).getException())
-                        && ((HandledErrorLog) item).getProperties().size() == 20;
-            }
-        }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(mLog.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertTrue(mLog.getValue() instanceof HandledErrorLog);
+        errorLog = (HandledErrorLog) mLog.getValue();
+        assertEquals(exception, errorLog.getException());
+        assertNotNull(errorLog.getProperties());
+        assertEquals(20, errorLog.getProperties().size());
         reset(mChannel);
+
         final String longerMapItem = generateString(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH + 1, '*');
         WrapperSdkExceptionManager.trackException(exception, new HashMap<String, String>() {{
             put(longerMapItem, longerMapItem);
         }}, null);
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof HandledErrorLog) {
-                    HandledErrorLog errorLog = (HandledErrorLog) item;
-                    if (exception.equals((errorLog.getException()))) {
-                        if (errorLog.getProperties().size() == 1) {
-                            Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
-                            return entry.getKey().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH && entry.getValue().length() == ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH;
-                        }
-                    }
-                }
-                return false;
-            }
-        }), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(mLog.capture(), eq(mCrashes.getGroupName()), eq(DEFAULTS));
+        assertTrue(mLog.getValue() instanceof HandledErrorLog);
+        errorLog = (HandledErrorLog) mLog.getValue();
+        assertEquals(exception, errorLog.getException());
+        assertNotNull(errorLog.getProperties());
+        assertEquals(1, errorLog.getProperties().size());
+        Map.Entry<String, String> entry = errorLog.getProperties().entrySet().iterator().next();
+        assertEquals(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, entry.getKey().length());
+        assertEquals(ErrorLogHelper.MAX_PROPERTY_ITEM_LENGTH, entry.getValue().length());
     }
 
     @Test

@@ -5,6 +5,14 @@
 
 package com.microsoft.appcenter.crashes;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+
 import android.os.Looper;
 import android.os.SystemClock;
 
@@ -23,23 +31,24 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-
-@SuppressWarnings("unused")
-@PrepareForTest({ErrorLogHelper.class, SystemClock.class, FileManager.class, SharedPreferencesManager.class, AppCenterLog.class, AppCenter.class, Crashes.class, HandlerUtils.class, Looper.class, ErrorAttachmentLog.class})
+@PrepareForTest({
+        AppCenter.class,
+        AppCenterLog.class,
+        Crashes.class,
+        ErrorAttachmentLog.class,
+        ErrorLogHelper.class,
+        FileManager.class,
+        HandlerUtils.class,
+        Looper.class,
+        SharedPreferencesManager.class,
+        SystemClock.class
+})
 public class AbstractCrashesTest {
 
     static final String CRASHES_ENABLED_KEY = PrefStorageConstants.KEY_ENABLED + "_" + Crashes.getInstance().getServiceName();
@@ -47,12 +56,11 @@ public class AbstractCrashesTest {
     static final Exception EXCEPTION = new Exception("This is a test exception.");
 
     @Rule
-    public final TemporaryFolder errorStorageDirectory = new TemporaryFolder();
-
-    @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
     @Mock
     AppCenterHandler mAppCenterHandler;
+
     @Mock
     private AppCenter mAppCenter;
 
@@ -60,12 +68,12 @@ public class AbstractCrashesTest {
     public void setUp() {
         Thread.setDefaultUncaughtExceptionHandler(null);
         Crashes.unsetInstance();
-        mockStatic(SystemClock.class);
+        mockStatic(AppCenter.class);
+        mockStatic(AppCenterLog.class);
         mockStatic(FileManager.class);
         mockStatic(SharedPreferencesManager.class);
-        mockStatic(AppCenterLog.class);
+        mockStatic(SystemClock.class);
         when(SystemClock.elapsedRealtime()).thenReturn(System.currentTimeMillis());
-        mockStatic(AppCenter.class);
         when(AppCenter.getInstance()).thenReturn(mAppCenter);
 
         @SuppressWarnings("unchecked")
@@ -101,7 +109,7 @@ public class AbstractCrashesTest {
         };
         doAnswer(runNow).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
-        doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any());
     }
 
     @After
