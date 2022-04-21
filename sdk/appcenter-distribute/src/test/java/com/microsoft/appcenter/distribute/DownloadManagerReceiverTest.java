@@ -18,9 +18,9 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -70,7 +70,7 @@ public class DownloadManagerReceiverTest {
         downloadManagerReceiver.onReceive(mockContext, mockIntent);
 
         /* Verify. */
-        verifyStatic(never());
+        verifyStatic(AsyncTaskUtils.class, never());
         AsyncTaskUtils.execute(anyString(), isA(ResumeFromBackgroundTask.class));
     }
 
@@ -86,7 +86,7 @@ public class DownloadManagerReceiverTest {
         downloadManagerReceiver.onReceive(mockContext, mockIntent);
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(AsyncTaskUtils.class);
         AsyncTaskUtils.execute(anyString(), isA(ResumeFromBackgroundTask.class));
     }
 
@@ -99,9 +99,9 @@ public class DownloadManagerReceiverTest {
         new DownloadManagerReceiver().onReceive(mock(Context.class), clickIntent);
 
         /* Verify. */
-        verifyStatic(never());
+        verifyStatic(Distribute.class, never());
         Distribute.getInstance();
-        verifyStatic(never());
+        verifyStatic(AsyncTaskUtils.class, never());
         AsyncTaskUtils.execute(anyString(), isA(ResumeFromBackgroundTask.class));
     }
 }

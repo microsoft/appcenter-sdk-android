@@ -5,12 +5,13 @@
 
 package com.microsoft.appcenter.distribute;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -37,34 +38,33 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.text.NumberFormat;
 
 @PrepareForTest({
-        ProgressDialog.class,
-        InstallerUtils.class,
-        FileInputStream.class,
-        PackageInstaller.SessionCallback.class,
-        Distribute.class,
-        HandlerUtils.class,
         AppCenterLog.class,
-        Toast.class,
-        ReleaseInstallerListener.class
+        Distribute.class,
+        FileInputStream.class,
+        HandlerUtils.class,
+        InstallerUtils.class,
+        PackageInstaller.SessionCallback.class,
+        ProgressDialog.class,
+        ReleaseInstallerListener.class,
+        Toast.class
 })
 public class ReleaseInstallerListenerTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Mock
+    private Context mContext;
 
     @Mock
     private Distribute mDistribute;
@@ -85,14 +85,11 @@ public class ReleaseInstallerListenerTest {
     @Before
     public void setUp() throws Exception {
 
-        /* Mock context. */
-        Context mockContext = mock(Context.class);
-
         /* Mock static classes. */
-        mockStatic(InstallerUtils.class);
-        mockStatic(HandlerUtils.class);
-        mockStatic(Distribute.class);
         mockStatic(AppCenterLog.class);
+        mockStatic(Distribute.class);
+        mockStatic(HandlerUtils.class);
+        mockStatic(InstallerUtils.class);
         mockStatic(Toast.class);
 
         /* Mock progress dialog. */
@@ -100,6 +97,7 @@ public class ReleaseInstallerListenerTest {
         when(mMockProgressDialog.isIndeterminate()).thenReturn(false);
 
         /* Mock toast. */
+        when(mContext.getString(anyInt())).thenReturn("localized_message");
         when(Toast.makeText(any(Context.class), anyString(), anyInt())).thenReturn(mToast);
 
         /* Mock Distribute. */
@@ -111,10 +109,10 @@ public class ReleaseInstallerListenerTest {
 
         /* Mock download manager. */
         when(mDownloadManager.openDownloadedFile(anyLong())).thenReturn(mock(ParcelFileDescriptor.class));
-        when(mockContext.getSystemService(anyString())).thenReturn(mDownloadManager);
+        when(mContext.getSystemService(anyString())).thenReturn(mDownloadManager);
 
         /* Create installer listener. */
-        mReleaseInstallerListener = new ReleaseInstallerListener(mockContext);
+        mReleaseInstallerListener = new ReleaseInstallerListener(mContext);
 
         /* Set downloadId. */
         mReleaseInstallerListener.setDownloadId(1);
@@ -123,8 +121,8 @@ public class ReleaseInstallerListenerTest {
         mReleaseInstallerListener.showInstallProgressDialog(mock(Activity.class));
 
         /* Verify call methods. */
-        verify(mMockProgressDialog).setProgressPercentFormat(any(NumberFormat.class));
-        verify(mMockProgressDialog).setProgressNumberFormat(anyString());
+        verify(mMockProgressDialog).setProgressPercentFormat(isNull());
+        verify(mMockProgressDialog).setProgressNumberFormat(isNull());
         verify(mMockProgressDialog).setIndeterminate(anyBoolean());
     }
 
@@ -143,12 +141,12 @@ public class ReleaseInstallerListenerTest {
         mReleaseInstallerListener.startInstall();
 
         /* Verify that exception was called. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), anyString(), any(FileNotFoundException.class));
     }
 
     @Test
-    public void releaseInstallProcessWhenOnFinnishFailureWithContext() throws IOException {
+    public void releaseInstallProcessWhenOnFinnishFailureWithContext() {
 
         /* Mock progress dialog. */
         when(mMockProgressDialog.isIndeterminate()).thenReturn(true);
@@ -158,8 +156,8 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that installPackage method was called. */
         ArgumentCaptor<PackageInstaller.SessionCallback> sessionListener = ArgumentCaptor.forClass(PackageInstaller.SessionCallback.class);
-        verifyStatic();
-        InstallerUtils.installPackage(Matchers.<InputStream>any(), Matchers.<Context>any(), sessionListener.capture());
+        verifyStatic(InstallerUtils.class);
+        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), sessionListener.capture());
 
         /* Emulate session status. */
         sessionListener.getValue().onCreated(mMockSessionId);
@@ -172,7 +170,7 @@ public class ReleaseInstallerListenerTest {
         sessionListener.getValue().onProgressChanged(mMockSessionId, 1);
 
         /* Verify that the handler was called and catch runnable. */
-        verifyStatic();
+        verifyStatic(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that progress dialog was closed after finish install process. */
@@ -180,7 +178,7 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that the handler was called again. */
         ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(times(2));
+        verifyStatic(HandlerUtils.class, times(2));
         HandlerUtils.runOnUiThread(runnable.capture());
         runnable.getValue().run();
 
@@ -189,15 +187,15 @@ public class ReleaseInstallerListenerTest {
     }
 
     @Test
-    public void releaseInstallerProcessWhenProgressDialogNull() throws Exception {
+    public void releaseInstallerProcessWhenProgressDialogNull() {
 
         /* Start install process. */
         mReleaseInstallerListener.startInstall();
 
         /* Verify that installPackage method was called. */
         ArgumentCaptor<PackageInstaller.SessionCallback> sessionListener = ArgumentCaptor.forClass(PackageInstaller.SessionCallback.class);
-        verifyStatic();
-        InstallerUtils.installPackage(Matchers.<InputStream>any(), Matchers.<Context>any(), sessionListener.capture());
+        verifyStatic(InstallerUtils.class);
+        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), sessionListener.capture());
 
         /* Emulate session status. */
         sessionListener.getValue().onCreated(mMockSessionId);
@@ -212,7 +210,7 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that runnable was called. */
         ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic();
+        verifyStatic(HandlerUtils.class);
         HandlerUtils.runOnUiThread(runnable.capture());
         runnable.getValue().run();
 
@@ -221,7 +219,7 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that the handler was called and catch runnable. */
         runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(times(2));
+        verifyStatic(HandlerUtils.class, times(2));
         HandlerUtils.runOnUiThread(runnable.capture());
         runnable.getValue().run();
 
@@ -232,7 +230,7 @@ public class ReleaseInstallerListenerTest {
         sessionListener.getValue().onFinished(mMockSessionId, true);
 
         /* Verify that the handler was called again. */
-        verifyStatic(times(3));
+        verifyStatic(HandlerUtils.class, times(3));
         HandlerUtils.runOnUiThread(runnable.capture());
         runnable.getValue().run();
 
@@ -241,7 +239,7 @@ public class ReleaseInstallerListenerTest {
     }
 
     @Test
-    public void releaseInstallerProcessWhenDialogIsIndeterminate() throws Exception {
+    public void releaseInstallerProcessWhenDialogIsIndeterminate() {
 
         /* Mock progress dialog. */
         when(mMockProgressDialog.isIndeterminate()).thenReturn(true);
@@ -251,8 +249,8 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that installPackage method was called. */
         ArgumentCaptor<PackageInstaller.SessionCallback> sessionListener = ArgumentCaptor.forClass(PackageInstaller.SessionCallback.class);
-        verifyStatic();
-        InstallerUtils.installPackage(Matchers.<InputStream>any(), Matchers.<Context>any(), sessionListener.capture());
+        verifyStatic(InstallerUtils.class);
+        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), sessionListener.capture());
 
         /* Emulate session status. */
         sessionListener.getValue().onCreated(mMockSessionId);
@@ -267,22 +265,22 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that the handler was called and catch runnable. */
         ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic();
+        verifyStatic(HandlerUtils.class);
         HandlerUtils.runOnUiThread(runnable.capture());
         runnable.getValue().run();
 
         /* Verify that the progress dialog was updated. */
         verify(mMockProgressDialog).setProgress(anyInt());
         verify(mMockProgressDialog).setMax(anyInt());
-        verify(mMockProgressDialog, times(2)).setProgressPercentFormat(any(NumberFormat.class));
-        verify(mMockProgressDialog, times(2)).setProgressNumberFormat(anyString());
+        verify(mMockProgressDialog).setProgressPercentFormat(any(NumberFormat.class));
+        verify(mMockProgressDialog).setProgressNumberFormat(anyString());
         verify(mMockProgressDialog, times(2)).setIndeterminate(anyBoolean());
 
         /* Verify that progress dialog was closed after finish install process. */
         sessionListener.getValue().onFinished(mMockSessionId, true);
 
         /* Verify that the handler was called again. */
-        verifyStatic(times(2));
+        verifyStatic(HandlerUtils.class, times(2));
         HandlerUtils.runOnUiThread(runnable.capture());
         runnable.getValue().run();
 
@@ -291,15 +289,15 @@ public class ReleaseInstallerListenerTest {
     }
 
     @Test
-    public void releaseInstallerProcessWhenWithContext() throws Exception {
+    public void releaseInstallerProcessWhenWithContext() {
 
         /* Start install process. */
         mReleaseInstallerListener.startInstall();
 
         /* Verify that installPackage method was called. */
         ArgumentCaptor<PackageInstaller.SessionCallback> sessionListener = ArgumentCaptor.forClass(PackageInstaller.SessionCallback.class);
-        verifyStatic();
-        InstallerUtils.installPackage(Matchers.<InputStream>any(), Matchers.<Context>any(), sessionListener.capture());
+        verifyStatic(InstallerUtils.class);
+        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), sessionListener.capture());
 
         /* Emulate session status. */
         sessionListener.getValue().onCreated(mMockSessionId);
@@ -314,7 +312,7 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that the handler was called and catch runnable. */
         ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic();
+        verifyStatic(HandlerUtils.class);
         HandlerUtils.runOnUiThread(runnable.capture());
         runnable.getValue().run();
 
@@ -325,7 +323,7 @@ public class ReleaseInstallerListenerTest {
         sessionListener.getValue().onFinished(mMockSessionId, true);
 
         /* Verify that the handler was called again. */
-        verifyStatic(times(2));
+        verifyStatic(HandlerUtils.class, times(2));
         HandlerUtils.runOnUiThread(runnable.capture());
         runnable.getValue().run();
 
@@ -348,8 +346,8 @@ public class ReleaseInstallerListenerTest {
         mReleaseInstallerListener.startInstall();
 
         /* Verify that the install process never starts. */
-        verifyStatic(never());
-        InstallerUtils.installPackage(Matchers.<InputStream>any(), Matchers.<Context>any(), any(PackageInstaller.SessionCallback.class));
+        verifyStatic(InstallerUtils.class, never());
+        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), any(PackageInstaller.SessionCallback.class));
     }
 
     @Test
@@ -365,7 +363,7 @@ public class ReleaseInstallerListenerTest {
         mReleaseInstallerListener.hideInstallProgressDialog();
 
         /* Verify that runnable was called once only. */
-        verifyStatic();
+        verifyStatic(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));
     }
 }

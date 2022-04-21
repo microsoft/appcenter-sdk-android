@@ -53,15 +53,15 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOW
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK_REQUEST;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
+import static org.powermock.api.mockito.PowerMockito.doCallRealMethod;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -74,7 +74,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         BrowserUtils.class,
         CryptoUtils.class,
         Distribute.class,
-        DistributeUtils.class,
         HandlerUtils.class,
         HttpUtils.class,
         IdHelper.class,
@@ -178,7 +177,7 @@ public class AbstractDistributeTest {
                 ((Runnable) invocation.getArguments()[0]).run();
                 return null;
             }
-        }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        }).when(mAppCenterHandler).post(any(Runnable.class), any());
         whenNew(DistributeInfoTracker.class).withAnyArguments().thenReturn(mDistributeInfoTracker);
         mockStatic(IdHelper.class);
         when(IdHelper.getInstallId()).thenReturn(mInstallId);
@@ -232,14 +231,18 @@ public class AbstractDistributeTest {
         mockStatic(NetworkStateHelper.class);
         mNetworkStateHelper = mock(NetworkStateHelper.class, new Returns(true));
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
-        spy(HttpUtils.class);
-        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
+        mockStatic(HttpUtils.class);
+        when(HttpUtils.createHttpClient(any(Context.class))).thenReturn(mHttpClient);
+        doCallRealMethod().when(HttpUtils.class);
+        HttpUtils.hideSecret(anyString());
+        doCallRealMethod().when(HttpUtils.class);
+        HttpUtils.isRecoverableError(any(Throwable.class));
 
         /* Mock some statics. */
         mockStatic(BrowserUtils.class);
         mockStatic(TextUtils.class);
         mockStatic(InstallerUtils.class);
-        when(TextUtils.isEmpty(any(CharSequence.class))).thenAnswer(new Answer<Boolean>() {
+        when(TextUtils.isEmpty(any())).thenAnswer(new Answer<Boolean>() {
 
             @Override
             public Boolean answer(InvocationOnMock invocation) {
@@ -309,7 +312,7 @@ public class AbstractDistributeTest {
 
         /* Mock Release Downloader. */
         mockStatic(ReleaseDownloaderFactory.class);
-        when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(mReleaseDownloader);
+        when(ReleaseDownloaderFactory.create(any(Context.class), any(), any())).thenReturn(mReleaseDownloader);
         when(mReleaseDownloader.getReleaseDetails()).thenReturn(mReleaseDetails);
 
         /* Mock Release Downloader Listener. */

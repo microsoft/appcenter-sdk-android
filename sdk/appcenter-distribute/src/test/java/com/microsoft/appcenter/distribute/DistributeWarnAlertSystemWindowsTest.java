@@ -8,9 +8,9 @@ package com.microsoft.appcenter.distribute;
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.never;
@@ -171,7 +171,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(true);
 
         /* Verify that after resume do nothing. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.info(eq(LOG_TAG), eq("Installing in progress..."));
     }
 
@@ -296,7 +296,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify that installation process is trying to resume but installer is null because release details was not loaded. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), eq("Installing couldn't start due to the release installer wasn't initialized."));
     }
 
@@ -326,7 +326,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         verify(mAlertWindowsDialog, never()).show();
 
         /* Verify system alert window is not trying to display if activity is null. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(eq(LOG_TAG), eq("The application is in background mode, the system alerts windows won't be displayed."));
     }
 
@@ -364,7 +364,7 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         verify(mAlertWindowsDialog).show();
 
         /* Verify system alert window is not trying to display if it is already shown. */
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(eq(LOG_TAG), eq("Show new system alerts windows dialog."));
     }
 }

@@ -40,10 +40,10 @@ import java.util.Collection;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMapOf;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -168,7 +168,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
@@ -191,7 +191,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
@@ -209,7 +209,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Disable. */
         Distribute.setEnabled(false);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Cancel. */
@@ -219,7 +219,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
         /* Verify cancel did nothing more. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
@@ -237,7 +237,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Disable. */
         Distribute.setEnabled(false);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Cancel. */
@@ -247,7 +247,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         when(mUnknownSourcesDialog.isShowing()).thenReturn(false);
 
         /* Verify cancel did nothing more. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
@@ -376,7 +376,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mFirstActivity).startActivity(intent);
 
         /* Verify failure is treated as a cancel dialog. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */
@@ -391,7 +391,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Disable. */
         Distribute.setEnabled(false);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Click settings. */
@@ -407,7 +407,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mFirstActivity).startActivity(intent);
 
         /* Verify cleaning behavior happened only once, e.g. completeWorkflow skipped. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no more calls, e.g. happened only once. */

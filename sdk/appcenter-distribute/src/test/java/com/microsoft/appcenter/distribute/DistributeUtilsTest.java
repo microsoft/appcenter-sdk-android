@@ -18,8 +18,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
@@ -42,6 +42,7 @@ public class DistributeUtilsTest {
         mockStatic(ReleaseDetails.class);
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void init() {
         new DistributeUtils();
@@ -67,7 +68,7 @@ public class DistributeUtilsTest {
 
         /* Verify. */
         assertEquals(mock, releaseDetails);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
     }
 
@@ -81,7 +82,7 @@ public class DistributeUtilsTest {
 
         /* Verify. */
         assertNull(releaseDetails);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
     }
 
@@ -95,7 +96,7 @@ public class DistributeUtilsTest {
 
         /* Verify. */
         assertNull(releaseDetails);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
     }
 }

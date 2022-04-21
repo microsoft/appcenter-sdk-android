@@ -19,7 +19,7 @@ import org.powermock.reflect.Whitebox;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,6 +39,7 @@ public class AppStoreDetectionTest {
 
     @Before
     public void setUp() {
+        when(mContext.getPackageName()).thenReturn("com.test.app");
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
     }
 
@@ -49,6 +50,7 @@ public class AppStoreDetectionTest {
         Whitebox.setInternalState(InstallerUtils.class, "sInstalledFromAppStore", (Boolean) null);
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void init() {
         new InstallerUtils();
@@ -91,10 +93,7 @@ public class AppStoreDetectionTest {
         String mockPackage = "mock.package.name";
 
         /* Mock context. */
-        Context mockContext = mock(Context.class);
-        when(mockContext.getPackageName()).thenReturn(mockPackage);
-        when(mockContext.getPackageManager()).thenReturn(mPackageManager);
-        mContext = mockContext;
+        when(mContext.getPackageName()).thenReturn(mockPackage);
 
         /* Mock installer package name. */
         setInstallerPackageName(mockPackage);

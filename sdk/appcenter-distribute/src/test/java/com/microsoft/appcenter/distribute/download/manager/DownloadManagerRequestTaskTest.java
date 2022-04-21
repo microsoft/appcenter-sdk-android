@@ -17,23 +17,23 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 
@@ -79,6 +79,7 @@ public class DownloadManagerRequestTaskTest {
         when(mDownloadManager.enqueue(eq(mDownloadManagerRequest))).thenReturn(DOWNLOAD_ID);
 
         /* Mock Downloader. */
+        when(mReleaseDetails.getDownloadUrl()).thenReturn(mock(Uri.class));
         when(mDownloader.getReleaseDetails()).thenReturn(mReleaseDetails);
         when(mDownloader.getDownloadManager()).thenReturn(mDownloadManager);
 
@@ -99,7 +100,7 @@ public class DownloadManagerRequestTaskTest {
         /* Verify. */
         String expectedTitle = "title 1 (1)";
         verify(mDownloadManagerRequest).setTitle(eq(expectedTitle));
-        verifyZeroInteractions(mDownloadManagerRequest);
+        verifyNoMoreInteractions(mDownloadManagerRequest);
         verify(mDownloader).onDownloadStarted(eq(DOWNLOAD_ID), anyLong());
     }
 
@@ -148,16 +149,16 @@ public class DownloadManagerRequestTaskTest {
 
     @Test
     public void noExceptionsWhenDownloadFinishedAfterTimeout() {
-        when(mDownloadManager.query(Matchers.<DownloadManager.Query>any())).thenReturn(mCursor);
+        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(mCursor);
         when(mCursor.moveToFirst()).thenReturn(false);
         when(mRequestTask.isCancelled()).thenReturn(false);
 
         /* Run Callback immediately. */
-        when(mHandler.postDelayed(Matchers.<Runnable>any(), anyLong())).thenAnswer(new Answer<Object>() {
+        when(mHandler.postDelayed(any(Runnable.class), anyLong())).thenAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
+                invocation.<Runnable>getArgument(0).run();
                 return true;
             }
         });
@@ -172,17 +173,16 @@ public class DownloadManagerRequestTaskTest {
 
     @Test
     public void throwExceptionWhenDownloadStillNotFinishedAfterTimeout() {
-        when(mDownloadManager.query(Matchers.<DownloadManager.Query>any())).thenReturn(mCursor);
+        when(mDownloadManager.query(any(DownloadManager.Query.class))).thenReturn(mCursor);
         when(mCursor.moveToFirst()).thenReturn(true);
-        when(mCursor.getInt(anyInt())).thenReturn(1);
         when(mRequestTask.isCancelled()).thenReturn(false);
 
         /* Run Callback immediately. */
-        when(mHandler.postDelayed(Matchers.<Runnable>any(), anyLong())).thenAnswer(new Answer<Object>() {
+        when(mHandler.postDelayed(any(Runnable.class), anyLong())).thenAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
+                invocation.<Runnable>getArgument(0).run();
                 return true;
             }
         });
@@ -197,7 +197,7 @@ public class DownloadManagerRequestTaskTest {
     @Test
     public void oldCallbacksRemovedBeforeCreatingNewDownload() {
         when(mRequestTask.isCancelled()).thenReturn(false);
-        when(mRequestTask.createRequest(Matchers.<Uri>any())).thenCallRealMethod();
+        when(mRequestTask.createRequest(any(Uri.class))).thenCallRealMethod();
 
         /* Perform background task. Emulates creating callback, which would not be used */
         mRequestTask.doInBackground();
@@ -206,6 +206,6 @@ public class DownloadManagerRequestTaskTest {
         mRequestTask.doInBackground();
 
         /* Verify that callback was removed. */
-        verify(mHandler).removeCallbacks(Matchers.<Runnable>any());
+        verify(mHandler).removeCallbacks(any(Runnable.class));
     }
 }

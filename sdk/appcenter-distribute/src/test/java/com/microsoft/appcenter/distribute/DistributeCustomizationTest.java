@@ -34,14 +34,14 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMapOf;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -357,7 +357,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
         /* Disable the service. */
@@ -365,7 +365,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* mReleaseListener is null. */
@@ -373,7 +373,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
@@ -382,16 +382,16 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.setInstanceEnabled(true);
 
         /* Verify the method is called by resumeDistributeWorkflow. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
@@ -401,9 +401,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Verify again to make sure the user action has NOT been processed yet. */
@@ -432,7 +432,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
         /* Disable the service. */
@@ -442,23 +442,23 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
         distribute.setInstanceEnabled(true);
 
         /* Verify the method is called by resumeDistributeWorkflow. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
@@ -468,9 +468,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Verify again to make sure the user action has NOT been processed yet. */
@@ -680,7 +680,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify POSTPONE has NOT been processed. */
         verify(distribute, never()).completeWorkflow();
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
     }
 
@@ -739,7 +739,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.notifyUpdateAction(invalidUserAction);
 
         /* Verify update has NOT been processed. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), contains(String.valueOf(invalidUserAction)));
     }
 

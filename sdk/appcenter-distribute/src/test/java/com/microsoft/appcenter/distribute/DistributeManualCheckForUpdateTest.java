@@ -14,14 +14,15 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.Collections;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
 
@@ -34,16 +35,18 @@ public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
 
         /* Check http call done. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
         /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
-        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
+        HttpResponse response = mock(HttpResponse.class);
+        when(response.getPayload()).thenReturn("<mock_release_details>");
+        httpCallback.getValue().onCallSucceeded(response);
 
         /* If checking for updates again. */
         Distribute.checkForUpdate();
 
         /* Then we call again. */
-        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
     }
 
     @Test
@@ -55,17 +58,19 @@ public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
 
         /* Check http call done. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
         /* If checking for updates again before call completes. */
         Distribute.checkForUpdate();
 
         /* Then we don't call again. */
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
 
         /* And it's not queued when current call finishes with no update available. */
-        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
+        HttpResponse response = mock(HttpResponse.class);
+        when(response.getPayload()).thenReturn("<mock_release_details>");
+        httpCallback.getValue().onCallSucceeded(response);
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
     }
 
     @Test
@@ -80,6 +85,6 @@ public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
         Distribute.checkForUpdate();
 
         /* No HTTP call done. */
-        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 }

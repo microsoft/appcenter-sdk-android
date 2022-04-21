@@ -14,14 +14,15 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.Collections;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistributeTest {
 
@@ -91,7 +92,9 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
         /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
-        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
+        HttpResponse response = mock(HttpResponse.class);
+        when(response.getPayload()).thenReturn("<mock_release_details>");
+        httpCallback.getValue().onCallSucceeded(response);
 
         /* Restart. */
         restartResumeLauncher(mActivity);
@@ -118,7 +121,9 @@ public class DistributeDisableAutomaticCheckForUpdateTest extends AbstractDistri
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
         /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
-        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
+        HttpResponse response = mock(HttpResponse.class);
+        when(response.getPayload()).thenReturn("<mock_release_details>");
+        httpCallback.getValue().onCallSucceeded(response);
 
         /* Manually check for updates again. */
         Distribute.checkForUpdate();

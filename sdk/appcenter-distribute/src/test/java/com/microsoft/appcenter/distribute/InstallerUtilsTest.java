@@ -8,11 +8,11 @@ package com.microsoft.appcenter.distribute;
 import static android.app.PendingIntent.FLAG_MUTABLE;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
@@ -32,7 +32,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -79,7 +78,7 @@ public class InstallerUtilsTest {
 
         /* Mock session. */
         when(mMockPackageInstaller.openSession(anyInt())).thenReturn(mSession);
-        when(mSession.openWrite(anyString(), anyInt(), anyInt())).thenReturn(mOutputStream);
+        when(mSession.openWrite(anyString(), anyLong(), anyLong())).thenReturn(mOutputStream);
     }
 
     @Test
@@ -95,7 +94,7 @@ public class InstallerUtilsTest {
         PackageInstaller.SessionCallback mockSessionCallback = mock(PackageInstaller.SessionCallback.class);
 
         /* Mock data. */
-        when(mData.read(Matchers.<byte[]>anyObject())).thenReturn(10).thenReturn(-1);
+        when(mData.read(any())).thenReturn(10).thenReturn(-1);
 
         /* Call install. */
         InstallerUtils.installPackage(mData, mContext, mockSessionCallback);
@@ -212,7 +211,7 @@ public class InstallerUtilsTest {
         when(mockIntent.getIntentSender()).thenReturn(mock(IntentSender.class));
         when(PendingIntent.getBroadcast(any(Context.class), anyInt(), any(Intent.class), anyInt())).then(new Answer<PendingIntent>() {
             @Override
-            public PendingIntent answer(InvocationOnMock invocation) throws Throwable {
+            public PendingIntent answer(InvocationOnMock invocation) {
                 int flag = (int)invocation.getArguments()[3];
                 Assert.assertEquals(flag, expectedFlag);
                 return mockIntent;
@@ -225,7 +224,6 @@ public class InstallerUtilsTest {
      * This is used ot set a specific Build.VERSION.SDK_INT for tests.
      * @param field static field
      * @param newValue new value for the given field
-     * @throws Exception
      */
     static void setFinalStatic(Field field, Object newValue) throws Exception {
         field.setAccessible(true);
