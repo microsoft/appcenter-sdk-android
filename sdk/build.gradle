@@ -16,6 +16,9 @@ allprojects {
     tasks.withType(Test) {
         jacoco.includeNoLocationClasses = true
         jacoco.excludes = ['jdk.internal.*']
+
+        // Run tests in parallel.
+        maxParallelForks = Runtime.runtime.availableProcessors()
     }
 
     //noinspection GroovyAssignabilityCheck
