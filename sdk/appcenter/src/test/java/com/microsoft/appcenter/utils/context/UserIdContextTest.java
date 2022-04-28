@@ -113,7 +113,7 @@ public class UserIdContextTest {
 
         /* Setting to null is an update "sign out". */
         userIdContext.setUserId(null);
-        verify(listener).onNewUserId(isNull(String.class));
+        verify(listener).onNewUserId(isNull());
         assertNull(userIdContext.getUserId());
     }
 
@@ -139,7 +139,7 @@ public class UserIdContextTest {
 
         /* Setting to null is an update "sign out". */
         userIdContext.setUserId(null);
-        verify(listener).onNewUserId(isNull(String.class));
+        verify(listener).onNewUserId(isNull());
         assertNull(userIdContext.getUserId());
     }
 
@@ -173,7 +173,7 @@ public class UserIdContextTest {
 
         /* Verify we now get called with update, here is a null update example. */
         userIdContext.setUserId(null);
-        verify(listener).onNewUserId(isNull(String.class));
+        verify(listener).onNewUserId(isNull());
         assertNull(userIdContext.getUserId());
     }
 

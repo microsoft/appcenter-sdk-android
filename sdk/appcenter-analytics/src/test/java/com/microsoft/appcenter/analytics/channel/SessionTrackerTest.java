@@ -41,7 +41,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anySetOf;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
@@ -107,7 +107,7 @@ public class SessionTrackerTest {
                 return null;
             }
         }).when(SharedPreferencesManager.class);
-        SharedPreferencesManager.putStringSet(anyString(), anySetOf(String.class));
+        SharedPreferencesManager.putStringSet(anyString(), anySet());
         when(SharedPreferencesManager.getStringSet(anyString())).thenReturn(null);
         SessionContext.unsetInstance();
         spendTime(1000);
@@ -321,7 +321,7 @@ public class SessionTrackerTest {
     public void startSessionWithoutLogs() {
 
         final AtomicReference<StartSessionLog> startSessionLog = new AtomicReference<>();
-        doAnswer(new Answer() {
+        doAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) {

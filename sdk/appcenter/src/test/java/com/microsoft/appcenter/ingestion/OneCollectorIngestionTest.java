@@ -171,7 +171,7 @@ public class OneCollectorIngestionTest {
         expectedHeaders.put(OneCollectorIngestion.CLIENT_VERSION_KEY, String.format("ACS-Android-Java-no-%s-no", VERSION_NAME));
         expectedHeaders.put(OneCollectorIngestion.UPLOAD_TIME_KEY, "1234");
         expectedHeaders.put(DefaultHttpClient.CONTENT_TYPE_KEY, "application/x-json-stream; charset=utf-8");
-        verify(mHttpClient).callAsync(eq("http://mock"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient).callAsync(eq("http://mock"), eq(METHOD_POST), eq(expectedHeaders), notNull(), eq(serviceCallback));
         assertNotNull(callTemplate.getValue());
         assertEquals("mockPayload1\nmockPayload2\n", callTemplate.getValue().buildRequestBody());
 

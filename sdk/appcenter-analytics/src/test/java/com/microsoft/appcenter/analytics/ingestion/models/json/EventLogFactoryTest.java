@@ -45,7 +45,7 @@ public class EventLogFactoryTest {
     }
 
     @Test
-    public void dontConvertEventWithoutTargetTokens() {
+    public void doNotConvertEventWithoutTargetTokens() {
 
         /* Create event log with just a name and no target. */
         EventLog log = new EventLog();
@@ -108,12 +108,12 @@ public class EventLogFactoryTest {
 
         /* Check Part A was added with target tokens. */
         verifyStatic(PartAUtils.class);
-        PartAUtils.addPartAFromLog(eq(log), notNull(CommonSchemaLog.class), eq("t1"));
+        PartAUtils.addPartAFromLog(eq(log), notNull(), eq("t1"));
         verifyStatic(PartAUtils.class);
-        PartAUtils.addPartAFromLog(eq(log), notNull(CommonSchemaLog.class), eq("t2"));
+        PartAUtils.addPartAFromLog(eq(log), notNull(), eq("t2"));
 
         /* Check data was added with typed properties (and thus not old ones). */
         verifyStatic(CommonSchemaDataUtils.class, times(2));
-        CommonSchemaDataUtils.addCommonSchemaData(eq(properties), notNull(CommonSchemaLog.class));
+        CommonSchemaDataUtils.addCommonSchemaData(eq(properties), notNull());
     }
 }

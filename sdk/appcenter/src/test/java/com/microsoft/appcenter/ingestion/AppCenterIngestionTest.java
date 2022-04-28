@@ -110,7 +110,7 @@ public class AppCenterIngestionTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
-        verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
 
@@ -160,7 +160,7 @@ public class AppCenterIngestionTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
-        verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(), eq(serviceCallback));
         assertNotNull(callTemplate.get());
 
         try {
@@ -257,7 +257,7 @@ public class AppCenterIngestionTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
-        verify(mHttpClient, never()).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient, never()).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(), eq(serviceCallback));
     }
 
     private HttpClient.CallTemplate getCallTemplate(String appSecret) {

@@ -5,30 +5,6 @@
 
 package com.microsoft.appcenter.distribute.download.manager;
 
-import android.app.DownloadManager;
-import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Handler;
-
-import com.microsoft.appcenter.distribute.ReleaseDetails;
-import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
-import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.HandlerUtils;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
-
 import static android.content.Context.DOWNLOAD_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
@@ -47,6 +23,29 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+
+import android.app.DownloadManager;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Handler;
+
+import com.microsoft.appcenter.distribute.ReleaseDetails;
+import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
+import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.HandlerUtils;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 
 @PrepareForTest({
         AsyncTaskUtils.class,
@@ -134,7 +133,7 @@ public class DownloadManagerReleaseDownloaderTest {
     public void resumeStartsUpdateTask() {
         mReleaseDownloader.resume();
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
     }
 
     @Test
@@ -142,7 +141,7 @@ public class DownloadManagerReleaseDownloaderTest {
         mReleaseDownloader.cancel();
         mReleaseDownloader.resume();
         verifyStatic(AsyncTaskUtils.class, never());
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
     }
 
     @Test
@@ -151,12 +150,12 @@ public class DownloadManagerReleaseDownloaderTest {
         /* Update status. */
         mReleaseDownloader.resume();
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
 
         /* Create new request. */
         mReleaseDownloader.onStart();
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), any());
 
         /* Cancel clears everything only once. */
         mReleaseDownloader.cancel();
@@ -166,7 +165,7 @@ public class DownloadManagerReleaseDownloaderTest {
         verify(mRequestTask).cancel(eq(true));
         verify(mUpdateTask).cancel(eq(true));
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class), any());
         verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
     }
@@ -179,7 +178,7 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Verify. */
         verifyStatic(AsyncTaskUtils.class, never());
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class), any());
         verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
     }
@@ -190,18 +189,18 @@ public class DownloadManagerReleaseDownloaderTest {
         /* Create new request. */
         mReleaseDownloader.onStart();
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), any());
 
         /* Do not duplicate requests. */
         mReleaseDownloader.onStart();
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), any());
 
         /* Don't do anything after cancellation. */
         mReleaseDownloader.cancel();
         mReleaseDownloader.onStart();
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), any());
     }
 
     @Test
@@ -209,7 +208,7 @@ public class DownloadManagerReleaseDownloaderTest {
         mReleaseDownloader.cancel();
         mReleaseDownloader.onStart();
         verifyStatic(AsyncTaskUtils.class, never());
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRequestTask.class), any());
     }
 
     @Test
@@ -225,7 +224,7 @@ public class DownloadManagerReleaseDownloaderTest {
         verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(DOWNLOAD_ID));
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
     }
 
     @Test
@@ -241,7 +240,7 @@ public class DownloadManagerReleaseDownloaderTest {
         verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(DOWNLOAD_ID));
         verifyStatic(AsyncTaskUtils.class, never());
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
     }
 
     @Test
@@ -266,7 +265,7 @@ public class DownloadManagerReleaseDownloaderTest {
         /* Verify. */
         verify(mListener).onProgress(anyLong(), anyLong());
         verifyStatic(AsyncTaskUtils.class);
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
     }
 
     @Test
@@ -282,7 +281,7 @@ public class DownloadManagerReleaseDownloaderTest {
         /* Verify. */
         verify(mListener).onProgress(anyLong(), anyLong());
         verifyStatic(AsyncTaskUtils.class, never());
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), Mockito.<Void>anyVararg());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
     }
 
     @Test

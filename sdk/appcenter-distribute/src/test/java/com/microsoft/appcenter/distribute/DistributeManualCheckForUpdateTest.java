@@ -46,7 +46,7 @@ public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
         Distribute.checkForUpdate();
 
         /* Then we call again. */
-        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull());
     }
 
     @Test
@@ -64,13 +64,13 @@ public class DistributeManualCheckForUpdateTest extends AbstractDistributeTest {
         Distribute.checkForUpdate();
 
         /* Then we don't call again. */
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull());
 
         /* And it's not queued when current call finishes with no update available. */
         HttpResponse response = mock(HttpResponse.class);
         when(response.getPayload()).thenReturn("<mock_release_details>");
         httpCallback.getValue().onCallSucceeded(response);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), notNull());
     }
 
     @Test
