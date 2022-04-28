@@ -37,7 +37,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyMapOf;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -211,7 +211,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock http call. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
 
         /* Mock data model. */
         mockStatic(ReleaseDetails.class);
@@ -277,7 +277,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock http call. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
 
         /* Start Distribute service. */
         restartProcessAndSdk();
@@ -378,7 +378,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Enable the service. */
         ReleaseDownloader cleanupReleaseDownloader = mock(ReleaseDownloader.class);
-        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
+        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), isNull(), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
         distribute.setInstanceEnabled(true);
 
         /* Verify the method is called by resumeDistributeWorkflow. */
@@ -777,7 +777,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     private ReleaseDetails mockForCustomizationTest(boolean mandatory) throws Exception {
 
         /* Mock http call. */
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -805,7 +805,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         final HttpException httpException = new HttpException(new HttpResponse(404, payload));
 
         /* Mock http call. */
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {

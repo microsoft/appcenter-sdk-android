@@ -181,7 +181,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
-        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
@@ -558,7 +558,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
-        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
@@ -620,7 +620,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
-        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
@@ -753,7 +753,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
-        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();
@@ -881,7 +881,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "?" + PARAMETER_RELEASE_HASH + "=" + TEST_HASH;
         url += "&" + PARAMETER_REDIRECT_ID + "=" + mContext.getPackageName();
         url += "&" + PARAMETER_REDIRECT_SCHEME + "=" + "appcenter";
-        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId.toString();
+        url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         url += "&" + PARAMETER_ENABLE_UPDATE_SETUP_FAILURE_REDIRECT_KEY + "=" + "true";
         url += "&" + PARAMETER_INSTALL_ID + "=" + mInstallId.toString();

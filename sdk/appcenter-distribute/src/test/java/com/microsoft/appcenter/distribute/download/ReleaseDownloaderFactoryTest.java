@@ -39,7 +39,7 @@ public class ReleaseDownloaderFactoryTest {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 
-    @SuppressWarnings("ObviousNullCheck")
+    @SuppressWarnings({"ObviousNullCheck", "InstantiationOfUtilityClass"})
     @Test
     public void generatedConstructor() {
 

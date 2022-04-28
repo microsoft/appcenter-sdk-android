@@ -36,6 +36,7 @@ public class PermissionUtilsTest {
     @Mock
     Context mContext;
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void init() {
         new PermissionUtils();

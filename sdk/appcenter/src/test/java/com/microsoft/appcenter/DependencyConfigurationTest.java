@@ -24,6 +24,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyNew;
 
 public class DependencyConfigurationTest extends AbstractAppCenterTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void ConstructorCoverage() {
         new DependencyConfiguration();

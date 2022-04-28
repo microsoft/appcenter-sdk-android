@@ -17,6 +17,7 @@ import static org.junit.Assert.assertSame;
 
 public class HandlerUtilsTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void init() {
         new HandlerUtils();

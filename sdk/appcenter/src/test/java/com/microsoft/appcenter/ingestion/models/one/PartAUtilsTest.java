@@ -40,6 +40,7 @@ public class PartAUtilsTest {
         assertEquals(name, log.getName());
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void coverInit() {
         new PartAUtils();

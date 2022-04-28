@@ -55,7 +55,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyMapOf;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -157,7 +157,7 @@ public class OneCollectorIngestionTest {
         /* Configure mock HTTP. */
         ServiceCall call = mock(ServiceCall.class);
         ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
 
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mHttpClient, serializer);
@@ -304,7 +304,7 @@ public class OneCollectorIngestionTest {
         /* Configure mock HTTP. */
         ServiceCall call = mock(ServiceCall.class);
         ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
 
         /* Test calling code. */
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mHttpClient, serializer);
@@ -392,7 +392,7 @@ public class OneCollectorIngestionTest {
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         ServiceCall call = mock(ServiceCall.class);
         ArgumentCaptor<HttpClient.CallTemplate> callTemplate = ArgumentCaptor.forClass(HttpClient.CallTemplate.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), callTemplate.capture(), any(ServiceCallback.class))).thenReturn(call);
         OneCollectorIngestion ingestion = new OneCollectorIngestion(mHttpClient, mock(LogSerializer.class));
         ingestion.setLogUrl("http://mock");
         assertEquals(call, ingestion.sendAsync(null, null, mock(LogContainer.class), mock(ServiceCallback.class)));

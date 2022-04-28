@@ -8,6 +8,8 @@ package com.microsoft.appcenter.distribute;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 public class ReleaseDetailsTest {
 
@@ -15,15 +17,15 @@ public class ReleaseDetailsTest {
     public void getPropertyFromReleaseDetailsTest() {
         ReleaseDetails releaseDetails = new ReleaseDetails();
         assertEquals(releaseDetails.getDistributionGroupId(), "distributionGroupId");
-        assertEquals(releaseDetails.getDownloadUrl(), null);
+        assertNull(releaseDetails.getDownloadUrl());
         assertEquals(releaseDetails.getId(), 1);
         assertEquals(releaseDetails.getMinApiLevel(), 0);
         assertEquals(releaseDetails.getReleaseHash(), "releaseHash");
         assertEquals(releaseDetails.getReleaseNotes(), "releaseNotes");
-        assertEquals(releaseDetails.getReleaseNotesUrl(), null);
+        assertNull(releaseDetails.getReleaseNotesUrl());
         assertEquals(releaseDetails.getShortVersion(), "shortVersion");
         assertEquals(releaseDetails.getSize(), 0);
         assertEquals(releaseDetails.getVersion(), 1);
-        assertEquals(releaseDetails.isMandatoryUpdate(), false);
+        assertFalse(releaseDetails.isMandatoryUpdate());
     }
 }

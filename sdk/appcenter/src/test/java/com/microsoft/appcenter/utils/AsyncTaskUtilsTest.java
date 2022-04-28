@@ -12,7 +12,6 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
 import static org.junit.Assert.assertSame;

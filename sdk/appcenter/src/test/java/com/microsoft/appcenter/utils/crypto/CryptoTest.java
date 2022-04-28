@@ -5,6 +5,35 @@
 
 package com.microsoft.appcenter.utils.crypto;
 
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.AES_KEY_SIZE;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALGORITHM_DATA_SEPARATOR;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_AES;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_RSA;
+import static com.microsoft.appcenter.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Build;
@@ -17,8 +46,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -26,7 +53,6 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -52,36 +78,6 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
-
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.AES_KEY_SIZE;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ALGORITHM_DATA_SEPARATOR;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.ANDROID_KEY_STORE;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_AES;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.CIPHER_RSA;
-import static com.microsoft.appcenter.utils.crypto.CryptoConstants.RSA_KEY_SIZE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.doThrow;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressLint("NewApi")
 @PowerMockIgnore({"javax.security.auth.x500.*"})
@@ -132,7 +128,7 @@ public class CryptoTest {
         when(Base64.decode(anyString(), anyInt())).thenAnswer(new Answer<byte[]>() {
 
             @Override
-            public byte[] answer(InvocationOnMock invocation) throws UnsupportedEncodingException, CharacterCodingException {
+            public byte[] answer(InvocationOnMock invocation) throws CharacterCodingException {
                 CharsetEncoder encoder = StandardCharsets.ISO_8859_1.newEncoder();
                 return encoder.encode(CharBuffer.wrap(invocation.getArguments()[0].toString()))
                         .array();
@@ -338,12 +334,11 @@ public class CryptoTest {
 
             @Override
             public byte[] answer(InvocationOnMock invocation) {
-                byte[] input = (byte[]) invocation.getArguments()[0];
-                return input;
+                return invocation.getArgument(0);
             }
         });
         int expectedKeyStoreCalls = 3;
-        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(String.class), isNull(KeyStore.ProtectionParameter.class));
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(), isNull());
 
         /* Verify we can decrypt with retry on expired key. */
         CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
@@ -353,7 +348,7 @@ public class CryptoTest {
         /* Verify the second alias was picked for decryption. */
         expectedKeyStoreCalls += 2;
         ArgumentCaptor<String> aliasCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(aliasCaptor.capture(), isNull(KeyStore.ProtectionParameter.class));
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(aliasCaptor.capture(), isNull());
         List<String> aliases = aliasCaptor.getAllValues();
 
         /* Check last calls: first we tried to read with the second alias (after rotation). */
@@ -392,7 +387,7 @@ public class CryptoTest {
             }
         });
         int expectedKeyStoreCalls = 3;
-        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(String.class), isNull(KeyStore.ProtectionParameter.class));
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(notNull(), isNull());
 
         /* Verify we can decrypt with retry on expired key. */
         CryptoUtils.DecryptedData decryptedData = cryptoUtils.decrypt(encryptedData);
@@ -402,7 +397,7 @@ public class CryptoTest {
         /* Verify the second alias was picked for decryption. */
         expectedKeyStoreCalls += 2;
         ArgumentCaptor<String> aliasCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(aliasCaptor.capture(), isNull(KeyStore.ProtectionParameter.class));
+        verify(mKeyStore, times(expectedKeyStoreCalls)).getEntry(aliasCaptor.capture(), isNull());
         List<String> aliases = aliasCaptor.getAllValues();
 
         /* Check last calls: first we tried to read with the second alias (after rotation). */
@@ -541,7 +536,6 @@ public class CryptoTest {
         assertEquals(oldAesSourceText, oldDecryptedAesData.getDecryptedData());
         assertTrue(oldDecryptedAesData.getNewEncryptedData().contains(expectedPrefix) && oldDecryptedAesData.getNewEncryptedData().contains(oldAesSourceText));
         oldDecryptedAesData = cryptoUtils.decrypt(CIPHER_AES + "/" + AES_KEY_SIZE + ALGORITHM_DATA_SEPARATOR + "IV" + oldAesSourceText);
-        String t = oldDecryptedAesData.getDecryptedData();
         assertEquals(oldAesSourceText, oldDecryptedAesData.getDecryptedData());
         assertTrue(oldDecryptedAesData.getNewEncryptedData().contains(expectedPrefix) && oldDecryptedAesData.getNewEncryptedData().contains(oldAesSourceText));
 
@@ -560,6 +554,7 @@ public class CryptoTest {
         assertTrue(alias.getValue().contains(CIPHER_AES));
     }
 
+    @SuppressWarnings("rawtypes")
     @Test
     public void verifyEncryptAes() throws Exception {
 
@@ -624,6 +619,7 @@ public class CryptoTest {
         assertEquals(decryptionString, sourceText);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void verifyExceptionDuringCreateSubkeyWhenOutputLengthLessOne() throws Exception {
 
@@ -658,7 +654,7 @@ public class CryptoTest {
                 spyCryptoAesAndEtmHandler.getSubkey((SecretKey)invocation.getArguments()[0], 0);
                 return new byte[0];
             }
-        }).when(spyCryptoAesAndEtmHandler).getSubkey(Matchers.<SecretKey>any(), eq(16));
+        }).when(spyCryptoAesAndEtmHandler).getSubkey(any(), eq(16));
 
         // Start encryption.
         String encryptedText = cryptoUtils.encrypt(sourceText);
@@ -667,6 +663,7 @@ public class CryptoTest {
         assertEquals(encryptedText, sourceText);
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Test
     public void verifyExceptionDuringCreateSubkeyWithTooMuchOperations() throws Exception {
 
@@ -701,7 +698,7 @@ public class CryptoTest {
                 spyCryptoAesAndEtmHandler.getSubkey((SecretKey)invocation.getArguments()[0], 999999999);
                 return new byte[0];
             }
-        }).when(spyCryptoAesAndEtmHandler).getSubkey(Matchers.<SecretKey>any(), eq(16));
+        }).when(spyCryptoAesAndEtmHandler).getSubkey(any(), eq(16));
 
         // Start encryption.
         String encryptedText = cryptoUtils.encrypt(sourceText);
@@ -711,28 +708,28 @@ public class CryptoTest {
     }
 
     @Test
-    public void verifyDecryptAesWithEtmCouldNotAuthenticateMac() throws Exception {
-        verifyExceptionDuringDecryptionAesWithEtm(16, 16, 32, SecurityException.class);
+    public void verifyDecryptAesWithEtmCouldNotAuthenticateMac() {
+        verifyExceptionDuringDecryptionAesWithEtm(16, 32);
     }
 
     @Test
-    public void verifyDecryptAesWithEtmWhenIvLengthInvalid() throws Exception {
-        verifyExceptionDuringDecryptionAesWithEtm(0, 16, 32, IllegalArgumentException.class);
+    public void verifyDecryptAesWithEtmWhenIvLengthInvalid() {
+        verifyExceptionDuringDecryptionAesWithEtm(0, 32);
     }
 
     @Test
-    public void verifyDecryptAesWithEtmWhenMacLengthInvalid() throws Exception {
-        verifyExceptionDuringDecryptionAesWithEtm(16, 16, 0, IllegalArgumentException.class);
+    public void verifyDecryptAesWithEtmWhenMacLengthInvalid() {
+        verifyExceptionDuringDecryptionAesWithEtm(16, 0);
     }
 
-    private void verifyExceptionDuringDecryptionAesWithEtm(int ivLength, int cipherOutputLength, int hMacLength, Class exceptionClass) throws Exception {
+    private void verifyExceptionDuringDecryptionAesWithEtm(int ivLength, int hMacLength) {
 
         // Mock MessageDigest.
         mockStatic(MessageDigest.class);
 
         // Prepare data.
         byte[] iv = new byte[ivLength];
-        byte[] cipherOutput = new byte[cipherOutputLength];
+        byte[] cipherOutput = new byte[16];
         byte[] hMac = new byte[hMacLength];
 
         // Start encryption.

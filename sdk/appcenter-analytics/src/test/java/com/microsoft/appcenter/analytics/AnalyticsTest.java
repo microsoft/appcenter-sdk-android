@@ -5,6 +5,37 @@
 
 package com.microsoft.appcenter.analytics;
 
+import static com.microsoft.appcenter.Flags.CRITICAL;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.Flags.NORMAL;
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GROUP;
+import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
+import static com.microsoft.appcenter.analytics.Analytics.MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
+import static com.microsoft.appcenter.analytics.Analytics.MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
+import static com.microsoft.appcenter.analytics.LogNameMatcher.logName;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+
 import android.content.Context;
 
 import com.microsoft.appcenter.AppCenter;
@@ -21,7 +52,6 @@ import com.microsoft.appcenter.analytics.ingestion.models.json.StartSessionLogFa
 import com.microsoft.appcenter.analytics.ingestion.models.one.CommonSchemaEventLog;
 import com.microsoft.appcenter.analytics.ingestion.models.one.json.CommonSchemaEventLogFactory;
 import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.ingestion.models.properties.BooleanTypedProperty;
@@ -39,7 +69,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -50,38 +79,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static com.microsoft.appcenter.Flags.CRITICAL;
-import static com.microsoft.appcenter.Flags.NORMAL;
-import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GROUP;
-import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
-import static com.microsoft.appcenter.analytics.Analytics.MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
-import static com.microsoft.appcenter.analytics.Analytics.MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS;
-import static com.microsoft.appcenter.analytics.LogNameMatcher.logName;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.ArgumentMatchers.notNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 public class AnalyticsTest extends AbstractAnalyticsTest {
 
@@ -116,13 +113,13 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
         /* Just check log is discarded without throwing any exception. */
         Analytics.trackEvent("test");
-        Analytics.trackEvent("test", new HashMap<String, String>());
+        Analytics.trackEvent("test", new HashMap<>());
         Analytics.trackEvent("test", (Map<String, String>) null);
         Analytics.trackEvent("test", (Map<String, String>) null, 0);
         Analytics.trackEvent("test", (EventProperties) null);
         Analytics.trackEvent("test", (EventProperties) null, 0);
         Analytics.trackPage("test");
-        Analytics.trackPage("test", new HashMap<String, String>());
+        Analytics.trackPage("test", new HashMap<>());
         Analytics.trackPage("test", null);
 
         /* Verify we just get an error every time. */
@@ -230,7 +227,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         analytics.onStarted(mock(Context.class), channel, "", null, true);
 
         /* Send event with empty Map properties. */
-        Analytics.trackEvent("eventName", new HashMap<String, String>());
+        Analytics.trackEvent("eventName", new HashMap<>());
         verify(channel).enqueue(argumentCaptor.capture(), anyString(), eq(DEFAULTS));
         assertNotNull(argumentCaptor.getValue());
         assertEquals("eventName", argumentCaptor.getValue().getName());
@@ -438,7 +435,6 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
     @Test
     public void setEnabled() throws InterruptedException {
         Channel channel = mock(Channel.class);
-        final ArgumentCaptor<String> captorGroupName = ArgumentCaptor.forClass(String.class);
 
         /* Before start it does not work to change state, it's disabled. */
         Analytics analytics = Analytics.getInstance();
@@ -451,8 +447,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).removeGroup(eq(analytics.getGroupName()));
-        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
-        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
         verify(channel).addListener(isA(AnalyticsValidator.class));
         verify(channel).addListener(isA(AnalyticsTransmissionTarget.getChannelListener().getClass()));
@@ -537,7 +533,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
         verify(channel).addListener(isA(AnalyticsValidator.class));
 
@@ -631,7 +627,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(analytics.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
         verify(channel).addListener(isA(SessionTracker.class));
         verify(channel).addListener(isA(AnalyticsValidator.class));
 
@@ -726,7 +722,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
         final ArgumentCaptor<Channel.GroupListener> captor = ArgumentCaptor.forClass(Channel.GroupListener.class);
-        verify(channel, times(2)).addGroup(anyString(), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), captor.capture());
+        verify(channel, times(2)).addGroup(anyString(), anyInt(), anyLong(), anyInt(), isNull(), captor.capture());
         doAnswer(new Answer<Void>() {
 
             @Override
@@ -738,9 +734,9 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
             }
         }).when(channel).enqueue(any(Log.class), anyString(), anyInt());
         Analytics.trackEvent("name");
-        verify(listener).onBeforeSending(notNull(Log.class));
-        verify(listener).onSendingSucceeded(notNull(Log.class));
-        verify(listener).onSendingFailed(notNull(Log.class), notNull(Exception.class));
+        verify(listener).onBeforeSending(notNull());
+        verify(listener).onSendingSucceeded(notNull());
+        verify(listener).onSendingFailed(notNull(), notNull());
     }
 
     @Test
@@ -751,8 +747,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
-        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
         Analytics.trackEvent("name", generateEventProperties(), Flags.CRITICAL);
         verify(channel).enqueue(any(Log.class), eq(ANALYTICS_CRITICAL_GROUP), eq(Flags.CRITICAL));
     }
@@ -765,8 +761,8 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
         Channel channel = mock(Channel.class);
         analytics.onStarting(mAppCenterHandler);
         analytics.onStarted(mock(Context.class), channel, "", null, true);
-        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
-        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_CRITICAL_GROUP), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
+        verify(channel).addGroup(eq(ANALYTICS_GROUP), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
         Analytics.trackEvent("name", generateEventProperties(), Flags.NORMAL);
         verify(channel).enqueue(any(Log.class), eq(ANALYTICS_GROUP), eq(Flags.NORMAL));
     }
@@ -869,14 +865,14 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void unableToSetTransmissionIntervalMoreThanMaximum() {
-        Analytics analytics = Analytics.getInstance();
+        Analytics.getInstance();
         boolean result = Analytics.setTransmissionInterval(MAXIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
         assertFalse(result);
     }
 
     @Test
     public void setTransmissionInterval() {
-        Analytics analytics = Analytics.getInstance();
+        Analytics.getInstance();
         boolean result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
         assertTrue(result);
         assertEquals(TimeUnit.MILLISECONDS.toSeconds(Analytics.getInstance().getTriggerInterval()),MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS + 1);
@@ -884,7 +880,7 @@ public class AnalyticsTest extends AbstractAnalyticsTest {
 
     @Test
     public void unableToSetTransmissionIntervalLessThanMinimum() {
-        Analytics analytics = Analytics.getInstance();
+        Analytics.getInstance();
         boolean result = Analytics.setTransmissionInterval(MINIMUM_TRANSMISSION_INTERVAL_IN_SECONDS - 1);
         assertFalse(result);
     }

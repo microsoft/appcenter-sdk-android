@@ -89,7 +89,6 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
 
         /* Start distribute from background. */
-        ArgumentCaptor<ReleaseDownloadListener> releaseDownloadListener = ArgumentCaptor.forClass(ReleaseDownloadListener.class);
         Distribute.getInstance().startFromBackground(mContext);
 
         /* Start distribute module. */

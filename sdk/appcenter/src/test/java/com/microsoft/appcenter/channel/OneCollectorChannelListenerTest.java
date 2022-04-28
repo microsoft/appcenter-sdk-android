@@ -7,7 +7,6 @@ package com.microsoft.appcenter.channel;
 
 import android.content.Context;
 
-import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.OneCollectorIngestion;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
@@ -17,7 +16,6 @@ import com.microsoft.appcenter.ingestion.models.one.MockCommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.SdkExtension;
 
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,7 +39,6 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;

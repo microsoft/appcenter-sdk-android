@@ -386,8 +386,7 @@ public class ReleaseDownloadListenerTest {
 
     @Test
     public void onCompleteNotify() throws Exception {
-        boolean mandatoryUpdate = false;
-        ReleaseDetails mockReleaseDetails = mockReleaseDetails(mandatoryUpdate);
+        ReleaseDetails mockReleaseDetails = mockReleaseDetails(false);
 
         /* Notify the download. */
         when(mDistribute.notifyDownload(mockReleaseDetails)).thenReturn(true);
@@ -401,14 +400,13 @@ public class ReleaseDownloadListenerTest {
 
     @Test
     public void onCompleteActivityNotResolved() throws Exception {
-        boolean mandatoryUpdate = false;
 
         /* Mock notify download result. */
         when(mDistribute.notifyDownload(any(ReleaseDetails.class))).thenReturn(true);
 
         /* Mock resolving to null activity. */
         when(mInstallIntent.resolveActivity(any(PackageManager.class))).thenReturn(null);
-        ReleaseDetails mockReleaseDetails = mockReleaseDetails(mandatoryUpdate);
+        ReleaseDetails mockReleaseDetails = mockReleaseDetails(false);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
 
         /* Verify that nothing is called and the method is exited early with false result. */

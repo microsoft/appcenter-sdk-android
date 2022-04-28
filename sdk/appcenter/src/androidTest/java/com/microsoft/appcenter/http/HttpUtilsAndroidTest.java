@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 @SuppressWarnings("unused")
 public class HttpUtilsAndroidTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void utilsCoverage() {
         new HttpUtils();

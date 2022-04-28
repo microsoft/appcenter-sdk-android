@@ -25,6 +25,7 @@ public class HashUtilsTest {
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void init() {
         new HashUtils();

@@ -16,7 +16,6 @@ import java.lang.reflect.Method;
 
 import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
@@ -30,6 +29,7 @@ public class InstrumentationRegistryHelperTest {
     @Rule
     public PowerMockRule rule = new PowerMockRule();
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void instrumentationRegistryHelperCoverage() {
         new InstrumentationRegistryHelper();

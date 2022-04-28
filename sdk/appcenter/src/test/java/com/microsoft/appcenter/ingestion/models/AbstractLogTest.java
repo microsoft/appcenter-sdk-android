@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 @SuppressWarnings("unused")
 public class AbstractLogTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void utilsCoverage() {
         new CommonProperties();

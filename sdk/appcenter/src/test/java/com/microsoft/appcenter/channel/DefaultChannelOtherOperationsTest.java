@@ -14,9 +14,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.persistence.Persistence;
 
 import org.junit.Test;
-import org.mockito.Matchers;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertFalse;
@@ -25,7 +23,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyListOf;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;

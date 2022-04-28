@@ -73,7 +73,7 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
 
         /* Check http call done. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
         /* Without browser because its public. */
         verifyStatic(BrowserUtils.class, never());

@@ -20,12 +20,10 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashSet;
-import java.util.Set;
 
 @SuppressWarnings("CanBeFinal")
 @RunWith(PowerMockRunner.class)

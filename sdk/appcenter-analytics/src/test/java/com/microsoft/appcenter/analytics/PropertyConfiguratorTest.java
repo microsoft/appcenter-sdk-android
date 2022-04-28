@@ -5,7 +5,6 @@
 
 package com.microsoft.appcenter.analytics;
 
-import android.content.ContentResolver;
 import android.content.Context;
 import android.provider.Settings.Secure;
 
@@ -483,7 +482,7 @@ public class PropertyConfiguratorTest extends AbstractAnalyticsTest {
         AnalyticsTransmissionTarget target = Analytics.getTransmissionTarget("test");
 
         /* Track event with empty properties. */
-        target.trackEvent("eventName", Collections.<String, String>emptyMap());
+        target.trackEvent("eventName", Collections.emptyMap());
 
         /* Check what event was sent. */
         ArgumentCaptor<EventLog> eventLogArg = ArgumentCaptor.forClass(EventLog.class);
