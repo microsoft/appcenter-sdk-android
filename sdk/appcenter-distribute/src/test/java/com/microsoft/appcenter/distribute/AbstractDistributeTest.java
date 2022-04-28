@@ -100,7 +100,7 @@ public class AbstractDistributeTest {
      * Use a timeout to fail test if deadlocks happen due to a code change.
      */
     @Rule
-    public Timeout mGlobalTimeout = Timeout.seconds(10);
+    public Timeout mGlobalTimeout = Timeout.seconds(15);
 
     @Mock
     Context mContext;
