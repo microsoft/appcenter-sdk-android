@@ -49,7 +49,11 @@ import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings("unused")
-@PrepareForTest({AppCenterLog.class, DatabaseManager.class, DatabasePersistence.class})
+@PrepareForTest({
+        AppCenterLog.class,
+        DatabaseManager.class,
+        DatabasePersistence.class
+})
 public class DatabasePersistenceTest {
 
     @Rule
@@ -123,7 +127,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs. */
         for (int i = 0; i < groupCount; i++) {
-            persistence.getLogs(String.valueOf(i), Collections.emptyList(), logCount, new ArrayList<Log>());
+            persistence.getLogs(String.valueOf(i), Collections.emptyList(), logCount, new ArrayList<>());
         }
 
         /* Verify there are 4 pending groups. */
@@ -279,7 +283,7 @@ public class DatabasePersistenceTest {
 
                 /* Hack serializer to return type = payload to simplify checking. */
                 Log log = mock(Log.class);
-                when(log.getType()).thenReturn((String) invocation.getArguments()[0]);
+                when(log.getType()).thenReturn(invocation.getArgument(0));
                 return log;
             }
         });
@@ -346,7 +350,8 @@ public class DatabasePersistenceTest {
             }
         };
         mockCursor.mockBuildValues(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(), any(String[].class), anyString())).thenReturn(mockCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(), any(String[].class), anyString()))
+                .thenReturn(mockCursor);
         idValues = new ArrayList<>(4);
 
         /* Here the id cursor will also skip the new corrupted log which id would be 3. */
@@ -365,7 +370,8 @@ public class DatabasePersistenceTest {
             }
         };
         mockIdCursor.mockBuildValues(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNotNull(), any(String[].class), anyString())).thenReturn(mockIdCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNotNull(), any(String[].class), isNull()))
+                    .thenReturn(mockIdCursor);
 
         /* Verify next call is only the new valid log as others are marked pending. */
         outLogs = new ArrayList<>();
