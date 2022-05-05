@@ -6,7 +6,9 @@
 apply plugin: 'com.android.library'
 
 android {
-    lint {
+
+    //noinspection GroovyMissingReturnStatement
+    lintOptions {
         disable 'InvalidPackage'
     }
 }
