@@ -120,8 +120,8 @@ subprojects {
                 fileTree(dir: "$buildDir/intermediates/javac/debug/classes", excludes: fileFilter)
         ])
         executionData.from = fileTree(dir: buildDir, includes: [
-                'jacoco/testDebugUnitTest.exec',
-                'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec'
+                'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec',
+                'outputs/code_coverage/debugAndroidTest/connected/*/coverage.ec'
         ])
 
         /* Exclude coverage report result for appcenter-distribute-play module from the main coverage report. */
