@@ -8,7 +8,6 @@ package com.microsoft.appcenter.crashes.model;
 import org.junit.Assert;
 import org.junit.Test;
 
-@SuppressWarnings("unused")
 public class TestCrashExceptionTest {
 
     @Test

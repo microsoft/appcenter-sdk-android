@@ -15,7 +15,7 @@ import java.security.spec.AlgorithmParameterSpec;
 
 import javax.crypto.KeyGenerator;
 
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;

@@ -240,7 +240,7 @@ public class AnalyticsValidatorForEventLogTest {
         BooleanTypedProperty property = new BooleanTypedProperty();
         property.setName("name");
         property.setValue(true);
-        mEventLog.setTypedProperties(Collections.<TypedProperty>singletonList(property));
+        mEventLog.setTypedProperties(Collections.singletonList(property));
         assertFalse(mAnalyticsValidator.shouldFilter(mEventLog));
         assertEquals(validEventName, mEventLog.getName());
         assertEquals(1, mEventLog.getTypedProperties().size());

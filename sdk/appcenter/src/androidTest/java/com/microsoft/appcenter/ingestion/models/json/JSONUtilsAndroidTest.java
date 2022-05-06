@@ -29,6 +29,7 @@ import static org.mockito.Mockito.mock;
 @SuppressWarnings("unused")
 public class JSONUtilsAndroidTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void utilsCoverage() {
         new JSONUtils();

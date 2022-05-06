@@ -17,9 +17,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
@@ -34,7 +32,7 @@ public class LogSerializerAndroidTest {
     @Test
     public void emptyLogs() throws JSONException {
         LogContainer expectedContainer = new LogContainer();
-        expectedContainer.setLogs(Collections.<Log>emptyList());
+        expectedContainer.setLogs(Collections.emptyList());
         LogSerializer serializer = new DefaultLogSerializer();
         String payload = serializer.serializeContainer(expectedContainer);
         android.util.Log.v(TAG, payload);

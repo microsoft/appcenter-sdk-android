@@ -17,7 +17,6 @@ import com.microsoft.appcenter.ingestion.models.LogContainer;
 import com.microsoft.appcenter.persistence.Persistence;
 
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -26,11 +25,12 @@ import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
 import static com.microsoft.appcenter.channel.DefaultChannel.CLEAR_BATCH_SIZE;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,8 +46,8 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyCollection(), eq(1), anyList())).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyCollection(), eq(CLEAR_BATCH_SIZE), anyList())).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         when(mockIngestion.isEnabled()).thenReturn(true);
         when(mockIngestion.sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class))).then(new Answer<Object>() {
@@ -82,13 +82,7 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
 
         /* Verify handling success was ignored. */
         verify(listener, never()).onSuccess(any(Log.class));
-        verify(listener).onFailure(any(Log.class), argThat(new ArgumentMatcher<Exception>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof CancellationException;
-            }
-        }));
+        verify(listener).onFailure(any(Log.class), isA(CancellationException.class));
         verify(mockPersistence, never()).deleteLogs(anyString(), anyString());
     }
 
@@ -100,8 +94,8 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
         final Semaphore afterCallSemaphore = new Semaphore(0);
         Persistence mockPersistence = mock(Persistence.class);
         when(mockPersistence.countLogs(anyString())).thenReturn(1);
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(1), anyListOf(Log.class))).then(getGetLogsAnswer(1));
-        when(mockPersistence.getLogs(anyString(), anyListOf(String.class), eq(CLEAR_BATCH_SIZE), anyListOf(Log.class))).then(getGetLogsAnswer(0));
+        when(mockPersistence.getLogs(anyString(), anyCollection(), eq(1), anyList())).then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyCollection(), eq(CLEAR_BATCH_SIZE), anyList())).then(getGetLogsAnswer(0));
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         when(mockIngestion.isEnabled()).thenReturn(true);
         final Exception mockException = new IOException();
@@ -137,12 +131,6 @@ public class DefaultChannelRaceConditionTest extends AbstractDefaultChannelTest 
 
         /* Verify handling error was ignored. */
         verify(listener, never()).onFailure(any(Log.class), eq(mockException));
-        verify(listener).onFailure(any(Log.class), argThat(new ArgumentMatcher<Exception>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof CancellationException;
-            }
-        }));
+        verify(listener).onFailure(any(Log.class), isA(CancellationException.class));
     }
 }

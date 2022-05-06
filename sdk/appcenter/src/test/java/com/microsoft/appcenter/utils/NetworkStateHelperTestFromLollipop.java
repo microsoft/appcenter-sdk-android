@@ -24,8 +24,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -57,7 +58,7 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
     public void permissionDenied() {
         doThrow(new SecurityException())
                 .when(mConnectivityManager)
-                .registerNetworkCallback(any(NetworkRequest.class), any(ConnectivityManager.NetworkCallback.class));
+                .registerNetworkCallback(any(), any(ConnectivityManager.NetworkCallback.class));
         assertTrue(new NetworkStateHelper(mContext).isNetworkConnected());
     }
 
@@ -66,7 +67,7 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
     public void listenNetwork() {
         NetworkStateHelper helper = new NetworkStateHelper(mContext);
         ArgumentCaptor<ConnectivityManager.NetworkCallback> callback = ArgumentCaptor.forClass(ConnectivityManager.NetworkCallback.class);
-        verify(mConnectivityManager).registerNetworkCallback(any(NetworkRequest.class), callback.capture());
+        verify(mConnectivityManager).registerNetworkCallback(isNull(), callback.capture());
         NetworkStateHelper.Listener listener = mock(NetworkStateHelper.Listener.class);
         helper.addListener(listener);
 
@@ -146,7 +147,8 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         network = mock(Network.class);
         callback.getValue().onAvailable(network);
         assertTrue(helper.isNetworkConnected());
-        verify(mConnectivityManager, times(2)).registerNetworkCallback(any(NetworkRequest.class), any(ConnectivityManager.NetworkCallback.class));
+        verify(mConnectivityManager, times(2))
+                .registerNetworkCallback(any(), any(ConnectivityManager.NetworkCallback.class));
 
         /* Check no extra listener calls. */
         verifyNoMoreInteractions(listener);

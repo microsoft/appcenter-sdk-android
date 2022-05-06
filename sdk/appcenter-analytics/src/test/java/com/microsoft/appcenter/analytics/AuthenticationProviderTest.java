@@ -22,9 +22,9 @@ import static com.microsoft.appcenter.analytics.AuthenticationProvider.Type.MSA_
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -71,13 +71,13 @@ public class AuthenticationProviderTest {
 
         /* When callback parameters are invalid, don't update cache. */
         callback.getValue().onAuthenticationResult(null, new Date());
-        verifyStatic(never());
+        verifyStatic(TicketCache.class, never());
         TicketCache.putTicket(anyString(), anyString());
 
         /* Ignore calling callback more than once, even if parameters are valid the second time. */
         long freshDate = System.currentTimeMillis() + 15 * 60 * 1000;
         callback.getValue().onAuthenticationResult("test", new Date(freshDate));
-        verifyStatic(never());
+        verifyStatic(TicketCache.class, never());
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test"));
     }
 
@@ -94,13 +94,13 @@ public class AuthenticationProviderTest {
 
         /* When callback parameters are invalid, don't update cache. */
         callback.getValue().onAuthenticationResult("test", null);
-        verifyStatic(never());
+        verifyStatic(TicketCache.class, never());
         TicketCache.putTicket(anyString(), anyString());
 
         /* Ignore calling callback more than once, even if parameters are valid the second time. */
         long freshDate = System.currentTimeMillis() + 15 * 60 * 1000;
         callback.getValue().onAuthenticationResult("test", new Date(freshDate));
-        verifyStatic(never());
+        verifyStatic(TicketCache.class, never());
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test"));
     }
 
@@ -118,12 +118,12 @@ public class AuthenticationProviderTest {
         /* When callback parameters are valid update cache. */
         long freshDate = System.currentTimeMillis() + 15 * 60 * 1000;
         callback.getValue().onAuthenticationResult("test", new Date(freshDate));
-        verifyStatic();
+        verifyStatic(TicketCache.class);
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test"));
 
         /* Duplicate calls are ignored. */
         callback.getValue().onAuthenticationResult("test2", new Date(freshDate));
-        verifyStatic(never());
+        verifyStatic(TicketCache.class, never());
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("p:test2"));
     }
 
@@ -143,7 +143,7 @@ public class AuthenticationProviderTest {
         when(expiryDate.getTime()).thenReturn(System.currentTimeMillis() + 15 * 60 * 1000);
         verify(tokenProvider).acquireToken(anyString(), callback.capture());
         callback.getValue().onAuthenticationResult("test", expiryDate);
-        verifyStatic();
+        verifyStatic(TicketCache.class);
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("d:test"));
 
         /* Then refresh does nothing. */
@@ -171,7 +171,7 @@ public class AuthenticationProviderTest {
         callback.getValue().onAuthenticationResult("test", expiryDate);
 
         /* Verify cache updated. */
-        verifyStatic(times(2));
+        verifyStatic(TicketCache.class, times(2));
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("d:test"));
 
         /* Now that called back, we can refresh again. */
@@ -181,7 +181,7 @@ public class AuthenticationProviderTest {
         verify(authenticationProvider).acquireTokenAsync();
         verify(tokenProvider).acquireToken(anyString(), callback.capture());
         callback.getValue().onAuthenticationResult("test", expiryDate);
-        verifyStatic(times(3));
+        verifyStatic(TicketCache.class, times(3));
         TicketCache.putTicket(eq(authenticationProvider.getTicketKeyHash()), eq("d:test"));
     }
 }

@@ -24,6 +24,7 @@ public class TicketCacheTest {
         TicketCache.clear();
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void coverInit() {
         new TicketCache();

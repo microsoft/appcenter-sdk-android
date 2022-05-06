@@ -21,8 +21,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -113,7 +113,7 @@ public class UserIdContextTest {
 
         /* Setting to null is an update "sign out". */
         userIdContext.setUserId(null);
-        verify(listener).onNewUserId(isNull(String.class));
+        verify(listener).onNewUserId(isNull());
         assertNull(userIdContext.getUserId());
     }
 
@@ -139,7 +139,7 @@ public class UserIdContextTest {
 
         /* Setting to null is an update "sign out". */
         userIdContext.setUserId(null);
-        verify(listener).onNewUserId(isNull(String.class));
+        verify(listener).onNewUserId(isNull());
         assertNull(userIdContext.getUserId());
     }
 
@@ -173,7 +173,7 @@ public class UserIdContextTest {
 
         /* Verify we now get called with update, here is a null update example. */
         userIdContext.setUserId(null);
-        verify(listener).onNewUserId(isNull(String.class));
+        verify(listener).onNewUserId(isNull());
         assertNull(userIdContext.getUserId());
     }
 

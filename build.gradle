@@ -18,9 +18,14 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.1'
-        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2'
+        classpath 'com.android.tools.build:gradle:4.2.2'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
+        classpath 'gradle.plugin.org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.12.0'
+
+        /* Resolves issue of incorrect version use in one of jacoco/android plugin inner tasks (can be removed on AGP 7.2+). */
+        classpath 'org.jacoco:org.jacoco.core:0.8.3'
+        classpath 'org.jacoco:org.jacoco.report:0.8.3'
+        classpath 'org.jacoco:org.jacoco.agent:0.8.3'
     }
 }
 
@@ -28,13 +33,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        jcenter {
-            content {
-
-                // https://youtrack.jetbrains.com/issue/IDEA-261387
-                includeModule("org.jetbrains.trove4j", "trove4j")
-            }
-        }
     }
 
     tasks.withType(JavaCompile) {
@@ -43,6 +41,18 @@ allprojects {
 }
 
 subprojects {
+
+    /* Force Jacoco Agent version upgrade (can be removed on AGP 7.2+). */
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { details ->
+                if ('org.jacoco' == details.requested.group) {
+                    details.useVersion '0.8.3'
+                }
+            }
+        }
+    }
+
     afterEvaluate { project ->
         if (project.hasProperty('android')) {
             def config = android.defaultConfig

@@ -16,7 +16,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("unused")
 public class ErrorAttachmentLogTest {
 
     @Test
@@ -32,9 +31,8 @@ public class ErrorAttachmentLogTest {
 
     @Test
     public void attachmentWithNullText() {
-        String text = null;
         String fileName = "1";
-        ErrorAttachmentLog attachment = ErrorAttachmentLog.attachmentWithText(text, fileName);
+        ErrorAttachmentLog attachment = ErrorAttachmentLog.attachmentWithText(null, fileName);
         assertNotNull(attachment);
         assertEquals("", new String(attachment.getData(), CHARSET));
         assertEquals(fileName, attachment.getFileName());

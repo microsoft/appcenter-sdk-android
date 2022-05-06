@@ -34,15 +34,14 @@ public class ShutdownHelperTest {
     public void shutdown() {
 
         /* Dummy coverage */
+        //noinspection InstantiationOfUtilityClass
         new ShutdownHelper();
 
         /* Mock process id */
         when(Process.myPid()).thenReturn(123);
 
         ShutdownHelper.shutdown(999);
-        verifyStatic();
+        verifyStatic(Process.class);
         Process.killProcess(123);
-        verifyStatic();
-        System.exit(999);
     }
 }

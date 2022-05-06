@@ -24,7 +24,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,7 +57,7 @@ public class ChannelLogDecorateTest {
         }
 
         /* Check cache was used, meaning only 1 call to generate a device. */
-        verifyStatic();
+        verifyStatic(DeviceInfoHelper.class);
         DeviceInfoHelper.getDeviceInfo(any(Context.class));
 
         /* Test a log that is already decorated. */
@@ -82,7 +82,7 @@ public class ChannelLogDecorateTest {
         }
 
         /* Check only 1 device has been generated after cache invalidate. */
-        verifyStatic(times(2));
+        verifyStatic(DeviceInfoHelper.class, times(2));
         DeviceInfoHelper.getDeviceInfo(any(Context.class));
     }
 }

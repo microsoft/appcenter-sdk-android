@@ -5,21 +5,14 @@
 
 package com.microsoft.appcenter.utils;
 
-import androidx.annotation.IntRange;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import static android.util.Log.VERBOSE;
 
 import android.util.Log;
 
-import static android.util.Log.VERBOSE;
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
 
-import com.microsoft.appcenter.BuildConfig;
-
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**

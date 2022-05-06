@@ -18,7 +18,7 @@ import org.junit.Test;
 /**
  * This class is to go through the code to get code coverage for constructors of utils/static classes.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "InstantiationOfUtilityClass"})
 public class InstantiationTest {
 
     @Test

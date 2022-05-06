@@ -44,7 +44,7 @@ public class IdHelperAndroidTest {
         SharedPreferencesManager.putString(PrefStorageConstants.KEY_INSTALL_ID, expected.toString());
 
         actual = IdHelper.getInstallId();
-        assertNotEquals(wrongUUID, actual);
         assertNotNull(actual);
+        assertNotEquals(wrongUUID, actual.toString());
     }
 }

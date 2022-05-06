@@ -140,7 +140,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get a log from persistence. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), 1, outputLogs);
+            persistence.getLogs("test-p1", Collections.emptyList(), 1, outputLogs);
             assertEquals(1, outputLogs.size());
             assertEquals(log, outputLogs.get(0));
             assertEquals(1, persistence.countLogs("test-p1"));
@@ -205,7 +205,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get a log from persistence. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), 1, outputLogs);
+            persistence.getLogs("test-p1", Collections.emptyList(), 1, outputLogs);
             assertEquals(1, outputLogs.size());
             assertEquals(log, outputLogs.get(0));
             assertEquals(1, persistence.countLogs("test-p1"));
@@ -312,7 +312,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* We won't be able to read the log now but persistence should delete the SQLite log on error. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), 1, outputLogs);
+            persistence.getLogs("test-p1", Collections.emptyList(), 1, outputLogs);
             assertEquals(0, outputLogs.size());
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
@@ -396,7 +396,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs from persistence and check we have all the most recent logs. */
             List<Log> actualLogs = new ArrayList<>();
-            persistence.getLogs(group, Collections.<String>emptyList(), allLogs.size(), actualLogs);
+            persistence.getLogs(group, Collections.emptyList(), allLogs.size(), actualLogs);
             assertEquals(expectedLogs, actualLogs);
         } finally {
             persistence.close();
@@ -444,7 +444,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs from persistence and check we have all the most recent logs. */
             List<Log> actualLogs = new ArrayList<>();
-            persistence.getLogs(group, Collections.<String>emptyList(), 2000, actualLogs);
+            persistence.getLogs(group, Collections.emptyList(), 2000, actualLogs);
             assertEquals(expectedLogs, actualLogs);
         } finally {
             persistence.close();
@@ -624,7 +624,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs from persistence: critical were kept. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), expectedLogs.size() + 1, outputLogs);
+            persistence.getLogs("test-p1", Collections.emptyList(), expectedLogs.size() + 1, outputLogs);
             assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
             assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
         } finally {
@@ -664,7 +664,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs from persistence: critical were kept. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test-p1", Collections.<String>emptyList(), expectedLogs.size() + 1, outputLogs);
+            persistence.getLogs("test-p1", Collections.emptyList(), expectedLogs.size() + 1, outputLogs);
             assertTrue(expectedLogs.size() >= persistence.countLogs("test-p1"));
             assertThat(expectedLogs, hasItems(outputLogs.toArray(new Log[0])));
         } finally {
@@ -701,9 +701,9 @@ public class DatabasePersistenceAndroidTest {
             List<Log> outputLogs1 = new ArrayList<>();
             List<Log> outputLogs2 = new ArrayList<>();
             List<Log> outputLogs3 = new ArrayList<>();
-            String id = persistence.getLogs("test-p1", Collections.<String>emptyList(), 5, outputLogs1);
-            persistence.getLogs("test-p2", Collections.<String>emptyList(), 5, outputLogs2);
-            persistence.getLogs("test-p3", Collections.<String>emptyList(), 5, outputLogs3);
+            String id = persistence.getLogs("test-p1", Collections.emptyList(), 5, outputLogs1);
+            persistence.getLogs("test-p2", Collections.emptyList(), 5, outputLogs2);
+            persistence.getLogs("test-p3", Collections.emptyList(), 5, outputLogs3);
 
             /* Verify. */
             assertNotNull(id);
@@ -790,8 +790,8 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get a log from persistence. */
             List<Log> outputLogs = new ArrayList<>();
-            String id1 = persistence.getLogs("test-p1", Collections.<String>emptyList(), 5, outputLogs);
-            String id2 = persistence.getLogs("test-p2", Collections.<String>emptyList(), 5, outputLogs);
+            String id1 = persistence.getLogs("test-p1", Collections.emptyList(), 5, outputLogs);
+            String id2 = persistence.getLogs("test-p2", Collections.emptyList(), 5, outputLogs);
             assertNotNull(id1);
             assertNotNull(id2);
 
@@ -801,7 +801,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Try another get for verification. */
             outputLogs.clear();
-            persistence.getLogs("test-p3", Collections.<String>emptyList(), 5, outputLogs);
+            persistence.getLogs("test-p3", Collections.emptyList(), 5, outputLogs);
 
             /* Verify. */
             Map<String, List<Long>> pendingGroups = persistence.mPendingDbIdentifiersGroups;
@@ -816,7 +816,7 @@ public class DatabasePersistenceAndroidTest {
             /* Verify one log still persists in the database. */
             persistence.clearPendingLogState();
             outputLogs.clear();
-            persistence.getLogs("test-p2", Collections.<String>emptyList(), 5, outputLogs);
+            persistence.getLogs("test-p2", Collections.emptyList(), 5, outputLogs);
             assertEquals(1, outputLogs.size());
             assertEquals(log3, outputLogs.get(0));
 
@@ -865,7 +865,7 @@ public class DatabasePersistenceAndroidTest {
             /* Clear. Nothing to get after. */
             persistence.mDatabaseManager.clear();
             List<Log> outputLogs = new ArrayList<>();
-            assertNull(persistence.getLogs("test", Collections.<String>emptyList(), sizeForGetLogs, outputLogs));
+            assertNull(persistence.getLogs("test", Collections.emptyList(), sizeForGetLogs, outputLogs));
             assertTrue(outputLogs.isEmpty());
             assertEquals(0, persistence.countLogs("test"));
         } finally {
@@ -878,14 +878,14 @@ public class DatabasePersistenceAndroidTest {
         int expected = 0;
         do {
             numberOfLogs -= expected;
-            persistence.getLogs("test", Collections.<String>emptyList(), sizeForGetLogs, outputLogs);
+            persistence.getLogs("test", Collections.emptyList(), sizeForGetLogs, outputLogs);
             expected = Math.min(Math.max(numberOfLogs, 0), sizeForGetLogs);
             assertEquals(expected, outputLogs.size());
             outputLogs.clear();
         } while (numberOfLogs > 0);
 
         /* Get should be 0 now. */
-        persistence.getLogs("test", Collections.<String>emptyList(), sizeForGetLogs, outputLogs);
+        persistence.getLogs("test", Collections.emptyList(), sizeForGetLogs, outputLogs);
         assertEquals(0, outputLogs.size());
     }
 
@@ -926,7 +926,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get logs and check order. */
             List<Log> actualLogs = new ArrayList<>();
-            persistence.getLogs("test", Collections.<String>emptyList(), expectedLogs.size(), actualLogs);
+            persistence.getLogs("test", Collections.emptyList(), expectedLogs.size(), actualLogs);
             assertEquals(expectedLogs, actualLogs);
         } finally {
             persistence.close();
@@ -982,7 +982,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* If we try to get a second batch without filtering, we should get all disabled logs. */
             outLogs.clear();
-            batchId = persistence.getLogs("test", Collections.<String>emptyList(), limit, outLogs);
+            batchId = persistence.getLogs("test", Collections.emptyList(), limit, outLogs);
             assertNotNull(batchId);
             assertEquals(numberOfLogsPerKey * 2, outLogs.size());
             for (Log log : outLogs) {
@@ -1044,7 +1044,7 @@ public class DatabasePersistenceAndroidTest {
 
             /* Get. */
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test", Collections.<String>emptyList(), 10, outputLogs);
+            persistence.getLogs("test", Collections.emptyList(), 10, outputLogs);
             assertEquals(numberOfLogs / 2, outputLogs.size());
             assertEquals(2, persistence.mDatabaseManager.getRowCount());
         } finally {
@@ -1066,7 +1066,7 @@ public class DatabasePersistenceAndroidTest {
 
         /* Get logs. */
         List<Log> outputLogs = new ArrayList<>();
-        persistence.getLogs("test", Collections.<String>emptyList(), 4, outputLogs);
+        persistence.getLogs("test", Collections.emptyList(), 4, outputLogs);
         assertEquals(4, outputLogs.size());
     }
 
@@ -1157,7 +1157,7 @@ public class DatabasePersistenceAndroidTest {
             /* Get new data. */
             assertEquals(1, persistence.countLogs("test/one"));
             List<Log> outputLogs = new ArrayList<>();
-            persistence.getLogs("test/one", Collections.<String>emptyList(), 1, outputLogs);
+            persistence.getLogs("test/one", Collections.emptyList(), 1, outputLogs);
             assertEquals(1, outputLogs.size());
             assertEquals(commonSchemaLog, outputLogs.get(0));
 

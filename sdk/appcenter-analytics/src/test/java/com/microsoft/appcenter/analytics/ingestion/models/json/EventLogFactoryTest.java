@@ -27,9 +27,9 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
-import static org.mockito.Matchers.same;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.times;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -45,7 +45,7 @@ public class EventLogFactoryTest {
     }
 
     @Test
-    public void dontConvertEventWithoutTargetTokens() {
+    public void doNotConvertEventWithoutTargetTokens() {
 
         /* Create event log with just a name and no target. */
         EventLog log = new EventLog();
@@ -99,7 +99,7 @@ public class EventLogFactoryTest {
         for (CommonSchemaLog commonSchemaLog : convertedLogs) {
 
             /* Check name was added. */
-            verifyStatic();
+            verifyStatic(PartAUtils.class);
             PartAUtils.setName(same(commonSchemaLog), eq("test"));
 
             /* Check tag was added. */
@@ -107,13 +107,13 @@ public class EventLogFactoryTest {
         }
 
         /* Check Part A was added with target tokens. */
-        verifyStatic();
-        PartAUtils.addPartAFromLog(eq(log), notNull(CommonSchemaLog.class), eq("t1"));
-        verifyStatic();
-        PartAUtils.addPartAFromLog(eq(log), notNull(CommonSchemaLog.class), eq("t2"));
+        verifyStatic(PartAUtils.class);
+        PartAUtils.addPartAFromLog(eq(log), notNull(), eq("t1"));
+        verifyStatic(PartAUtils.class);
+        PartAUtils.addPartAFromLog(eq(log), notNull(), eq("t2"));
 
         /* Check data was added with typed properties (and thus not old ones). */
-        verifyStatic(times(2));
-        CommonSchemaDataUtils.addCommonSchemaData(eq(properties), notNull(CommonSchemaLog.class));
+        verifyStatic(CommonSchemaDataUtils.class, times(2));
+        CommonSchemaDataUtils.addCommonSchemaData(eq(properties), notNull());
     }
 }

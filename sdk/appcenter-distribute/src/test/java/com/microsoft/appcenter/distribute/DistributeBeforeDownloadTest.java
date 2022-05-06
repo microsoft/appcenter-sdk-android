@@ -5,6 +5,39 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.same;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.internal.verification.VerificationModeFactory.times;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
@@ -43,39 +76,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Matchers.same;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.internal.verification.VerificationModeFactory.times;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-
-@PrepareForTest({DistributeUtils.class, SessionContext.class})
+@PrepareForTest({
+        DistributeUtils.class,
+        SessionContext.class
+})
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
     private void mockSessionContext() {
@@ -91,7 +95,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     public void moreRecentWithIncompatibleMinApiLevel() throws Exception {
         mockSessionContext();
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -114,18 +118,18 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on incompatible version we complete workflow. */
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
         /* Verify we still track the distribution group statistics. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
         verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
-        verify(mChannel).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(isA(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
 
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -136,7 +140,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void olderVersionCode() throws Exception {
         mockSessionContext();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -160,16 +164,16 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
         /* Verify we still track the distribution group statistics. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
         verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
-        verify(mChannel).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(isA(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
 
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -184,7 +188,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void sameVersionCodeSameHash() throws Exception {
         mockSessionContext();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -207,16 +211,16 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mHttpClient).callAsync(anyString(), anyString(), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify on failure we complete workflow. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
         verify(mDialogBuilder, never()).create();
         verify(mDialog, never()).show();
 
         /* Verify we still track the distribution group statistics. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
         verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
-        verify(mChannel).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(isA(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
 
         /* After that if we resume app nothing happens. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -227,7 +231,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void moreRecentVersionCode() throws Exception {
         mockSessionContext();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -257,10 +261,10 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialog).show();
 
         /* Verify we track the distribution group statistics. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
         verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
-        verify(mChannel).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(isA(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
 
         /* After that if we resume app we refresh dialog. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
@@ -294,7 +298,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         mockSessionContext();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -330,10 +334,10 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialog).show();
 
         /* Verify we didn't track the distribution group statistics since it was already done at redirection. */
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
         verify(mDistributeInfoTracker, never()).updateDistributionGroupId(distributionGroupId);
-        verify(mChannel, never()).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
+        verify(mChannel, never()).enqueue(isA(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
     }
 
     @Test
@@ -343,7 +347,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         mockSessionContext();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -384,24 +388,24 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(mDialog.isShowing()).thenReturn(false);
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), eq(now));
 
         /* Verify we didn't track distribution group stats since we already had redirection parameters. */
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
         verify(mDistributeInfoTracker, never()).updateDistributionGroupId(distributionGroupId);
-        verify(mChannel, never()).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
+        verify(mChannel, never()).enqueue(isA(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
 
         /* Verify no more calls, e.g. happened only once. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
-        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Restart should check release and should not show dialog again until 1 day has elapsed. */
         now += DistributeConstants.POSTPONE_TIME_THRESHOLD - 1;
@@ -434,7 +438,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialog, times(3)).show();
 
         /* Set back in time to make SDK clean state and force update. */
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
         when(releaseDetails.isMandatoryUpdate()).thenReturn(false);
         now = 1;
@@ -442,7 +446,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         restartProcessAndSdk();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog, times(4)).show();
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
     }
 
@@ -451,7 +455,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Setup mock. */
         mockSessionContext();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -476,14 +480,14 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialog).show();
 
         /* Verify we track the distribution group statistics. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID, distributionGroupId);
         verify(mDistributeInfoTracker).updateDistributionGroupId(distributionGroupId);
-        verify(mChannel).enqueue(any(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
+        verify(mChannel).enqueue(isA(DistributionStartSessionLog.class), eq(Distribute.getInstance().getGroupName()), eq(DEFAULTS));
 
         /* Disable. */
         Distribute.setEnabled(false);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Postpone it. */
@@ -497,10 +501,10 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mDialog).show();
-        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-        verifyStatic();
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
     }
 
@@ -511,7 +515,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Mock we already have redirection parameters. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -537,7 +541,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Disable. */
         Distribute.setEnabled(false);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Click on download. */
@@ -551,8 +555,8 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
         verify(mDialog).show();
-        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
-        verifyStatic();
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
 
         /* Verify no download scheduled. */
@@ -570,7 +574,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Mock we already have redirection parameters. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -617,7 +621,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         final AtomicReference<ServiceCallback> serviceCallbackRef = new AtomicReference<>();
         final ServiceCall serviceCall = mock(ServiceCall.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -642,9 +646,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         serviceCallbackRef.set(null);
 
         /* Verify release notes persisted. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putString(PREFERENCE_KEY_RELEASE_DETAILS, "mock");
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
 
         /* Verify dialog. */
@@ -657,7 +661,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
         verify(mDialogBuilder, never()).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
-        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         assertNotNull(serviceCallbackRef.get());
 
         /* Simulate network back and get same release again, should do nothing particular. */
@@ -665,7 +669,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         serviceCallbackRef.get().onCallSucceeded(new HttpResponse(200, "mock"));
 
         /* Check we didn't change state, e.g. happened only once. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
 
         /* Restart and this time we will detect a more recent optional release. */
@@ -673,7 +677,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify call is made and that we restored again mandatory update dialog in the mean time. */
-        verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, times(3)).callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         verify(mDialogBuilder, times(3)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), any(DialogInterface.OnClickListener.class));
         verify(mDialogBuilder, never()).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
@@ -686,7 +690,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         serviceCallbackRef.get().onCallSucceeded(new HttpResponse(200, "mock"));
 
         /* Check state updated again when we detect it. */
-        verifyStatic(times(2));
+        verifyStatic(SharedPreferencesManager.class, times(2));
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
 
         /* Restart SDK, even offline, should show optional dialog. */
@@ -697,7 +701,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verify(mDialogBuilder).setNegativeButton(anyInt(), any(DialogInterface.OnClickListener.class));
 
         /* And still check again for further update. */
-        verify(mHttpClient, times(4)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, times(4)).callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Unblock call with network up. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(true);
@@ -733,7 +737,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
         final AtomicReference<ServiceCallback> serviceCallbackRef = new AtomicReference<>();
         final ServiceCall serviceCall = mock(ServiceCall.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -764,7 +768,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Verify dialog restored and call scheduled. */
-        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
         ArgumentCaptor<DialogInterface.OnClickListener> clickListener = ArgumentCaptor.forClass(DialogInterface.OnClickListener.class);
         verify(mDialogBuilder, times(2)).setPositiveButton(eq(R.string.appcenter_distribute_update_dialog_download), clickListener.capture());
 
@@ -780,7 +784,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Mock we already have redirection parameters. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -855,7 +859,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         doThrow(exception).when(mActivity).startActivity(intent);
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_NEUTRAL);
         verify(mActivity, times(2)).startActivity(intent);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), anyString(), eq(exception));
     }
 
@@ -869,7 +873,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Mock we already have token and no group. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -887,9 +891,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
     }
 
@@ -903,7 +907,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Mock we already have token and no group. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -921,9 +925,9 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID);
     }
 
@@ -1004,7 +1008,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         SharedPreferencesManager.putString(eq(PREFERENCE_KEY_RELEASE_DETAILS), anyString());
 
         /* Mock we receive a second update. */
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -1016,7 +1020,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Trigger call. */
         start();
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        verify(mHttpClient).callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Verify prompt is shown. */
         verify(mDialog).show();
@@ -1055,7 +1059,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Mock we receive a second update. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID)).thenReturn("some group");
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN)).thenReturn("some token");
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -1072,7 +1076,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Disable SDK. */
         ReleaseDownloader cleanupReleaseDownloader = mock(ReleaseDownloader.class);
-        when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
+        when(ReleaseDownloaderFactory.create(any(Context.class), isNull(), any())).thenReturn(cleanupReleaseDownloader);
         Distribute.setEnabled(false).get();
         Distribute.setEnabled(true).get();
 

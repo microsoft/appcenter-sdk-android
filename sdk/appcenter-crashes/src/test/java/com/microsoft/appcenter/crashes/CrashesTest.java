@@ -5,6 +5,50 @@
 
 package com.microsoft.appcenter.crashes;
 
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
+import static android.util.Log.getStackTraceString;
+import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
+import static com.microsoft.appcenter.Flags.CRITICAL;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static com.microsoft.appcenter.Flags.NORMAL;
+import static com.microsoft.appcenter.crashes.Crashes.MINIDUMP_FILE;
+import static com.microsoft.appcenter.crashes.Crashes.PREF_KEY_MEMORY_RUNNING_LEVEL;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyByte;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.endsWith;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.content.ComponentCallbacks;
 import android.content.ComponentCallbacks2;
 import android.content.Context;
@@ -24,7 +68,6 @@ import com.microsoft.appcenter.crashes.ingestion.models.json.ManagedErrorLogFact
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.crashes.model.TestCrashException;
 import com.microsoft.appcenter.crashes.utils.ErrorLogHelper;
-import com.microsoft.appcenter.ingestion.Ingestion;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.json.DefaultLogSerializer;
@@ -45,7 +88,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -61,56 +103,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
-import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
-import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
-import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
-import static android.content.ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN;
-import static android.util.Log.getStackTraceString;
-import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
-import static com.microsoft.appcenter.Flags.CRITICAL;
-import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static com.microsoft.appcenter.Flags.NORMAL;
-import static com.microsoft.appcenter.crashes.Crashes.MINIDUMP_FILE;
-import static com.microsoft.appcenter.crashes.Crashes.PREF_KEY_MEMORY_RUNNING_LEVEL;
-import static com.microsoft.appcenter.crashes.ingestion.models.ErrorAttachmentLog.attachmentWithBinary;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyByte;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Matchers.notNull;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doThrow;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-
+@PrepareForTest({android.util.Log.class})
 public class CrashesTest extends AbstractCrashesTest {
 
     private static final String STACK_TRACE = "type: message";
@@ -134,7 +133,9 @@ public class CrashesTest extends AbstractCrashesTest {
     @Before
     public void setUp() {
         super.setUp();
-        mErrorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), Thread.getAllStackTraces(), 0);
+        mockStatic(android.util.Log.class);
+        when(getStackTraceString(any(Throwable.class))).thenReturn(STACK_TRACE);
+        mErrorLog = ErrorLogHelper.createErrorLog(mock(Context.class), Thread.currentThread(), new RuntimeException(), new HashMap<>(), 0);
     }
 
     @Test
@@ -149,20 +150,21 @@ public class CrashesTest extends AbstractCrashesTest {
         Crashes crashes = Crashes.getInstance();
         mockStatic(ErrorLogHelper.class);
         File dir = mock(File.class);
-        File file1 = mock(File.class);
-        File file2 = mock(File.class);
         UncaughtExceptionHandler mockHandler = mock(UncaughtExceptionHandler.class);
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(dir);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
-        when(dir.listFiles()).thenReturn(new File[]{file1, file2});
+        when(dir.listFiles()).thenReturn(new File[]{
+                mock(File.class),
+                mock(File.class)
+        });
         crashes.setUncaughtExceptionHandler(mockHandler);
         when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
         /* Test. */
-        verifyStatic(times(4));
+        verifyStatic(SharedPreferencesManager.class, times(4));
         SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true);
         assertFalse(Crashes.isEnabled().get());
         assertEquals(crashes.getInitializeTimestamp(), -1);
@@ -173,7 +175,7 @@ public class CrashesTest extends AbstractCrashesTest {
     @Test
     public void notInit() {
         Crashes.notifyUserConfirmation(Crashes.SEND);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
@@ -213,7 +215,7 @@ public class CrashesTest extends AbstractCrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), mockChannel, "", null, true);
         verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
-        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
 
         /* Test. */
         assertTrue(Crashes.isEnabled().get());
@@ -238,7 +240,7 @@ public class CrashesTest extends AbstractCrashesTest {
         assertTrue(Thread.getDefaultUncaughtExceptionHandler() instanceof UncaughtExceptionHandler);
         Crashes.setEnabled(true);
         assertTrue(Crashes.isEnabled().get());
-        verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(mockChannel, times(2)).addGroup(eq(crashes.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
         Crashes.trackError(EXCEPTION);
         verify(mockChannel, times(1)).enqueue(isA(HandledErrorLog.class), eq(crashes.getGroupName()), eq(DEFAULTS));
     }
@@ -264,14 +266,14 @@ public class CrashesTest extends AbstractCrashesTest {
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(context, mockChannel, "", null, true);
         verify(mockChannel).removeGroup(eq(crashes.getGroupName()));
-        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyInt(), anyInt(), isNull(Ingestion.class), any(Channel.GroupListener.class));
+        verify(mockChannel).addGroup(eq(crashes.getGroupName()), anyInt(), anyLong(), anyInt(), isNull(), any(Channel.GroupListener.class));
 
         /* When we disable. */
         Crashes.setEnabled(false);
         assertFalse(Crashes.isEnabled().get());
 
         /* Verify we recovered file listing error. */
-        verify(context).unregisterComponentCallbacks(notNull(ComponentCallbacks.class));
+        verify(context).unregisterComponentCallbacks(notNull());
     }
 
     @Test
@@ -316,7 +318,7 @@ public class CrashesTest extends AbstractCrashesTest {
         List<ErrorAttachmentLog> errorAttachmentLogList = Arrays.asList(mockAttachment, mockAttachment, mockEmptyAttachment, null);
         when(mockListener.getErrorAttachments(report)).thenReturn(errorAttachmentLogList);
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(mErrorLog);
         Crashes crashes = Crashes.getInstance();
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -327,13 +329,9 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockListener).shouldProcess(report);
         verify(mockListener).shouldAwaitUserConfirmation();
         verify(mockListener).getErrorAttachments(report);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-            @Override
-            public boolean matches(Object log) {
-                return log.equals(mErrorLog);
-            }
-        }), eq(crashes.getGroupName()), eq(CRITICAL));
-        verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount)).enqueue(mockAttachment, crashes.getGroupName(), DEFAULTS);
+        verify(mockChannel).enqueue(eq(mErrorLog), eq(crashes.getGroupName()), eq(CRITICAL));
+        verify(mockChannel, times(errorAttachmentLogList.size() - skipAttachmentLogsCount))
+                .enqueue(mockAttachment, crashes.getGroupName(), DEFAULTS);
     }
 
     @Test
@@ -354,7 +352,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -401,7 +399,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -412,12 +410,7 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockListener, never()).shouldAwaitUserConfirmation();
 
         verify(mockListener).getErrorAttachments(report);
-        verify(mockChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-            @Override
-            public boolean matches(Object log) {
-                return log.equals(mErrorLog);
-            }
-        }), eq(crashes.getGroupName()), eq(CRITICAL));
+        verify(mockChannel).enqueue(eq(mErrorLog), eq(crashes.getGroupName()), eq(CRITICAL));
 
         verify(mockChannel, times(errorAttachmentLogList.size())).enqueue(mockAttachment, crashes.getGroupName(), DEFAULTS);
     }
@@ -437,7 +430,7 @@ public class CrashesTest extends AbstractCrashesTest {
         mockException.setMessage("message");
         ManagedErrorLog managedErrorLog = mock(ManagedErrorLog.class);
         when(managedErrorLog.getException()).thenReturn(mockException);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(managedErrorLog);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(managedErrorLog);
         crashes.setLogSerializer(logSerializer);
 
         CrashesListener listener = mock(CrashesListener.class);
@@ -446,14 +439,14 @@ public class CrashesTest extends AbstractCrashesTest {
         Channel channel = mock(Channel.class);
         crashes.onStarting(mAppCenterHandler);
         crashes.onStarted(mock(Context.class), channel, "", null, true);
-        verifyZeroInteractions(listener);
+        verifyNoInteractions(listener);
         verify(channel, never()).enqueue(any(Log.class), anyString(), anyInt());
     }
 
     @Test
     public void noQueueingWhenDisabled() {
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mTemporaryFolder.getRoot());
         when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(false);
         Channel channel = mock(Channel.class);
         Crashes crashes = Crashes.getInstance();
@@ -473,7 +466,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(null);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(null);
         crashes.setLogSerializer(logSerializer);
 
         crashes.onStarting(mAppCenterHandler);
@@ -495,7 +488,7 @@ public class CrashesTest extends AbstractCrashesTest {
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
 
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenThrow(jsonException);
+        when(logSerializer.deserializeLog(anyString(), any())).thenThrow(jsonException);
         crashes.setLogSerializer(logSerializer);
 
         crashes.onStarting(mAppCenterHandler);
@@ -503,7 +496,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         verify(mockChannel, never()).enqueue(any(Log.class), anyString(), anyInt());
 
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
     }
 
@@ -540,7 +533,7 @@ public class CrashesTest extends AbstractCrashesTest {
         when(FileManager.read(any(File.class))).thenReturn(STACK_TRACE);
 
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(mErrorLog);
         CrashesListener crashesListener = mock(CrashesListener.class);
         when(crashesListener.shouldProcess(any(ErrorReport.class))).thenReturn(true);
         Crashes.setListener(crashesListener);
@@ -550,7 +543,7 @@ public class CrashesTest extends AbstractCrashesTest {
         crashes.onStarted(mock(Context.class), mock(Channel.class), "", null, true);
 
         /* The error report was created and cached but device is null here. */
-        verifyStatic();
+        verifyStatic(ErrorLogHelper.class);
         ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
         assertNull(errorReport.getDevice());
 
@@ -571,7 +564,7 @@ public class CrashesTest extends AbstractCrashesTest {
         assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
 
         /* No more error reports should be produced at the point. */
-        verifyStatic();
+        verifyStatic(ErrorLogHelper.class);
         ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
 
         /* Simulate onFailure event. */
@@ -580,7 +573,7 @@ public class CrashesTest extends AbstractCrashesTest {
         assertErrorEquals(mErrorLog, errorReportCaptor.getValue());
 
         /* onSuccess and onFailure invalidate the cache, so one more call is expected. */
-        verifyStatic();
+        verifyStatic(ErrorLogHelper.class);
         ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
     }
 
@@ -600,12 +593,12 @@ public class CrashesTest extends AbstractCrashesTest {
         Channel.GroupListener listener = Crashes.getInstance().getChannelListener();
 
         listener.onBeforeSending(mErrorLog);
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(eq(Crashes.LOG_TAG), anyString());
         Mockito.verifyNoMoreInteractions(mockListener);
 
         listener.onSuccess(mock(Log.class));
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(eq(Crashes.LOG_TAG), contains(Log.class.getName()));
         Mockito.verifyNoMoreInteractions(mockListener);
     }
@@ -628,7 +621,7 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Prepare data. Set values. */
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(mErrorLog);
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
         crashes.onStarting(mAppCenterHandler);
@@ -637,11 +630,11 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Verify. */
         Crashes.notifyUserConfirmation(Crashes.DONT_SEND);
         verify(mockListener, never()).getErrorAttachments(any(ErrorReport.class));
-        verifyStatic();
+        verifyStatic(ErrorLogHelper.class);
         ErrorLogHelper.cleanPendingMinidumps();
-        verifyStatic();
+        verifyStatic(ErrorLogHelper.class);
         ErrorLogHelper.removeStoredErrorLogFile(mErrorLog.getId());
-        verifyStatic(never());
+        verifyStatic(ErrorLogHelper.class, never());
         ErrorLogHelper.removeLostThrowableFiles();
     }
 
@@ -663,7 +656,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         Crashes crashes = Crashes.getInstance();
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mErrorLog);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(mErrorLog);
 
         crashes.setLogSerializer(logSerializer);
         crashes.setInstanceListener(mockListener);
@@ -672,7 +665,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
 
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
     }
 
@@ -696,12 +689,12 @@ public class CrashesTest extends AbstractCrashesTest {
         Crashes crashes = Crashes.getInstance();
         ErrorReport report = crashes.buildErrorReport(mErrorLog);
         assertErrorEquals(mErrorLog, report);
-        verifyStatic();
+        verifyStatic(ErrorLogHelper.class);
         ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
 
         /* Verify the caching. */
         assertEquals(report, crashes.buildErrorReport(mErrorLog));
-        verifyStatic();
+        verifyStatic(ErrorLogHelper.class);
         ErrorLogHelper.getErrorReportFromErrorLog(mErrorLog, STACK_TRACE);
 
         mErrorLog.setId(UUID.randomUUID());
@@ -768,7 +761,7 @@ public class CrashesTest extends AbstractCrashesTest {
         Crashes.getInstance().onStarted(mock(Context.class), mock(Channel.class), "", null, true);
         assertFalse(Crashes.hasCrashedInLastSession().get());
         assertNull(Crashes.getLastSessionCrashReport().get());
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.debug(anyString(), anyString());
     }
 
@@ -792,12 +785,12 @@ public class CrashesTest extends AbstractCrashesTest {
         errorLog.setDevice(mock(Device.class));
 
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(errorLog);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(errorLog);
 
         final ErrorReport errorReport = ErrorLogHelper.getErrorReportFromErrorLog(errorLog, STACK_TRACE);
 
         mockStatic(ErrorLogHelper.class);
-        File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
+        File lastErrorLogFile = mTemporaryFolder.newFile("last-error-log.json");
         new FileWriter(lastErrorLogFile).append("fake_data").close();
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         when(ErrorLogHelper.getErrorReportFromErrorLog(errorLog, STACK_TRACE)).thenReturn(errorReport);
@@ -856,24 +849,24 @@ public class CrashesTest extends AbstractCrashesTest {
     public void noCrashInLastSessionWhenDisabled() {
 
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mTemporaryFolder.getRoot());
 
         Crashes.setEnabled(false);
 
         assertFalse(Crashes.hasCrashedInLastSession().get());
         assertNull(Crashes.getLastSessionCrashReport().get());
 
-        verifyStatic(never());
+        verifyStatic(ErrorLogHelper.class, never());
         ErrorLogHelper.getLastErrorLogFile();
     }
 
     @Test
     public void failToDeserializeLastSessionCrashReport() throws JSONException, IOException {
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(mock(ManagedErrorLog.class));
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(mock(ManagedErrorLog.class));
 
         mockStatic(ErrorLogHelper.class);
-        File lastErrorLogFile = errorStorageDirectory.newFile("last-error-log.json");
+        File lastErrorLogFile = mTemporaryFolder.newFile("last-error-log.json");
         new FileWriter(lastErrorLogFile).append("fake_data").close();
         when(ErrorLogHelper.getLastErrorLogFile()).thenReturn(lastErrorLogFile);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{lastErrorLogFile});
@@ -886,7 +879,7 @@ public class CrashesTest extends AbstractCrashesTest {
         assertFalse(Crashes.hasCrashedInLastSession().get());
 
         JSONException jsonException = new JSONException("Fake JSON exception");
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenThrow(jsonException);
+        when(logSerializer.deserializeLog(anyString(), any())).thenThrow(jsonException);
 
         /*
          * Last session error is only fetched upon initialization: enabled and channel ready.
@@ -904,16 +897,16 @@ public class CrashesTest extends AbstractCrashesTest {
          * De-serializing fails twice: processing the log from last time as part of the bulk processing.
          * And loading that same file for exposing it in getLastErrorReport.
          */
-        verifyStatic(times(2));
+        verifyStatic(AppCenterLog.class, times(2));
         AppCenterLog.error(eq(Crashes.LOG_TAG), anyString(), eq(jsonException));
-        verifyStatic();
+        verifyStatic(ErrorLogHelper.class);
         ErrorLogHelper.removeLostThrowableFiles();
     }
 
     @Test
     public void crashInLastSessionCorrupted() throws IOException {
         mockStatic(ErrorLogHelper.class);
-        File file = errorStorageDirectory.newFile("last-error-log.json");
+        File file = mTemporaryFolder.newFile("last-error-log.json");
         new FileWriter(file).append("fake_data").close();
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{file});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
@@ -946,7 +939,7 @@ public class CrashesTest extends AbstractCrashesTest {
 
         /* Prepare a big (too big) attachment and a small one. */
         ArrayList<ErrorAttachmentLog> errorAttachmentLogs = new ArrayList<>(2);
-        ErrorAttachmentLog binaryAttachment = attachmentWithBinary(new byte[7 * 1024 * 1024 + 1], "earth.png", "image/png");
+        ErrorAttachmentLog binaryAttachment = ErrorAttachmentLog.attachmentWithBinary(new byte[7 * 1024 * 1024 + 1], "earth.png", "image/png");
         errorAttachmentLogs.add(binaryAttachment);
         ErrorAttachmentLog textAttachment = ErrorAttachmentLog.attachmentWithText("hello", "log.txt");
         errorAttachmentLogs.add(textAttachment);
@@ -964,7 +957,7 @@ public class CrashesTest extends AbstractCrashesTest {
         when(log.getId()).thenReturn(UUID.randomUUID());
         when(log.getException()).thenReturn(mockException);
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenReturn(log);
+        when(logSerializer.deserializeLog(anyString(), any())).thenReturn(log);
         mockStatic(ErrorLogHelper.class);
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{mock(File.class)});
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
@@ -999,7 +992,7 @@ public class CrashesTest extends AbstractCrashesTest {
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report1).thenReturn(report2);
         when(FileManager.read(any(File.class))).thenReturn("");
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), any())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {
@@ -1038,20 +1031,20 @@ public class CrashesTest extends AbstractCrashesTest {
         assertEquals(report2, iterator.next());
 
         /* Listener not called yet on anything on manual processing. */
-        verifyZeroInteractions(listener);
+        verifyNoInteractions(listener);
 
         /* Send only the first. */
         assertFalse(WrapperSdkExceptionManager.sendCrashReportsOrAwaitUserConfirmation(Collections.singletonList(report1.getId())).get());
 
         /* We used manual process function, listener not called. */
-        verifyZeroInteractions(listener);
+        verifyNoInteractions(listener);
 
         /* No log sent until manual user confirmation in that mode (we are not in always send). */
         verify(mockChannel, never()).enqueue(any(ManagedErrorLog.class), eq(crashes.getGroupName()), anyInt());
 
         /* Confirm with always send. */
         Crashes.notifyUserConfirmation(Crashes.ALWAYS_SEND);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(Crashes.PREF_KEY_ALWAYS_SEND, true);
         when(SharedPreferencesManager.getBoolean(eq(Crashes.PREF_KEY_ALWAYS_SEND), anyBoolean())).thenReturn(true);
 
@@ -1075,7 +1068,7 @@ public class CrashesTest extends AbstractCrashesTest {
         verify(mockChannel, never()).enqueue(eq(mockAttachment), eq(crashes.getGroupName()), anyInt());
 
         /* We used manual process function, listener not called and our mock channel does not send events. */
-        verifyZeroInteractions(listener);
+        verifyNoInteractions(listener);
 
         /* Reset instance to test another tine with always send. */
         Crashes.unsetInstance();
@@ -1109,7 +1102,7 @@ public class CrashesTest extends AbstractCrashesTest {
         when(ErrorLogHelper.getErrorReportFromErrorLog(any(ManagedErrorLog.class), anyString())).thenReturn(report1).thenReturn(report2);
         when(FileManager.read(any(File.class))).thenReturn("");
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), any())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {
@@ -1199,7 +1192,7 @@ public class CrashesTest extends AbstractCrashesTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         ArgumentCaptor<Log> log = ArgumentCaptor.forClass(Log.class);
         when(logSerializer.serializeLog(log.capture())).thenReturn("{}");
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), any())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {
@@ -1295,7 +1288,6 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Set up mock for the crash. */
         final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
         DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
-        mock(ErrorAttachmentLog.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(ErrorAttachmentLog.class);
         ErrorReport errorReport = new ErrorReport();
@@ -1313,7 +1305,7 @@ public class CrashesTest extends AbstractCrashesTest {
         when(FileManager.read(any(File.class))).thenReturn("");
         String jsonCrash = "{}";
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), any())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {
@@ -1338,8 +1330,8 @@ public class CrashesTest extends AbstractCrashesTest {
          * Verify that attachmentWithBinary doesn't get called if minidump is missing.
          * This scenario used to crash before, so if the test succeeds that also tests the crash is fixed.
          */
-        verifyStatic(never());
-        attachmentWithBinary(new byte[]{anyByte()}, anyString(), anyString());
+        verifyStatic(ErrorAttachmentLog.class, never());
+        ErrorAttachmentLog.attachmentWithBinary(new byte[]{anyByte()}, anyString(), anyString());
     }
 
     @Test
@@ -1348,7 +1340,6 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Set up mock for the crash. */
         final com.microsoft.appcenter.crashes.ingestion.models.Exception exception = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
         DefaultLogSerializer defaultLogSerializer = mock(DefaultLogSerializer.class);
-        mock(ErrorAttachmentLog.class);
         mockStatic(ErrorLogHelper.class);
         mockStatic(ErrorAttachmentLog.class);
         ErrorReport errorReport = new ErrorReport();
@@ -1368,7 +1359,7 @@ public class CrashesTest extends AbstractCrashesTest {
         when(FileManager.read(any(File.class))).thenReturn("");
         String jsonCrash = "{}";
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<ManagedErrorLog>() {
+        when(logSerializer.deserializeLog(anyString(), any())).thenAnswer(new Answer<ManagedErrorLog>() {
 
             @Override
             public ManagedErrorLog answer(InvocationOnMock invocation) {
@@ -1390,41 +1381,38 @@ public class CrashesTest extends AbstractCrashesTest {
         crashes.onStarted(mock(Context.class), mock(Channel.class), "secret-app-mock", null, true);
 
         /* Verify that attachmentWithBinary does get sent. */
-        verifyStatic();
-        attachmentWithBinary(new byte[]{anyByte()}, anyString(), anyString());
+        verifyStatic(ErrorAttachmentLog.class);
+        ErrorAttachmentLog.attachmentWithBinary(any(), anyString(), anyString());
 
         /* Verify temporary field erased. */
-        verify(exception, times(1)).setStackTrace(null);
+        verify(exception).setStackTrace(isNull());
     }
 
     @Test
-    @PrepareForTest({android.util.Log.class})
     public void stackOverflowOnSavingThrowable() throws Exception {
 
         /* Mock error log utils. */
         mockStatic(ErrorLogHelper.class);
+        when(ErrorLogHelper.getModelExceptionFromThrowable(any(Throwable.class))).thenCallRealMethod();
         when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mock(File.class));
-        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{});
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
-        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), any(com.microsoft.appcenter.crashes.ingestion.models.Exception.class), anyMapOf(Thread.class, StackTraceElement[].class), anyLong(), anyBoolean())).thenReturn(mErrorLog);
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.createErrorLog(any(Context.class), any(Thread.class), notNull(), anyMap(), anyLong(), anyBoolean())).thenReturn(mErrorLog);
         File throwableFile = mock(File.class);
-        whenNew(File.class).withParameterTypes(File.class, String.class).withArguments(any(File.class), argThat(new ArgumentMatcher<String>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument.toString().endsWith(ErrorLogHelper.THROWABLE_FILE_EXTENSION);
-            }
-        })).thenReturn(throwableFile);
+        whenNew(File.class).withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), endsWith(ErrorLogHelper.THROWABLE_FILE_EXTENSION))
+                .thenReturn(throwableFile);
+        whenNew(File.class).withParameterTypes(File.class, String.class)
+                .withArguments(any(File.class), anyString())
+                .thenReturn(mock(File.class));
         LogSerializer logSerializer = mock(LogSerializer.class);
         String jsonCrash = "{}";
         when(logSerializer.serializeLog(any(Log.class))).thenReturn(jsonCrash);
 
         /* Mock storage to fail on stack overflow when saving a Throwable as binary. */
-        mockStatic(android.util.Log.class);
-        when(getStackTraceString(any(Throwable.class))).thenReturn(STACK_TRACE);
         Throwable throwable = new Throwable();
         doThrow(new StackOverflowError()).when(FileManager.class);
-        FileManager.write(throwableFile, STACK_TRACE);
+        FileManager.write(eq(throwableFile), eq(STACK_TRACE));
 
         /* Simulate start SDK. */
         Crashes crashes = Crashes.getInstance();
@@ -1436,18 +1424,18 @@ public class CrashesTest extends AbstractCrashesTest {
         Crashes.getInstance().saveUncaughtException(Thread.currentThread(), throwable);
 
         /* Verify it didn't prevent saving the JSON file. */
-        verifyStatic();
+        verifyStatic(FileManager.class);
         FileManager.write(any(File.class), eq(jsonCrash));
     }
 
     @Test
-    public void handlerMemoryWarning() throws Exception {
+    public void handlerMemoryWarning() {
 
         /* Mock files. */
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mock(File.class));
-        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[]{});
-        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[]{});
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mTemporaryFolder.getRoot());
+        when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
+        when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
 
         /* Mock classes. */
         Context mockContext = mock(Context.class);
@@ -1464,14 +1452,14 @@ public class CrashesTest extends AbstractCrashesTest {
         componentCallbacks2Captor.getValue().onTrimMemory(TRIM_MEMORY_RUNNING_CRITICAL);
 
         /* Verify put data to preferences. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), eq(TRIM_MEMORY_RUNNING_CRITICAL));
 
         /* Invoke callback onLowMemory. */
         componentCallbacks2Captor.getValue().onLowMemory();
 
         /* Verify put data to preferences. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(eq(PREF_KEY_MEMORY_RUNNING_LEVEL), eq(TRIM_MEMORY_COMPLETE));
     }
 
@@ -1481,7 +1469,7 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Mock classes. */
         Context mockContext = mock(Context.class);
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mTemporaryFolder.getRoot());
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
 
@@ -1491,29 +1479,29 @@ public class CrashesTest extends AbstractCrashesTest {
         crashes.onStarted(mockContext, mock(Channel.class), "", null, true);
 
         /* Verify register callback. */
-        verify(mockContext, never()).registerComponentCallbacks(any(ComponentCallbacks2.class));
-        verifyStatic();
+        verify(mockContext, never()).registerComponentCallbacks(any(ComponentCallbacks.class));
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_RUNNING_LEVEL));
 
         /* Enable crashes. */
         crashes.setInstanceEnabled(true);
-        verify(mockContext).registerComponentCallbacks(any(ComponentCallbacks2.class));
+        verify(mockContext).registerComponentCallbacks(isA(ComponentCallbacks2.class));
 
         /* Disable crashes. */
         crashes.setInstanceEnabled(false);
 
         /* Verify unregister callback. */
-        verify(mockContext, (times(2))).unregisterComponentCallbacks(any(ComponentCallbacks2.class));
+        verify(mockContext).unregisterComponentCallbacks(isA(ComponentCallbacks2.class));
 
-        /* Verify clear preferences. */
-        verifyStatic(times(2));
+        /* Verify clear preferences. It's called first time during starting disabled service. */
+        verifyStatic(SharedPreferencesManager.class, times(2));
         SharedPreferencesManager.remove(eq(PREF_KEY_MEMORY_RUNNING_LEVEL));
     }
 
     @Test
     public void setReceiveMemoryWarningInLastSession() {
         mockStatic(ErrorLogHelper.class);
-        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(errorStorageDirectory.getRoot());
+        when(ErrorLogHelper.getErrorStorageDirectory()).thenReturn(mTemporaryFolder.getRoot());
         when(ErrorLogHelper.getStoredErrorLogFiles()).thenReturn(new File[0]);
         when(ErrorLogHelper.getNewMinidumpFiles()).thenReturn(new File[0]);
         when(FileManager.read(any(File.class))).thenReturn("");
@@ -1563,7 +1551,7 @@ public class CrashesTest extends AbstractCrashesTest {
         com.microsoft.appcenter.crashes.ingestion.models.Exception mockException = mock(com.microsoft.appcenter.crashes.ingestion.models.Exception.class);
         when(mockException.getType()).thenReturn("type");
         when(mockException.getMessage()).thenReturn("message");
-        when(mockException.getFrames()).thenReturn(Arrays.asList(stackFrame1));
+        when(mockException.getFrames()).thenReturn(Collections.singletonList(stackFrame1));
 
         /* Mock log. */
         ManagedErrorLog mockLog = new ManagedErrorLog();
@@ -1580,7 +1568,7 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Verify that stacktrace is null. */
         ErrorReport report = crashes.buildErrorReport(mockLog);
         assertEquals(expectedStacktrace, report.getStackTrace());
-        verifyStatic(never());
+        verifyStatic(FileManager.class, never());
         FileManager.read(any(File.class));
     }
 
@@ -1620,7 +1608,7 @@ public class CrashesTest extends AbstractCrashesTest {
         /* Verify. */
         assertEquals(expectedStacktrace, report.getStackTrace());
         verify(crashes, never()).buildStackTrace(any(com.microsoft.appcenter.crashes.ingestion.models.Exception.class));
-        verifyStatic();
+        verifyStatic(FileManager.class);
         FileManager.read(any(File.class));
     }
 

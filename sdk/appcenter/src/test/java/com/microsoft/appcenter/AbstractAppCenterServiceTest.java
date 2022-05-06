@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -26,12 +27,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -52,6 +53,9 @@ public class AbstractAppCenterServiceTest {
 
     private AbstractAppCenterService mService;
 
+    @Mock
+    private Channel.GroupListener mChannelListener;
+
     @Before
     public void setUp() {
         mService = new AbstractAppCenterService() {
@@ -69,6 +73,11 @@ public class AbstractAppCenterServiceTest {
             @Override
             protected String getLoggerTag() {
                 return "TestLog";
+            }
+
+            @Override
+            protected Channel.GroupListener getChannelListener() {
+                return mChannelListener;
             }
         };
         mockStatic(AppCenter.class);
@@ -146,25 +155,25 @@ public class AbstractAppCenterServiceTest {
 
         /* Change state to true will have no effect. */
         mService.setInstanceEnabledAsync(true);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putBoolean(eq(mService.getEnabledPreferenceKey()), anyBoolean());
 
         /* Disable. */
         mService.setInstanceEnabledAsync(false);
         assertFalse(mService.isInstanceEnabledAsync().get());
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), false);
 
         /* Disable again will have no effect. */
         mService.setInstanceEnabledAsync(false);
         assertFalse(mService.isInstanceEnabledAsync().get());
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), false);
 
         /* Enable back. */
         mService.setInstanceEnabledAsync(true);
         assertTrue(mService.isInstanceEnabledAsync().get());
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), true);
 
         /* Enable again has no effect. */
@@ -172,9 +181,9 @@ public class AbstractAppCenterServiceTest {
         assertTrue(mService.isInstanceEnabledAsync().get());
 
         /* Verify only 2 actual changes in storage: false to true, then true to false. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), false);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(mService.getEnabledPreferenceKey(), true);
     }
 
@@ -201,7 +210,7 @@ public class AbstractAppCenterServiceTest {
         assertFalse(mService.isInstanceEnabledAsync().get());
         mService.setInstanceEnabledAsync(false);
         assertFalse(mService.isInstanceEnabledAsync().get());
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putBoolean(eq(mService.getEnabledPreferenceKey()), anyBoolean());
     }
 
@@ -215,7 +224,7 @@ public class AbstractAppCenterServiceTest {
         Channel channel = mock(Channel.class);
         mService.onStarted(mock(Context.class), channel, "", null, true);
         verify(channel).removeGroup(mService.getGroupName());
-        verify(channel).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), null, mService.getChannelListener());
+        verify(channel).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), null, mChannelListener);
         verifyNoMoreInteractions(channel);
         assertSame(channel, mService.mChannel);
 
@@ -237,7 +246,7 @@ public class AbstractAppCenterServiceTest {
         verifyNoMoreInteractions(channel);
         assertSame(channel, mService.mChannel);
         mService.setInstanceEnabled(true);
-        verify(channel, times(2)).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), null, mService.getChannelListener());
+        verify(channel, times(2)).addGroup(mService.getGroupName(), mService.getTriggerCount(), mService.getTriggerInterval(), mService.getTriggerMaxParallelRequests(), null, mChannelListener);
         verifyNoMoreInteractions(channel);
     }
 

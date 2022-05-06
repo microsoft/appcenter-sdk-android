@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings("unused")
 public class JSONDateUtilsAndroidTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void utilsCoverage() {
         new JSONDateUtils();

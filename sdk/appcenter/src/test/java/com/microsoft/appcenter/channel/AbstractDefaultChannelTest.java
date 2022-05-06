@@ -30,7 +30,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
@@ -54,8 +54,6 @@ public class AbstractDefaultChannelTest {
 
     static final int MAX_PARALLEL_BATCHES = 3;
 
-    static final String MOCK_TOKEN = UUID.randomUUID().toString();
-
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
@@ -75,7 +73,7 @@ public class AbstractDefaultChannelTest {
                 Object[] args = invocation.getArguments();
                 int length = size >= 0 ? size : (int) args[2];
                 if (args[3] instanceof ArrayList) {
-                    ArrayList logs = (ArrayList) args[3];
+                    ArrayList<Log> logs = (ArrayList<Log>) args[3];
                     for (int i = 0; i < length; i++) {
                         logs.add(mock(Log.class));
                     }

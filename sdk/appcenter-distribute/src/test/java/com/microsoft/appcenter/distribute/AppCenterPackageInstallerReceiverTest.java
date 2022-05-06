@@ -9,10 +9,10 @@ import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiv
 import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.START_ACTION;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -37,15 +37,14 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 @PrepareForTest({
         AppCenterLog.class,
-        Toast.class,
-        AppCenterPackageInstallerReceiver.class
+        AppCenterPackageInstallerReceiver.class,
+        Toast.class
 })
 public class AppCenterPackageInstallerReceiverTest {
 
@@ -87,7 +86,8 @@ public class AppCenterPackageInstallerReceiverTest {
 
         /* Mock methods. */
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
-        when(mContext.getPackageName()).thenReturn("com.mock.package");
+        when(mContext.getPackageName()).thenReturn("com.contoso");
+        when(mContext.getString(anyInt())).thenReturn("localized_message");
         when(mActivity.getApplicationContext()).thenReturn(mContext);
 
         /* Mock toast. */
@@ -111,7 +111,7 @@ public class AppCenterPackageInstallerReceiverTest {
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify that activity was started. */
-        verify(mContext).startActivity(Matchers.<Intent>any());
+        verify(mContext).startActivity(any());
     }
 
     @Test
@@ -139,7 +139,7 @@ public class AppCenterPackageInstallerReceiverTest {
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), eq("Application was successfully updated."));
     }
 
@@ -188,7 +188,7 @@ public class AppCenterPackageInstallerReceiverTest {
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify that log was called. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), eq("Failed to install a new release with status: " + status + ". Error message: null."));
     }
 
@@ -207,7 +207,7 @@ public class AppCenterPackageInstallerReceiverTest {
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify that log was called. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), eq("Unrecognized status received from installer: " + status));
     }
 
@@ -219,7 +219,7 @@ public class AppCenterPackageInstallerReceiverTest {
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify that log was called. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), eq("Unrecognized action UnknownAction - do nothing."));
     }
 

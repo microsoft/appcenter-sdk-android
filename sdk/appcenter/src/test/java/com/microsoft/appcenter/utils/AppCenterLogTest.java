@@ -19,9 +19,9 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -54,45 +54,44 @@ public class AppCenterLogTest {
     }
 
     private static void verifyAssert(VerificationMode verificationMode) {
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.println(Log.ASSERT, "my-tag", "error with my-tag");
-        verifyStatic(verificationMode);
-        //noinspection WrongConstant
+        verifyStatic(Log.class, verificationMode);
         Log.println(eq(Log.ASSERT), eq("my-tag"), eq("error with my-tag with exception\nmock stack trace"));
     }
 
     private static void verifyError(VerificationMode verificationMode) {
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.e(eq("my-tag"), eq("error with my-tag"));
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.e(eq("my-tag"), eq("error with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyWarn(VerificationMode verificationMode) {
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.w(eq("my-tag"), eq("warn with my-tag"));
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.w(eq("my-tag"), eq("warn with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyInfo(VerificationMode verificationMode) {
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.i(eq("my-tag"), eq("info with my-tag"));
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.i(eq("my-tag"), eq("info with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyDebug(VerificationMode verificationMode) {
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.d(eq("my-tag"), eq("debug with my-tag"));
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.d(eq("my-tag"), eq("debug with my-tag with exception"), any(Exception.class));
     }
 
     private static void verifyVerbose(VerificationMode verificationMode) {
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.v(eq("my-tag"), eq("verbose with my-tag"));
-        verifyStatic(verificationMode);
+        verifyStatic(Log.class, verificationMode);
         Log.v(eq("my-tag"), eq("verbose with my-tag with exception"), any(Exception.class));
     }
 

@@ -8,7 +8,6 @@ package com.microsoft.appcenter.http;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
-import android.net.NetworkRequest;
 import android.os.Build;
 
 import com.microsoft.appcenter.test.TestUtils;
@@ -25,8 +24,8 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.METHOD_GET;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -234,7 +233,7 @@ public class HttpClientNetworkStateHandlerTest {
         verify(httpClient).close();
     }
 
-    @Test(timeout=3000)
+    @Test(timeout = 3000)
     public void changeNetworkConnectionDuringCallWithoutDeadlock() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
 
@@ -283,7 +282,7 @@ public class HttpClientNetworkStateHandlerTest {
 
         /* Simulate network lost event. */
         ArgumentCaptor<ConnectivityManager.NetworkCallback> callback = ArgumentCaptor.forClass(ConnectivityManager.NetworkCallback.class);
-        verify(connectivityManager).registerNetworkCallback(any(NetworkRequest.class), callback.capture());
+        verify(connectivityManager).registerNetworkCallback(any(), callback.capture());
         callback.getValue().onAvailable(mock(Network.class));
 
         /* Clear the state. */

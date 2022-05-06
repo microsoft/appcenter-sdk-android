@@ -26,8 +26,9 @@ import java.util.Arrays;
 import static com.microsoft.appcenter.distribute.InstallerUtils.INSTALL_NON_MARKET_APPS_ENABLED;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -36,9 +37,13 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 @SuppressLint("InlinedApi")
-@SuppressWarnings({"deprecation", "RedundantSuppression"})
+@SuppressWarnings({"deprecation"})
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Build.class, Settings.Global.class, Settings.Secure.class})
+@PrepareForTest({
+        Build.class,
+        Settings.Global.class,
+        Settings.Secure.class
+})
 public class UnknownSourcesDetectionTest {
 
     @Mock
@@ -60,6 +65,7 @@ public class UnknownSourcesDetectionTest {
         mockStatic(Settings.Secure.class);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
+        when(mContext.getContentResolver()).thenReturn(mock(ContentResolver.class));
     }
 
     @Test

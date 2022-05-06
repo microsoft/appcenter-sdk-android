@@ -5,8 +5,42 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static android.content.Context.NOTIFICATION_SERVICE;
+import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.RETURNS_MOCKS;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.app.Activity;
-import android.app.Dialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
@@ -36,57 +70,21 @@ import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
 import org.mockito.Mockito;
-import org.mockito.internal.util.reflection.Whitebox;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.reflect.Whitebox;
 
 import java.util.Collections;
 import java.util.Map;
 
-import static android.content.Context.NOTIFICATION_SERVICE;
-import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.RETURNS_MOCKS;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-
-@PrepareForTest({DistributeUtils.class, HttpUtils.class, DeviceInfoHelper.class})
+@PrepareForTest({
+        DistributeUtils.class,
+        DeviceInfoHelper.class
+})
 public class DistributeTest extends AbstractDistributeTest {
 
     private static final String DISTRIBUTION_GROUP_ID = "group_id";
@@ -237,9 +235,9 @@ public class DistributeTest extends AbstractDistributeTest {
 
         long mockTime = 1000000;
         Distribute.getInstance().setDownloading(mReleaseDetails, mockTime);
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_ENQUEUED));
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), eq(mockTime));
     }
 
@@ -247,7 +245,7 @@ public class DistributeTest extends AbstractDistributeTest {
     public void startFromBackgroundTwice() {
         start();
         Distribute.getInstance().startFromBackground(mContext);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.initialize(mContext);
     }
 
@@ -255,18 +253,18 @@ public class DistributeTest extends AbstractDistributeTest {
     public void setDownloadingReleaseDetailsNotEqualTest() {
         long mockTime = 1000000;
         Distribute.getInstance().setDownloading(mReleaseDetails, mockTime);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_ENQUEUED));
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME), eq(mockTime));
     }
 
     @Test
     public void setInstallingReleaseDetailsNotEqualTest() {
         Distribute.getInstance().setInstalling(mReleaseDetails);
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED));
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
     }
 
@@ -279,11 +277,11 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().setInstalling(mReleaseDetails);
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_STATE));
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
         verifyReleaseDetailsAreStored();
     }
@@ -297,9 +295,9 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().setInstalling(mReleaseDetails);
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(DistributeUtils.class);
         DistributeUtils.getStoredDownloadState();
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
         verifyReleaseDetailsAreStored();
     }
@@ -314,11 +312,11 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     private void verifyReleaseDetailsAreStored() {
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID), eq(DISTRIBUTION_GROUP_ID));
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putString(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH), eq(RELEASE_HASH));
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOADED_RELEASE_ID), eq(RELEASE_ID));
     }
 
@@ -419,7 +417,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* mReleaseDownloader is null and is created. */
         Distribute.getInstance().startFromBackground(mContext);
-        verifyStatic();
+        verifyStatic(ReleaseDownloaderFactory.class);
         ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloader.Listener.class));
 
         /* mReleaseDetails not null but id is not equal to mReleaseDownloader details id. */
@@ -442,11 +440,11 @@ public class DistributeTest extends AbstractDistributeTest {
         resumeWorkflow(mock(Activity.class));
 
         /* Verify that previous tasks are cancelled. */
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_STATE));
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_TIME));
     }
 
@@ -524,7 +522,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         verify(mDialogBuilder, never()).create();
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
     }
 
@@ -538,7 +536,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify dialog. */
         verify(mDialogBuilder).create();
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
     }
 
@@ -683,22 +681,23 @@ public class DistributeTest extends AbstractDistributeTest {
         DependencyConfiguration.setHttpClient(mockHttpClient);
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("mock-hash");
+        Distribute.getInstance().startFromBackground(mContext);
 
         /* Call get last release details. */
-        Distribute.getInstance().getLatestReleaseDetails(anyString(), anyString());
+        Distribute.getInstance().getLatestReleaseDetails(DISTRIBUTION_GROUP_ID, "token");
 
         /* Verify. */
-        verifyStatic(never());
+        verifyStatic(HttpUtils.class, never());
         HttpUtils.createHttpClient(any(Context.class));
 
         /* Clear http client. */
         DependencyConfiguration.setHttpClient(null);
 
         /* Call get last release details. */
-        Distribute.getInstance().getLatestReleaseDetails(anyString(), anyString());
+        Distribute.getInstance().getLatestReleaseDetails(DISTRIBUTION_GROUP_ID, "token");
 
         /* Verify. */
-        verifyStatic();
+        verifyStatic(HttpUtils.class);
         HttpUtils.createHttpClient(any(Context.class));
     }
 
@@ -770,7 +769,7 @@ public class DistributeTest extends AbstractDistributeTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
                 return call;
             }
-        }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Starting distribute. */
         Distribute.getInstance().onStarting(mAppCenterHandler);
@@ -780,7 +779,7 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify download is not checked after we reset workflow. */
-        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, never()).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -797,7 +796,7 @@ public class DistributeTest extends AbstractDistributeTest {
                 ((ServiceCallback) invocationOnMock.getArguments()[4]).onCallSucceeded(new HttpResponse(200, ""));
                 return call;
             }
-        }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        }).when(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Start distribute. */
         start();
@@ -807,21 +806,21 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify download is checked after we reset workflow. */
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Stop activity. */
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onApplicationEnterBackground();
 
         /* Verify that all calls were completed. */
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
 
         /* Enter foreground again. */
         Distribute.getInstance().onApplicationEnterForeground();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify download is checked after we reset workflow again. */
-        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -843,17 +842,19 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify that check release for update was called. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
         /* Complete the first call. */
-        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
+        HttpResponse response = mock(HttpResponse.class);
+        when(response.getPayload()).thenReturn("<mock_release_details>");
+        httpCallback.getValue().onCallSucceeded(response);
 
         /* Disable and enable distribute module. */
         Distribute.setEnabled(false);
         Distribute.setEnabled(true);
 
         /* Verify that check release for update was called again. */
-        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
     }
 
     @Test
@@ -864,33 +865,33 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Verify that when distribute disabled no receivers was registered. */
         Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mContext, never()).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
+        verify(mContext, never()).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
 
         /* Start distribute. */
         start();
 
         /* Check that receiver was registered. */
-        verify(mContext).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
+        verify(mContext).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
 
         /* Stop activity. */
         Distribute.getInstance().onActivityPaused(mActivity);
         Distribute.getInstance().onActivityStopped(mActivity);
 
         /* Check that receiver was not unregistered on activity pause and stop. */
-        verify(mContext, never()).unregisterReceiver(Matchers.<BroadcastReceiver>any());
+        verify(mContext, never()).unregisterReceiver(any(BroadcastReceiver.class));
 
         /* Resume activity */
         Distribute.getInstance().onActivityStarted(mActivity);
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify that register receiver was called again after activity is resumed. */
-        verify(mContext).registerReceiver(Matchers.<BroadcastReceiver>any(), Matchers.<IntentFilter>any());
+        verify(mContext).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
 
         /* Disable Distribute. */
         Distribute.setEnabled(false);
 
         /* Check that receiver was unregistered. */
-        verify(mContext).unregisterReceiver(Matchers.<BroadcastReceiver>any());
+        verify(mContext).unregisterReceiver(any(BroadcastReceiver.class));
     }
 
     @Test
@@ -900,14 +901,14 @@ public class DistributeTest extends AbstractDistributeTest {
         start();
 
         /* Verify that receiver was not registered. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(eq(LOG_TAG), eq("Couldn't register receiver due to activity is null."));
 
         /* Disable Distribute. */
         Distribute.setEnabled(false);
 
         /* Verify that receiver was not registered. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(eq(LOG_TAG), eq("Couldn't unregister due to activity is null."));
     }
 
@@ -921,7 +922,7 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().notifyInstallProgress(true);
 
         /* Verify that progress dialog was not trying to display. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(eq(LOG_TAG), eq("Could not display install progress dialog in the background."));
     }
 
@@ -957,7 +958,7 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Start distribute. */
         Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onStarted(mContext, mChannel, null, null, true);
-        when(mReleaseInstallerListener.showInstallProgressDialog(Matchers.<Activity>any())).thenReturn(mDialog);
+        when(mReleaseInstallerListener.showInstallProgressDialog(any(Activity.class))).thenReturn(mDialog);
 
         /* Resume activity. */
         Distribute.getInstance().onActivityResumed(mActivity);
@@ -966,7 +967,7 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().startFromBackground(mContext);
         Distribute.getInstance().notifyInstallProgress(true);
         verify(mReleaseInstallerListener).hideInstallProgressDialog();
-        verify(mReleaseInstallerListener).showInstallProgressDialog(Matchers.<Activity>any());
+        verify(mReleaseInstallerListener).showInstallProgressDialog(any(Activity.class));
 
         /* Stop installing and verify thad dialog was hide. */
         Distribute.getInstance().notifyInstallProgress(false);
@@ -980,7 +981,7 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(1L, 1L);
 
         /* Verify that log was called. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), eq("Installing couldn't start due to the release installer wasn't initialized."));
     }
 
@@ -1028,7 +1029,7 @@ public class DistributeTest extends AbstractDistributeTest {
         resumeWorkflow(mActivity);
 
         /* Verify that SDK wasn't crashed with NPE and showed dialog. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), eq("Show default update dialog."));
     }
 

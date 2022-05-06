@@ -5,6 +5,23 @@
 
 package com.microsoft.appcenter.persistence;
 
+import static com.microsoft.appcenter.Flags.NORMAL;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -29,29 +46,14 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
-import static com.microsoft.appcenter.Flags.NORMAL;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNotNull;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-
 @SuppressWarnings("unused")
-@PrepareForTest({AppCenterLog.class, DatabaseManager.class, DatabasePersistence.class})
+@PrepareForTest({
+        AppCenterLog.class,
+        DatabaseManager.class,
+        DatabasePersistence.class
+})
 public class DatabasePersistenceTest {
 
     @Rule
@@ -66,7 +68,7 @@ public class DatabasePersistenceTest {
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mockDatabaseManager);
         Cursor mockCursor = mock(Cursor.class);
         when(mockCursor.moveToNext()).thenThrow(new RuntimeException());
-        when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+        when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString())).thenReturn(mockCursor);
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
 
         /* Try to get logs count. */
@@ -80,7 +82,7 @@ public class DatabasePersistenceTest {
         }
 
         /* There is an error log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -112,12 +114,12 @@ public class DatabasePersistenceTest {
         for (int i = 0; i < groupCount; i++) {
             MockCursor mockCursor = new MockCursor(list.get(i));
             mockCursor.mockBuildValues(mockDatabaseManager);
-            when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), eq(new String[]{String.valueOf(i)}), anyString()))
+            when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), eq(new String[]{String.valueOf(i)}), anyString()))
                     .thenReturn(mockCursor);
         }
 
         LogSerializer mockLogSerializer = mock(LogSerializer.class);
-        when(mockLogSerializer.deserializeLog(anyString(), anyString())).thenReturn(mock(Log.class));
+        when(mockLogSerializer.deserializeLog(anyString(), any())).thenReturn(mock(Log.class));
 
         /* Instantiate Database Persistence. */
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
@@ -125,7 +127,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs. */
         for (int i = 0; i < groupCount; i++) {
-            persistence.getLogs(String.valueOf(i), Collections.<String>emptyList(), logCount, new ArrayList<Log>());
+            persistence.getLogs(String.valueOf(i), Collections.emptyList(), logCount, new ArrayList<>());
         }
 
         /* Verify there are 4 pending groups. */
@@ -146,16 +148,17 @@ public class DatabasePersistenceTest {
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
         when(databaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenThrow(new RuntimeException());
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString()))
+                .thenThrow(new RuntimeException());
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
 
         /* Try to get logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -169,16 +172,16 @@ public class DatabasePersistenceTest {
         when(databaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
         Cursor mockCursor = mock(Cursor.class);
         when(mockCursor.moveToNext()).thenThrow(new RuntimeException());
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString())).thenReturn(mockCursor);
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class), 1, DatabasePersistence.SCHEMA);
 
         /* Try to get logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -203,21 +206,21 @@ public class DatabasePersistenceTest {
         /* Mock log sequence retrieved from cursor. */
         MockCursor mockCursor = new MockCursor(fieldValues);
         mockCursor.mockBuildValues(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(), any(String[].class), anyString())).thenReturn(mockCursor);
 
         /* Mock second cursor with identifiers only. */
         Cursor failingCursor = mock(Cursor.class);
         when(failingCursor.moveToNext()).thenThrow(new SQLiteDiskIOException());
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNotNull(String[].class), any(String[].class), anyString())).thenReturn(failingCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNotNull(), any(String[].class), anyString())).thenReturn(failingCursor);
 
         /* Get logs and verify we get only non corrupted logs. */
         DatabasePersistence persistence = new DatabasePersistence(mock(Context.class));
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
         /* There is an error log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 
@@ -256,7 +259,8 @@ public class DatabasePersistenceTest {
         /* Mock log sequence retrieved from cursor. */
         MockCursor mockCursor = new MockCursor(fieldValues);
         mockCursor.mockBuildValues(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(), any(String[].class), anyString()))
+                .thenReturn(mockCursor);
 
         /* Mock second cursor with identifiers only. */
         List<ContentValues> idValues = new ArrayList<>(logCount);
@@ -267,18 +271,19 @@ public class DatabasePersistenceTest {
         }
         MockCursor mockIdCursor = new MockCursor(idValues);
         mockIdCursor.mockBuildValues(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNotNull(String[].class), any(String[].class), anyString())).thenReturn(mockIdCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNotNull(), any(String[].class), isNull()))
+                .thenReturn(mockIdCursor);
 
         /* Mock serializer and eventually the database. */
         LogSerializer logSerializer = mock(LogSerializer.class);
-        when(logSerializer.deserializeLog(anyString(), anyString())).thenAnswer(new Answer<Log>() {
+        when(logSerializer.deserializeLog(anyString(), any())).thenAnswer(new Answer<Log>() {
 
             @Override
             public Log answer(InvocationOnMock invocation) {
 
                 /* Hack serializer to return type = payload to simplify checking. */
                 Log log = mock(Log.class);
-                when(log.getType()).thenReturn((String) invocation.getArguments()[0]);
+                when(log.getType()).thenReturn(invocation.getArgument(0));
                 return log;
             }
         });
@@ -287,7 +292,7 @@ public class DatabasePersistenceTest {
 
         /* Get logs and verify we get only non corrupted logs. */
         ArrayList<Log> outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.emptyList(), 50, outLogs);
         assertEquals(logCount - 1, outLogs.size());
         assertEquals("first", outLogs.get(0).getType());
         assertEquals("last", outLogs.get(1).getType());
@@ -297,7 +302,7 @@ public class DatabasePersistenceTest {
 
         /* Verify next call is empty logs as they are pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.emptyList(), 50, outLogs);
         assertEquals(0, outLogs.size());
 
         /*
@@ -345,7 +350,8 @@ public class DatabasePersistenceTest {
             }
         };
         mockCursor.mockBuildValues(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(String[].class), any(String[].class), anyString())).thenReturn(mockCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNull(), any(String[].class), anyString()))
+                .thenReturn(mockCursor);
         idValues = new ArrayList<>(4);
 
         /* Here the id cursor will also skip the new corrupted log which id would be 3. */
@@ -364,11 +370,12 @@ public class DatabasePersistenceTest {
             }
         };
         mockIdCursor.mockBuildValues(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNotNull(String[].class), any(String[].class), anyString())).thenReturn(mockIdCursor);
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), isNotNull(), any(String[].class), isNull()))
+                    .thenReturn(mockIdCursor);
 
         /* Verify next call is only the new valid log as others are marked pending. */
         outLogs = new ArrayList<>();
-        persistence.getLogs("mock", Collections.<String>emptyList(), 50, outLogs);
+        persistence.getLogs("mock", Collections.emptyList(), 50, outLogs);
         assertEquals(1, outLogs.size());
         assertEquals("true last", outLogs.get(0).getType());
 
@@ -382,7 +389,7 @@ public class DatabasePersistenceTest {
         /* The real Android test for checking size is in DatabaseManagerAndroidTest. */
         DatabaseManager databaseManager = mock(DatabaseManager.class);
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManager);
-        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(String[].class), any(String[].class), anyString()))
+        when(databaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString()))
                 .thenReturn(mock(Cursor.class));
         when(databaseManager.setMaxSize(anyLong())).thenReturn(true).thenReturn(false);
 

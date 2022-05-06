@@ -21,6 +21,7 @@ public class TypedPropertyUtilsTest {
         assertTrue(TypedPropertyUtils.create(StringTypedProperty.TYPE) instanceof StringTypedProperty);
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test(expected = JSONException.class)
     public void createInvalidTypedProperty() throws JSONException {
         //noinspection AccessStaticViaInstance to cover default constructor

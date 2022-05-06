@@ -17,6 +17,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 public class AppNameHelperTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void init() {
         new AppNameHelper();
