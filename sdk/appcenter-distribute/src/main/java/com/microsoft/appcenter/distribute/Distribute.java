@@ -456,7 +456,7 @@ public class Distribute extends AbstractAppCenterService {
      * Implements {@link #disableAutomaticCheckForUpdate()}.
      */
     private synchronized void instanceDisableAutomaticCheckForUpdate() {
-        if (mChannel != null) {
+        if (isStarted()) {
             AppCenterLog.error(LOG_TAG, "Automatic check for update cannot be disabled after Distribute is started.");
             return;
         }
@@ -550,7 +550,7 @@ public class Distribute extends AbstractAppCenterService {
         mForegroundActivity = activity;
 
         /* If started, resume now, otherwise this will be called by onStarted. */
-        if (mChannel != null) {
+        if (isStarted()) {
             resumeDistributeWorkflow();
         }
     }
@@ -567,7 +567,7 @@ public class Distribute extends AbstractAppCenterService {
 
     @Override
     public void onApplicationEnterForeground() {
-        if (mChannel != null) {
+        if (isStarted()) {
             AppCenterLog.debug(LOG_TAG, "Resetting workflow on entering foreground.");
             tryResetWorkflow();
         }
@@ -614,7 +614,7 @@ public class Distribute extends AbstractAppCenterService {
      * Register package installer receiver.
      */
     private synchronized void registerReceiver(@Nullable Activity activity) {
-        if (mChannel == null) {
+        if (!isStarted()) {
             AppCenterLog.debug(LOG_TAG, "Couldn't register receiver because App Center has not started yet.");
             return;
         }
