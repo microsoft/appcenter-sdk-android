@@ -531,12 +531,6 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @Override
-    public void onActivityStarted(Activity activity) {
-        super.onActivityStarted(activity);
-        registerReceiver(activity);
-    }
-
-    @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
 
@@ -578,7 +572,7 @@ public class Distribute extends AbstractAppCenterService {
             resumeWorkflowIfForeground();
 
             /* Register package installer receiver. */
-            registerReceiver(mForegroundActivity);
+            registerReceiver();
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -597,47 +591,27 @@ public class Distribute extends AbstractAppCenterService {
             mDistributeInfoTracker = null;
 
             /* Unregister package installer receiver. */
-            unregisterReceiver(mForegroundActivity);
+            unregisterReceiver();
         }
     }
 
     /**
      * Register package installer receiver.
      */
-    private synchronized void registerReceiver(@Nullable Activity activity) {
-        if (!isStarted()) {
-            AppCenterLog.debug(LOG_TAG, "Couldn't register receiver because App Center has not started yet.");
-            return;
-        }
-        if (!isInstanceEnabled()) {
-            AppCenterLog.debug(LOG_TAG, "Couldn't register receiver due to Distribute module is disabled.");
-            return;
-        }
-        if (activity == null) {
-            AppCenterLog.warn(LOG_TAG, "Couldn't register receiver due to activity is null.");
-            return;
-        }
-        if (mAppCenterPackageInstallerReceiver == null) {
-            mAppCenterPackageInstallerReceiver = new AppCenterPackageInstallerReceiver();
-            activity.getApplicationContext().registerReceiver(mAppCenterPackageInstallerReceiver,
-                    mAppCenterPackageInstallerReceiver.getInstallerReceiverFilter());
-            AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was registered.");
-        }
+    private void registerReceiver() {
+        mAppCenterPackageInstallerReceiver = new AppCenterPackageInstallerReceiver();
+        mContext.registerReceiver(mAppCenterPackageInstallerReceiver,
+                mAppCenterPackageInstallerReceiver.getInstallerReceiverFilter());
+        AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was registered.");
     }
 
     /**
      * Unregister package installer receiver.
      */
-    private synchronized void unregisterReceiver(Activity activity) {
-        if (activity == null) {
-            AppCenterLog.warn(LOG_TAG, "Couldn't unregister due to activity is null.");
-            return;
-        }
-        if (mAppCenterPackageInstallerReceiver != null) {
-            activity.getApplicationContext().unregisterReceiver(mAppCenterPackageInstallerReceiver);
-            mAppCenterPackageInstallerReceiver = null;
-            AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was unregistered.");
-        }
+    private void unregisterReceiver() {
+        mContext.unregisterReceiver(mAppCenterPackageInstallerReceiver);
+        mAppCenterPackageInstallerReceiver = null;
+        AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was unregistered.");
     }
 
     @WorkerThread
