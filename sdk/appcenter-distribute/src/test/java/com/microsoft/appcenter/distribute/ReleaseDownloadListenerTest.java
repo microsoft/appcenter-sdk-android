@@ -57,6 +57,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         AppCenter.class,
         AppCenterLog.class,
         Distribute.class,
+        DistributeUtils.class,
         HandlerUtils.class,
         InstallerUtils.class,
         ProgressDialog.class,
@@ -196,7 +197,7 @@ public class ReleaseDownloadListenerTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
+                invocation.<Runnable>getArgument(0).run();
                 return null;
             }
         }).when(HandlerUtils.class);
@@ -372,10 +373,12 @@ public class ReleaseDownloadListenerTest {
 
     @Test
     public void onComplete() throws Exception {
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getResumeAppIntent(eq(mContext))).thenReturn(mock(Intent.class));
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
 
         /* Do not notify the download. */
-        when(mDistribute.notifyDownload(mockReleaseDetails)).thenReturn(false);
+        when(mDistribute.notifyDownload(eq(mockReleaseDetails), any(Intent.class))).thenReturn(false);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
         releaseDownloadListener.onComplete(1L, 1L);
 
@@ -386,10 +389,12 @@ public class ReleaseDownloadListenerTest {
 
     @Test
     public void onCompleteNotify() throws Exception {
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getResumeAppIntent(eq(mContext))).thenReturn(mock(Intent.class));
         ReleaseDetails mockReleaseDetails = mockReleaseDetails(false);
 
         /* Notify the download. */
-        when(mDistribute.notifyDownload(mockReleaseDetails)).thenReturn(true);
+        when(mDistribute.notifyDownload(eq(mockReleaseDetails), any(Intent.class))).thenReturn(true);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
         releaseDownloadListener.onComplete(1L, 1L);
 
@@ -400,9 +405,11 @@ public class ReleaseDownloadListenerTest {
 
     @Test
     public void onCompleteActivityNotResolved() throws Exception {
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getResumeAppIntent(eq(mContext))).thenReturn(mock(Intent.class));
 
         /* Mock notify download result. */
-        when(mDistribute.notifyDownload(any(ReleaseDetails.class))).thenReturn(true);
+        when(mDistribute.notifyDownload(any(ReleaseDetails.class), any(Intent.class))).thenReturn(true);
 
         /* Mock resolving to null activity. */
         when(mInstallIntent.resolveActivity(any(PackageManager.class))).thenReturn(null);

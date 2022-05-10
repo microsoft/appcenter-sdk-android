@@ -17,6 +17,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -50,11 +51,8 @@ public class DistributeUtilsTest {
     }
 
     @Test
-    public void getNotificationId() {
-
-        /* Coverage fix. */
-        int notificationId = DistributeUtils.getNotificationId();
-        Assert.assertNotEquals(0, notificationId);
+    public void notificationId() {
+        assertNotEquals(0, DistributeUtils.getNotificationId());
     }
 
     @Test
