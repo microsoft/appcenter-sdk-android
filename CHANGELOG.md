@@ -2,6 +2,10 @@
 
 ## Version 4.4.4 (Under active development)
 
+### App Center Distribute
+
+* **[Fix]** Fix clicks on the download notification.
+
  ___
 
 ## Version 4.4.3
