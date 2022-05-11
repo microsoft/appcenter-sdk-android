@@ -5,9 +5,10 @@
 
 package com.microsoft.appcenter.utils.storage;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -24,12 +25,6 @@ public class SharedPreferencesManager {
     private static final String PREFERENCES_NAME = "AppCenter";
 
     /**
-     * Application context instance.
-     */
-    @SuppressLint("StaticFieldLeak")
-    private static Context sContext;
-
-    /**
      * Android SharedPreferences instance.
      */
     private static SharedPreferences sSharedPreferences;
@@ -40,9 +35,11 @@ public class SharedPreferencesManager {
      * @param context The context of the application.
      */
     public static synchronized void initialize(Context context) {
-        if (sContext == null) {
-            sContext = context;
-            sSharedPreferences = sContext.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
+        if (sSharedPreferences == null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                context = context.createDeviceProtectedStorageContext();
+            }
+            sSharedPreferences = context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE);
         }
     }
 

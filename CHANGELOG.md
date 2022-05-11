@@ -2,6 +2,10 @@
 
 ## Version 4.4.4 (Under active development)
 
+### App Center
+
+* **[Fix]** Crash when direct boot is used.
+
 ### App Center Distribute
 
 * **[Fix]** Fix possible crash on resume event before initialization.
