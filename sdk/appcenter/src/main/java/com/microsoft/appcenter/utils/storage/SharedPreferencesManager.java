@@ -11,6 +11,7 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.Set;
 
@@ -22,12 +23,14 @@ public class SharedPreferencesManager {
     /**
      * Name of preferences.
      */
-    private static final String PREFERENCES_NAME = "AppCenter";
-
+    @VisibleForTesting
+    static final String PREFERENCES_NAME = "AppCenter";
+    
     /**
      * Android SharedPreferences instance.
      */
-    private static SharedPreferences sSharedPreferences;
+    @VisibleForTesting
+    static SharedPreferences sSharedPreferences;
 
     /**
      * Initializes SharedPreferencesManager class.
