@@ -5,18 +5,15 @@
 
 package com.microsoft.appcenter.distribute;
 
-import static android.app.PendingIntent.FLAG_MUTABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
@@ -170,7 +167,7 @@ class InstallerUtils {
             }
 
             /* Start to install a new release. */
-            session.commit(createIntentSender(context, sessionId));
+            session.commit(AppCenterPackageInstallerReceiver.getInstallStatusIntentSender(context, sessionId));
             session.close();
         } catch (IOException e) {
             if (session != null) {
@@ -178,26 +175,6 @@ class InstallerUtils {
             }
             AppCenterLog.error(LOG_TAG, "Couldn't install a new release.", e);
         }
-    }
-
-    /**
-     * Return IntentSender with the receiver that listens to the package installer session status.
-     *
-     * @param context any context.
-     * @param sessionId install sessionId.
-     * @return IntentSender with receiver.
-     */
-    public static IntentSender createIntentSender(Context context, int sessionId) {
-        int broadcastFlags = 0;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            broadcastFlags |= FLAG_MUTABLE;
-        }
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context,
-                sessionId,
-                new Intent(AppCenterPackageInstallerReceiver.START_ACTION),
-                broadcastFlags);
-        return pendingIntent.getIntentSender();
     }
 
     @WorkerThread

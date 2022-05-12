@@ -46,7 +46,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="com.microsoft.appcenter.action.START" />
+                <action android:name="com.microsoft.appcenter.action.INSTALL_STATUS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>

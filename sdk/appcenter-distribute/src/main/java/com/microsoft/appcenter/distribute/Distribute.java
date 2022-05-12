@@ -599,7 +599,7 @@ public class Distribute extends AbstractAppCenterService {
     private void registerReceiver() {
         mAppCenterPackageInstallerReceiver = new AppCenterPackageInstallerReceiver();
         mContext.registerReceiver(mAppCenterPackageInstallerReceiver,
-                mAppCenterPackageInstallerReceiver.getInstallerReceiverFilter());
+                AppCenterPackageInstallerReceiver.getInstallerReceiverFilter());
         AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was registered.");
     }
 
@@ -1852,6 +1852,12 @@ public class Distribute extends AbstractAppCenterService {
      */
     private void showDisabledToast() {
         Toast.makeText(mContext, R.string.appcenter_distribute_dialog_actioned_on_disabled_toast, Toast.LENGTH_SHORT).show();
+    }
+
+    void showInstallingErrorToast() {
+        // Use Activity context if possible to avoid StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
+        Context context = mForegroundActivity != null ? mForegroundActivity : mContext;
+        Toast.makeText(context, R.string.appcenter_distribute_something_went_wrong_during_installing_new_release, Toast.LENGTH_SHORT).show();
     }
 
     /**
