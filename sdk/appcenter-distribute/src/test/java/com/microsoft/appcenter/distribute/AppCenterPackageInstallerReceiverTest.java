@@ -8,15 +8,12 @@ package com.microsoft.appcenter.distribute;
 import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.MY_PACKAGE_REPLACED_ACTION;
 import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.START_ACTION;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -25,7 +22,6 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -59,9 +55,6 @@ public class AppCenterPackageInstallerReceiverTest {
 
     @Mock
     private Intent mIntent;
-
-    @Mock
-    private IntentFilter mIntentFilter;
 
     @Mock
     private PackageManager mPackageManager;
@@ -221,62 +214,6 @@ public class AppCenterPackageInstallerReceiverTest {
         /* Verify that log was called. */
         verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), eq("Unrecognized action UnknownAction - do nothing."));
-    }
-
-    @Test
-    public void tryRegisterAndUnregisterReceiver() {
-
-        /* Register receiver. */
-        mAppCenterPackageInstallerReceiver.tryRegisterReceiver(mActivity, mIntentFilter);
-        verify(mActivity).registerReceiver(eq(mAppCenterPackageInstallerReceiver), eq(mIntentFilter));
-
-        /* Unregister receiver again. */
-        mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(mActivity);
-        verify(mActivity).unregisterReceiver(eq(mAppCenterPackageInstallerReceiver));
-
-        /* Register receiver again. */
-        mAppCenterPackageInstallerReceiver.tryRegisterReceiver(mActivity, mIntentFilter);
-        verify(mActivity, times(2)).registerReceiver(eq(mAppCenterPackageInstallerReceiver), eq(mIntentFilter));
-
-        /* Unregister receiver again. */
-        mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(mActivity);
-        verify(mActivity, times(2)).unregisterReceiver(eq(mAppCenterPackageInstallerReceiver));
-    }
-
-    @Test
-    public void tryDoubleUnregisterReceiver() {
-
-        /* Unregister receiver and verify that nothing is happened. */
-        mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(mActivity);
-        verify(mActivity, never()).unregisterReceiver(eq(mAppCenterPackageInstallerReceiver));
-
-        /* Register receiver. */
-        mAppCenterPackageInstallerReceiver.tryRegisterReceiver(mActivity, mIntentFilter);
-        verify(mActivity).registerReceiver(eq(mAppCenterPackageInstallerReceiver), eq(mIntentFilter));
-
-        /* Unregister receiver again. */
-        mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(mActivity);
-        verify(mActivity).unregisterReceiver(eq(mAppCenterPackageInstallerReceiver));
-
-        /* Unregister receiver again and verify that it wasn't re-unregister. */
-        mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(mActivity);
-        verify(mActivity).unregisterReceiver(eq(mAppCenterPackageInstallerReceiver));
-    }
-
-    @Test
-    public void tryDoubleRegisterReceiver() {
-
-        /* Register receiver. */
-        mAppCenterPackageInstallerReceiver.tryRegisterReceiver(mActivity, mIntentFilter);
-        verify(mActivity).registerReceiver(eq(mAppCenterPackageInstallerReceiver), eq(mIntentFilter));
-
-        /* Register receiver again and verify that it wasn't re-register. */
-        mAppCenterPackageInstallerReceiver.tryRegisterReceiver(mActivity, mIntentFilter);
-        verify(mActivity).registerReceiver(eq(mAppCenterPackageInstallerReceiver), eq(mIntentFilter));
-
-        /* Unregister receiver. */
-        mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(mActivity);
-        verify(mActivity).unregisterReceiver(eq(mAppCenterPackageInstallerReceiver));
     }
 }
 

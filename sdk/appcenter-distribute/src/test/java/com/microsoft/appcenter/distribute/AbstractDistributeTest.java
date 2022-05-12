@@ -174,7 +174,7 @@ public class AbstractDistributeTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
+                invocation.<Runnable>getArgument(0).run();
                 return null;
             }
         }).when(mAppCenterHandler).post(any(Runnable.class), any());
@@ -194,7 +194,7 @@ public class AbstractDistributeTest {
             public Void answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
-                boolean enabled = (Boolean) invocation.getArguments()[1];
+                boolean enabled = invocation.getArgument(1);
                 when(SharedPreferencesManager.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }

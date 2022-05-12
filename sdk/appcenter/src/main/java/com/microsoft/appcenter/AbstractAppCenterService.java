@@ -167,7 +167,7 @@ public abstract class AbstractAppCenterService implements AppCenterService {
         AppCenterLog.info(getLoggerTag(), String.format("%s service has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
 
         /* Don't call it before the service starts. */
-        if (mChannel != null) {
+        if (isStarted()) {
 
             /* Allow sub-class to handle state change. */
             applyEnabledState(enabled);
@@ -241,6 +241,15 @@ public abstract class AbstractAppCenterService implements AppCenterService {
      * @return The tag of the logger.
      */
     protected abstract String getLoggerTag();
+
+    /**
+     * Gets a state of the service.
+     *
+     * @return <code>true</code> if already started, <code>false</code> otherwise.
+     */
+    protected boolean isStarted() {
+        return mChannel != null;
+    }
 
     @NonNull
     protected String getEnabledPreferenceKey() {

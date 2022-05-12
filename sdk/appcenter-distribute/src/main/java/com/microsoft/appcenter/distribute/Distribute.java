@@ -254,11 +254,6 @@ public class Distribute extends AbstractAppCenterService {
     private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
 
     /**
-     * Intent filter of receiver for a new release.
-     */
-    private IntentFilter mPackageInstallerReceiverFilter;
-
-    /**
      * Remember if we checked download since our own process restarted.
      */
     private boolean mCheckedDownload;
@@ -314,10 +309,6 @@ public class Distribute extends AbstractAppCenterService {
     private Distribute() {
         mFactories = new HashMap<>();
         mFactories.put(DistributionStartSessionLog.TYPE, new DistributionStartSessionLogFactory());
-        mAppCenterPackageInstallerReceiver = new AppCenterPackageInstallerReceiver();
-        mPackageInstallerReceiverFilter = new IntentFilter();
-        mPackageInstallerReceiverFilter.addAction(AppCenterPackageInstallerReceiver.START_ACTION);
-        mPackageInstallerReceiverFilter.addAction(AppCenterPackageInstallerReceiver.MY_PACKAGE_REPLACED_ACTION);
     }
 
     /**
@@ -453,7 +444,7 @@ public class Distribute extends AbstractAppCenterService {
      * Implements {@link #disableAutomaticCheckForUpdate()}.
      */
     private synchronized void instanceDisableAutomaticCheckForUpdate() {
-        if (mChannel != null) {
+        if (isStarted()) {
             AppCenterLog.error(LOG_TAG, "Automatic check for update cannot be disabled after Distribute is started.");
             return;
         }
@@ -537,17 +528,11 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @Override
-    public void onActivityStarted(Activity activity) {
-        super.onActivityStarted(activity);
-        registerReceiver(activity);
-    }
-
-    @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
 
         /* If started, resume now, otherwise this will be called by onStarted. */
-        if (mChannel != null) {
+        if (isStarted()) {
             resumeDistributeWorkflow();
         }
     }
@@ -564,7 +549,7 @@ public class Distribute extends AbstractAppCenterService {
 
     @Override
     public void onApplicationEnterForeground() {
-        if (mChannel != null) {
+        if (isStarted()) {
             AppCenterLog.debug(LOG_TAG, "Resetting workflow on entering foreground.");
             tryResetWorkflow();
         }
@@ -584,7 +569,7 @@ public class Distribute extends AbstractAppCenterService {
             resumeWorkflowIfForeground();
 
             /* Register package installer receiver. */
-            registerReceiver(mForegroundActivity);
+            registerReceiver();
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -603,34 +588,27 @@ public class Distribute extends AbstractAppCenterService {
             mDistributeInfoTracker = null;
 
             /* Unregister package installer receiver. */
-            unregisterReceiver(mForegroundActivity);
+            unregisterReceiver();
         }
     }
 
     /**
      * Register package installer receiver.
      */
-    private synchronized void registerReceiver(Activity activity) {
-        if (!isInstanceEnabled()) {
-            AppCenterLog.warn(LOG_TAG, "Couldn't register receiver due to Distribute module is disabled.");
-            return;
-        }
-        if (activity != null) {
-            mAppCenterPackageInstallerReceiver.tryRegisterReceiver(activity.getApplicationContext(), mPackageInstallerReceiverFilter);
-        } else {
-            AppCenterLog.warn(LOG_TAG, "Couldn't register receiver due to activity is null.");
-        }
+    private void registerReceiver() {
+        mAppCenterPackageInstallerReceiver = new AppCenterPackageInstallerReceiver();
+        mContext.registerReceiver(mAppCenterPackageInstallerReceiver,
+                mAppCenterPackageInstallerReceiver.getInstallerReceiverFilter());
+        AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was registered.");
     }
 
     /**
      * Unregister package installer receiver.
      */
-    private synchronized void unregisterReceiver(Activity activity) {
-        if (activity != null) {
-            mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(activity.getApplicationContext());
-        } else {
-            AppCenterLog.warn(LOG_TAG, "Couldn't unregister due to activity is null.");
-        }
+    private void unregisterReceiver() {
+        mContext.unregisterReceiver(mAppCenterPackageInstallerReceiver);
+        mAppCenterPackageInstallerReceiver = null;
+        AppCenterLog.debug(LOG_TAG, "The receiver for installing a new release was unregistered.");
     }
 
     @WorkerThread

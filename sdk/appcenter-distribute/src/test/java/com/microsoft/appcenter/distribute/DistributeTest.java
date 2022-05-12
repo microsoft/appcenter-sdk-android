@@ -862,33 +862,10 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void checkRegisterAndUnregisterReceiver() {
-        mockStatic(SharedPreferencesManager.class);
-        when(SharedPreferencesManager.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(false).thenReturn(true);
-
-        /* Verify that when distribute disabled no receivers was registered. */
-        Distribute.getInstance().onActivityStarted(mActivity);
-        Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mContext, never()).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
-
-        /* Start distribute. */
+    public void applyEnableStateRegistersInstallReceiver() {
         start();
 
-        /* Check that receiver was registered. */
-        verify(mContext).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
-
-        /* Stop activity. */
-        Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.getInstance().onActivityStopped(mActivity);
-
-        /* Check that receiver was not unregistered on activity pause and stop. */
-        verify(mContext, never()).unregisterReceiver(any(BroadcastReceiver.class));
-
-        /* Resume activity */
-        Distribute.getInstance().onActivityStarted(mActivity);
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Verify that register receiver was called again after activity is resumed. */
+        /* Verify that register receiver was called after activity is resumed. */
         verify(mContext).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
 
         /* Disable Distribute. */
@@ -896,24 +873,6 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Check that receiver was unregistered. */
         verify(mContext).unregisterReceiver(any(BroadcastReceiver.class));
-    }
-
-    @Test
-    public void checkRegisterReceiverWhenActivityNull() {
-
-        /* Start Distribute. */
-        start();
-
-        /* Verify that receiver was not registered. */
-        verifyStatic(AppCenterLog.class);
-        AppCenterLog.warn(eq(LOG_TAG), eq("Couldn't register receiver due to activity is null."));
-
-        /* Disable Distribute. */
-        Distribute.setEnabled(false);
-
-        /* Verify that receiver was not registered. */
-        verifyStatic(AppCenterLog.class);
-        AppCenterLog.warn(eq(LOG_TAG), eq("Couldn't unregister due to activity is null."));
     }
 
     @Test

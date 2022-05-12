@@ -820,7 +820,7 @@ public class Analytics extends AbstractAppCenterService {
      * Implements {@link #enableManualSessionTracker()}.
      */
     private synchronized void enableManualSessionTrackerAsync() {
-        if (mChannel != null) {
+        if (isStarted()) {
             AppCenterLog.debug(AppCenterLog.LOG_TAG, "The manual session tracker state should be set before the App Center start.");
             return;
         }
@@ -967,7 +967,7 @@ public class Analytics extends AbstractAppCenterService {
      * @return <code>true</code> if the interval is set, <code>false</code> otherwise.
      */
     private boolean setInstanceTransmissionInterval(int seconds) {
-        if (mChannel != null) {
+        if (isStarted()) {
             AppCenterLog.error(LOG_TAG, "Transmission interval should be set before the service is started.");
             return false;
         }
