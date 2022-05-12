@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 
@@ -65,9 +66,6 @@ public class InstallerUtilsTest {
     @Mock
     private PackageInstaller.Session mSession;
 
-    @Mock
-    private InputStream mData;
-
     @Before
     public void setUp() throws IOException {
 
@@ -93,15 +91,11 @@ public class InstallerUtilsTest {
         /* Mock session callback. */
         PackageInstaller.SessionCallback mockSessionCallback = mock(PackageInstaller.SessionCallback.class);
 
-        /* Mock data. */
-        when(mData.read(any())).thenReturn(10).thenReturn(-1);
-
         /* Call install. */
-        InstallerUtils.installPackage(mData, mContext, mockSessionCallback);
+        InstallerUtils.installPackage(mock(Uri.class), mContext, mockSessionCallback);
 
         /* Verify. */
         verify(mMockPackageInstaller).registerSessionCallback(eq(mockSessionCallback));
-        verify(mData).close();
         verify(mOutputStream).close();
         verify(mSession).commit(any(IntentSender.class));
         verify(mSession, never()).abandon();
@@ -115,10 +109,9 @@ public class InstallerUtilsTest {
         when(mSession.openWrite(anyString(), anyLong(), anyLong())).thenThrow(new IOException());
 
         /* Call install method. */
-        InstallerUtils.installPackage(mData, mContext, null);
+        InstallerUtils.installPackage(mock(Uri.class), mContext, null);
 
         /* Verify. */
-        verify(mData, never()).close();
         verify(mSession).abandon();
     }
 
@@ -129,7 +122,7 @@ public class InstallerUtilsTest {
         when(mMockPackageInstaller.createSession(any(PackageInstaller.SessionParams.class))).thenThrow(new IOException());
 
         /* Call install method. */
-        InstallerUtils.installPackage(mData, mContext, null);
+        InstallerUtils.installPackage(mock(Uri.class), mContext, null);
 
         /* Verify that the session wasn't created. */
         verify(mMockPackageInstaller, never()).openSession(anyInt());

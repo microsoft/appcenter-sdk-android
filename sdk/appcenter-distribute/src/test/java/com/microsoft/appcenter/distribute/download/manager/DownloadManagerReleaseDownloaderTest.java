@@ -301,10 +301,10 @@ public class DownloadManagerReleaseDownloaderTest {
         when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
 
         /* Complete download. */
-        mReleaseDownloader.onDownloadComplete(1L);
+        mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
-        verify(mListener).onComplete(anyLong(), anyLong());
+        verify(mListener).onComplete(any(Uri.class));
         verify(mListener, never()).onError(anyString());
     }
 
@@ -315,10 +315,10 @@ public class DownloadManagerReleaseDownloaderTest {
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
 
         /* Complete download. */
-        mReleaseDownloader.onDownloadComplete(1L);
+        mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
-        verify(mListener).onComplete(anyLong(), anyLong());
+        verify(mListener).onComplete(any(Uri.class));
         verify(mListener, never()).onError(anyString());
     }
 
@@ -329,10 +329,10 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Complete download after cancelling. */
         mReleaseDownloader.cancel();
-        mReleaseDownloader.onDownloadComplete(1L);
+        mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
-        verify(mListener, never()).onComplete(anyLong(), anyLong());
+        verify(mListener, never()).onComplete(any(Uri.class));
     }
 
     @Test
