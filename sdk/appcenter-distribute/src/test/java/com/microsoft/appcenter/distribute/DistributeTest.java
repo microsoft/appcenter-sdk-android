@@ -37,6 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
@@ -75,6 +76,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.reflect.Whitebox;
 
@@ -322,9 +324,11 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void cancelingNotification() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
-        when(DistributeUtils.getNotificationId()).thenReturn(2);
+        spy(DistributeUtils.class);
+        PowerMockito.doReturn(DOWNLOAD_STATE_NOTIFIED).when(DistributeUtils.class);
+        DistributeUtils.getStoredDownloadState();
+        PowerMockito.doReturn(0).when(DistributeUtils.class);
+        DistributeUtils.getNotificationId();
         NotificationManager manager = mock(NotificationManager.class);
         when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
         Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
@@ -355,7 +359,7 @@ public class DistributeTest extends AbstractDistributeTest {
         ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
 
         /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mockReleaseDetails);
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mockReleaseDetails, null);
 
         /* Verify. */
         assertTrue(notifyDownloadResult);
@@ -375,7 +379,7 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
 
         /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails);
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, null);
 
         /* Verify. */
         assertFalse(notifyDownloadResult);
@@ -395,7 +399,7 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
 
         /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails);
+        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, null);
 
         /* Verify. */
         assertFalse(notifyDownloadResult);
@@ -407,7 +411,7 @@ public class DistributeTest extends AbstractDistributeTest {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
         Distribute.getInstance().startFromBackground(mContext);
-        assertTrue(Distribute.getInstance().notifyDownload(mock(ReleaseDetails.class)));
+        assertTrue(Distribute.getInstance().notifyDownload(mock(ReleaseDetails.class), null));
     }
 
     @Test
@@ -994,16 +998,18 @@ public class DistributeTest extends AbstractDistributeTest {
 
     private void firstDownloadNotification(int apiLevel) throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
-        mockStatic(DistributeUtils.class);
+        spy(DistributeUtils.class);
         NotificationManager manager = mock(NotificationManager.class);
         whenNew(Notification.Builder.class).withAnyArguments()
                 .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(DistributeUtils.getNotificationId()).thenReturn(0);
+        PowerMockito.doReturn(mReleaseDetails).when(DistributeUtils.class);
+        DistributeUtils.loadCachedReleaseDetails();
+        PowerMockito.doReturn(0).when(DistributeUtils.class);
+        DistributeUtils.getNotificationId();
         when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
         Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().onStarted(mContext, mChannel, "0", "Anna", false);
-        Distribute.getInstance().notifyDownload(mReleaseDetails);
+        Distribute.getInstance().onStarted(mContext, mChannel, "0", "test", false);
+        Distribute.getInstance().notifyDownload(mReleaseDetails, null);
         verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
     }
 }

@@ -5,6 +5,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix possible crash on resume event before initialization.
+* **[Fix]** Fix clicks on the download notification.
 
  ___
 
