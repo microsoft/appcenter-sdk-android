@@ -251,6 +251,9 @@ public class Distribute extends AbstractAppCenterService {
      */
     private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
 
+    /**
+     * Uri of downloaded package file.
+     */
     private Uri mDownloadedPackageFileUri;
 
     /**
@@ -1900,10 +1903,6 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void installUpdate() {
         if (mReleaseInstallerListener == null) {
             AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
-            return;
-        }
-        if (mDownloadedPackageFileUri == null) {
-            AppCenterLog.debug(LOG_TAG, "Installing couldn't start because the package file is missing.");
             return;
         }
         post(new Runnable() {

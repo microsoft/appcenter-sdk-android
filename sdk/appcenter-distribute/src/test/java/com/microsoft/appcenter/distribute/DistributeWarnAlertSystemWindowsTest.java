@@ -76,9 +76,6 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         mockStatic(Settings.class);
         mockStatic(AppCenterLog.class);
 
-        doCallRealMethod().when(InstallerUtils.class);
-        InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class));
-
         /* Reset mock release listener methods. */
         doCallRealMethod().when(mReleaseDownloaderListener).onComplete(any(Uri.class));
         when(mReleaseInstallerListener.showInstallProgressDialog(any(Activity.class))).thenReturn(mock(Dialog.class));
@@ -260,6 +257,37 @@ public class DistributeWarnAlertSystemWindowsTest extends AbstractDistributeTest
         /* Verify that after enabling permissions the install process was started. */
         verifyStatic(InstallerUtils.class);
         InstallerUtils.installPackage(any(Uri.class), any(Context.class), any(ReleaseInstallerListener.class));
+    }
+
+    @Test
+    public void returningToDialogFromBackgroundWhenInstallerIsNull() {
+
+        /* Mock permission state for Android Q. */
+        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
+        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
+
+        /* Notify about complete download. */
+        mReleaseDownloaderListener.onComplete(mock(Uri.class));
+
+        /* Emulate behavior that settings was enabled via dialog. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().onApplicationEnterBackground();
+
+        /* Make release details NULL to make installer listener NULL too. */
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
+
+        /* Start distribute with app secret NULL to make sure updateReleaseDetails is called on startFromBackground. */
+        Distribute.getInstance().onStarting(mAppCenterHandler);
+        Distribute.getInstance().onStarted(mContext, mChannel, null, null, true);
+        Distribute.getInstance().startFromBackground(mContext);
+
+        /* Enter foreground */
+        Distribute.getInstance().onApplicationEnterForeground();
+        Distribute.getInstance().onActivityResumed(mActivity);
+
+        /* Verify that installation process is trying to resume but installer is null because release details was not loaded. */
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.debug(eq(LOG_TAG), eq("Installing couldn't start due to the release installer wasn't initialized."));
     }
 
     @Test

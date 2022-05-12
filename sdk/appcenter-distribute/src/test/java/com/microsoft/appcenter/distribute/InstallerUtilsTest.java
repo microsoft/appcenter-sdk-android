@@ -81,6 +81,7 @@ public class InstallerUtilsTest {
         when(mockPackageManager.getPackageInstaller()).thenReturn(mMockPackageInstaller);
         when(mContext.getPackageManager()).thenReturn(mockPackageManager);
 
+        /* Mock input file. */
         ContentResolver contentResolver = mock(ContentResolver.class);
         when(mContext.getContentResolver()).thenReturn(contentResolver);
         ParcelFileDescriptor fileDescriptor = mock(ParcelFileDescriptor.class);

@@ -188,22 +188,16 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         if (isCancelled()) {
             return;
         }
-        DownloadManager downloadManager = getDownloadManager();
-        try (ParcelFileDescriptor fileDescriptor = downloadManager.openDownloadedFile(mDownloadId)) {
-            if (fileDescriptor.getStatSize() != mReleaseDetails.getSize()) {
-                mListener.onError("The file is invalid");
-                return;
-            }
-        } catch (IOException e) {
-            mListener.onError("Cannot check file size: " + e.getMessage());
+        if (!isDownloadedFileValid()) {
+            mListener.onError("Downloaded package file is invalid.");
             return;
         }
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        Uri localUri = downloadManager.getUriForDownloadedFile(mDownloadId);
+        Uri localUri = getDownloadManager().getUriForDownloadedFile(mDownloadId);
         if (localUri != null) {
             mListener.onComplete(localUri);
         } else {
-            mListener.onError("Downloaded file not found");
+            mListener.onError("Downloaded file not found.");
         }
     }
 
@@ -214,5 +208,23 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         }
         AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
         mListener.onError(e.getMessage());
+    }
+
+    private boolean isDownloadedFileValid() {
+        ParcelFileDescriptor fileDescriptor = null;
+        try {
+            fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId);
+            return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
+        } catch (IOException e) {
+            AppCenterLog.error(LOG_TAG, "Cannot open downloaded file for id=" + mDownloadId, e);
+            return false;
+        } finally {
+            try {
+                if (fileDescriptor != null) {
+                    fileDescriptor.close();
+                }
+            } catch (IOException ignore) {
+            }
+        }
     }
 }
