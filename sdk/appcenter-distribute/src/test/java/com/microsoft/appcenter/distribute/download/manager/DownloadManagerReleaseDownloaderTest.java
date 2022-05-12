@@ -30,6 +30,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -45,7 +46,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+
+import java.io.FileNotFoundException;
 
 @PrepareForTest({
         AsyncTaskUtils.class,
@@ -59,6 +61,8 @@ import org.powermock.reflect.Whitebox;
 public class DownloadManagerReleaseDownloaderTest {
 
     private static final long DOWNLOAD_ID = 42;
+
+    private static final long PACKAGE_SIZE = 42 * 1024;
 
     @Mock
     private Context mContext;
@@ -84,6 +88,7 @@ public class DownloadManagerReleaseDownloaderTest {
     public void setUp() {
         mockStatic(SharedPreferencesManager.class);
         mockStatic(HandlerUtils.class);
+        when(mReleaseDetails.getSize()).thenReturn(PACKAGE_SIZE);
 
         /* Mock AsyncTaskUtils. */
         mockStatic(AsyncTaskUtils.class);
@@ -296,23 +301,13 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void completeDownload() {
-        mockStatic(Uri.class);
-        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
-
-        /* Complete download. */
-        mReleaseDownloader.onDownloadComplete();
-
-        /* Verify. */
-        verify(mListener).onComplete(any(Uri.class));
-        verify(mListener, never()).onError(anyString());
-    }
-
-    @Test
-    public void completeDownloadFallbackOnOldDevices() {
-        mockStatic(Uri.class);
-        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
+    public void completeDownload() throws FileNotFoundException {
+        DownloadManager downloadManager = mock(DownloadManager.class);
+        when(mContext.getSystemService(DOWNLOAD_SERVICE)).thenReturn(downloadManager);
+        when(downloadManager.getUriForDownloadedFile(anyLong())).thenReturn(mock(Uri.class));
+        ParcelFileDescriptor fileDescriptor = mock(ParcelFileDescriptor.class);
+        when(fileDescriptor.getStatSize()).thenReturn(PACKAGE_SIZE);
+        when(downloadManager.openDownloadedFile(anyLong())).thenReturn(fileDescriptor);
 
         /* Complete download. */
         mReleaseDownloader.onDownloadComplete();
