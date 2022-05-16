@@ -5,7 +5,8 @@
 ### App Center Distribute
 
 * **[Fix]** Fix possible crash on resume event before initialization.
-* **[Fix]** Fix clicks on the download notification.
+* **[Fix]** Fix clicks on the download completion notification.
+* **[Fix]** Fix ANR on installing large packages.
 
  ___
 
