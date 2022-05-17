@@ -211,11 +211,6 @@ public class Distribute extends AbstractAppCenterService {
     private Dialog mUnknownSourcesDialog;
 
     /**
-     * Alert system dialog that was shown.
-     */
-    private Dialog mAlertSystemWindowsDialog;
-
-    /**
      * Mandatory download completed in app notification.
      */
     private Dialog mCompletedDownloadDialog;
@@ -250,11 +245,6 @@ public class Distribute extends AbstractAppCenterService {
      * Receiver of installing a new release.
      */
     private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
-
-    /**
-     * Uri of downloaded package file.
-     */
-    private Uri mDownloadedPackageFileUri;
 
     /**
      * Remember if we checked download since our own process restarted.
@@ -759,7 +749,6 @@ public class Distribute extends AbstractAppCenterService {
         mCheckReleaseCallId = null;
         mUpdateDialog = null;
         mUnknownSourcesDialog = null;
-        mAlertSystemWindowsDialog = null;
         mCompletedDownloadDialog = null;
         mUpdateSetupFailedDialog = null;
         mLastActivityWithDialog.clear();
@@ -794,14 +783,6 @@ public class Distribute extends AbstractAppCenterService {
                 AppCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
                 mWorkflowCompleted = true;
                 mManualCheckForUpdateRequested = false;
-                return;
-            }
-
-            /* Continue installing a new release if the dialog was shown before resumeDistributeWorkflow. */
-            if (mAlertSystemWindowsDialog != null) {
-                mAlertSystemWindowsDialog.dismiss();
-                mAlertSystemWindowsDialog = null;
-                installUpdate();
                 return;
             }
 
@@ -1056,7 +1037,6 @@ public class Distribute extends AbstractAppCenterService {
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
-        mAlertSystemWindowsDialog = null;
         mLastActivityWithDialog.clear();
         mReleaseDetails = null;
         if (mReleaseDownloaderListener != null) {
@@ -1601,65 +1581,6 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
-
-    /**
-     * Show system alerts windows setting dialog.
-     */
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private synchronized void showSystemAlertsWindowsSettingsDialog() {
-
-        /* Do not attempt to show dialog if application is in the background. */
-        if (mForegroundActivity == null) {
-            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the system alerts windows won't be displayed.");
-            return;
-        }
-
-        /* Check if we need to replace dialog. */
-        if (!shouldRefreshDialog(mAlertSystemWindowsDialog)) {
-            return;
-        }
-        AppCenterLog.debug(LOG_TAG, "Show new system alerts windows dialog.");
-
-        /* Build confirmation dialog on enabled system alerts windows permission. */
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-        dialogBuilder.setMessage(R.string.appcenter_distribute_alert_system_dialog_message);
-        dialogBuilder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                mAlertSystemWindowsDialog = null;
-                AppCenterLog.debug(LOG_TAG, "Permission request on alert system windows denied. Continue installing...");
-
-                /* It is optional and installing can be continued if customer reject permission request. */
-                installUpdate();
-            }
-        });
-        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                mAlertSystemWindowsDialog = null;
-                AppCenterLog.debug(LOG_TAG, "Permission request on alert system windows denied. Continue installing...");
-
-                /* It is optional and installing can be continued if customer reject permission request. */
-                installUpdate();
-            }
-        });
-        dialogBuilder.setPositiveButton(R.string.appcenter_distribute_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-                /* Open system alerts windows settings activity. */
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + mForegroundActivity.getPackageName()));
-                mForegroundActivity.startActivity(intent);
-            }
-        });
-        mAlertSystemWindowsDialog = dialogBuilder.create();
-        showAndRememberDialogActivity(mAlertSystemWindowsDialog);
-    }
-
     /**
      * Show unknown sources dialog. This can be called multiple times if clicking on HOME and app resumed
      * (it could be resumed in another activity covering the previous one).
@@ -1906,7 +1827,7 @@ public class Distribute extends AbstractAppCenterService {
      * Start to install a new update.
      */
     @UiThread
-    private synchronized void installUpdate() {
+    synchronized void installUpdate(@NonNull Uri localUri) {
         if (mReleaseInstallerListener == null) {
             AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
             return;
@@ -1916,28 +1837,9 @@ public class Distribute extends AbstractAppCenterService {
             @Override
             public void run() {
                 AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
-                InstallerUtils.installPackage(mDownloadedPackageFileUri, mContext, mReleaseInstallerListener);
+                InstallerUtils.installPackage(localUri, mContext, mReleaseInstallerListener);
             }
         });
-    }
-
-    /**
-     * Ask permission on start application after update or start to install a new update.
-     */
-    @UiThread
-    synchronized void showSystemSettingsDialogOrStartInstalling(@NonNull Uri localUri) {
-        if (mReleaseInstallerListener == null) {
-            AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
-            return;
-        }
-        mDownloadedPackageFileUri = localUri;
-
-        /* Check permission on start application after update. */
-        if (InstallerUtils.isSystemAlertWindowsEnabled(mContext)) {
-            installUpdate();
-        } else {
-            showSystemAlertsWindowsSettingsDialog();
-        }
     }
 
     /**

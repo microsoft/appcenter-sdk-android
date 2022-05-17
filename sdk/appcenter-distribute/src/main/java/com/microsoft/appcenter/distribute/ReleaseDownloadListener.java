@@ -104,8 +104,8 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
                 /* Check if app should install now. */
                 if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
                     AppCenterLog.info(LOG_TAG, "Release is downloaded. Starting to install it.");
+                    Distribute.getInstance().installUpdate(localUri);
                     Distribute.getInstance().setInstalling(mReleaseDetails);
-                    Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(localUri);
                 }
             }
         });
