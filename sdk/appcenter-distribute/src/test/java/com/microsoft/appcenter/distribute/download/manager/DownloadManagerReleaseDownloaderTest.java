@@ -16,6 +16,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,6 +31,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -45,7 +47,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.powermock.reflect.Whitebox;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 @PrepareForTest({
         AsyncTaskUtils.class,
@@ -59,6 +63,8 @@ import org.powermock.reflect.Whitebox;
 public class DownloadManagerReleaseDownloaderTest {
 
     private static final long DOWNLOAD_ID = 42;
+
+    private static final long PACKAGE_SIZE = 42 * 1024;
 
     @Mock
     private Context mContext;
@@ -78,10 +84,16 @@ public class DownloadManagerReleaseDownloaderTest {
     @Mock
     private DownloadManagerRemoveTask mRemoveTask;
 
+    @Mock
+    private DownloadManager mDownloadManager;
+
+    @Mock
+    private ParcelFileDescriptor mFileDescriptor;
+
     private DownloadManagerReleaseDownloader mReleaseDownloader;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         mockStatic(SharedPreferencesManager.class);
         mockStatic(HandlerUtils.class);
 
@@ -102,6 +114,15 @@ public class DownloadManagerReleaseDownloaderTest {
                 return null;
             }
         });
+
+        /* Mock download manager. */
+        when(mContext.getSystemService(DOWNLOAD_SERVICE)).thenReturn(mDownloadManager);
+        when(mDownloadManager.getUriForDownloadedFile(anyLong())).thenReturn(mock(Uri.class));
+
+        /* Mock package size. */
+        when(mFileDescriptor.getStatSize()).thenReturn(PACKAGE_SIZE);
+        when(mDownloadManager.openDownloadedFile(anyLong())).thenReturn(mFileDescriptor);
+        when(mReleaseDetails.getSize()).thenReturn(PACKAGE_SIZE);
 
         /* Create release downloader. */
         mReleaseDownloader = new DownloadManagerReleaseDownloader(mContext, mReleaseDetails, mListener);
@@ -296,29 +317,14 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void completeDownload() {
-        mockStatic(Uri.class);
-        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
+    public void completeDownload() throws IOException {
 
         /* Complete download. */
-        mReleaseDownloader.onDownloadComplete(1L);
+        mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
-        verify(mListener).onComplete(anyLong(), anyLong());
-        verify(mListener, never()).onError(anyString());
-    }
-
-    @Test
-    public void completeDownloadFallbackOnOldDevices() {
-        mockStatic(Uri.class);
-        when(Uri.parse(anyString())).thenReturn(mock(Uri.class));
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
-
-        /* Complete download. */
-        mReleaseDownloader.onDownloadComplete(1L);
-
-        /* Verify. */
-        verify(mListener).onComplete(anyLong(), anyLong());
+        verify(mFileDescriptor).close();
+        verify(mListener).onComplete(any(Uri.class));
         verify(mListener, never()).onError(anyString());
     }
 
@@ -329,10 +335,10 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Complete download after cancelling. */
         mReleaseDownloader.cancel();
-        mReleaseDownloader.onDownloadComplete(1L);
+        mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
-        verify(mListener, never()).onComplete(anyLong(), anyLong());
+        verify(mListener, never()).onComplete(any(Uri.class));
     }
 
     @Test
@@ -341,6 +347,62 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Verify. */
         verify(mListener).onError(anyString());
+    }
+
+    @Test
+    public void errorOnOpenDownloadedFile() throws IOException {
+
+        /* Throw exception. */
+        when(mDownloadManager.openDownloadedFile(anyLong())).thenThrow(new FileNotFoundException());
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
+
+        /* Verify. */
+        verify(mListener).onError(anyString());
+    }
+
+    @Test
+    public void errorOnInvalidFile() throws IOException {
+
+        /* If size is different. */
+        when(mReleaseDetails.getSize()).thenReturn(142 * 1024L);
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
+
+        /* Verify. */
+        verify(mFileDescriptor).close();
+        verify(mListener).onError(anyString());
+    }
+
+    @Test
+    public void errorDownloadFileNotFound() throws IOException {
+
+        /* DownloadManager returns null. */
+        when(mDownloadManager.getUriForDownloadedFile(anyLong())).thenReturn(null);
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
+
+        /* Verify. */
+        verify(mFileDescriptor).close();
+        verify(mListener).onError(anyString());
+    }
+
+    @Test
+    public void exceptionOnClosingFileDescriptor() throws IOException {
+
+        /* Throw exception in invalid size callback. */
+        doThrow(new IOException()).when(mFileDescriptor).close();
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
+
+        /* Verify. */
+        verify(mFileDescriptor).close();
+        verify(mListener).onComplete(any(Uri.class));
+        verify(mListener, never()).onError(anyString());
     }
 
     @Test

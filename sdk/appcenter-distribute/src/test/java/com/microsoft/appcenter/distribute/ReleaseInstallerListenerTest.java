@@ -18,6 +18,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -26,39 +27,34 @@ import android.app.Activity;
 import android.app.DownloadManager;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.pm.PackageInstaller;
 import android.os.ParcelFileDescriptor;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.text.NumberFormat;
 
 @PrepareForTest({
         AppCenterLog.class,
         Distribute.class,
-        FileInputStream.class,
         HandlerUtils.class,
-        InstallerUtils.class,
-        PackageInstaller.SessionCallback.class,
-        ProgressDialog.class,
         ReleaseInstallerListener.class,
         Toast.class
 })
 public class ReleaseInstallerListenerTest {
+
+    private static final int SESSION_ID = 42;
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
@@ -76,9 +72,7 @@ public class ReleaseInstallerListenerTest {
     private DownloadManager mDownloadManager;
 
     @Mock
-    private android.app.ProgressDialog mMockProgressDialog;
-
-    private final int mMockSessionId = 1;
+    private android.app.ProgressDialog mProgressDialog;
 
     private ReleaseInstallerListener mReleaseInstallerListener;
 
@@ -88,24 +82,31 @@ public class ReleaseInstallerListenerTest {
         /* Mock static classes. */
         mockStatic(AppCenterLog.class);
         mockStatic(Distribute.class);
-        mockStatic(HandlerUtils.class);
-        mockStatic(InstallerUtils.class);
-        mockStatic(Toast.class);
 
         /* Mock progress dialog. */
-        whenNew(android.app.ProgressDialog.class).withAnyArguments().thenReturn(mMockProgressDialog);
-        when(mMockProgressDialog.isIndeterminate()).thenReturn(false);
+        whenNew(android.app.ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
+        when(mProgressDialog.isIndeterminate()).thenReturn(false);
+
+        /* Mock HandlerUtils. */
+        mockStatic(HandlerUtils.class);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                invocation.<Runnable>getArgument(0).run();
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Mock toast. */
+        mockStatic(Toast.class);
         when(mContext.getString(anyInt())).thenReturn("localized_message");
         when(Toast.makeText(any(Context.class), anyString(), anyInt())).thenReturn(mToast);
 
         /* Mock Distribute. */
         when(Distribute.getInstance()).thenReturn(mDistribute);
         doNothing().when(mDistribute).notifyInstallProgress(anyBoolean());
-
-        /* Mock constructors and classes. */
-        whenNew(FileInputStream.class).withAnyArguments().thenReturn(mock(FileInputStream.class));
 
         /* Mock download manager. */
         when(mDownloadManager.openDownloadedFile(anyLong())).thenReturn(mock(ParcelFileDescriptor.class));
@@ -114,73 +115,39 @@ public class ReleaseInstallerListenerTest {
         /* Create installer listener. */
         mReleaseInstallerListener = new ReleaseInstallerListener(mContext);
 
-        /* Set downloadId. */
-        mReleaseInstallerListener.setDownloadId(1);
-
         /* Init install progress dialog. */
         mReleaseInstallerListener.showInstallProgressDialog(mock(Activity.class));
 
         /* Verify call methods. */
-        verify(mMockProgressDialog).setProgressPercentFormat(isNull());
-        verify(mMockProgressDialog).setProgressNumberFormat(isNull());
-        verify(mMockProgressDialog).setIndeterminate(anyBoolean());
-    }
-
-    @After
-    public void cleanUp() {
-        mReleaseInstallerListener = null;
+        verify(mProgressDialog).setProgressPercentFormat(isNull());
+        verify(mProgressDialog).setProgressNumberFormat(isNull());
+        verify(mProgressDialog).setIndeterminate(anyBoolean());
     }
 
     @Test
-    public void throwIOExceptionAfterStartInstall() throws Exception {
-
-        /* Throw exception. */
-        when(mDownloadManager.openDownloadedFile(anyLong())).thenThrow(new FileNotFoundException());
-
-        /* Start install process. */
-        mReleaseInstallerListener.startInstall();
-
-        /* Verify that exception was called. */
-        verifyStatic(AppCenterLog.class);
-        AppCenterLog.error(anyString(), anyString(), any(FileNotFoundException.class));
-    }
-
-    @Test
-    public void releaseInstallProcessWhenOnFinnishFailureWithContext() {
+    public void releaseInstallProcessOnFinishFailureWithContext() {
 
         /* Mock progress dialog. */
-        when(mMockProgressDialog.isIndeterminate()).thenReturn(true);
-
-        /* Start install process. */
-        mReleaseInstallerListener.startInstall();
-
-        /* Verify that installPackage method was called. */
-        ArgumentCaptor<PackageInstaller.SessionCallback> sessionListener = ArgumentCaptor.forClass(PackageInstaller.SessionCallback.class);
-        verifyStatic(InstallerUtils.class);
-        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), sessionListener.capture());
+        when(mProgressDialog.isIndeterminate()).thenReturn(true);
 
         /* Emulate session status. */
-        sessionListener.getValue().onCreated(mMockSessionId);
+        mReleaseInstallerListener.onCreated(SESSION_ID);
 
         /* Verify that installer process was triggered in the Distribute. */
-        sessionListener.getValue().onActiveChanged(mMockSessionId, true);
+        mReleaseInstallerListener.onActiveChanged(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(true));
 
         /* Verity that progress dialog was updated. */
-        sessionListener.getValue().onProgressChanged(mMockSessionId, 1);
-
-        /* Verify that the handler was called and catch runnable. */
-        verifyStatic(HandlerUtils.class);
+        mReleaseInstallerListener.onProgressChanged(SESSION_ID, 1);
+        verifyStatic(HandlerUtils.class, times(2));
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that progress dialog was closed after finish install process. */
-        sessionListener.getValue().onFinished(mMockSessionId, false);
-
-        /* Verify that the handler was called again. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class, times(2));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        mReleaseInstallerListener.onFinished(SESSION_ID, false);
+        verifyStatic(HandlerUtils.class, times(3));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that installer process was triggered in the Distribute again. */
         verify(mToast).show();
@@ -189,52 +156,33 @@ public class ReleaseInstallerListenerTest {
     @Test
     public void releaseInstallerProcessWhenProgressDialogNull() {
 
-        /* Start install process. */
-        mReleaseInstallerListener.startInstall();
-
-        /* Verify that installPackage method was called. */
-        ArgumentCaptor<PackageInstaller.SessionCallback> sessionListener = ArgumentCaptor.forClass(PackageInstaller.SessionCallback.class);
-        verifyStatic(InstallerUtils.class);
-        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), sessionListener.capture());
-
         /* Emulate session status. */
-        sessionListener.getValue().onCreated(mMockSessionId);
-        sessionListener.getValue().onBadgingChanged(mMockSessionId);
+        mReleaseInstallerListener.onCreated(SESSION_ID);
+        mReleaseInstallerListener.onBadgingChanged(SESSION_ID);
 
         /* Verify that installer process was triggered in the Distribute. */
-        sessionListener.getValue().onActiveChanged(mMockSessionId, true);
+        mReleaseInstallerListener.onActiveChanged(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(true));
 
         /* Hide dialog. */
         mReleaseInstallerListener.hideInstallProgressDialog();
-
-        /* Verify that runnable was called. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic(HandlerUtils.class, times(2));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verity that progress dialog was updated. */
-        sessionListener.getValue().onProgressChanged(mMockSessionId, 1);
-
-        /* Verify that the handler was called and catch runnable. */
-        runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class, times(2));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        mReleaseInstallerListener.onProgressChanged(SESSION_ID, 1);
+        verifyStatic(HandlerUtils.class, times(3));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that the progress dialog was updated. */
-        verify(mMockProgressDialog, never()).setProgress(anyInt());
+        verify(mProgressDialog, never()).setProgress(anyInt());
 
         /* Verify that progress dialog was closed after finish install process. */
-        sessionListener.getValue().onFinished(mMockSessionId, true);
-
-        /* Verify that the handler was called again. */
-        verifyStatic(HandlerUtils.class, times(3));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
-
-        /* Verify that installer process was triggered in the Distribute again. */
+        mReleaseInstallerListener.onFinished(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class, times(4));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(false));
     }
 
@@ -242,47 +190,34 @@ public class ReleaseInstallerListenerTest {
     public void releaseInstallerProcessWhenDialogIsIndeterminate() {
 
         /* Mock progress dialog. */
-        when(mMockProgressDialog.isIndeterminate()).thenReturn(true);
-
-        /* Start install process. */
-        mReleaseInstallerListener.startInstall();
-
-        /* Verify that installPackage method was called. */
-        ArgumentCaptor<PackageInstaller.SessionCallback> sessionListener = ArgumentCaptor.forClass(PackageInstaller.SessionCallback.class);
-        verifyStatic(InstallerUtils.class);
-        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), sessionListener.capture());
+        when(mProgressDialog.isIndeterminate()).thenReturn(true);
 
         /* Emulate session status. */
-        sessionListener.getValue().onCreated(mMockSessionId);
-        sessionListener.getValue().onBadgingChanged(mMockSessionId);
+        mReleaseInstallerListener.onCreated(SESSION_ID);
+        mReleaseInstallerListener.onBadgingChanged(SESSION_ID);
 
         /* Verify that installer process was triggered in the Distribute. */
-        sessionListener.getValue().onActiveChanged(mMockSessionId, true);
+        mReleaseInstallerListener.onActiveChanged(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(true));
 
         /* Verity that progress dialog was updated. */
-        sessionListener.getValue().onProgressChanged(mMockSessionId, 1);
-
-        /* Verify that the handler was called and catch runnable. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        mReleaseInstallerListener.onProgressChanged(SESSION_ID, 1);
+        verifyStatic(HandlerUtils.class, times(2));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that the progress dialog was updated. */
-        verify(mMockProgressDialog).setProgress(anyInt());
-        verify(mMockProgressDialog).setMax(anyInt());
-        verify(mMockProgressDialog).setProgressPercentFormat(any(NumberFormat.class));
-        verify(mMockProgressDialog).setProgressNumberFormat(anyString());
-        verify(mMockProgressDialog, times(2)).setIndeterminate(anyBoolean());
+        verify(mProgressDialog).setProgress(anyInt());
+        verify(mProgressDialog).setMax(anyInt());
+        verify(mProgressDialog).setProgressPercentFormat(any(NumberFormat.class));
+        verify(mProgressDialog).setProgressNumberFormat(anyString());
+        verify(mProgressDialog, times(2)).setIndeterminate(anyBoolean());
 
         /* Verify that progress dialog was closed after finish install process. */
-        sessionListener.getValue().onFinished(mMockSessionId, true);
-
-        /* Verify that the handler was called again. */
-        verifyStatic(HandlerUtils.class, times(2));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        mReleaseInstallerListener.onFinished(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class, times(3));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that installer process was triggered in the Distribute again. */
         verify(mDistribute).notifyInstallProgress(eq(false));
@@ -291,70 +226,35 @@ public class ReleaseInstallerListenerTest {
     @Test
     public void releaseInstallerProcessWhenWithContext() {
 
-        /* Start install process. */
-        mReleaseInstallerListener.startInstall();
-
-        /* Verify that installPackage method was called. */
-        ArgumentCaptor<PackageInstaller.SessionCallback> sessionListener = ArgumentCaptor.forClass(PackageInstaller.SessionCallback.class);
-        verifyStatic(InstallerUtils.class);
-        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), sessionListener.capture());
-
         /* Emulate session status. */
-        sessionListener.getValue().onCreated(mMockSessionId);
-        sessionListener.getValue().onBadgingChanged(mMockSessionId);
+        mReleaseInstallerListener.onCreated(SESSION_ID);
+        mReleaseInstallerListener.onBadgingChanged(SESSION_ID);
 
         /* Verify that installer process was triggered in the Distribute. */
-        sessionListener.getValue().onActiveChanged(mMockSessionId, true);
+        mReleaseInstallerListener.onActiveChanged(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(true));
 
         /* Verity that progress dialog was updated. */
-        sessionListener.getValue().onProgressChanged(mMockSessionId, 1);
-
-        /* Verify that the handler was called and catch runnable. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        mReleaseInstallerListener.onProgressChanged(SESSION_ID, 1);
+        verifyStatic(HandlerUtils.class, times(2));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that the progress dialog was updated. */
-        verify(mMockProgressDialog).setProgress(anyInt());
+        verify(mProgressDialog).setProgress(anyInt());
 
         /* Verify that progress dialog was closed after finish install process. */
-        sessionListener.getValue().onFinished(mMockSessionId, true);
-
-        /* Verify that the handler was called again. */
-        verifyStatic(HandlerUtils.class, times(2));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        mReleaseInstallerListener.onFinished(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class, times(3));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that installer process was triggered in the Distribute again. */
         verify(mDistribute).notifyInstallProgress(eq(false));
     }
 
     @Test
-    public void startInstallWhenFileIsInvalid() throws FileNotFoundException {
-
-        /* Mock file description. */
-        ParcelFileDescriptor mockFileDescriptor = mock(ParcelFileDescriptor.class);
-        when(mockFileDescriptor.getStatSize()).thenReturn(0L);
-        when(mDownloadManager.openDownloadedFile(anyLong())).thenReturn(mockFileDescriptor);
-
-        /* Set total size. */
-        mReleaseInstallerListener.setTotalSize(1L);
-
-        /* Start install process. */
-        mReleaseInstallerListener.startInstall();
-
-        /* Verify that the install process never starts. */
-        verifyStatic(InstallerUtils.class, never());
-        InstallerUtils.installPackage(any(InputStream.class), any(Context.class), any(PackageInstaller.SessionCallback.class));
-    }
-
-    @Test
     public void releaseInstallerHideDialogTwice() {
-
-        /* Start install process. */
-        mReleaseInstallerListener.startInstall();
 
         /* Hide dialog. */
         mReleaseInstallerListener.hideInstallProgressDialog();

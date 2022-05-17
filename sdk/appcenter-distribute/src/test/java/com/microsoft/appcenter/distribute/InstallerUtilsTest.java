@@ -18,14 +18,18 @@ import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import android.app.PendingIntent;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 
 import org.junit.Assert;
@@ -38,13 +42,14 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 @PrepareForTest({
+        InstallerUtils.class,
         PendingIntent.class,
         Settings.class
 })
@@ -60,21 +65,28 @@ public class InstallerUtilsTest {
     private PackageInstaller mMockPackageInstaller;
 
     @Mock
+    private FileInputStream mInputStream;
+
+    @Mock
     private OutputStream mOutputStream;
 
     @Mock
     private PackageInstaller.Session mSession;
 
-    @Mock
-    private InputStream mData;
-
     @Before
-    public void setUp() throws IOException {
+    public void setUp() throws Exception {
 
         /* Mock package installer. */
         PackageManager mockPackageManager = mock(PackageManager.class);
         when(mockPackageManager.getPackageInstaller()).thenReturn(mMockPackageInstaller);
         when(mContext.getPackageManager()).thenReturn(mockPackageManager);
+
+        /* Mock input file. */
+        ContentResolver contentResolver = mock(ContentResolver.class);
+        when(mContext.getContentResolver()).thenReturn(contentResolver);
+        ParcelFileDescriptor fileDescriptor = mock(ParcelFileDescriptor.class);
+        when(contentResolver.openFileDescriptor(any(Uri.class), eq("r"))).thenReturn(fileDescriptor);
+        whenNew(FileInputStream.class).withAnyArguments().thenReturn(mInputStream);
 
         /* Mock session. */
         when(mMockPackageInstaller.openSession(anyInt())).thenReturn(mSession);
@@ -94,14 +106,14 @@ public class InstallerUtilsTest {
         PackageInstaller.SessionCallback mockSessionCallback = mock(PackageInstaller.SessionCallback.class);
 
         /* Mock data. */
-        when(mData.read(any())).thenReturn(10).thenReturn(-1);
+        when(mInputStream.read(any())).thenReturn(10).thenReturn(-1);
 
         /* Call install. */
-        InstallerUtils.installPackage(mData, mContext, mockSessionCallback);
+        InstallerUtils.installPackage(mock(Uri.class), mContext, mockSessionCallback);
 
         /* Verify. */
         verify(mMockPackageInstaller).registerSessionCallback(eq(mockSessionCallback));
-        verify(mData).close();
+        verify(mInputStream).close();
         verify(mOutputStream).close();
         verify(mSession).commit(any(IntentSender.class));
         verify(mSession, never()).abandon();
@@ -115,10 +127,10 @@ public class InstallerUtilsTest {
         when(mSession.openWrite(anyString(), anyLong(), anyLong())).thenThrow(new IOException());
 
         /* Call install method. */
-        InstallerUtils.installPackage(mData, mContext, null);
+        InstallerUtils.installPackage(mock(Uri.class), mContext, null);
 
         /* Verify. */
-        verify(mData, never()).close();
+        verify(mInputStream, never()).close();
         verify(mSession).abandon();
     }
 
@@ -129,7 +141,7 @@ public class InstallerUtilsTest {
         when(mMockPackageInstaller.createSession(any(PackageInstaller.SessionParams.class))).thenThrow(new IOException());
 
         /* Call install method. */
-        InstallerUtils.installPackage(mData, mContext, null);
+        InstallerUtils.installPackage(mock(Uri.class), mContext, null);
 
         /* Verify that the session wasn't created. */
         verify(mMockPackageInstaller, never()).openSession(anyInt());

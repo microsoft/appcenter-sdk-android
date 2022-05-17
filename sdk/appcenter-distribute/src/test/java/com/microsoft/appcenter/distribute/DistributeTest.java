@@ -52,6 +52,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
+import android.net.Uri;
 import android.os.Build;
 
 import com.microsoft.appcenter.DependencyConfiguration;
@@ -941,7 +942,7 @@ public class DistributeTest extends AbstractDistributeTest {
     public void showSystemSettingsDialogWhenPackageInstallerNull() {
 
         /* Try to show dialog. */
-        Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(1L, 1L);
+        Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(mock(Uri.class));
 
         /* Verify that log was called. */
         verifyStatic(AppCenterLog.class);
@@ -976,7 +977,7 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Show install settings dialog. */
         Distribute.getInstance().startFromBackground(mContext);
         resumeWorkflow(mActivity);
-        Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(1L, 1L);
+        Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(mock(Uri.class));
 
         /* Emulate that settings was applied. */
         Distribute.getInstance().onActivityPaused(mActivity);
@@ -984,7 +985,8 @@ public class DistributeTest extends AbstractDistributeTest {
         resumeWorkflow(mActivity);
 
         /* Verify that install progress was started. */
-        verify(mReleaseInstallerListener).startInstall();
+        verifyStatic(InstallerUtils.class);
+        InstallerUtils.installPackage(any(Uri.class), any(Context.class), any(ReleaseInstallerListener.class));
 
         /* Emulate system confirmation dialog about installing new release. */
         Distribute.getInstance().onActivityPaused(mActivity);

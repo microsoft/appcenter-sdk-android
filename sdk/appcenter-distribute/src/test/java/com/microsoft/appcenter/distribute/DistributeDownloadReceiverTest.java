@@ -11,6 +11,7 @@ import android.content.Intent;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import static android.app.DownloadManager.ACTION_NOTIFICATION_CLICKED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -21,6 +22,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+@PrepareForTest({
+        DistributeUtils.class
+})
 public class DistributeDownloadReceiverTest extends AbstractDistributeTest {
 
     DownloadManagerReceiver mDownloadManagerReceiver = new DownloadManagerReceiver();

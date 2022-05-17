@@ -14,7 +14,6 @@ import android.widget.Toast;
 import com.microsoft.appcenter.AppCenterHandler;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.Distribute;
-import com.microsoft.appcenter.distribute.InstallerUtils;
 import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -70,7 +69,6 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
         AppNameHelper.class,
         Distribute.class,
         HandlerUtils.class,
-        InstallerUtils.class,
         Toast.class,
         Uri.class
 })
@@ -191,7 +189,6 @@ public class DownloadManagerDistributeDeadlockTest {
         /* Mock Install Intent. */
         when(mInstallIntent.getData()).thenReturn(mUri);
         when(mInstallIntent.resolveActivity(eq(mPackageManager))).thenReturn(mock(ComponentName.class));
-        mockStatic(InstallerUtils.class);
 
         /* Mock app name and other string resources. */
         mockStatic(AppNameHelper.class);
@@ -249,7 +246,7 @@ public class DownloadManagerDistributeDeadlockTest {
 
             @Override
             public void run() {
-                mReleaseDownloader.onDownloadComplete(anyLong());
+                mReleaseDownloader.onDownloadComplete();
             }
         });
     }

@@ -65,6 +65,8 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
                     public void run() {
                         DownloadManager.Query query = new DownloadManager.Query();
                         query.setFilterByStatus(DownloadManager.STATUS_PENDING);
+                        // FIXME: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released
+                        // FIXME: StrictMode policy violation; ~duration=6 ms: android.os.strictmode.DiskReadViolation
                         Cursor c = downloadManager.query(query);
                         if (c.moveToFirst()) {
                             downloadManager.remove(downloadId);

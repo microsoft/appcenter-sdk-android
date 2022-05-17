@@ -8,7 +8,12 @@ package com.microsoft.appcenter.distribute.download.manager;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.widget.Toast;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
@@ -27,6 +32,9 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOW
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader {
 
@@ -176,12 +184,21 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     @WorkerThread
-    synchronized void onDownloadComplete(long totalSize) {
+    synchronized void onDownloadComplete() {
         if (isCancelled()) {
             return;
         }
+        if (!isDownloadedFileValid()) {
+            mListener.onError("Downloaded package file is invalid.");
+            return;
+        }
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        mListener.onComplete(mDownloadId, totalSize);
+        Uri localUri = getDownloadManager().getUriForDownloadedFile(mDownloadId);
+        if (localUri != null) {
+            mListener.onComplete(localUri);
+        } else {
+            mListener.onError("Downloaded file not found.");
+        }
     }
 
     @WorkerThread
@@ -191,5 +208,23 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         }
         AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
         mListener.onError(e.getMessage());
+    }
+
+    private boolean isDownloadedFileValid() {
+        ParcelFileDescriptor fileDescriptor = null;
+        try {
+            fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId);
+            return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
+        } catch (IOException e) {
+            AppCenterLog.error(LOG_TAG, "Cannot open downloaded file for id=" + mDownloadId, e);
+            return false;
+        } finally {
+            try {
+                if (fileDescriptor != null) {
+                    fileDescriptor.close();
+                }
+            } catch (IOException ignore) {
+            }
+        }
     }
 }

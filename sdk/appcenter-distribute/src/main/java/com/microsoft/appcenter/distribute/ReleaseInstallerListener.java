@@ -17,6 +17,7 @@ import android.os.ParcelFileDescriptor;
 import android.widget.Toast;
 
 import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -35,22 +36,12 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     /**
      * Total progress size.
      */
-    private final int mTotalProgressSize = 100;
+    private static final int TOTAL_PROGRESS_SIZE = 100;
 
     /**
      * Context.
      */
     private final Context mContext;
-
-    /**
-     * Download id.
-     */
-    private long mDownloadId;
-
-    /**
-     * Total size of the file.
-     */
-    private long mTotalSize;
 
     /**
      * Last download progress dialog that was shown.
@@ -65,59 +56,30 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         mContext = context;
     }
 
-    /**
-     * Set the downloadId of the downloaded file to be installed.
-     *
-     * @param downloadId downloadId of the downloaded file.
-     */
-    public synchronized void setDownloadId(long downloadId) {
-        mDownloadId = downloadId;
-    }
-
-    /**
-     * Set the total size of the downloaded file.
-     *
-     * @param totalSize downloadId of the downloaded file.
-     */
-    public synchronized void setTotalSize(long totalSize) {
-        mTotalSize = totalSize;
-    }
-
-    /**
-     * Start to install a new release.
-     */
-    public synchronized void startInstall() {
-        AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
-        ParcelFileDescriptor pfd;
-        try {
-            DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
-            pfd = downloadManager.openDownloadedFile(mDownloadId);
-            if (pfd.getStatSize() != mTotalSize) {
-                AppCenterLog.error(AppCenterLog.LOG_TAG, "Failed to start installing new release. The file is invalid.");
-                Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_failed_file_during_install_update), Toast.LENGTH_SHORT).show();
-                return;
-            }
-            InputStream data = new FileInputStream(pfd.getFileDescriptor());
-            InstallerUtils.installPackage(data, mContext, this);
-        } catch (IOException e) {
-            AppCenterLog.error(AppCenterLog.LOG_TAG, "Update can't be installed.", e);
-        }
-    }
-
+    @WorkerThread
     @Override
     public void onCreated(int sessionId) {
         AppCenterLog.debug(LOG_TAG, "The install session was created.");
     }
 
+    @WorkerThread
     @Override
     public void onBadgingChanged(int sessionId) {
     }
 
+    @WorkerThread
     @Override
     public void onActiveChanged(int sessionId, boolean active) {
-        Distribute.getInstance().notifyInstallProgress(true);
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                Distribute.getInstance().notifyInstallProgress(true);
+            }
+        });
     }
 
+    @WorkerThread
     @Override
     public void onProgressChanged(int sessionId, float progress) {
         final int downloadProgress = (int)(progress * 100);
@@ -131,6 +93,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         });
     }
 
+    @WorkerThread
     @Override
     public void onFinished(int sessionId, final boolean success) {
         AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH,"The installation of the new version is completed with the result: %s.", success ? "successful" : "failure"));
@@ -141,6 +104,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
             @Override
             public void run() {
                 if (!success) {
+                    // FIXME: StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
                     Toast.makeText(mContext, mContext.getString(R.string.appcenter_distribute_something_went_wrong_during_installing_new_release), Toast.LENGTH_SHORT).show();
                 }
                 Distribute.getInstance().notifyInstallProgress(false);
@@ -151,7 +115,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
     /**
      * Hide the install progress dialog.
      */
-    public synchronized void hideInstallProgressDialog() {
+    public void hideInstallProgressDialog() {
         AppCenterLog.debug(LOG_TAG, "Hide the install progress dialog.");
         if (mProgressDialog != null) {
             final android.app.ProgressDialog progressDialog = mProgressDialog;
@@ -175,7 +139,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
      */
     @SuppressWarnings({"deprecation", "RedundantSuppression"})
     @UiThread
-    private synchronized void updateInstallProgressDialog(final int currentSize) {
+    private void updateInstallProgressDialog(final int currentSize) {
         AppCenterLog.debug(LOG_TAG, "Update the install progress dialog.");
 
         /* If file size is known update downloadProgress bar. */
@@ -188,7 +152,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
                 mProgressDialog.setProgressPercentFormat(NumberFormat.getPercentInstance());
                 mProgressDialog.setProgressNumberFormat(mContext.getString(R.string.appcenter_distribute_install_progress_number_format));
                 mProgressDialog.setIndeterminate(false);
-                mProgressDialog.setMax(mTotalProgressSize);
+                mProgressDialog.setMax(TOTAL_PROGRESS_SIZE);
             }
             mProgressDialog.setProgress(currentSize);
         }
@@ -201,7 +165,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
      * @return install progress dialog.
      */
     @UiThread
-    public synchronized Dialog showInstallProgressDialog(Activity foregroundActivity) {
+    public Dialog showInstallProgressDialog(Activity foregroundActivity) {
         AppCenterLog.debug(LOG_TAG, "Show the install progress dialog.");
         mProgressDialog = new android.app.ProgressDialog(foregroundActivity);
         mProgressDialog.setTitle(mContext.getString(R.string.appcenter_distribute_install_dialog));

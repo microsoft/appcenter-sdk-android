@@ -380,11 +380,11 @@ public class ReleaseDownloadListenerTest {
         /* Do not notify the download. */
         when(mDistribute.notifyDownload(eq(mockReleaseDetails), any(Intent.class))).thenReturn(false);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        releaseDownloadListener.onComplete(1L, 1L);
+        releaseDownloadListener.onComplete(mock(Uri.class));
 
         /* Verify that setInstalling() is called on mandatory update. */
         verify(mDistribute).setInstalling(mockReleaseDetails);
-        verify(mDistribute).showSystemSettingsDialogOrStartInstalling(anyLong(), anyLong());
+        verify(mDistribute).showSystemSettingsDialogOrStartInstalling(any(Uri.class));
     }
 
     @Test
@@ -396,7 +396,7 @@ public class ReleaseDownloadListenerTest {
         /* Notify the download. */
         when(mDistribute.notifyDownload(eq(mockReleaseDetails), any(Intent.class))).thenReturn(true);
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        releaseDownloadListener.onComplete(1L, 1L);
+        releaseDownloadListener.onComplete(mock(Uri.class));
 
         /* Verify that startActivity() and setInstalling() are not called here. */
         verify(mContext, never()).startActivity(any(Intent.class));
@@ -417,8 +417,8 @@ public class ReleaseDownloadListenerTest {
         ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
 
         /* Verify that nothing is called and the method is exited early with false result. */
-        releaseDownloadListener.onComplete(1L, 1L);
-        verify(mDistribute, never()).showSystemSettingsDialogOrStartInstalling(anyLong(), anyLong());
+        releaseDownloadListener.onComplete(mock(Uri.class));
+        verify(mDistribute, never()).showSystemSettingsDialogOrStartInstalling(any(Uri.class));
         verify(mDistribute, never()).setInstalling(mockReleaseDetails);
     }
 }

@@ -10,7 +10,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DownloadManager;
-import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -21,14 +20,15 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import android.text.TextUtils;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.UiThread;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
-import android.text.TextUtils;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
@@ -97,8 +97,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
-import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
-import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
 
 /**
  * Distribute service.
@@ -254,6 +252,11 @@ public class Distribute extends AbstractAppCenterService {
     private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
 
     /**
+     * Uri of downloaded package file.
+     */
+    private Uri mDownloadedPackageFileUri;
+
+    /**
      * Remember if we checked download since our own process restarted.
      */
     private boolean mCheckedDownload;
@@ -380,8 +383,6 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Get the current update track (public vs private).
      */
-    // TODO Remove suppress when app uses it without reflection on jCenter
-    @SuppressWarnings("WeakerAccess")
     public static int getUpdateTrack() {
         return getInstance().getInstanceUpdateTrack();
     }
@@ -519,7 +520,7 @@ public class Distribute extends AbstractAppCenterService {
      * @return true if workflow was reset, false otherwise.
      */
     private boolean tryResetWorkflow() {
-        if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED && mCheckReleaseCallId == null) {
+        if (DistributeUtils.getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED && mCheckReleaseCallId == null) {
             mWorkflowCompleted = false;
             mBrowserOpenedOrAborted = false;
             return true;
@@ -645,7 +646,7 @@ public class Distribute extends AbstractAppCenterService {
                     return;
                 }
                 boolean isDownloading = mReleaseDownloader != null && mReleaseDownloader.isDownloading();
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || isDownloading) {
+                if (DistributeUtils.getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || isDownloading) {
                     AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
@@ -852,7 +853,7 @@ public class Distribute extends AbstractAppCenterService {
             }
 
             /* Load cached release details if process restarted and we have such a cache. */
-            int downloadState = getStoredDownloadState();
+            int downloadState = DistributeUtils.getStoredDownloadState();
             if (mReleaseDetails == null && downloadState != DOWNLOAD_STATE_COMPLETED) {
                 updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
 
@@ -1037,7 +1038,7 @@ public class Distribute extends AbstractAppCenterService {
      * Cancel notification if needed.
      */
     private synchronized void cancelNotification() {
-        if (getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
+        if (DistributeUtils.getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
             AppCenterLog.debug(LOG_TAG, "Cancel download notification.");
             DistributeUtils.cancelDownloadNotification(mContext);
         }
@@ -1147,7 +1148,7 @@ public class Distribute extends AbstractAppCenterService {
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(final String distributionGroupId, String updateToken) {
         AppCenterLog.debug(LOG_TAG, "Get latest release details...");
-        String releaseHash = computeReleaseHash(mPackageInfo);
+        String releaseHash = DistributeUtils.computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
             url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, distributionGroupId));
@@ -1407,7 +1408,7 @@ public class Distribute extends AbstractAppCenterService {
         if (mPackageInfo == null || TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             return false;
         }
-        String currentInstalledReleaseHash = computeReleaseHash(mPackageInfo);
+        String currentInstalledReleaseHash = DistributeUtils.computeReleaseHash(mPackageInfo);
         return currentInstalledReleaseHash.equals(lastDownloadedReleaseHash);
     }
 
@@ -1461,6 +1462,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param dialog existing dialog if any, always returning true when null.
      * @return true if a new dialog should be displayed, false otherwise.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean shouldRefreshDialog(@Nullable Dialog dialog) {
 
         /* We could be in another activity now, refresh dialog. */
@@ -1867,7 +1869,6 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @UiThread
-    @VisibleForTesting
     synchronized void notifyInstallProgress(boolean isInProgress) {
         mInstallInProgress = isInProgress;
         if (isInProgress) {
@@ -1898,27 +1899,32 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Start to install a new update.
      */
-    synchronized private void installUpdate() {
+    @UiThread
+    private synchronized void installUpdate() {
         if (mReleaseInstallerListener == null) {
             AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
             return;
         }
-        mReleaseInstallerListener.startInstall();
+        post(new Runnable() {
+
+            @Override
+            public void run() {
+                AppCenterLog.debug(AppCenterLog.LOG_TAG, "Start installing new release...");
+                InstallerUtils.installPackage(mDownloadedPackageFileUri, mContext, mReleaseInstallerListener);
+            }
+        });
     }
 
     /**
      * Ask permission on start application after update or start to install a new update.
-     *
-     * @param downloadId downloadId of downloaded file.
-     * @param totalSize total size of downloaded file.
      */
-    synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId, long totalSize) {
+    @UiThread
+    synchronized void showSystemSettingsDialogOrStartInstalling(@NonNull Uri localUri) {
         if (mReleaseInstallerListener == null) {
             AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
             return;
         }
-        mReleaseInstallerListener.setDownloadId(downloadId);
-        mReleaseInstallerListener.setTotalSize(totalSize);
+        mDownloadedPackageFileUri = localUri;
 
         /* Check permission on start application after update. */
         if (InstallerUtils.isSystemAlertWindowsEnabled(mContext)) {
@@ -1952,7 +1958,7 @@ public class Distribute extends AbstractAppCenterService {
          * We should not hold the install any longer now, even if the async task was long enough
          * for app to be in background again, we should show install U.I. now.
          */
-        if (mForegroundActivity != null || getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
+        if (mForegroundActivity != null || DistributeUtils.getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
             return false;
         }
 
