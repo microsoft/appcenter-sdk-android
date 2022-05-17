@@ -18,6 +18,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
@@ -37,6 +38,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
@@ -79,14 +82,25 @@ public class ReleaseInstallerListenerTest {
         /* Mock static classes. */
         mockStatic(AppCenterLog.class);
         mockStatic(Distribute.class);
-        mockStatic(HandlerUtils.class);
-        mockStatic(Toast.class);
 
         /* Mock progress dialog. */
         whenNew(android.app.ProgressDialog.class).withAnyArguments().thenReturn(mProgressDialog);
         when(mProgressDialog.isIndeterminate()).thenReturn(false);
 
+        /* Mock HandlerUtils. */
+        mockStatic(HandlerUtils.class);
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) {
+                invocation.<Runnable>getArgument(0).run();
+                return null;
+            }
+        }).when(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
+
         /* Mock toast. */
+        mockStatic(Toast.class);
         when(mContext.getString(anyInt())).thenReturn("localized_message");
         when(Toast.makeText(any(Context.class), anyString(), anyInt())).thenReturn(mToast);
 
@@ -121,23 +135,19 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that installer process was triggered in the Distribute. */
         mReleaseInstallerListener.onActiveChanged(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(true));
 
         /* Verity that progress dialog was updated. */
         mReleaseInstallerListener.onProgressChanged(SESSION_ID, 1);
-
-        /* Verify that the handler was called and catch runnable. */
-        verifyStatic(HandlerUtils.class);
+        verifyStatic(HandlerUtils.class, times(2));
         HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that progress dialog was closed after finish install process. */
         mReleaseInstallerListener.onFinished(SESSION_ID, false);
-
-        /* Verify that the handler was called again. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class, times(2));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic(HandlerUtils.class, times(3));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that installer process was triggered in the Distribute again. */
         verify(mToast).show();
@@ -152,38 +162,27 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that installer process was triggered in the Distribute. */
         mReleaseInstallerListener.onActiveChanged(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(true));
 
         /* Hide dialog. */
         mReleaseInstallerListener.hideInstallProgressDialog();
-
-        /* Verify that runnable was called. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic(HandlerUtils.class, times(2));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verity that progress dialog was updated. */
         mReleaseInstallerListener.onProgressChanged(SESSION_ID, 1);
-
-        /* Verify that the handler was called and catch runnable. */
-        runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class, times(2));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic(HandlerUtils.class, times(3));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that the progress dialog was updated. */
         verify(mProgressDialog, never()).setProgress(anyInt());
 
         /* Verify that progress dialog was closed after finish install process. */
         mReleaseInstallerListener.onFinished(SESSION_ID, true);
-
-        /* Verify that the handler was called again. */
-        verifyStatic(HandlerUtils.class, times(3));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
-
-        /* Verify that installer process was triggered in the Distribute again. */
+        verifyStatic(HandlerUtils.class, times(4));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(false));
     }
 
@@ -199,16 +198,14 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that installer process was triggered in the Distribute. */
         mReleaseInstallerListener.onActiveChanged(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(true));
 
         /* Verity that progress dialog was updated. */
         mReleaseInstallerListener.onProgressChanged(SESSION_ID, 1);
-
-        /* Verify that the handler was called and catch runnable. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic(HandlerUtils.class, times(2));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that the progress dialog was updated. */
         verify(mProgressDialog).setProgress(anyInt());
@@ -219,11 +216,8 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that progress dialog was closed after finish install process. */
         mReleaseInstallerListener.onFinished(SESSION_ID, true);
-
-        /* Verify that the handler was called again. */
-        verifyStatic(HandlerUtils.class, times(2));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic(HandlerUtils.class, times(3));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that installer process was triggered in the Distribute again. */
         verify(mDistribute).notifyInstallProgress(eq(false));
@@ -238,27 +232,22 @@ public class ReleaseInstallerListenerTest {
 
         /* Verify that installer process was triggered in the Distribute. */
         mReleaseInstallerListener.onActiveChanged(SESSION_ID, true);
+        verifyStatic(HandlerUtils.class);
+        HandlerUtils.runOnUiThread(any(Runnable.class));
         verify(mDistribute).notifyInstallProgress(eq(true));
 
         /* Verity that progress dialog was updated. */
         mReleaseInstallerListener.onProgressChanged(SESSION_ID, 1);
-
-        /* Verify that the handler was called and catch runnable. */
-        ArgumentCaptor<Runnable> runnable = ArgumentCaptor.forClass(Runnable.class);
-        verifyStatic(HandlerUtils.class);
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic(HandlerUtils.class, times(2));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that the progress dialog was updated. */
         verify(mProgressDialog).setProgress(anyInt());
 
         /* Verify that progress dialog was closed after finish install process. */
         mReleaseInstallerListener.onFinished(SESSION_ID, true);
-
-        /* Verify that the handler was called again. */
-        verifyStatic(HandlerUtils.class, times(2));
-        HandlerUtils.runOnUiThread(runnable.capture());
-        runnable.getValue().run();
+        verifyStatic(HandlerUtils.class, times(3));
+        HandlerUtils.runOnUiThread(any(Runnable.class));
 
         /* Verify that installer process was triggered in the Distribute again. */
         verify(mDistribute).notifyInstallProgress(eq(false));

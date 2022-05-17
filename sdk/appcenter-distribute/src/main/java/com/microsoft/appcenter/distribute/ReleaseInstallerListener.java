@@ -17,6 +17,7 @@ import android.os.ParcelFileDescriptor;
 import android.widget.Toast;
 
 import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.HandlerUtils;
@@ -55,20 +56,30 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         mContext = context;
     }
 
+    @WorkerThread
     @Override
     public void onCreated(int sessionId) {
         AppCenterLog.debug(LOG_TAG, "The install session was created.");
     }
 
+    @WorkerThread
     @Override
     public void onBadgingChanged(int sessionId) {
     }
 
+    @WorkerThread
     @Override
     public void onActiveChanged(int sessionId, boolean active) {
-        Distribute.getInstance().notifyInstallProgress(true);
+        HandlerUtils.runOnUiThread(new Runnable() {
+
+            @Override
+            public void run() {
+                Distribute.getInstance().notifyInstallProgress(true);
+            }
+        });
     }
 
+    @WorkerThread
     @Override
     public void onProgressChanged(int sessionId, float progress) {
         final int downloadProgress = (int)(progress * 100);
@@ -82,6 +93,7 @@ public class ReleaseInstallerListener extends PackageInstaller.SessionCallback {
         });
     }
 
+    @WorkerThread
     @Override
     public void onFinished(int sessionId, final boolean success) {
         AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH,"The installation of the new version is completed with the result: %s.", success ? "successful" : "failure"));
