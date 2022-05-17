@@ -25,6 +25,8 @@
     <string name="appcenter_distribute_install_dialog" tools:ignore="MissingTranslation">Installing...</string>
     <string name="appcenter_distribute_install_ready_title">App update downloaded</string>
     <string name="appcenter_distribute_install_ready_message">%1$s %2$s (%3$d) has been downloaded and is ready to be installed.</string>
+    <string name="appcenter_distribute_install_completed_title" tools:ignore="MissingTranslation">App update installed</string>
+    <string name="appcenter_distribute_install_completed_message" tools:ignore="MissingTranslation">%1$s %2$s (%3$d) has been installed.</string>
     <string name="appcenter_distribute_install">Install</string>
     <string name="appcenter_distribute_notification_category">App updates</string>
     <string name="appcenter_distribute_update_failed_dialog_title">In-app updates disabled</string>

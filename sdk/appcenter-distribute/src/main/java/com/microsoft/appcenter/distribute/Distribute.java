@@ -476,11 +476,7 @@ public class Distribute extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
-        try {
-            mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
-        } catch (PackageManager.NameNotFoundException e) {
-            AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
-        }
+        mPackageInfo = DeviceInfoHelper.getPackageInfo(context);
 
         /*
          * Apply enabled state is called by this method, we need fields to be initialized before.
@@ -1021,7 +1017,7 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void cancelNotification() {
         if (DistributeUtils.getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
             AppCenterLog.debug(LOG_TAG, "Cancel download notification.");
-            DistributeUtils.cancelDownloadNotification(mContext);
+            DistributeUtils.cancelNotification(mContext);
         }
     }
 
@@ -1872,7 +1868,8 @@ public class Distribute extends AbstractAppCenterService {
 
         /* Post notification. */
         AppCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
-        DistributeUtils.postDownloadNotification(mContext, getInstallReadyMessage(), intent);
+        String title = mContext.getString(R.string.appcenter_distribute_install_ready_title);
+        DistributeUtils.postNotification(mContext, title, getInstallReadyMessage(), intent);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
 
         /* Reset check download flag to show install U.I. on resume if notification ignored. */

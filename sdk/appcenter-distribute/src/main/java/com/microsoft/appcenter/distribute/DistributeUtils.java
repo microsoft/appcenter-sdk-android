@@ -70,7 +70,7 @@ class DistributeUtils {
         return Distribute.class.getName().hashCode();
     }
 
-    static void postDownloadNotification(@NonNull Context context, String message, Intent intent) {
+    static void postNotification(@NonNull Context context, String title, String message, Intent intent) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification.Builder builder;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -89,8 +89,8 @@ class DistributeUtils {
             pendingIntentFlag = PendingIntent.FLAG_IMMUTABLE;
         }
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, pendingIntentFlag);
-        builder.setTicker(context.getString(R.string.appcenter_distribute_install_ready_title))
-                .setContentTitle(context.getString(R.string.appcenter_distribute_install_ready_title))
+        builder.setTicker(title)
+                .setContentTitle(title)
                 .setContentText(message)
                 .setSmallIcon(context.getApplicationInfo().icon)
                 .setStyle(new Notification.BigTextStyle().bigText(message))
@@ -100,7 +100,7 @@ class DistributeUtils {
         notificationManager.notify(DistributeUtils.getNotificationId(), notification);
     }
 
-    static void cancelDownloadNotification(@NonNull Context context) {
+    static void cancelNotification(@NonNull Context context) {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(DistributeUtils.getNotificationId());
     }
