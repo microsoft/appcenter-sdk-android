@@ -5,203 +5,176 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.INSTALL_STATUS_ACTION;
 import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.MY_PACKAGE_REPLACED_ACTION;
-import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.START_ACTION;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInstaller;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.AppNameHelper;
 
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 @PrepareForTest({
         AppCenterLog.class,
-        AppCenterPackageInstallerReceiver.class,
-        Toast.class
+        AppNameHelper.class,
+        Distribute.class,
+        DistributeUtils.class
 })
+@RunWith(PowerMockRunner.class)
 public class AppCenterPackageInstallerReceiverTest {
-
-    @Rule
-    public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
     private Context mContext;
 
     @Mock
-    private Activity mActivity;
-
-    @Mock
     private Intent mIntent;
 
     @Mock
-    private PackageManager mPackageManager;
-
-    @Mock
-    private Bundle mBundle;
-
-    @Mock
-    private Intent mConfirmIntent;
-
-    @Mock
-    private Toast mToast;
+    private Bundle mExtra;
 
     private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
 
+    private void installStatus(int status) {
+        when(mIntent.getAction()).thenReturn(INSTALL_STATUS_ACTION);
+        when(mExtra.getInt(eq(PackageInstaller.EXTRA_STATUS))).thenReturn(status);
+    }
+
     @Before
     public void setUp() {
+        when(mIntent.getExtras()).thenReturn(mExtra);
 
         /* Mock static classes. */
         mockStatic(AppCenterLog.class);
-        mockStatic(Toast.class);
-
-        /* Mock methods. */
-        when(mContext.getPackageManager()).thenReturn(mPackageManager);
-        when(mContext.getPackageName()).thenReturn("com.contoso");
-        when(mContext.getString(anyInt())).thenReturn("localized_message");
-        when(mActivity.getApplicationContext()).thenReturn(mContext);
-
-        /* Mock toast. */
-        when(Toast.makeText(any(Context.class), anyString(), anyInt())).thenReturn(mToast);
+        mockStatic(DistributeUtils.class);
 
         /* Init receiver. */
-        mAppCenterPackageInstallerReceiver = spy(new AppCenterPackageInstallerReceiver());
-    }
-
-    @After
-    public void cleanUp() {
-        mAppCenterPackageInstallerReceiver = null;
+        mAppCenterPackageInstallerReceiver = new AppCenterPackageInstallerReceiver();
     }
 
     @Test
-    public void onReceiveWithActionMyPackageReplace() {
+    public void receiveMyPackageReplaced() {
+        mockStatic(AppNameHelper.class);
+        when(AppNameHelper.getAppName(mContext)).thenReturn("Contoso");
+        Intent intent = mock(Intent.class);
+        when(DistributeUtils.getResumeAppIntent(mContext)).thenReturn(intent);
         when(mIntent.getAction()).thenReturn(MY_PACKAGE_REPLACED_ACTION);
-        when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(mock(Intent.class));
+        when(mContext.getString(R.string.appcenter_distribute_install_completed_title))
+                .thenReturn("Title");
+        when(mContext.getString(R.string.appcenter_distribute_install_completed_message))
+                .thenReturn("%1$s %2$s (%3$d)");
 
         /* Call method with MY_PACKAGE_REPLACED_ACTION action. */
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
-        /* Verify that activity was started. */
-        verify(mContext).startActivity(any());
+        verifyStatic(DistributeUtils.class);
+        DistributeUtils.postNotification(eq(mContext), anyString(), anyString(), eq(intent));
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusPendingUserAction() {
-        when(mIntent.getAction()).thenReturn(START_ACTION);
-        when(mIntent.getExtras()).thenReturn(mBundle);
-        when(mBundle.getInt(eq(PackageInstaller.EXTRA_STATUS))).thenReturn(PackageInstaller.STATUS_PENDING_USER_ACTION);
-        when(mBundle.get(eq(Intent.EXTRA_INTENT))).thenReturn(mConfirmIntent);
+    public void receiveInstallStatusPendingUserAction() {
+        installStatus(PackageInstaller.STATUS_PENDING_USER_ACTION);
+        Intent confirmIntent = mock(Intent.class);
+        when(mExtra.get(eq(Intent.EXTRA_INTENT))).thenReturn(confirmIntent);
 
         /* Call method with STATUS_PENDING_USER_ACTION action. */
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify that activity was started. */
-        verify(mContext).startActivity(mConfirmIntent);
+        verify(mContext).startActivity(eq(confirmIntent));
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusSuccess() {
-        when(mIntent.getAction()).thenReturn(START_ACTION);
-        when(mIntent.getExtras()).thenReturn(mBundle);
-        when(mBundle.getInt(eq(PackageInstaller.EXTRA_STATUS))).thenReturn(PackageInstaller.STATUS_SUCCESS);
-        when(mBundle.get(eq(Intent.EXTRA_INTENT))).thenReturn(mConfirmIntent);
+    public void receiveInstallStatusSuccess() {
+        installStatus(PackageInstaller.STATUS_SUCCESS);
 
         /* Call method with STATUS_SUCCESS action. */
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify. */
         verifyStatic(AppCenterLog.class);
-        AppCenterLog.debug(eq(LOG_TAG), eq("Application was successfully updated."));
+        AppCenterLog.info(eq(LOG_TAG), eq("Application was successfully updated."));
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusFailure() {
-        onReceiveWithStartFailureAction(PackageInstaller.STATUS_FAILURE);
+    public void receiveInstallStatusFailure() {
+        receiveInstallStatusFailure(PackageInstaller.STATUS_FAILURE);
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusFailureAborted() {
-        onReceiveWithStartFailureAction(PackageInstaller.STATUS_FAILURE_ABORTED);
+    public void receiveInstallStatusFailureAborted() {
+        receiveInstallStatusFailure(PackageInstaller.STATUS_FAILURE_ABORTED);
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusFailureBlocked() {
-        onReceiveWithStartFailureAction(PackageInstaller.STATUS_FAILURE_BLOCKED);
+    public void receiveInstallStatusFailureBlocked() {
+        receiveInstallStatusFailure(PackageInstaller.STATUS_FAILURE_BLOCKED);
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusFailureConflict() {
-        onReceiveWithStartFailureAction(PackageInstaller.STATUS_FAILURE_CONFLICT);
+    public void receiveInstallStatusFailureConflict() {
+        receiveInstallStatusFailure(PackageInstaller.STATUS_FAILURE_CONFLICT);
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusFailureIncompatible() {
-        onReceiveWithStartFailureAction(PackageInstaller.STATUS_FAILURE_INCOMPATIBLE);
+    public void receiveInstallStatusFailureIncompatible() {
+        receiveInstallStatusFailure(PackageInstaller.STATUS_FAILURE_INCOMPATIBLE);
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusFailureInvalid() {
-        onReceiveWithStartFailureAction(PackageInstaller.STATUS_FAILURE_INVALID);
+    public void receiveInstallStatusFailureInvalid() {
+        receiveInstallStatusFailure(PackageInstaller.STATUS_FAILURE_INVALID);
     }
 
     @Test
-    public void onReceiveWithStartIntentWithStatusFailureStorage() {
-        onReceiveWithStartFailureAction(PackageInstaller.STATUS_FAILURE_STORAGE);
+    public void receiveInstallStatusFailureStorage() {
+        receiveInstallStatusFailure(PackageInstaller.STATUS_FAILURE_STORAGE);
     }
 
-    private void onReceiveWithStartFailureAction(int status) {
-        when(mIntent.getAction()).thenReturn(START_ACTION);
-        when(mIntent.getExtras()).thenReturn(mBundle);
-        when(mBundle.getInt(eq(PackageInstaller.EXTRA_STATUS))).thenReturn(status);
-        when(mBundle.get(eq(Intent.EXTRA_INTENT))).thenReturn(mConfirmIntent);
+    private void receiveInstallStatusFailure(int status) {
+        installStatus(status);
+
+        mockStatic(Distribute.class);
+        Distribute distribute = mock(Distribute.class);
+        when(Distribute.getInstance()).thenReturn(distribute);
 
         /* Call method with failure action. */
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify that log was called. */
+        verify(distribute).showInstallingErrorToast();
         verifyStatic(AppCenterLog.class);
-        AppCenterLog.debug(eq(LOG_TAG), eq("Failed to install a new release with status: " + status + ". Error message: null."));
+        AppCenterLog.error(eq(LOG_TAG), eq("Failed to install a new release with status: " + status + ". Error message: null."));
     }
 
     @Test
     public void onReceiveWithStartIntentWithUnrecognizedStatus() {
-
-        /* Create unrecognized status  */
-        int status = 10;
-        when(mIntent.getAction()).thenReturn(START_ACTION);
-        when(mIntent.getExtras()).thenReturn(mBundle);
-        when(mBundle.getInt(eq(PackageInstaller.EXTRA_STATUS))).thenReturn(status);
-        when(mBundle.get(eq(Intent.EXTRA_INTENT))).thenReturn(mConfirmIntent);
-        when(Toast.makeText(any(Context.class), eq("Failed during installing new release."), anyInt())).thenReturn(mToast);
+        final int UNKNOWN_STATUS = 42;
+        installStatus(UNKNOWN_STATUS);
 
         /* Call method with wrong action. */
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         /* Verify that log was called. */
         verifyStatic(AppCenterLog.class);
-        AppCenterLog.debug(eq(LOG_TAG), eq("Unrecognized status received from installer: " + status));
+        AppCenterLog.warn(eq(LOG_TAG), eq("Unrecognized status received from installer: " + UNKNOWN_STATUS));
     }
 
     @Test
@@ -213,7 +186,7 @@ public class AppCenterPackageInstallerReceiverTest {
 
         /* Verify that log was called. */
         verifyStatic(AppCenterLog.class);
-        AppCenterLog.debug(eq(LOG_TAG), eq("Unrecognized action UnknownAction - do nothing."));
+        AppCenterLog.warn(eq(LOG_TAG), eq("Unrecognized action UnknownAction - do nothing."));
     }
 }
 

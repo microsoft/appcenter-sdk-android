@@ -5,9 +5,6 @@
 
 package com.microsoft.appcenter.distribute;
 
-import static android.app.PendingIntent.FLAG_MUTABLE;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -28,25 +25,19 @@ import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 @PrepareForTest({
         InstallerUtils.class,
@@ -145,103 +136,5 @@ public class InstallerUtilsTest {
 
         /* Verify that the session wasn't created. */
         verify(mMockPackageInstaller, never()).openSession(anyInt());
-    }
-
-    @Test
-    public void isSystemAlertWindowsEnabledReturnsTrueIfBuildVersionLowerQ() throws Exception {
-
-        /* Mock SDK_INT to LOLLIPOP. */
-        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.LOLLIPOP);
-
-        /* Set canDrawOverlays to false. */
-        mockStatic(Settings.class);
-        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
-
-        /* Check if system alert windows is enabled. */
-        assertTrue(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
-
-        /* Set canDrawOverlays to true. */
-        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(true);
-
-        /* Verify canDrawOverlays == true doesn't affect the return value of isSystemAlertWindowsEnabled and it still returns true. */
-        assertTrue(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
-
-        /* Also check on P. */
-        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.P);
-
-        /* Verify that system alert windows is enabled. */
-        assertTrue(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
-    }
-
-    @Test
-    public void isSystemAlertWindowsEnabledReturnsFalseIfBuildVersionQorHigherAndCanDrawOverlay() throws Exception {
-
-        /* Mock SDK_INT to Q. */
-        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.Q);
-
-        /* Set canDrawOverlays to true. */
-        mockStatic(Settings.class);
-        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(true);
-
-        /* Verify that system alert windows is enabled. */
-        assertTrue(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
-    }
-
-    @Test
-    public void isSystemAlertWindowsEnabledReturnsFalseIfBuildVersionQorHigherAndCannotDrawOverlay() throws Exception {
-
-        /* Mock SDK_INT to Q. */
-        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.Q);
-
-        /* Set canDrawOverlays to false. */
-        mockStatic(Settings.class);
-        when(Settings.canDrawOverlays(any(Context.class))).thenReturn(false);
-
-        /* Verify that system alert windows is not enabled. */
-        assertFalse(InstallerUtils.isSystemAlertWindowsEnabled(mContext));
-    }
-
-    @Test
-    public void createIntentSenderOnAndroidS() throws Exception {
-
-        /* Mock SDK_INT to S. */
-        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.S);
-        createIntentSender(FLAG_MUTABLE);
-    }
-
-    @Test
-    public void createIntentSenderOnAndroidLowS() throws Exception {
-
-        /* Mock SDK_INT to M. */
-        setFinalStatic(Build.VERSION.class.getField("SDK_INT"), Build.VERSION_CODES.M);
-        createIntentSender(0);
-    }
-
-    private void createIntentSender(final int expectedFlag) {
-        mockStatic(PendingIntent.class);
-        final PendingIntent mockIntent = mock(PendingIntent.class);
-        when(mockIntent.getIntentSender()).thenReturn(mock(IntentSender.class));
-        when(PendingIntent.getBroadcast(any(Context.class), anyInt(), any(Intent.class), anyInt())).then(new Answer<PendingIntent>() {
-            @Override
-            public PendingIntent answer(InvocationOnMock invocation) {
-                int flag = (int)invocation.getArguments()[3];
-                Assert.assertEquals(flag, expectedFlag);
-                return mockIntent;
-            }
-        });
-        InstallerUtils.createIntentSender(mContext, 1);
-    }
-
-    /**
-     * This is used ot set a specific Build.VERSION.SDK_INT for tests.
-     * @param field static field
-     * @param newValue new value for the given field
-     */
-    static void setFinalStatic(Field field, Object newValue) throws Exception {
-        field.setAccessible(true);
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
-        field.set(null, newValue);
     }
 }

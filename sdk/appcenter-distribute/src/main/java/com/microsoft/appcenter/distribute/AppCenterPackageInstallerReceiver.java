@@ -72,7 +72,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
         } else if (INSTALL_STATUS_ACTION.equals(action)) {
             onInstallStatus(context, intent);
         } else {
-            AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized action %s - do nothing.", action));
+            AppCenterLog.warn(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized action %s - do nothing.", action));
         }
     }
 
@@ -118,7 +118,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
                 onInstallStatusFailure(status, message);
                 break;
             default:
-                AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized status received from installer: %s", status));
+                AppCenterLog.warn(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized status received from installer: %s", status));
         }
     }
 
@@ -129,11 +129,11 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
     }
 
     private void onInstallStatusSuccess() {
-        AppCenterLog.debug(LOG_TAG, "Application was successfully updated.");
+        AppCenterLog.info(LOG_TAG, "Application was successfully updated.");
     }
 
     private void onInstallStatusFailure(int status, String message) {
-        AppCenterLog.debug(LOG_TAG, String.format(Locale.ENGLISH, "Failed to install a new release with status: %s. Error message: %s.", status, message));
+        AppCenterLog.error(LOG_TAG, String.format(Locale.ENGLISH, "Failed to install a new release with status: %s. Error message: %s.", status, message));
         Distribute.getInstance().showInstallingErrorToast();
     }
 }

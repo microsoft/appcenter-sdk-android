@@ -65,6 +65,7 @@ import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.context.SessionContext;
@@ -103,10 +104,10 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 })
 public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
-    private void testDistributeInactiveOnPrivateTrack() throws PackageManager.NameNotFoundException {
+    private void testDistributeInactiveOnPrivateTrack() {
 
         /* Check browser not opened. */
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
@@ -146,13 +147,13 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void doNothingIfEnabledForDebuggableBuildNotSet() throws PackageManager.NameNotFoundException {
+    public void doNothingIfEnabledForDebuggableBuildNotSet() {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
         testDistributeInactiveOnPrivateTrack();
     }
 
     @Test
-    public void doNothingWhenEnabledForDebuggableBuildSetToFalse() throws PackageManager.NameNotFoundException {
+    public void doNothingWhenEnabledForDebuggableBuildSetToFalse() {
         Whitebox.setInternalState(mApplicationInfo, "flags", ApplicationInfo.FLAG_DEBUGGABLE);
         Distribute.setEnabledForDebuggableBuild(false);
         testDistributeInactiveOnPrivateTrack();
@@ -170,7 +171,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         mockStatic(UUID.class);
         when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
 
         /* Start and resume: open browser. */
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
@@ -198,19 +199,19 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void doNothingIfInstallComesFromStore() throws PackageManager.NameNotFoundException {
+    public void doNothingIfInstallComesFromStore() {
         when(InstallerUtils.isInstalledFromAppStore(anyString(), any(Context.class))).thenReturn(true);
         testDistributeInactiveOnPrivateTrack();
     }
 
     @Test
-    public void doNothingIfUpdateSetupFailedMessageExist() throws PackageManager.NameNotFoundException {
+    public void doNothingIfUpdateSetupFailedMessageExist() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message_from_backend");
         testDistributeInactiveOnPrivateTrack();
     }
 
     @Test
-    public void doNothingIfReleaseHashEqualsToFailedPackageHash() throws PackageManager.NameNotFoundException {
+    public void doNothingIfReleaseHashEqualsToFailedPackageHash() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
         mockStatic(DistributeUtils.class);
 
@@ -220,8 +221,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void checkForUpdateIfIgnoredSideLoadingButSwitchedToPublicTrack() throws PackageManager.NameNotFoundException {
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+    public void checkForUpdateIfIgnoredSideLoadingButSwitchedToPublicTrack() {
+        withoutTesterApp();
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
         mockStatic(DistributeUtils.class);
 
@@ -246,9 +247,10 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void continueIfReleaseHashNotEqualsToFailedPackageHash() throws PackageManager.NameNotFoundException {
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
-        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY)).thenReturn("some_hash");
+    public void continueIfReleaseHashNotEqualsToFailedPackageHash() {
+        withoutTesterApp();
+        when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY))
+                .thenReturn("some_hash");
         mockStatic(DistributeUtils.class);
 
         /* Mock the computeReleaseHash to other_hash value. */
@@ -383,8 +385,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void postponeBrowserIfNoNetwork() throws Exception {
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+    public void postponeBrowserIfNoNetwork() {
+        withoutTesterApp();
 
         /* Check browser not opened if no network. */
         when(mNetworkStateHelper.isNetworkConnected()).thenReturn(false);
@@ -547,7 +549,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         mockStatic(UUID.class);
         when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
 
         /* Start and resume: open browser. */
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
@@ -576,8 +578,8 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         mockStatic(UUID.class);
         when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
         when(mContext.getPackageName()).thenReturn(DistributeUtils.TESTER_APP_PACKAGE_NAME);
+        withTesterApp();
 
         /* Start and resume: open browser. */
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
@@ -602,7 +604,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
+        withTesterApp();
 
         /* Start and resume: open tester app. */
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
@@ -651,7 +653,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         url += "&" + PARAMETER_REQUEST_ID + "=" + requestId;
         url += "&" + PARAMETER_PLATFORM + "=" + PARAMETER_PLATFORM_VALUE;
         whenNew(Intent.class).withArguments(Intent.ACTION_VIEW, Uri.parse(url)).thenReturn(mock(Intent.class));
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenReturn(mock(PackageInfo.class));
+        withTesterApp();
 
         /*
          * Start and resume: open tester app.
@@ -742,7 +744,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         mockStatic(UUID.class);
         when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
 
         /* Start and resume: open browser. */
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
@@ -870,7 +872,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         mockStatic(UUID.class);
         when(UUID.randomUUID()).thenReturn(requestId);
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_REQUEST_ID)).thenReturn(requestId.toString());
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
 
         /* Start and resume: open browser. */
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
@@ -898,17 +900,14 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void computeHashFailsWhenOpeningBrowser() throws Exception {
+    public void computeHashFailsWhenOpeningBrowser() {
 
-        /* Mock package manager. */
-        when(mPackageManager.getPackageInfo("com.contoso", 0)).thenThrow(new PackageManager.NameNotFoundException());
+        /* Mock package info. */
+        when(DeviceInfoHelper.getPackageInfo(any(Context.class))).thenReturn(null);
 
         /* Start and resume: open browser. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Verify only tried once. */
-        verify(mPackageManager).getPackageInfo("com.contoso", 0);
 
         /* And verify we didn't open browser. */
         verifyStatic(BrowserUtils.class, never());
@@ -919,7 +918,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
 
     @Test
     public void disableBeforeStoreToken() throws Exception {
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
 
         /* Start and resume: open browser. */
         UUID requestId = UUID.randomUUID();

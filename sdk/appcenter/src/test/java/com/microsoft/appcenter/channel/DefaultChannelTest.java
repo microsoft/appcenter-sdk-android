@@ -9,10 +9,10 @@ import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,7 +26,6 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.Flags;
@@ -803,7 +802,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     public void packageManagerIsBroken() throws Persistence.PersistenceException, DeviceInfoHelper.DeviceInfoException {
 
         /* Setup mocking to make device properties generation fail. */
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class)))
+                .thenThrow(new DeviceInfoHelper.DeviceInfoException("mock"));
         Persistence persistence = mock(Persistence.class);
         DefaultChannel channel = new DefaultChannel(mock(Context.class), null, persistence, mock(AppCenterIngestion.class), mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, null);

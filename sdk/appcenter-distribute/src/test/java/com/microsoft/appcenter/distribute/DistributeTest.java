@@ -833,7 +833,6 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Prepare data. */
         mockStatic(DistributeUtils.class);
-        mockStatic(DeviceInfoHelper.class);
         when(mReleaseDetails.getVersion()).thenReturn(1);
         when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(0);
@@ -936,66 +935,6 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Stop installing and verify thad dialog was hide. */
         Distribute.getInstance().notifyInstallProgress(false);
         verify(mReleaseInstallerListener, times(2)).hideInstallProgressDialog();
-    }
-
-    @Test
-    public void showSystemSettingsDialogWhenPackageInstallerNull() {
-
-        /* Try to show dialog. */
-        Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(mock(Uri.class));
-
-        /* Verify that log was called. */
-        verifyStatic(AppCenterLog.class);
-        AppCenterLog.debug(eq(LOG_TAG), eq("Installing couldn't start due to the release installer wasn't initialized."));
-    }
-
-    @Test
-    public void showUpdateDialogAfterShowingInstallReleaseDialogTest() {
-
-        /* Mock App Center log. */
-        mockStatic(AppCenterLog.class);
-
-        /* Mock system alert settings. */
-        mockStatic(InstallerUtils.class);
-        when(InstallerUtils.isSystemAlertWindowsEnabled(any(Context.class))).thenReturn(false);
-
-        /* Mock distribute utils. */
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1).thenReturn(1);
-
-        /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
-        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
-
-        /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-        when(mReleaseDownloader.isDownloading()).thenReturn(false);
-
-        /* Prepare distribute listener. */
-        Distribute.setListener(Mockito.mock(DistributeListener.class));
-
-        /* Show install settings dialog. */
-        Distribute.getInstance().startFromBackground(mContext);
-        resumeWorkflow(mActivity);
-        Distribute.getInstance().showSystemSettingsDialogOrStartInstalling(mock(Uri.class));
-
-        /* Emulate that settings was applied. */
-        Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.getInstance().onActivityStopped(mActivity);
-        resumeWorkflow(mActivity);
-
-        /* Verify that install progress was started. */
-        verifyStatic(InstallerUtils.class);
-        InstallerUtils.installPackage(any(Uri.class), any(Context.class), any(ReleaseInstallerListener.class));
-
-        /* Emulate system confirmation dialog about installing new release. */
-        Distribute.getInstance().onActivityPaused(mActivity);
-        Distribute.getInstance().onActivityStopped(mActivity);
-        resumeWorkflow(mActivity);
-
-        /* Verify that SDK wasn't crashed with NPE and showed dialog. */
-        verifyStatic(AppCenterLog.class);
-        AppCenterLog.debug(eq(LOG_TAG), eq("Show default update dialog."));
     }
 
     private void firstDownloadNotification(int apiLevel) throws Exception {
