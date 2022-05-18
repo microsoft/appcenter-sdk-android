@@ -42,6 +42,7 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -85,6 +86,9 @@ public class DownloadManagerReleaseDownloaderTest {
     private DownloadManagerRemoveTask mRemoveTask;
 
     @Mock
+    private Handler mMainHandler;
+
+    @Mock
     private DownloadManager mDownloadManager;
 
     @Mock
@@ -104,9 +108,8 @@ public class DownloadManagerReleaseDownloaderTest {
         when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class))).thenReturn(mRemoveTask);
 
         /* Run handler immediately. */
-        Handler handler = mock(Handler.class);
-        when(HandlerUtils.getMainHandler()).thenReturn(handler);
-        when(handler.postAtTime(any(Runnable.class), anyString(), anyLong())).thenAnswer(new Answer<Object>() {
+        when(HandlerUtils.getMainHandler()).thenReturn(mMainHandler);
+        when(mMainHandler.postAtTime(any(Runnable.class), anyString(), anyLong())).thenAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) {
@@ -189,6 +192,79 @@ public class DownloadManagerReleaseDownloaderTest {
         AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class), any());
         verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
+    }
+
+    @Test
+    public void clearDownloadId() {
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(DOWNLOAD_ID);
+        assertEquals(DOWNLOAD_ID, mReleaseDownloader.getDownloadId());
+
+        /* Clear with valid id. */
+        mReleaseDownloader.clearDownloadId(DOWNLOAD_ID);
+
+        /* Verify. */
+        verifyStatic(AsyncTaskUtils.class);
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class));
+        verifyStatic(SharedPreferencesManager.class);
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
+    }
+
+    @Test
+    public void clearInvalidDownloadId() {
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(DOWNLOAD_ID);
+        assertEquals(DOWNLOAD_ID, mReleaseDownloader.getDownloadId());
+
+        /* Clear with invalid id. */
+        mReleaseDownloader.clearDownloadId(43);
+
+        /* Verify. */
+        verifyStatic(AsyncTaskUtils.class, never());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class));
+        verifyStatic(SharedPreferencesManager.class, never());
+        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_ID));
+    }
+
+    @Test
+    public void cancelPendingDownloadIfWasCancelled() {
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(DOWNLOAD_ID);
+
+        /* Start download. */
+        mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
+
+        /* Capture timeout callback. */
+        ArgumentCaptor<Runnable> timeoutCallback = ArgumentCaptor.forClass(Runnable.class);
+        verify(mMainHandler).postDelayed(timeoutCallback.capture(), anyLong());
+
+        /* Cancel before timeout. */
+        mReleaseDownloader.cancel();
+        timeoutCallback.getValue().run();
+
+        /* Verify. */
+        verifyStatic(AsyncTaskUtils.class, never());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerCancelPendingTask.class));
+    }
+
+    @Test
+    public void cancelPendingDownloadIfWasNotCancelled() {
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(DOWNLOAD_ID);
+
+        /* Start download. */
+        mReleaseDownloader.onDownloadStarted(DOWNLOAD_ID, 0);
+
+        /* Capture timeout callback. */
+        ArgumentCaptor<Runnable> timeoutCallback = ArgumentCaptor.forClass(Runnable.class);
+        verify(mMainHandler).postDelayed(timeoutCallback.capture(), anyLong());
+
+        /* Call timeout when download is in progress. */
+        timeoutCallback.getValue().run();
+
+        /* Verify. */
+        verifyStatic(AsyncTaskUtils.class);
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerCancelPendingTask.class));
     }
 
     @Test
