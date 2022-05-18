@@ -27,7 +27,7 @@ public abstract class AbstractReleaseDownloader implements ReleaseDownloader {
      */
     protected final ReleaseDownloader.Listener mListener;
 
-    private boolean mCancelled;
+    protected boolean mCompleted;
 
     protected AbstractReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull ReleaseDownloader.Listener listener) {
         mContext = context;
@@ -35,8 +35,8 @@ public abstract class AbstractReleaseDownloader implements ReleaseDownloader {
         mListener = listener;
     }
 
-    protected boolean isCancelled() {
-        return mCancelled;
+    protected boolean isCompleted() {
+        return mCompleted;
     }
 
     @NonNull
@@ -47,6 +47,6 @@ public abstract class AbstractReleaseDownloader implements ReleaseDownloader {
 
     @Override
     public void cancel() {
-        mCancelled = true;
+        mCompleted = true;
     }
 }

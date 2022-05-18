@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute;
+package com.microsoft.appcenter.distribute.install.session;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
@@ -13,34 +13,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.AppNameHelper;
-import com.microsoft.appcenter.utils.DeviceInfoHelper;
 
 import java.util.Locale;
 
 /**
  * Process install manager callbacks.
  */
-public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
+class InstallStatusReceiver extends BroadcastReceiver {
 
     @VisibleForTesting
     static final String INSTALL_STATUS_ACTION = "com.microsoft.appcenter.action.INSTALL_STATUS";
 
-    @VisibleForTesting
-    static final String MY_PACKAGE_REPLACED_ACTION = "android.intent.action.MY_PACKAGE_REPLACED";
-
     static IntentFilter getInstallerReceiverFilter() {
         IntentFilter installerReceiverFilter = new IntentFilter();
         installerReceiverFilter.addAction(INSTALL_STATUS_ACTION);
-        installerReceiverFilter.addAction(MY_PACKAGE_REPLACED_ACTION);
         return installerReceiverFilter;
     }
 
@@ -64,36 +58,18 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
         return pendingIntent.getIntentSender();
     }
 
+    private final SessionReleaseInstaller mInstaller;
+
+    InstallStatusReceiver(@NonNull SessionReleaseInstaller installer) {
+        mInstaller = installer;
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
-        if (MY_PACKAGE_REPLACED_ACTION.equals(action)) {
-            onPackageReplaced(context);
-        } else if (INSTALL_STATUS_ACTION.equals(action)) {
+        if (INSTALL_STATUS_ACTION.equals(action)) {
             onInstallStatus(context, intent);
-        } else {
-            AppCenterLog.warn(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized action %s - do nothing.", action));
         }
-    }
-
-    private void onPackageReplaced(Context context) {
-        AppCenterLog.debug(LOG_TAG, "Post a notification as the installation finished in background.");
-        String title = context.getString(R.string.appcenter_distribute_install_completed_title);
-        Intent intent = DistributeUtils.getResumeAppIntent(context);
-        DistributeUtils.postNotification(context, title, getInstallCompletedMessage(context), intent);
-    }
-
-    private static String getInstallCompletedMessage(Context context) {
-        String versionName = "?";
-        int versionCode = 0;
-        PackageInfo packageInfo = DeviceInfoHelper.getPackageInfo(context);
-        if (packageInfo != null) {
-            versionName =  packageInfo.versionName;
-            versionCode = DeviceInfoHelper.getVersionCode(packageInfo);
-        }
-        String format = context.getString(R.string.appcenter_distribute_install_completed_message);
-        String appName = AppNameHelper.getAppName(context);
-        return String.format(format, appName, versionName, versionCode);
     }
 
     private void onInstallStatus(Context context, Intent intent) {
@@ -102,38 +78,25 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
         switch (status) {
             case PackageInstaller.STATUS_PENDING_USER_ACTION:
                 Intent confirmIntent = (Intent) extras.get(Intent.EXTRA_INTENT);
-                onInstallStatusPendingUserAction(context, confirmIntent);
+                mInstaller.onInstallConfirmation(confirmIntent);
                 break;
             case PackageInstaller.STATUS_SUCCESS:
-                onInstallStatusSuccess();
+                AppCenterLog.info(LOG_TAG, "Application was successfully updated.");
+                break;
+            case PackageInstaller.STATUS_FAILURE_ABORTED:
+                mInstaller.onInstallCancel();
                 break;
             case PackageInstaller.STATUS_FAILURE:
             case PackageInstaller.STATUS_FAILURE_BLOCKED:
-            case PackageInstaller.STATUS_FAILURE_ABORTED:
             case PackageInstaller.STATUS_FAILURE_INVALID:
             case PackageInstaller.STATUS_FAILURE_CONFLICT:
             case PackageInstaller.STATUS_FAILURE_STORAGE:
             case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
                 String message = extras.getString(PackageInstaller.EXTRA_STATUS_MESSAGE);
-                onInstallStatusFailure(status, message);
+                mInstaller.onInstallError(message);
                 break;
             default:
                 AppCenterLog.warn(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized status received from installer: %s", status));
         }
-    }
-
-    private void onInstallStatusPendingUserAction(Context context, Intent confirmIntent) {
-        AppCenterLog.debug(LOG_TAG, "Ask confirmation to install a new release.");
-        confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(confirmIntent);
-    }
-
-    private void onInstallStatusSuccess() {
-        AppCenterLog.info(LOG_TAG, "Application was successfully updated.");
-    }
-
-    private void onInstallStatusFailure(int status, String message) {
-        AppCenterLog.error(LOG_TAG, String.format(Locale.ENGLISH, "Failed to install a new release with status: %s. Error message: %s.", status, message));
-        Distribute.getInstance().showInstallingErrorToast();
     }
 }

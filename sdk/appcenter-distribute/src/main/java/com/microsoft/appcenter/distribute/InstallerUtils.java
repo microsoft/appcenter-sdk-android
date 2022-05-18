@@ -5,25 +5,15 @@
 
 package com.microsoft.appcenter.distribute;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-
 import android.content.Context;
-import android.content.pm.PackageInstaller;
-import android.net.Uri;
 import android.os.Build;
-import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
-import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -37,16 +27,6 @@ class InstallerUtils {
      */
     @VisibleForTesting
     static final String INSTALL_NON_MARKET_APPS_ENABLED = "1";
-
-    /**
-     * Name of package installer stream.
-     */
-    private static final String sOutputStreamName = "AppCenterPackageInstallerStream";
-
-    /**
-     * Buffer capacity of package installer.
-     */
-    private static final int BUFFER_CAPACITY = 64 * 1024;
 
     /**
      * Installer package names that are not app stores.
@@ -122,53 +102,6 @@ class InstallerUtils {
             return context.getApplicationInfo().targetSdkVersion < Build.VERSION_CODES.O || context.getPackageManager().canRequestPackageInstalls();
         } else {
             return INSTALL_NON_MARKET_APPS_ENABLED.equals(Settings.Secure.getString(context.getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS));
-        }
-    }
-
-    /**
-     * Install a new release.
-     */
-    @WorkerThread
-    public static void installPackage(@NonNull Uri localUri, Context context, PackageInstaller.SessionCallback sessionCallback) {
-        PackageInstaller.Session session = null;
-        try {
-
-            /* Prepare package installer. */
-            PackageInstaller packageInstaller = context.getPackageManager().getPackageInstaller();
-            if (sessionCallback != null) {
-                packageInstaller.registerSessionCallback(sessionCallback);
-            }
-            PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-
-            /* Prepare session. */
-            int sessionId = packageInstaller.createSession(params);
-            session = packageInstaller.openSession(sessionId);
-            try (ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(localUri, "r")) {
-                addFileToInstallSession(fileDescriptor, session);
-            }
-
-            /* Start to install a new release. */
-            session.commit(AppCenterPackageInstallerReceiver.getInstallStatusIntentSender(context, sessionId));
-            session.close();
-        } catch (IOException e) {
-            if (session != null) {
-                session.abandon();
-            }
-            AppCenterLog.error(LOG_TAG, "Couldn't install a new release.", e);
-        }
-    }
-
-    @WorkerThread
-    private static void addFileToInstallSession(ParcelFileDescriptor fileDescriptor, PackageInstaller.Session session)
-            throws IOException {
-        try (OutputStream out = session.openWrite(sOutputStreamName, 0, fileDescriptor.getStatSize());
-             InputStream in = new FileInputStream(fileDescriptor.getFileDescriptor())) {
-            byte[] buffer = new byte[BUFFER_CAPACITY];
-            int read;
-            while ((read = in.read(buffer)) >= 0) {
-                out.write(buffer, 0, read);
-            }
-            session.fsync(out);
         }
     }
 }

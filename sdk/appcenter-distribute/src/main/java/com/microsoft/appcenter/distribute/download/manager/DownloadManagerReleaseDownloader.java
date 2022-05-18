@@ -89,6 +89,8 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     @AnyThread
     @Override
     public synchronized void resume() {
+        // Force resume means that we want another completion event
+        mCompleted = false;
 
         /*
          * Just update the current downloading status.
@@ -99,9 +101,6 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
 
     @Override
     public synchronized void cancel() {
-        if (isCancelled()) {
-            return;
-        }
         super.cancel();
         if (mRequestTask != null) {
             mRequestTask.cancel(true);
@@ -132,7 +131,7 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
      * Start new download.
      */
     private synchronized void request() {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
         if (mRequestTask != null) {
@@ -146,7 +145,7 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
      * Update the state on current download.
      */
     private synchronized void update() {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
         mUpdateTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerUpdateTask(this));
@@ -161,7 +160,7 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
      * Cancels download if it's still in pending state.
      */
     private void cancelPendingDownload(long downloadId) {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
         AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerCancelPendingTask(this, downloadId));
@@ -173,8 +172,8 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     @WorkerThread
-    synchronized void onDownloadStarted(final long downloadId, long enqueueTime) {
-        if (isCancelled()) {
+    synchronized void onDownloadStarted(long downloadId, long enqueueTime) {
+        if (isCompleted()) {
             return;
         }
 
@@ -199,7 +198,7 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
 
     @WorkerThread
     synchronized void onDownloadProgress(Cursor cursor) {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
         long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
@@ -219,9 +218,11 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
 
     @WorkerThread
     synchronized void onDownloadComplete() {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
+        // Mark completed
+        mCompleted = true;
         if (!isDownloadedFileValid()) {
             mListener.onError("Downloaded package file is invalid.");
             return;
@@ -237,28 +238,20 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
 
     @WorkerThread
     synchronized void onDownloadError(RuntimeException e) {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
+        mCompleted = true;
         AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
         mListener.onError(e.getMessage());
     }
 
     private boolean isDownloadedFileValid() {
-        ParcelFileDescriptor fileDescriptor = null;
-        try {
-            fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId);
+        try (ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId)) {
             return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
         } catch (IOException e) {
             AppCenterLog.error(LOG_TAG, "Cannot open downloaded file for id=" + mDownloadId, e);
             return false;
-        } finally {
-            try {
-                if (fileDescriptor != null) {
-                    fileDescriptor.close();
-                }
-            } catch (IOException ignore) {
-            }
         }
     }
 }

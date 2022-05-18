@@ -13,7 +13,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
 
-import android.content.Intent;
 import android.net.Uri;
 import android.widget.Toast;
 
@@ -97,16 +96,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
             @Override
             public void run() {
-
-                /* Use intent to just resume app instead on install intent. */
-                Intent intent = DistributeUtils.getResumeAppIntent(mContext);
-
-                /* Check if app should install now. */
-                if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
-                    AppCenterLog.info(LOG_TAG, "Release is downloaded. Starting to install it.");
-                    Distribute.getInstance().installUpdate(localUri);
-                    Distribute.getInstance().setInstalling(mReleaseDetails);
-                }
+                Distribute.getInstance().setInstalling(mReleaseDetails, localUri);
             }
         });
     }
