@@ -4,6 +4,8 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.HandlerThread;
 
 import androidx.annotation.NonNull;
 
@@ -23,8 +25,11 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
     private boolean mCancelled;
 
     UpdateInstaller(Context context, ReleaseDetails releaseDetails) {
-        mInstallers.add(new SessionReleaseInstaller(context, this));
-        mInstallers.add(new IntentReleaseInstaller(context, this));
+        HandlerThread thread = new HandlerThread("AppCenter.Installer");
+        thread.start();
+        Handler handler = new Handler(thread.getLooper());
+        mInstallers.add(new SessionReleaseInstaller(context, handler, this));
+        mInstallers.add(new IntentReleaseInstaller(context, handler, this));
         mReleaseDetails = releaseDetails;
         mCurrent = next();
     }

@@ -805,6 +805,9 @@ public class Distribute extends AbstractAppCenterService {
             if (mPackageInfo.lastUpdateTime > SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
                 AppCenterLog.debug(LOG_TAG, "Discarding previous download as application updated.");
                 cancelPreviousTasks();
+
+                // Close notification about success update.
+                DistributeUtils.cancelNotification(mContext);
             }
         }
 
@@ -960,7 +963,6 @@ public class Distribute extends AbstractAppCenterService {
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
     synchronized void completeWorkflow() {
-        AppCenterLog.warn(LOG_TAG, "DEBUG Complete workflow");
         cancelDownloadCompletedNotification();
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
@@ -1636,6 +1638,7 @@ public class Distribute extends AbstractAppCenterService {
              * And a no U.I. activity of our own must finish in onCreate,
              * so it cannot receive a result.
              */
+            // FIXME: StrictMode policy violation;
             mForegroundActivity.startActivity(intent);
         } catch (ActivityNotFoundException e) {
 
@@ -1877,13 +1880,7 @@ public class Distribute extends AbstractAppCenterService {
         if (mReleaseInstaller == null) {
             mReleaseInstaller = new UpdateInstaller(mContext, mReleaseDetails);
         }
-        post(new Runnable() {
-
-            @Override
-            public void run() {
-                mReleaseInstaller.install(localUri);
-            }
-        });
+        mReleaseInstaller.install(localUri);
     }
 
     private void storeInstallingReleaseDetails() {

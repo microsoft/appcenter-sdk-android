@@ -2,12 +2,12 @@ package com.microsoft.appcenter.distribute.install;
 
 import android.net.Uri;
 
+import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
-import androidx.annotation.WorkerThread;
 
 public interface ReleaseInstaller {
 
-    @WorkerThread
+    @AnyThread
     void install(@NonNull Uri localUri);
 
     void resume();

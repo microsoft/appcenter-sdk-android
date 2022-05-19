@@ -68,11 +68,11 @@ class InstallStatusReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         if (INSTALL_STATUS_ACTION.equals(action)) {
-            onInstallStatus(context, intent);
+            onInstallStatus(intent);
         }
     }
 
-    private void onInstallStatus(Context context, Intent intent) {
+    private void onInstallStatus(Intent intent) {
         Bundle extras = intent.getExtras();
         int status = extras.getInt(PackageInstaller.EXTRA_STATUS);
         switch (status) {

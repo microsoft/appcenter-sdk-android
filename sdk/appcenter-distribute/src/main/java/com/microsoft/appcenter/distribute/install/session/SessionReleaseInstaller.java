@@ -9,8 +9,10 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 
+import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
@@ -44,43 +46,42 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
 
     private int mSessionId = INVALID_SESSION_ID;
 
-    public SessionReleaseInstaller(Context context, Listener listener) {
-        super(context, listener);
+    public SessionReleaseInstaller(Context context, Handler installerHandler, Listener listener) {
+        super(context, installerHandler, listener);
     }
+
 
     private PackageInstaller getPackageInstaller() {
         return mContext.getPackageManager().getPackageInstaller();
     }
 
-    @WorkerThread
+    @AnyThread
     @Override
     public void install(@NonNull Uri localUri) {
         registerListeners();
-        PackageInstaller.Session session = null;
-        try (ParcelFileDescriptor fileDescriptor = mContext.getContentResolver().openFileDescriptor(localUri, "r")) {
+        post(new Runnable() {
 
-            /* Prepare session. */
-            session = createSession(fileDescriptor);
-            addFileToInstallSession(fileDescriptor, session);
-
-            /* Start to install a new release. */
-            IntentSender statusReceiver = InstallStatusReceiver.getInstallStatusIntentSender(mContext, mSessionId);
-            session.commit(statusReceiver);
-            session.close();
-
-            // IllegalStateException - Too many active sessions
-        } catch (IOException | IllegalStateException e) {
-            if (session != null) {
-                session.abandon();
+            @Override
+            public void run() {
+                startInstallSession(localUri);
             }
-            mListener.onError("Couldn't install a new release: " + e);
-        }
+        });
     }
 
     @Override
-    public synchronized void resume() {
+    public void resume() {
+        postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                delayedResume();
+            }
+        }, 500);
+    }
+
+    private synchronized void delayedResume() {
         if (mUserConfirmationRequested) {
-            onInstallCancel();
+            onCancel();
         }
 
         // Sometimes progress event comes a bit late, in this case second resume means cancellation.
@@ -106,18 +107,46 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
     synchronized void onInstallConfirmation(Intent intent) {
         AppCenterLog.info(LOG_TAG, "Ask confirmation to install a new release.");
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
         mUserConfirmationRequested = true;
+        post(new Runnable() {
+            @Override
+            public void run() {
+                mContext.startActivity(intent);
+            }
+        });
     }
 
     synchronized void onInstallError(String message) {
-        AppCenterLog.error(LOG_TAG, "Failed to install a new release: " + message);
-        mListener.onError(message);
+        mSessionId = INVALID_SESSION_ID;
+        onError(message);
     }
 
     synchronized void onInstallCancel() {
-        AppCenterLog.debug(LOG_TAG, "Installation cancelled.");
-        mListener.onCancel();
+        mSessionId = INVALID_SESSION_ID;
+        onCancel();
+    }
+
+    @WorkerThread
+    private synchronized void startInstallSession(@NonNull Uri localUri) {
+        PackageInstaller.Session session = null;
+        try (ParcelFileDescriptor fileDescriptor = mContext.getContentResolver().openFileDescriptor(localUri, "r")) {
+
+            /* Prepare session. */
+            session = createSession(fileDescriptor);
+            addFileToInstallSession(fileDescriptor, session);
+
+            /* Start to install a new release. */
+            IntentSender statusReceiver = InstallStatusReceiver.getInstallStatusIntentSender(mContext, mSessionId);
+            session.commit(statusReceiver);
+            session.close();
+
+            // IllegalStateException - Too many active sessions
+        } catch (IOException | IllegalStateException e) {
+            if (session != null) {
+                session.abandon();
+            }
+            onError("Couldn't install a new release: " + e);
+        }
     }
 
     @WorkerThread
