@@ -16,6 +16,7 @@ public class UpdateReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
+        AppCenterLog.verbose(LOG_TAG, "Receive broadcast action: " + action);
         if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
             onPackageReplaced(context);
         }

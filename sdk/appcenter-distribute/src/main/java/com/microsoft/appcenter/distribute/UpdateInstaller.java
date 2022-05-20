@@ -44,7 +44,7 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
     }
 
     @Override
-    public void install(@NonNull Uri localUri) {
+    public synchronized void install(@NonNull Uri localUri) {
         mCancelled = false;
         mLocalUri = localUri;
         if (mCurrent != null) {
@@ -53,9 +53,10 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
     }
 
     @Override
-    public void resume() {
-        if (mCancelled) {
-            cancel();
+    public synchronized void resume() {
+        // Show mandatory dialog if cancelled in background.
+        if (mCancelled && mReleaseDetails.isMandatoryUpdate()) {
+            Distribute.getInstance().showMandatoryDownloadReadyDialog();
             return;
         }
         if (mCurrent != null) {
@@ -64,34 +65,39 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         if (mCurrent != null) {
             mCurrent.clear();
         }
     }
 
     @Override
-    public void onError(String message) {
-        mCurrent.clear();
-        mCurrent = next();
-        if (mCurrent != null) {
-            mCurrent.install(mLocalUri);
-        } else {
-            Distribute.getInstance().completeWorkflow(mReleaseDetails);
+    public synchronized void onError(String message) {
+        if (isRecoverableError(message)) {
+            mCurrent.clear();
+            mCurrent = next();
+            if (mCurrent != null) {
+                mCurrent.install(mLocalUri);
+                return;
+            }
         }
+        Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
 
     @Override
-    public void onCancel() {
+    public synchronized void onCancel() {
         mCancelled = true;
-        cancel();
+        if (mReleaseDetails.isMandatoryUpdate()) {
+            Distribute.getInstance().showMandatoryDownloadReadyDialog();
+        } else {
+            Distribute.getInstance().completeWorkflow(mReleaseDetails);
+        }
     }
 
-    private void cancel() {
-        if (!mReleaseDetails.isMandatoryUpdate()) {
-            Distribute.getInstance().completeWorkflow(mReleaseDetails);
-        } else {
-            Distribute.getInstance().showMandatoryDownloadReadyDialog();
-        }
+    // MIUI fallback
+    private static final String RECOVERABLE_ERROR = "INSTALL_FAILED_INTERNAL_ERROR: Permission Denied";
+
+    private static boolean isRecoverableError(String message) {
+        return RECOVERABLE_ERROR.equals(message);
     }
 }

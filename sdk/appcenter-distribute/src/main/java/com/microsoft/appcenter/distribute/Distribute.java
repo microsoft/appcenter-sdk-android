@@ -720,7 +720,6 @@ public class Distribute extends AbstractAppCenterService {
         if (mPackageInfo == null || mForegroundActivity == null || mWorkflowCompleted || !isInstanceEnabled()) {
             return;
         }
-        AppCenterLog.debug(LOG_TAG, "Resume distribute workflow...");
 
         /* Don't go any further it this is a debug app. */
         if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
@@ -743,6 +742,7 @@ public class Distribute extends AbstractAppCenterService {
             mReleaseInstaller.resume();
             return;
         }
+        AppCenterLog.debug(LOG_TAG, "Resume distribute workflow...");
 
         /*
          * If failed to enable in-app updates on the same app build before, don't go any further.
@@ -963,6 +963,7 @@ public class Distribute extends AbstractAppCenterService {
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
     synchronized void completeWorkflow() {
+        AppCenterLog.debug(LOG_TAG, "Complete current updating process.");
         cancelDownloadCompletedNotification();
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
@@ -1874,7 +1875,7 @@ public class Distribute extends AbstractAppCenterService {
             return;
         }
         cancelDownloadCompletedNotification();
-        AppCenterLog.info(AppCenterLog.LOG_TAG, "Start installing new release...");
+        AppCenterLog.info(LOG_TAG, "Start installing new release...");
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
         storeInstallingReleaseDetails();
         if (mReleaseInstaller == null) {

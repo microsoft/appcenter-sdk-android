@@ -42,17 +42,17 @@ class InstallStatusReceiver extends BroadcastReceiver {
      * Return IntentSender with the receiver that listens to the package installer session status.
      *
      * @param context any context.
-     * @param sessionId install sessionId.
+     * @param requestCode request code for the sender.
      * @return IntentSender with receiver.
      */
-    static IntentSender getInstallStatusIntentSender(Context context, int sessionId) {
+    static IntentSender getInstallStatusIntentSender(Context context, int requestCode) {
         int broadcastFlags = 0;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             broadcastFlags = PendingIntent.FLAG_MUTABLE;
         }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
-                sessionId,
+                requestCode,
                 new Intent(INSTALL_STATUS_ACTION),
                 broadcastFlags);
         return pendingIntent.getIntentSender();
@@ -67,6 +67,7 @@ class InstallStatusReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
+        AppCenterLog.verbose(LOG_TAG, "Receive broadcast action: " + action);
         if (INSTALL_STATUS_ACTION.equals(action)) {
             onInstallStatus(intent);
         }
@@ -74,17 +75,21 @@ class InstallStatusReceiver extends BroadcastReceiver {
 
     private void onInstallStatus(Intent intent) {
         Bundle extras = intent.getExtras();
+        for (String key : extras.keySet()) {
+            AppCenterLog.verbose(LOG_TAG, "\t" + key + ": " + extras.get(key));
+        }
         int status = extras.getInt(PackageInstaller.EXTRA_STATUS);
+        int sessionId = extras.getInt(PackageInstaller.EXTRA_SESSION_ID);
         switch (status) {
             case PackageInstaller.STATUS_PENDING_USER_ACTION:
-                Intent confirmIntent = (Intent) extras.get(Intent.EXTRA_INTENT);
-                mInstaller.onInstallConfirmation(confirmIntent);
+                Intent confirmIntent = extras.getParcelable(Intent.EXTRA_INTENT);
+                mInstaller.onInstallConfirmation(sessionId, confirmIntent);
                 break;
             case PackageInstaller.STATUS_SUCCESS:
                 AppCenterLog.info(LOG_TAG, "Application was successfully updated.");
                 break;
             case PackageInstaller.STATUS_FAILURE_ABORTED:
-                mInstaller.onInstallCancel();
+                mInstaller.onInstallCancel(sessionId);
                 break;
             case PackageInstaller.STATUS_FAILURE:
             case PackageInstaller.STATUS_FAILURE_BLOCKED:
@@ -93,7 +98,7 @@ class InstallStatusReceiver extends BroadcastReceiver {
             case PackageInstaller.STATUS_FAILURE_STORAGE:
             case PackageInstaller.STATUS_FAILURE_INCOMPATIBLE:
                 String message = extras.getString(PackageInstaller.EXTRA_STATUS_MESSAGE);
-                mInstaller.onInstallError(message);
+                mInstaller.onInstallError(sessionId, message);
                 break;
             default:
                 AppCenterLog.warn(LOG_TAG, String.format(Locale.ENGLISH, "Unrecognized status received from installer: %s", status));

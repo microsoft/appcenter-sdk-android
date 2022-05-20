@@ -17,7 +17,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.distribute.install.AbstractReleaseInstaller;
+import com.microsoft.appcenter.distribute.install.ReleaseInstallerActivity;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -37,6 +40,8 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
     private static final int BUFFER_CAPACITY = 64 * 1024;
 
     private static final int INVALID_SESSION_ID = -1;
+
+    private static final long CANCEL_TIMEOUT = 1000;
 
     private BroadcastReceiver mInstallStatusReceiver;
 
@@ -63,29 +68,10 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
 
             @Override
             public void run() {
+                abandonSession();
                 startInstallSession(localUri);
             }
         });
-    }
-
-    @Override
-    public void resume() {
-        postDelayed(new Runnable() {
-
-            @Override
-            public void run() {
-                delayedResume();
-            }
-        }, 500);
-    }
-
-    private synchronized void delayedResume() {
-        if (mUserConfirmationRequested) {
-            onCancel();
-        }
-
-        // Sometimes progress event comes a bit late, in this case second resume means cancellation.
-        mUserConfirmationRequested = true;
     }
 
     @Override
@@ -100,30 +86,57 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
         return "PackageInstaller";
     }
 
-    synchronized void onInstallProgress() {
+    synchronized void onInstallProgress(int sessionId) {
+        if (mSessionId != sessionId) {
+            return;
+        }
         mUserConfirmationRequested = false;
     }
 
-    synchronized void onInstallConfirmation(Intent intent) {
+    synchronized void onInstallConfirmation(int sessionId, Intent confirmIntent) {
+        if (mSessionId != sessionId) {
+            return;
+        }
         AppCenterLog.info(LOG_TAG, "Ask confirmation to install a new release.");
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mUserConfirmationRequested = true;
-        post(new Runnable() {
-            @Override
-            public void run() {
-                mContext.startActivity(intent);
-            }
-        });
+        AppCenterFuture<ReleaseInstallerActivity.Result> confirmFuture = ReleaseInstallerActivity.startActivityForResult(mContext, confirmIntent);
+        if (confirmFuture != null) {
+            confirmFuture.thenAccept(new AppCenterConsumer<ReleaseInstallerActivity.Result>() {
+
+                @Override
+                public void accept(ReleaseInstallerActivity.Result result) {
+                    cancelIfNoProgress();
+                }
+            });
+        }
     }
 
-    synchronized void onInstallError(String message) {
+    synchronized void onInstallError(int sessionId, String message) {
+        if (mSessionId != sessionId) {
+            return;
+        }
         mSessionId = INVALID_SESSION_ID;
         onError(message);
     }
 
-    synchronized void onInstallCancel() {
+    synchronized void onInstallCancel(int sessionId) {
+        if (mSessionId != sessionId) {
+            return;
+        }
         mSessionId = INVALID_SESSION_ID;
         onCancel();
+    }
+
+    private void cancelIfNoProgress() {
+        postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                if (mUserConfirmationRequested) {
+                    onCancel();
+                }
+            }
+        }, CANCEL_TIMEOUT);
     }
 
     @WorkerThread
@@ -139,13 +152,11 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
             IntentSender statusReceiver = InstallStatusReceiver.getInstallStatusIntentSender(mContext, mSessionId);
             session.commit(statusReceiver);
             session.close();
-
-            // IllegalStateException - Too many active sessions
-        } catch (IOException | IllegalStateException e) {
+        } catch (IOException | RuntimeException e) {
             if (session != null) {
                 session.abandon();
             }
-            onError("Couldn't install a new release: " + e);
+            onError("Cannot initiate PackageInstaller.Session", e);
         }
     }
 
@@ -195,14 +206,33 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
         params.setSize(fileDescriptor.getStatSize());
         params.setAppPackageName(mContext.getPackageName());
         mSessionId = packageInstaller.createSession(params);
-        return packageInstaller.openSession(mSessionId);
+        try {
+            return packageInstaller.openSession(mSessionId);
+
+            // IllegalStateException - Too many active sessions
+        } catch (IllegalStateException e) {
+            AppCenterLog.warn(LOG_TAG, "Cannot open session, trying to cleanup previous ones.", e);
+
+            // Leaked sessions can prevent opening new ones.
+            cleanPreviousSessions();
+            return packageInstaller.openSession(mSessionId);
+        }
     }
 
     private void abandonSession() {
         if (mSessionId != INVALID_SESSION_ID) {
+            AppCenterLog.debug(LOG_TAG, "Abandon PackageInstaller session.");
             PackageInstaller packageInstaller = getPackageInstaller();
             packageInstaller.abandonSession(mSessionId);
             mSessionId = INVALID_SESSION_ID;
+        }
+    }
+
+    private void cleanPreviousSessions() {
+        PackageInstaller packageInstaller = getPackageInstaller();
+        for (PackageInstaller.SessionInfo session: getPackageInstaller().getMySessions()) {
+            AppCenterLog.warn(LOG_TAG, "Abandon leaked session: " + session.getSessionId());
+            packageInstaller.abandonSession(session.getSessionId());
         }
     }
 }

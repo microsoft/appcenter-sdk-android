@@ -30,7 +30,7 @@ public class PackageInstallerListener extends PackageInstaller.SessionCallback {
     @WorkerThread
     @Override
     public void onCreated(int sessionId) {
-        AppCenterLog.debug(LOG_TAG, "The install session was created.");
+        AppCenterLog.verbose(LOG_TAG, "The install session was created. sessionId=" + sessionId);
     }
 
     @WorkerThread
@@ -46,14 +46,14 @@ public class PackageInstallerListener extends PackageInstaller.SessionCallback {
     @WorkerThread
     @Override
     public void onProgressChanged(int sessionId, float progress) {
-        final int downloadProgress = (int)(progress * 100);
-        AppCenterLog.verbose(LOG_TAG, String.format(Locale.ENGLISH, "Installation progress: %d / 100.", downloadProgress));
-        mInstaller.onInstallProgress();
+        final int downloadProgress = (int) (progress * 100);
+        AppCenterLog.verbose(LOG_TAG, "Installation progress: " + downloadProgress + "%. sessionId=" + sessionId);
+        mInstaller.onInstallProgress(sessionId);
     }
 
     @WorkerThread
     @Override
     public void onFinished(int sessionId, boolean success) {
-        AppCenterLog.debug(LOG_TAG, "The installation has been finished. success=" + success);
+        AppCenterLog.verbose(LOG_TAG, "The installation has been finished. sessionId=" + sessionId + ", success=" + success);
     }
 }

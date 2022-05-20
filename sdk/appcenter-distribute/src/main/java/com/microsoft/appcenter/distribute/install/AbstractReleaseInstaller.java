@@ -31,8 +31,21 @@ public abstract class AbstractReleaseInstaller implements ReleaseInstaller {
         mListener.onError(message);
     }
 
+    protected void onError(String message, Throwable throwable) {
+        AppCenterLog.error(LOG_TAG, "Failed to install a new release: " + message, throwable);
+        mListener.onError(message);
+    }
+
     protected void onCancel() {
         AppCenterLog.debug(LOG_TAG, "Installation cancelled.");
         mListener.onCancel();
+    }
+
+    @Override
+    public void resume() {
+    }
+
+    @Override
+    public void clear() {
     }
 }

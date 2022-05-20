@@ -1,5 +1,8 @@
 package com.microsoft.appcenter.distribute.install.intent;
 
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_FIRST_USER;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -9,6 +12,9 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.distribute.install.AbstractReleaseInstaller;
+import com.microsoft.appcenter.distribute.install.ReleaseInstallerActivity;
+import com.microsoft.appcenter.utils.async.AppCenterConsumer;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 public class IntentReleaseInstaller extends AbstractReleaseInstaller {
 
@@ -19,29 +25,25 @@ public class IntentReleaseInstaller extends AbstractReleaseInstaller {
     @AnyThread
     @Override
     public void install(@NonNull Uri localUri) {
-        final Intent intent = getInstallIntent(localUri);
-        post(new Runnable() {
+        final Intent installIntent = getInstallIntent(localUri);
+        if (installIntent.resolveActivity(mContext.getPackageManager()) == null) {
+            onError("Cannot resolve install intent for " + localUri);
+            return;
+        }
+        AppCenterFuture<ReleaseInstallerActivity.Result> confirmFuture = ReleaseInstallerActivity.startActivityForResult(mContext, installIntent);
+        if (confirmFuture != null) {
+            confirmFuture.thenAccept(new AppCenterConsumer<ReleaseInstallerActivity.Result>() {
 
-            @Override
-            public void run() {
-                if (intent.resolveActivity(mContext.getPackageManager()) == null) {
-                    onError("Cannot resolve install intent for " + localUri);
-                    return;
+                @Override
+                public void accept(ReleaseInstallerActivity.Result result) {
+                    if (result.code == RESULT_FIRST_USER) {
+                        onError("Install failed");
+                    } else if (result.code == RESULT_CANCELED) {
+                        onCancel();
+                    }
                 }
-                mContext.startActivity(intent);
-            }
-        });
-    }
-
-    @Override
-    public void resume() {
-        // If we're still here then it was cancelled.
-        onCancel();
-    }
-
-    @Override
-    public void clear() {
-        // Nothing to clear.
+            });
+        }
     }
 
     @NonNull
@@ -61,8 +63,7 @@ public class IntentReleaseInstaller extends AbstractReleaseInstaller {
         Intent intent = new Intent(Intent.ACTION_INSTALL_PACKAGE);
         intent.setData(fileUri);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra(Intent.EXTRA_RETURN_RESULT, true);
         return intent;
     }
 }

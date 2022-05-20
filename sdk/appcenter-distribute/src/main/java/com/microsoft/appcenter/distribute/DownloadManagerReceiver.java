@@ -30,7 +30,7 @@ public class DownloadManagerReceiver extends BroadcastReceiver {
          * Another option would be to open download list.
          */
         String action = intent.getAction();
-        AppCenterLog.debug(LOG_TAG, "Receive broadcast action: " + action);
+        AppCenterLog.verbose(LOG_TAG, "Receive broadcast action: " + action);
         if (DownloadManager.ACTION_NOTIFICATION_CLICKED.equals(action)) {
             Distribute.getInstance().resumeApp(context);
         }
