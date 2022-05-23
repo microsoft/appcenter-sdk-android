@@ -5,14 +5,19 @@
 
 package com.microsoft.appcenter.distribute.download.manager;
 
+import static android.content.Context.DOWNLOAD_SERVICE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
+
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.widget.Toast;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
@@ -26,22 +31,18 @@ import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import static android.content.Context.DOWNLOAD_SERVICE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
-
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader {
 
-    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull Listener listener) {
-        super(context, releaseDetails, listener);
-    }
+    /**
+     * Timeout to start download the package, in milliseconds.
+     */
+    private final static int PENDING_TIMEOUT = 10 * 1000;
 
+    /**
+     * Current download identifier.
+     */
     private long mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;
 
     /**
@@ -53,6 +54,10 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
      * Current task inspecting the latest release details that we fetched from server.
      */
     private DownloadManagerRequestTask mRequestTask;
+
+    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull Listener listener) {
+        super(context, releaseDetails, listener);
+    }
 
     DownloadManager getDownloadManager() {
         return (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
@@ -114,6 +119,16 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     /**
+     * Clears download id if it's active.
+     */
+    synchronized void clearDownloadId(long downloadId) {
+        if (downloadId == getDownloadId()) {
+            remove(downloadId);
+            setDownloadId(INVALID_DOWNLOAD_IDENTIFIER);
+        }
+    }
+
+    /**
      * Start new download.
      */
     private synchronized void request() {
@@ -142,13 +157,23 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRemoveTask(mContext, downloadId));
     }
 
+    /**
+     * Cancels download if it's still in pending state.
+     */
+    private void cancelPendingDownload(long downloadId) {
+        if (isCancelled()) {
+            return;
+        }
+        AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerCancelPendingTask(this, downloadId));
+    }
+
     @WorkerThread
     synchronized void onStart() {
         request();
     }
 
     @WorkerThread
-    synchronized void onDownloadStarted(long downloadId, long enqueueTime) {
+    synchronized void onDownloadStarted(final long downloadId, long enqueueTime) {
         if (isCancelled()) {
             return;
         }
@@ -161,6 +186,15 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         if (mReleaseDetails.isMandatoryUpdate()) {
             update();
         }
+
+        /* Handle pending timeout. */
+        HandlerUtils.getMainHandler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                cancelPendingDownload(downloadId);
+            }
+        }, PENDING_TIMEOUT);
     }
 
     @WorkerThread

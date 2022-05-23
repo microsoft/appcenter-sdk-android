@@ -7,6 +7,7 @@
 * **[Fix]** Fix possible crash on resume event before initialization.
 * **[Fix]** Fix clicks on the download completion notification.
 * **[Fix]** Fix ANR on installing large packages.
+* **[Fix]** Fix strict mode issues.
 
  ___
 

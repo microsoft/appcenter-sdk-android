@@ -5,37 +5,32 @@
 
 package com.microsoft.appcenter.distribute.download.manager;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+
 import android.app.DownloadManager;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-
-import java.util.concurrent.TimeoutException;
-
 /**
  * The download manager API triggers strict mode exception in UI thread.
  */
 class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
-    
-    private final int TIMEOUT_LIMIT = 10000;
+
     private final DownloadManagerReleaseDownloader mDownloader;
+
+    /**
+     * The title of this download, to be displayed in notifications.
+     */
     private final String mTitle;
-    private Handler mHandler;
-    private Runnable handlerCallback;
 
     DownloadManagerRequestTask(DownloadManagerReleaseDownloader downloader, String title) {
         mDownloader = downloader;
         mTitle = title;
-        mHandler = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -59,24 +54,6 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
             final long downloadId = downloadManager.enqueue(request);
             if (!isCancelled()) {
                 mDownloader.onDownloadStarted(downloadId, enqueueTime);
-                handlerCallback = new Runnable() {
-
-                    @Override
-                    public void run() {
-                        DownloadManager.Query query = new DownloadManager.Query();
-                        query.setFilterByStatus(DownloadManager.STATUS_PENDING);
-                        // FIXME: android.os.strictmode.LeakedClosableViolation: A resource was acquired at attached stack trace but never released
-                        // FIXME: StrictMode policy violation; ~duration=6 ms: android.os.strictmode.DiskReadViolation
-                        Cursor c = downloadManager.query(query);
-                        if (c.moveToFirst()) {
-                            downloadManager.remove(downloadId);
-                            mDownloader.onDownloadError(new IllegalStateException("Failed to start downloading file due to timeout exception."));
-                        }
-                    }
-                };
-
-                /* Check that the file started to download. */
-                mHandler.postDelayed(handlerCallback, TIMEOUT_LIMIT);
             }
         } catch (IllegalArgumentException e) {
 
@@ -91,9 +68,6 @@ class DownloadManagerRequestTask extends AsyncTask<Void, Void, Void> {
 
     @VisibleForTesting
     DownloadManager.Request createRequest(Uri Uri) {
-        if (handlerCallback != null) {
-            mHandler.removeCallbacks(handlerCallback);
-        }
         return new DownloadManager.Request(Uri);
     }
 }
