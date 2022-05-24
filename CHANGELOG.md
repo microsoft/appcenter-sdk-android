@@ -4,6 +4,7 @@
 
 ### App Center Distribute
 
+* **[Improvement]** Remove optional `SYSTEM_ALERT_WINDOW` permission that was required to automatically restart the app after installing the update.
 * **[Fix]** Fix possible crash on resume event before initialization.
 * **[Fix]** Fix clicks on the download completion notification.
 * **[Fix]** Fix ANR on installing large packages.
