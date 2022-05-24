@@ -8,6 +8,7 @@ package com.microsoft.appcenter.distribute;
 import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.INSTALL_STATUS_ACTION;
 import static com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver.MY_PACKAGE_REPLACED_ACTION;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,13 +18,18 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,12 +37,15 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 
 @PrepareForTest({
         AppCenterLog.class,
         AppNameHelper.class,
+        DeviceInfoHelper.class,
         Distribute.class,
-        DistributeUtils.class
+        DistributeUtils.class,
+        PendingIntent.class
 })
 @RunWith(PowerMockRunner.class)
 public class AppCenterPackageInstallerReceiverTest {
@@ -63,6 +72,7 @@ public class AppCenterPackageInstallerReceiverTest {
 
         /* Mock static classes. */
         mockStatic(AppCenterLog.class);
+        mockStatic(DeviceInfoHelper.class);
         mockStatic(DistributeUtils.class);
 
         /* Init receiver. */
@@ -71,6 +81,10 @@ public class AppCenterPackageInstallerReceiverTest {
 
     @Test
     public void receiveMyPackageReplaced() {
+        PackageInfo packageInfo = new PackageInfo();
+        packageInfo.versionName = "1.0";
+        when(DeviceInfoHelper.getPackageInfo(mContext)).thenReturn(packageInfo);
+        when(DeviceInfoHelper.getVersionCode(packageInfo)).thenReturn(1);
         mockStatic(AppNameHelper.class);
         when(AppNameHelper.getAppName(mContext)).thenReturn("Contoso");
         Intent intent = mock(Intent.class);
@@ -85,7 +99,26 @@ public class AppCenterPackageInstallerReceiverTest {
         mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
 
         verifyStatic(DistributeUtils.class);
-        DistributeUtils.postNotification(eq(mContext), anyString(), anyString(), eq(intent));
+        DistributeUtils.postNotification(eq(mContext), eq("Title"), eq("Contoso 1.0 (1)"), eq(intent));
+    }
+
+    @Test
+    public void receiveMyPackageReplacedWithoutPackageInfo() {
+        mockStatic(AppNameHelper.class);
+        when(AppNameHelper.getAppName(mContext)).thenReturn("Contoso");
+        Intent intent = mock(Intent.class);
+        when(DistributeUtils.getResumeAppIntent(mContext)).thenReturn(intent);
+        when(mIntent.getAction()).thenReturn(MY_PACKAGE_REPLACED_ACTION);
+        when(mContext.getString(R.string.appcenter_distribute_install_completed_title))
+                .thenReturn("Title");
+        when(mContext.getString(R.string.appcenter_distribute_install_completed_message))
+                .thenReturn("%1$s %2$s (%3$d)");
+
+        /* Call method with MY_PACKAGE_REPLACED_ACTION action. */
+        mAppCenterPackageInstallerReceiver.onReceive(mContext, mIntent);
+
+        verifyStatic(DistributeUtils.class);
+        DistributeUtils.postNotification(eq(mContext), eq("Title"), eq("Contoso ? (0)"), eq(intent));
     }
 
     @Test
@@ -187,6 +220,40 @@ public class AppCenterPackageInstallerReceiverTest {
         /* Verify that log was called. */
         verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(eq(LOG_TAG), eq("Unrecognized action UnknownAction - do nothing."));
+    }
+
+    @Test
+    public void createIntentSenderOnAndroidS() {
+
+        /* Mock SDK_INT to S. */
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.S);
+        createIntentSender(PendingIntent.FLAG_MUTABLE);
+    }
+
+    @Test
+    public void createIntentSenderOnAndroidLowS() {
+
+        /* Mock SDK_INT to M. */
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
+        createIntentSender(0);
+    }
+
+    private void createIntentSender(int expectedFlag) {
+        final int REQUEST_CODE = 42;
+
+        /* Mock. */
+        mockStatic(PendingIntent.class);
+        PendingIntent intent = mock(PendingIntent.class);
+        IntentSender sender = mock(IntentSender.class);
+        when(intent.getIntentSender()).thenReturn(sender);
+        when(PendingIntent.getBroadcast(any(Context.class), eq(REQUEST_CODE), any(Intent.class), eq(expectedFlag)))
+                .thenReturn(intent);
+
+        /* Call. */
+        IntentSender result = AppCenterPackageInstallerReceiver.getInstallStatusIntentSender(mContext, REQUEST_CODE);
+
+        /* Verify. */
+        assertEquals(sender, result);
     }
 }
 

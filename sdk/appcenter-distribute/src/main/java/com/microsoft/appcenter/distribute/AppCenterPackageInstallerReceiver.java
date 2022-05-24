@@ -84,7 +84,7 @@ public class AppCenterPackageInstallerReceiver extends BroadcastReceiver {
     }
 
     private static String getInstallCompletedMessage(Context context) {
-        String versionName = "";
+        String versionName = "?";
         int versionCode = 0;
         PackageInfo packageInfo = DeviceInfoHelper.getPackageInfo(context);
         if (packageInfo != null) {

@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
@@ -54,6 +55,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -877,6 +879,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void checkProgressWhenActivityNull() {
+        mockStatic(DistributeUtils.class);
 
         /* Start distribute. */
         start();
@@ -887,6 +890,13 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Verify that progress dialog was not trying to display. */
         verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(eq(LOG_TAG), eq("Could not display install progress dialog in the background."));
+
+        /* Resume workflow. */
+        resumeWorkflow(mock(Activity.class));
+
+        /* Verify that it does nothing. */
+        verifyStatic(DistributeUtils.class, never());
+        DistributeUtils.getStoredDownloadState();
     }
 
     @Test
@@ -952,5 +962,52 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onStarted(mContext, mChannel, "0", "test", false);
         Distribute.getInstance().notifyDownload(mReleaseDetails, null);
         verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
+    }
+
+    @Test
+    public void installUpdate() {
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        Distribute.getInstance().startFromBackground(mContext);
+
+        /* Try to start installation. */
+        Uri localUri = mock(Uri.class);
+        start();
+        Distribute.getInstance().installUpdate(localUri);
+
+        /* Verify that it calls InstallerUtils. */
+        verifyStatic(InstallerUtils.class);
+        InstallerUtils.installPackage(eq(localUri), eq(mContext), isA(ReleaseInstallerListener.class));
+    }
+
+    @Test
+    public void installUpdateWhenPackageInstallerNull() {
+
+        /* Try to start installation. */
+        Uri localUri = mock(Uri.class);
+        start();
+        Distribute.getInstance().installUpdate(localUri);
+
+        /* Verify that it was called. */
+        verifyStatic(InstallerUtils.class, never());
+        InstallerUtils.installPackage(any(), any(), any());
+    }
+
+    @Test
+    public void showInstallingErrorToast() {
+        start();
+
+        /* Without activity. */
+        Distribute.getInstance().showInstallingErrorToast();
+        verify(mToast).show();
+        verifyStatic(Toast.class);
+        Toast.makeText(eq(mContext), anyInt(), anyInt());
+
+        /* With activity. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        Distribute.getInstance().showInstallingErrorToast();
+        verify(mToast, times(2)).show();
+        verifyStatic(Toast.class);
+        Toast.makeText(eq(mActivity), anyInt(), anyInt());
     }
 }
