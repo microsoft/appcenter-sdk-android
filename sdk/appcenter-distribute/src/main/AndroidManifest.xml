@@ -6,7 +6,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.microsoft.appcenter.distribute">
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
 
@@ -46,7 +45,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="com.microsoft.appcenter.action.START" />
+                <action android:name="com.microsoft.appcenter.action.INSTALL_STATUS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>

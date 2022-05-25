@@ -29,6 +29,7 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.IdHelper;
@@ -73,6 +74,7 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         AppNameHelper.class,
         BrowserUtils.class,
         CryptoUtils.class,
+        DeviceInfoHelper.class,
         Distribute.class,
         HandlerUtils.class,
         HttpUtils.class,
@@ -210,11 +212,12 @@ public class AbstractDistributeTest {
         when(mActivity.getPackageName()).thenReturn("com.contoso");
         when(mActivity.getApplicationContext()).thenReturn(mContext);
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
-        when(mActivity.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
-        when(mActivity.getPackageManager()).thenReturn(mPackageManager);
+
+        mockStatic(DeviceInfoHelper.class);
         PackageInfo packageInfo = mock(PackageInfo.class);
-        when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
+        when(DeviceInfoHelper.getPackageInfo(any(Context.class))).thenReturn(packageInfo);
+        when(DeviceInfoHelper.getVersionCode(eq(packageInfo))).thenReturn(6);
         Whitebox.setInternalState(packageInfo, "packageName", "com.contoso");
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
@@ -294,7 +297,7 @@ public class AbstractDistributeTest {
         mockStatic(Toast.class);
         when(Toast.makeText(any(Context.class), anyInt(), anyInt())).thenReturn(mToast);
 
-        /* Mock Handler .*/
+        /* Mock Handler. */
         mockStatic(HandlerUtils.class);
         doAnswer(new Answer<Void>() {
 
@@ -341,6 +344,22 @@ public class AbstractDistributeTest {
     void start() {
         Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
+    }
+    
+    void withTesterApp() {
+        try {
+            when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0))
+                    .thenReturn(mock(PackageInfo.class));
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+    }
+
+    void withoutTesterApp() {
+        try {
+            when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0))
+                    .thenThrow(new PackageManager.NameNotFoundException());
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
     }
 
     /* Shared code to mock a restart of an activity considered to be the launcher. */

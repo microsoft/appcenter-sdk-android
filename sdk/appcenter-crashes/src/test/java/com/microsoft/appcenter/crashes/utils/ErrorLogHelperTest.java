@@ -28,7 +28,6 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
 import android.text.TextUtils;
@@ -223,7 +222,8 @@ public class ErrorLogHelperTest {
         });
 
         /* Mock device. */
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class)))
+                .thenThrow(new DeviceInfoHelper.DeviceInfoException("mock"));
 
         /* Mock architecture. */
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 15);
@@ -264,7 +264,8 @@ public class ErrorLogHelperTest {
         });
 
         /* Mock device. */
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class)))
+                .thenThrow(new DeviceInfoHelper.DeviceInfoException("mock"));
 
         /* Mock activity manager to return null active processes. */
         ActivityManager activityManager = mock(ActivityManager.class);
@@ -482,7 +483,8 @@ public class ErrorLogHelperTest {
 
         /* Prepare data. */
         mockStatic(DeviceInfoHelper.class);
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("crash", new java.lang.Exception()));
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class)))
+                .thenThrow(new DeviceInfoHelper.DeviceInfoException("crash"));
         Context mockContext = mock(Context.class);
         File mockFile = mock(File.class);
         whenNew(File.class).withAnyArguments().thenReturn(mockFile);

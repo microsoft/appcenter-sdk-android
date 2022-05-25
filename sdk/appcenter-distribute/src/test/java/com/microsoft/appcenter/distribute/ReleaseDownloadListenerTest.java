@@ -383,8 +383,8 @@ public class ReleaseDownloadListenerTest {
         releaseDownloadListener.onComplete(mock(Uri.class));
 
         /* Verify that setInstalling() is called on mandatory update. */
+        verify(mDistribute).installUpdate(any(Uri.class));
         verify(mDistribute).setInstalling(mockReleaseDetails);
-        verify(mDistribute).showSystemSettingsDialogOrStartInstalling(any(Uri.class));
     }
 
     @Test
@@ -418,7 +418,7 @@ public class ReleaseDownloadListenerTest {
 
         /* Verify that nothing is called and the method is exited early with false result. */
         releaseDownloadListener.onComplete(mock(Uri.class));
-        verify(mDistribute, never()).showSystemSettingsDialogOrStartInstalling(any(Uri.class));
+        verify(mDistribute, never()).installUpdate(any(Uri.class));
         verify(mDistribute, never()).setInstalling(mockReleaseDetails);
     }
 }

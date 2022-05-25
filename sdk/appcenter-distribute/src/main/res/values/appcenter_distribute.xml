@@ -17,7 +17,6 @@
     <!-- TODO: Deprecated. Remove this key and move the translated strings to appcenter_distribute_downloading_update. -->
     <string name="appcenter_distribute_downloading_mandatory_update">Downloading update</string>
     <!-- TODO: Add translations. -->
-    <string name="appcenter_distribute_alert_system_dialog_message" tools:ignore="MissingTranslation">For security, your device is set to block start application after update.</string>
     <string name="appcenter_distribute_downloading_version" tools:ignore="MissingTranslation">Downloading version %1$s (%2$d)</string>
     <string name="appcenter_distribute_downloading_error" tools:ignore="MissingTranslation">Failed to download app update</string>
     <string name="appcenter_distribute_download_progress_number_format">%1$d MB of %2$d MB</string>
@@ -26,6 +25,8 @@
     <string name="appcenter_distribute_install_dialog" tools:ignore="MissingTranslation">Installing...</string>
     <string name="appcenter_distribute_install_ready_title">App update downloaded</string>
     <string name="appcenter_distribute_install_ready_message">%1$s %2$s (%3$d) has been downloaded and is ready to be installed.</string>
+    <string name="appcenter_distribute_install_completed_title" tools:ignore="MissingTranslation">App update installed</string>
+    <string name="appcenter_distribute_install_completed_message" tools:ignore="MissingTranslation">%1$s %2$s (%3$d) has been installed.</string>
     <string name="appcenter_distribute_install">Install</string>
     <string name="appcenter_distribute_notification_category">App updates</string>
     <string name="appcenter_distribute_update_failed_dialog_title">In-app updates disabled</string>

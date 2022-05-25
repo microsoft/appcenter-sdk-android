@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.utils;
 
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -45,6 +47,16 @@ public class DeviceInfoHelper {
      */
     private static String mCountryCode;
 
+    public static PackageInfo getPackageInfo(Context context) {
+        try {
+            PackageManager packageManager = context.getPackageManager();
+            return packageManager.getPackageInfo(context.getPackageName(), 0);
+        } catch (Exception e) {
+            AppCenterLog.error(LOG_TAG, "Cannot retrieve package info", e);
+            return null;
+        }
+    }
+
     /**
      * Gets device information.
      *
@@ -56,16 +68,12 @@ public class DeviceInfoHelper {
         Device device = new Device();
 
         /* Application version. */
-        PackageInfo packageInfo;
-        try {
-            PackageManager packageManager = context.getPackageManager();
-            packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
-            device.setAppVersion(packageInfo.versionName);
-            device.setAppBuild(String.valueOf(getVersionCode(packageInfo)));
-        } catch (Exception e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve package info", e);
-            throw new DeviceInfoException("Cannot retrieve package info", e);
+        PackageInfo packageInfo = getPackageInfo(context);
+        if (packageInfo == null) {
+            throw new DeviceInfoException("Cannot retrieve package info");
         }
+        device.setAppVersion(packageInfo.versionName);
+        device.setAppBuild(String.valueOf(getVersionCode(packageInfo)));
 
         /* Application namespace. */
         device.setAppNamespace(context.getPackageName());
@@ -82,7 +90,7 @@ public class DeviceInfoHelper {
                 device.setCarrierName(networkOperatorName);
             }
         } catch (Exception e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve carrier info", e);
+            AppCenterLog.error(LOG_TAG, "Cannot retrieve carrier info", e);
         }
 
         /* Set country code. */
@@ -107,7 +115,7 @@ public class DeviceInfoHelper {
         try {
             device.setScreenSize(getScreenSize(context));
         } catch (Exception e) {
-            AppCenterLog.error(AppCenter.LOG_TAG, "Cannot retrieve screen size", e);
+            AppCenterLog.error(LOG_TAG, "Cannot retrieve screen size", e);
         }
 
         /* Set SDK name and version. Don't add the BuildConfig import or it will trigger a Javadoc warning... */
@@ -209,8 +217,8 @@ public class DeviceInfoHelper {
     public static class DeviceInfoException extends Exception {
 
         @SuppressWarnings("SameParameterValue")
-        public DeviceInfoException(String detailMessage, Throwable throwable) {
-            super(detailMessage, throwable);
+        public DeviceInfoException(String detailMessage) {
+            super(detailMessage);
         }
     }
 }

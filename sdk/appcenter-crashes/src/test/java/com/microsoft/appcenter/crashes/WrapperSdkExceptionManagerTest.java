@@ -346,7 +346,8 @@ public class WrapperSdkExceptionManagerTest {
 
         /* If device info fails. */
         mockStatic(DeviceInfoHelper.class);
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new java.lang.Exception()));
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class)))
+                .thenThrow(new DeviceInfoHelper.DeviceInfoException("mock"));
 
         /* When we build an handled error report. */
         String errorReportId = UUID.randomUUID().toString();

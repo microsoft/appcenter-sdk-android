@@ -53,8 +53,10 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@SuppressWarnings("unused")
-@PrepareForTest({ErrorDetails.class, DistributeUtils.class, DeviceInfoHelper.class})
+@PrepareForTest({
+        DistributeUtils.class,
+        ErrorDetails.class
+})
 public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     private void start(Distribute distribute) {
@@ -70,7 +72,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
 
         /* Set the package version equal to the portal's one. */
-        mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(10);
 
         /* Mock http call. */
@@ -157,7 +158,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     public void distributeNotRecent() throws Exception {
 
         /* Set the package version higher than the portal's one. */
-        mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(11);
 
         /* Mock http call. */
@@ -206,7 +206,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     private void distributeNotRecentCoverage(DistributeListener actualListener, DistributeListener verificationListener, boolean onPause) throws Exception {
 
         /* Set the package version higher than the portal's one. */
-        mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(11);
 
         /* Mock http call. */

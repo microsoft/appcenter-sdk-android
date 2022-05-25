@@ -64,10 +64,10 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void switchTrack() throws PackageManager.NameNotFoundException {
+    public void switchTrack() {
 
         /* Start (in public mode). */
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
 
@@ -91,10 +91,10 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void switchTrackBeforeForeground() throws PackageManager.NameNotFoundException {
+    public void switchTrackBeforeForeground() {
 
         /* Start (in public mode) in background. */
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
         start();
 
         /* Switch to private. */
