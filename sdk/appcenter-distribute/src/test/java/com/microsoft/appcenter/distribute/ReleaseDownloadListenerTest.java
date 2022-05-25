@@ -27,11 +27,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -52,6 +48,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
+@SuppressWarnings({"deprecation", "RedundantSuppression"})
 @PrepareForTest({
         AppCenter.class,
         AppCenterLog.class,
@@ -59,7 +56,7 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
         DistributeUtils.class,
         HandlerUtils.class,
         InstallerUtils.class,
-        ProgressDialog.class,
+        android.app.ProgressDialog.class,
         ReleaseDetails.class,
         ReleaseDownloadListener.class,
         SharedPreferencesManager.class,
@@ -78,29 +75,22 @@ public class ReleaseDownloadListenerTest {
     public PowerMockRule mPowerMockRule = new PowerMockRule();
 
     @Mock
-    Context mContext;
+    private Context mContext;
 
     @Mock
-    Activity mActivity;
+    private Activity mActivity;
 
     @Mock
     private Handler mHandler;
 
     @Mock
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
     private android.app.ProgressDialog mProgressDialog;
 
     @Mock
-    Uri mUri;
+    private Uri mUri;
 
     @Mock
     private Distribute mDistribute;
-
-    @Mock
-    private Intent mInstallIntent;
-
-    @Mock
-    private PackageManager mPackageManager;
 
     @Mock
     private Toast mToast;
@@ -110,7 +100,6 @@ public class ReleaseDownloadListenerTest {
         mockHandler();
         mockDialog();
         mockStorage();
-        mockInstallIntent();
         mockDistribute();
         mockToast();
     }
@@ -123,12 +112,6 @@ public class ReleaseDownloadListenerTest {
     private void mockDistribute() {
         mockStatic(Distribute.class);
         when(Distribute.getInstance()).thenReturn(mDistribute);
-    }
-
-    private void mockInstallIntent() throws Exception {
-        whenNew(Intent.class).withArguments(Intent.ACTION_INSTALL_PACKAGE).thenReturn(mInstallIntent);
-        when(mInstallIntent.resolveActivity(any(PackageManager.class))).thenReturn(mock(ComponentName.class));
-        when(mContext.getPackageManager()).thenReturn(mPackageManager);
     }
 
     private ReleaseDetails mockReleaseDetails(boolean isMandatory) throws Exception {

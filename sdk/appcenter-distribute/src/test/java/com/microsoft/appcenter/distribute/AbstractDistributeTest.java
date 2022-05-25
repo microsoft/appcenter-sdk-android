@@ -200,9 +200,6 @@ public class AbstractDistributeTest {
         }).when(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(eq(DISTRIBUTE_ENABLED_KEY), anyBoolean());
 
-        /* Default download id when not found. */
-        when(SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
-
         /* Mock package manager. */
         when(mContext.getApplicationContext()).thenReturn(mContext);
         when(mContext.getPackageName()).thenReturn("com.contoso");

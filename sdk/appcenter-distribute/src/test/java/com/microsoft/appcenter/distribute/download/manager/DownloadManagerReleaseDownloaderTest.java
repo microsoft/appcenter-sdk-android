@@ -99,7 +99,8 @@ public class DownloadManagerReleaseDownloaderTest {
     @Before
     public void setUp() throws Exception {
         mockStatic(SharedPreferencesManager.class);
-        mockStatic(HandlerUtils.class);
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Mock AsyncTaskUtils. */
         mockStatic(AsyncTaskUtils.class);
@@ -108,6 +109,7 @@ public class DownloadManagerReleaseDownloaderTest {
         when(AsyncTaskUtils.execute(anyString(), isA(DownloadManagerRemoveTask.class))).thenReturn(mRemoveTask);
 
         /* Run handler immediately. */
+        mockStatic(HandlerUtils.class);
         when(HandlerUtils.getMainHandler()).thenReturn(mMainHandler);
         when(mMainHandler.postAtTime(any(Runnable.class), anyString(), anyLong())).thenAnswer(new Answer<Object>() {
 
@@ -161,15 +163,10 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void resumeDoesNothingAfterCancellation() {
-        mReleaseDownloader.cancel();
-        mReleaseDownloader.resume();
-        verifyStatic(AsyncTaskUtils.class, never());
-        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
-    }
-
-    @Test
     public void cancelClearsEverything() {
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_ID), eq(INVALID_DOWNLOAD_IDENTIFIER)))
+                .thenReturn(DOWNLOAD_ID)
+                .thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Update status. */
         mReleaseDownloader.resume();
@@ -477,8 +474,8 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Verify. */
         verify(mFileDescriptor).close();
-        verify(mListener).onComplete(any(Uri.class));
-        verify(mListener, never()).onError(anyString());
+        verify(mListener, never()).onComplete(any(Uri.class));
+        verify(mListener).onError(anyString());
     }
 
     @Test

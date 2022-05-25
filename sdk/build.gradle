@@ -63,7 +63,7 @@ subprojects {
         testOptions {
             unitTests {
                 all {
-                    jvmArgs '-noverify', '-Djdk.attach.allowAttachSelf=true'
+                    jvmArgs '-noverify', '-Djdk.attach.allowAttachSelf=true', '-Djdk.module.illegalAccess.silent=true'
                 }
                 returnDefaultValues = true
             }
