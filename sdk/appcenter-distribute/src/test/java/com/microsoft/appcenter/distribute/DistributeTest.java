@@ -11,7 +11,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
@@ -19,7 +18,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -27,8 +25,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -43,7 +39,6 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import android.app.Activity;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -53,9 +48,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
-import android.net.Uri;
 import android.os.Build;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -69,14 +62,12 @@ import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
 import com.microsoft.appcenter.test.TestUtils;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -266,7 +257,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void setInstallingReleaseDetailsNotEqualTest() {
-        Distribute.getInstance().setInstalling(mReleaseDetails);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mUri);
         verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED));
         verifyStatic(SharedPreferencesManager.class, never());
@@ -279,7 +270,7 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Mock release details and startFromBackground to apply it. */
         mockReleaseDetails(false);
         Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().setInstalling(mReleaseDetails);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mUri);
 
         /* Verify. */
         verifyStatic(SharedPreferencesManager.class);
@@ -297,7 +288,7 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Mock release details and startFromBackground to apply it. */
         mockReleaseDetails(true);
         Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().setInstalling(mReleaseDetails);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mUri);
 
         /* Verify. */
         verifyStatic(DistributeUtils.class);
@@ -337,84 +328,6 @@ public class DistributeTest extends AbstractDistributeTest {
         Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
         Distribute.getInstance().completeWorkflow();
         verify(manager).cancel(any(Integer.class));
-    }
-
-    @Test
-    public void firstDownloadNotificationApi26() throws Exception {
-        firstDownloadNotification(Build.VERSION_CODES.O);
-    }
-
-    @Test
-    public void firstDownloadNotificationApi21() throws Exception {
-        firstDownloadNotification(Build.VERSION_CODES.LOLLIPOP);
-    }
-
-    @Test
-    public void notifyDownloadNoReleaseDetails() throws Exception {
-        mockStatic(DistributeUtils.class);
-        whenNew(Notification.Builder.class).withAnyArguments()
-                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Mock another ReleaseDetails. */
-        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
-
-        /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mockReleaseDetails, null);
-
-        /* Verify. */
-        assertTrue(notifyDownloadResult);
-        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
-
-    @Test
-    public void notifyDownloadStateNotified() throws Exception {
-        mockStatic(DistributeUtils.class);
-        whenNew(Notification.Builder.class).withAnyArguments()
-                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Mock notified state. */
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
-
-        /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, null);
-
-        /* Verify. */
-        assertFalse(notifyDownloadResult);
-        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
-
-    @Test
-    public void notifyDownloadForegroundActivity() throws Exception {
-        mockStatic(DistributeUtils.class);
-        whenNew(Notification.Builder.class).withAnyArguments()
-                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Mock foreground activity. */
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-
-        /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, null);
-
-        /* Verify. */
-        assertFalse(notifyDownloadResult);
-        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
-
-    @Test
-    public void checkNotificationState() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        Distribute.getInstance().startFromBackground(mContext);
-        assertTrue(Distribute.getInstance().notifyDownload(mock(ReleaseDetails.class), null));
     }
 
     @Test
@@ -875,139 +788,5 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Check that receiver was unregistered. */
         verify(mContext).unregisterReceiver(any(BroadcastReceiver.class));
-    }
-
-    @Test
-    public void checkProgressWhenActivityNull() {
-        mockStatic(DistributeUtils.class);
-
-        /* Start distribute. */
-        start();
-
-        /* Notify install progress. */
-        Distribute.getInstance().notifyInstallProgress(true);
-
-        /* Verify that progress dialog was not trying to display. */
-        verifyStatic(AppCenterLog.class);
-        AppCenterLog.warn(eq(LOG_TAG), eq("Could not display install progress dialog in the background."));
-
-        /* Resume workflow. */
-        resumeWorkflow(mock(Activity.class));
-
-        /* Verify that it does nothing. */
-        verifyStatic(DistributeUtils.class, never());
-        DistributeUtils.getStoredDownloadState();
-    }
-
-    @Test
-    public void checkProgressWhenReleaseInstallerIsNull() {
-
-        /* Start distribute. */
-        start();
-
-        /* Initialize mReleaseInstallerListener. */
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Call resume with the activity reference so that mForegroundActivity not null. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Remove listener if it is not null. */
-        Distribute.getInstance().notifyInstallProgress(true);
-        verify(mReleaseInstallerListener, never()).showInstallProgressDialog(any(Activity.class));
-        verify(mReleaseInstallerListener, never()).hideInstallProgressDialog();
-
-        /* Verify hide install progress was not invoked. */
-        Distribute.getInstance().notifyInstallProgress(false);
-        verify(mReleaseInstallerListener, never()).hideInstallProgressDialog();
-    }
-
-    @Test
-    public void checkInstallProgressState() {
-
-        /* Mock Distribute Utils. */
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-
-        /* Start distribute. */
-        Distribute.getInstance().onStarting(mAppCenterHandler);
-        Distribute.getInstance().onStarted(mContext, mChannel, null, null, true);
-        when(mReleaseInstallerListener.showInstallProgressDialog(any(Activity.class))).thenReturn(mDialog);
-
-        /* Resume activity. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Verify that release listener was initialized. */
-        Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().notifyInstallProgress(true);
-        verify(mReleaseInstallerListener).hideInstallProgressDialog();
-        verify(mReleaseInstallerListener).showInstallProgressDialog(any(Activity.class));
-
-        /* Stop installing and verify thad dialog was hide. */
-        Distribute.getInstance().notifyInstallProgress(false);
-        verify(mReleaseInstallerListener, times(2)).hideInstallProgressDialog();
-    }
-
-    private void firstDownloadNotification(int apiLevel) throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
-        spy(DistributeUtils.class);
-        NotificationManager manager = mock(NotificationManager.class);
-        whenNew(Notification.Builder.class).withAnyArguments()
-                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        PowerMockito.doReturn(mReleaseDetails).when(DistributeUtils.class);
-        DistributeUtils.loadCachedReleaseDetails();
-        PowerMockito.doReturn(0).when(DistributeUtils.class);
-        DistributeUtils.getNotificationId();
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
-        Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().onStarted(mContext, mChannel, "0", "test", false);
-        Distribute.getInstance().notifyDownload(mReleaseDetails, null);
-        verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
-
-    @Test
-    public void installUpdate() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Try to start installation. */
-        Uri localUri = mock(Uri.class);
-        start();
-        Distribute.getInstance().installUpdate(localUri);
-
-        /* Verify that it calls InstallerUtils. */
-        verifyStatic(InstallerUtils.class);
-        InstallerUtils.installPackage(eq(localUri), eq(mContext), isA(ReleaseInstallerListener.class));
-    }
-
-    @Test
-    public void installUpdateWhenPackageInstallerNull() {
-
-        /* Try to start installation. */
-        Uri localUri = mock(Uri.class);
-        start();
-        Distribute.getInstance().installUpdate(localUri);
-
-        /* Verify that it was called. */
-        verifyStatic(InstallerUtils.class, never());
-        InstallerUtils.installPackage(any(), any(), any());
-    }
-
-    @Test
-    public void showInstallingErrorToast() {
-        start();
-
-        /* Without activity. */
-        Distribute.getInstance().showInstallingErrorToast();
-        verify(mToast).show();
-        verifyStatic(Toast.class);
-        Toast.makeText(eq(mContext), anyInt(), anyInt());
-
-        /* With activity. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-        Distribute.getInstance().showInstallingErrorToast();
-        verify(mToast, times(2)).show();
-        verifyStatic(Toast.class);
-        Toast.makeText(eq(mActivity), anyInt(), anyInt());
     }
 }

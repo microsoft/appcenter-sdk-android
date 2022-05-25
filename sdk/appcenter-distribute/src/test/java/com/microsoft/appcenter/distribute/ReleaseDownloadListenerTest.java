@@ -5,6 +5,27 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
@@ -30,28 +51,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
-
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @PrepareForTest({
         AppCenter.class,
@@ -369,56 +368,5 @@ public class ReleaseDownloadListenerTest {
 
         /* Verify that completeWorkflow() is called on error. */
         verify(mDistribute).completeWorkflow(mockReleaseDetails);
-    }
-
-    @Test
-    public void onComplete() throws Exception {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getResumeAppIntent(eq(mContext))).thenReturn(mock(Intent.class));
-        ReleaseDetails mockReleaseDetails = mockReleaseDetails(true);
-
-        /* Do not notify the download. */
-        when(mDistribute.notifyDownload(eq(mockReleaseDetails), any(Intent.class))).thenReturn(false);
-        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        releaseDownloadListener.onComplete(mock(Uri.class));
-
-        /* Verify that setInstalling() is called on mandatory update. */
-        verify(mDistribute).installUpdate(any(Uri.class));
-        verify(mDistribute).setInstalling(mockReleaseDetails);
-    }
-
-    @Test
-    public void onCompleteNotify() throws Exception {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getResumeAppIntent(eq(mContext))).thenReturn(mock(Intent.class));
-        ReleaseDetails mockReleaseDetails = mockReleaseDetails(false);
-
-        /* Notify the download. */
-        when(mDistribute.notifyDownload(eq(mockReleaseDetails), any(Intent.class))).thenReturn(true);
-        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-        releaseDownloadListener.onComplete(mock(Uri.class));
-
-        /* Verify that startActivity() and setInstalling() are not called here. */
-        verify(mContext, never()).startActivity(any(Intent.class));
-        verify(mDistribute, never()).setInstalling(mockReleaseDetails);
-    }
-
-    @Test
-    public void onCompleteActivityNotResolved() throws Exception {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getResumeAppIntent(eq(mContext))).thenReturn(mock(Intent.class));
-
-        /* Mock notify download result. */
-        when(mDistribute.notifyDownload(any(ReleaseDetails.class), any(Intent.class))).thenReturn(true);
-
-        /* Mock resolving to null activity. */
-        when(mInstallIntent.resolveActivity(any(PackageManager.class))).thenReturn(null);
-        ReleaseDetails mockReleaseDetails = mockReleaseDetails(false);
-        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, mockReleaseDetails);
-
-        /* Verify that nothing is called and the method is exited early with false result. */
-        releaseDownloadListener.onComplete(mock(Uri.class));
-        verify(mDistribute, never()).installUpdate(any(Uri.class));
-        verify(mDistribute, never()).setInstalling(mockReleaseDetails);
     }
 }
