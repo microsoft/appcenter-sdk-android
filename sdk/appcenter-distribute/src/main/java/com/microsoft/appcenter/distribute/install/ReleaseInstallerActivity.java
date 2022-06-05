@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.install;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
@@ -11,8 +16,14 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
+/**
+ * Invisible activity used for wrapping system dialogs.
+ */
 public class ReleaseInstallerActivity extends Activity {
 
+    /**
+     * Result of system dialog.
+     */
     public static class Result {
         public final int code;
         public final String message;
@@ -23,11 +34,21 @@ public class ReleaseInstallerActivity extends Activity {
         }
     }
 
+    /**
+     * Tracking last request to send result to the listener.
+     */
     private static DefaultAppCenterFuture<Result> sResultFuture;
 
+    /**
+     * Starts wrapper activity and system dialog inside.
+     *
+     * @param context any context.
+     * @param trackedIntent intent of tracked system dialog.
+     * @return future with result.
+     */
     public static AppCenterFuture<Result> startActivityForResult(Context context, Intent trackedIntent) {
         if (sResultFuture != null) {
-            AppCenterLog.error(LOG_TAG, "ALREADY IN PROGRESS");
+            AppCenterLog.error(LOG_TAG, "Another installing activity already in progress.");
             return null;
         }
         sResultFuture = new DefaultAppCenterFuture<>();
@@ -36,8 +57,6 @@ public class ReleaseInstallerActivity extends Activity {
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         intent.putExtra(Intent.EXTRA_INTENT, trackedIntent);
-
-        // FIXME: StrictMode policy violation; ~duration=13 ms: android.os.strictmode.DiskReadViolation
         context.startActivity(intent);
         return sResultFuture;
     }
@@ -54,7 +73,7 @@ public class ReleaseInstallerActivity extends Activity {
         super.onCreate(savedInstanceState);
         final Intent intent = getIntent().getParcelableExtra(Intent.EXTRA_INTENT);
         if (intent == null) {
-            AppCenterLog.warn(LOG_TAG, "MISSING EXTRA INTENT");
+            AppCenterLog.warn(LOG_TAG, "Missing extra intent.");
             finish();
             return;
         }
@@ -67,12 +86,7 @@ public class ReleaseInstallerActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        AppCenterLog.warn(LOG_TAG, "onActivityResult: " + resultCode);
-        if (data != null && data.getExtras() != null) {
-            for (String key : data.getExtras().keySet()) {
-                AppCenterLog.warn(LOG_TAG, key + ": " + data.getExtras().get(key));
-            }
-        }
+        AppCenterLog.verbose(LOG_TAG, "Release installer activity result=" + resultCode);
         complete(new Result(resultCode, null));
         finish();
     }

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.install;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
@@ -22,6 +27,7 @@ public abstract class AbstractReleaseInstaller implements ReleaseInstaller {
         mInstallerHandler.post(runnable);
     }
 
+    @SuppressWarnings("SameParameterValue")
     protected void postDelayed(Runnable runnable, long delayMillis) {
         mInstallerHandler.postDelayed(runnable, delayMillis);
     }
@@ -31,18 +37,14 @@ public abstract class AbstractReleaseInstaller implements ReleaseInstaller {
         mListener.onError(message);
     }
 
-    protected void onError(String message, Throwable throwable) {
-        AppCenterLog.error(LOG_TAG, "Failed to install a new release: " + message, throwable);
-        mListener.onError(message);
+    protected void onError(String errorMessage, Throwable throwable) {
+        AppCenterLog.error(LOG_TAG, "Failed to install a new release: " + errorMessage, throwable);
+        mListener.onError(errorMessage);
     }
 
     protected void onCancel() {
         AppCenterLog.debug(LOG_TAG, "Installation cancelled.");
         mListener.onCancel();
-    }
-
-    @Override
-    public void resume() {
     }
 
     @Override

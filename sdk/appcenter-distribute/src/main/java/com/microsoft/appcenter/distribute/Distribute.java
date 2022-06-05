@@ -235,7 +235,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     private ReleaseDownloadListener mReleaseDownloaderListener;
 
-    private ReleaseInstaller mReleaseInstaller;
+    private UpdateInstaller mReleaseInstaller;
 
     /**
      * True when distribute workflow reached final state.
