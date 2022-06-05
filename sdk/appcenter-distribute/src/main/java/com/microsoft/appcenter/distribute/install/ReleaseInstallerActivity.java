@@ -69,7 +69,7 @@ public class ReleaseInstallerActivity extends Activity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final Intent intent = getIntent().getParcelableExtra(Intent.EXTRA_INTENT);
         if (intent == null) {
@@ -85,7 +85,7 @@ public class ReleaseInstallerActivity extends Activity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         AppCenterLog.verbose(LOG_TAG, "Release installer activity result=" + resultCode);
         complete(new Result(resultCode, null));
         finish();

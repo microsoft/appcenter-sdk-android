@@ -13,12 +13,15 @@ import android.os.Handler;
 import android.os.HandlerThread;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.distribute.install.ReleaseInstaller;
 import com.microsoft.appcenter.distribute.install.intent.IntentReleaseInstaller;
 import com.microsoft.appcenter.distribute.install.session.SessionReleaseInstaller;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
 
@@ -35,7 +38,7 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
     /**
      * Queue of available to use installers.
      */
-    private final Deque<ReleaseInstaller> mInstallers = new LinkedList<>();
+    private final Deque<ReleaseInstaller> mInstallers;
 
     /**
      * The installer that we currently use.
@@ -54,14 +57,25 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
 
     UpdateInstaller(Context context, ReleaseDetails releaseDetails) {
         mReleaseDetails = releaseDetails;
+        mInstallers = createInstallers(context);
+        mCurrentInstaller = popNextInstaller();
+    }
+
+    @VisibleForTesting
+    UpdateInstaller(ReleaseDetails releaseDetails, Deque<ReleaseInstaller> installers) {
+        mReleaseDetails = releaseDetails;
+        mInstallers = installers;
+        mCurrentInstaller = popNextInstaller();
+    }
+
+    private Deque<ReleaseInstaller> createInstallers(Context context) {
 
         /* Initialize installers list. Use separate thread for background operations. */
-        HandlerThread thread = new HandlerThread("AppCenter.Installer");
-        thread.start();
-        Handler handler = new Handler(thread.getLooper());
-        mInstallers.add(new SessionReleaseInstaller(context, handler, this));
-        mInstallers.add(new IntentReleaseInstaller(context, handler, this));
-        mCurrentInstaller = popNextInstaller();
+        Handler handler = createInstallerHandler();
+        Deque<ReleaseInstaller> installers = new LinkedList<>();
+        installers.add(new SessionReleaseInstaller(context, handler, this));
+        installers.add(new IntentReleaseInstaller(context, handler, this));
+        return installers;
     }
 
     private ReleaseInstaller popNextInstaller() {
@@ -120,6 +134,12 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
         } else {
             Distribute.getInstance().completeWorkflow(mReleaseDetails);
         }
+    }
+
+    private static Handler createInstallerHandler() {
+        HandlerThread thread = new HandlerThread("AppCenter.Installer");
+        thread.start();
+        return new Handler(thread.getLooper());
     }
 
     /**
