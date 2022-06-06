@@ -41,12 +41,12 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -225,7 +225,7 @@ public class Distribute extends AbstractAppCenterService {
     private WeakReference<Activity> mLastActivityWithDialog = new WeakReference<>(null);
 
     /**
-     * Release downloader. It can use {@link DownloadManager} or direct HTTPS downloading.
+     * Release downloader. It will use {@link android.app.DownloadManager}.
      */
     private ReleaseDownloader mReleaseDownloader;
 
@@ -234,6 +234,9 @@ public class Distribute extends AbstractAppCenterService {
      */
     private ReleaseDownloadListener mReleaseDownloaderListener;
 
+    /**
+     * Release installer. It can use {@link PackageInstaller.Session} or {@link Intent#ACTION_INSTALL_PACKAGE}.
+     */
     private UpdateInstaller mReleaseInstaller;
 
     /**
@@ -724,7 +727,7 @@ public class Distribute extends AbstractAppCenterService {
             return;
         }
 
-        /* Do nothing during installing a new release. */
+        /* The installer takes care of resume event during installing a new release. */
         if (mReleaseInstaller != null) {
             mReleaseInstaller.resume();
             return;
@@ -1626,7 +1629,6 @@ public class Distribute extends AbstractAppCenterService {
              * And a no U.I. activity of our own must finish in onCreate,
              * so it cannot receive a result.
              */
-            // FIXME: StrictMode policy violation;
             mForegroundActivity.startActivity(intent);
         } catch (ActivityNotFoundException e) {
 

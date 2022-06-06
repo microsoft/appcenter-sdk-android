@@ -33,7 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * Installer based on PackageInstaller.Session API.
+ * Installer based on {@link PackageInstaller.Session} API.
  */
 public class SessionReleaseInstaller extends AbstractReleaseInstaller {
 

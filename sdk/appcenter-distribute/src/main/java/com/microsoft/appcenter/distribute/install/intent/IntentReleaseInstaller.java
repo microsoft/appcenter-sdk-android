@@ -21,6 +21,9 @@ import com.microsoft.appcenter.distribute.install.ReleaseInstallerActivity;
 import com.microsoft.appcenter.utils.async.AppCenterConsumer;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
+/**
+ * Installer based on {@link Intent#ACTION_INSTALL_PACKAGE}.
+ */
 public class IntentReleaseInstaller extends AbstractReleaseInstaller {
 
     public IntentReleaseInstaller(Context context, Handler installerHandler, Listener listener) {
