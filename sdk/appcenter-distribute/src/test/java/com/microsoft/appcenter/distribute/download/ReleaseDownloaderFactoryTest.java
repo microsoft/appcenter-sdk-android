@@ -13,13 +13,13 @@ import android.os.Build;
 
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.manager.DownloadManagerReleaseDownloader;
-import com.microsoft.appcenter.test.TestUtils;
 
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 
 @RunWith(PowerMockRunner.class)
 public class ReleaseDownloaderFactoryTest {
@@ -35,7 +35,7 @@ public class ReleaseDownloaderFactoryTest {
 
     @After
     public void tearDown() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 
     @SuppressWarnings({"ObviousNullCheck", "InstantiationOfUtilityClass"})
@@ -48,7 +48,7 @@ public class ReleaseDownloaderFactoryTest {
 
     @Test
     public void createOnLollipop() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
         ReleaseDownloader releaseDownloader = ReleaseDownloaderFactory.create(mockContext, mockReleaseDetails, mockReleaseDownloaderListener);
         assertTrue(releaseDownloader instanceof DownloadManagerReleaseDownloader);
     }

@@ -5,27 +5,40 @@
 
 package com.microsoft.appcenter.distribute;
 
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
-import org.json.JSONException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
-
+import static android.content.Context.NOTIFICATION_SERVICE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.os.Build;
+
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
+import org.json.JSONException;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.reflect.Whitebox;
 
 @PrepareForTest({
         DistributeUtils.class,
@@ -36,6 +49,9 @@ public class DistributeUtilsTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Mock
+    private Context mContext;
 
     @Before
     public void setUp() {
@@ -96,5 +112,45 @@ public class DistributeUtilsTest {
         assertNull(releaseDetails);
         verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
+    }
+
+    @Test
+    public void firstDownloadNotificationApi26() throws Exception {
+        firstDownloadNotification(Build.VERSION_CODES.O);
+    }
+
+    @Test
+    public void firstDownloadNotificationApi21() throws Exception {
+        firstDownloadNotification(Build.VERSION_CODES.LOLLIPOP);
+    }
+
+    private void firstDownloadNotification(int apiLevel) throws Exception {
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
+        NotificationManager manager = mock(NotificationManager.class);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
+        when(mContext.getApplicationInfo()).thenReturn(mock(ApplicationInfo.class));
+        Notification.Builder builder = mock(Notification.Builder.class, RETURNS_SELF);
+        whenNew(Notification.Builder.class).withAnyArguments().thenReturn(builder);
+        Notification notification = mock(Notification.class);
+        when(builder.build()).thenReturn(notification);
+
+        /* Post notification. */
+        Intent intent = mock(Intent.class);
+        DistributeUtils.postNotification(mContext,"Title", "Message", intent);
+
+        /* Verify. */
+        verify(builder).setContentTitle(eq("Title"));
+        verify(builder).setContentText(eq("Message"));
+        verify(manager).notify(eq(DistributeUtils.getNotificationId()), eq(notification));
+    }
+
+    @Test
+    public void checkNotificationState() {
+        NotificationManager manager = mock(NotificationManager.class);
+        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
+
+        /* Cancel notification. */
+        DistributeUtils.cancelNotification(mContext);
+        verify(manager).cancel(eq(DistributeUtils.getNotificationId()));
     }
 }

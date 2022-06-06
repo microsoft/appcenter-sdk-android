@@ -35,20 +35,25 @@ public class IntentReleaseInstaller extends AbstractReleaseInstaller {
             onError("Cannot resolve install intent for " + localUri);
             return;
         }
-        AppCenterFuture<ReleaseInstallerActivity.Result> confirmFuture = ReleaseInstallerActivity.startActivityForResult(mContext, installIntent);
-        if (confirmFuture != null) {
-            confirmFuture.thenAccept(new AppCenterConsumer<ReleaseInstallerActivity.Result>() {
 
-                @Override
-                public void accept(ReleaseInstallerActivity.Result result) {
-                    if (result.code == RESULT_FIRST_USER) {
-                        onError("Install failed");
-                    } else if (result.code == RESULT_CANCELED) {
-                        onCancel();
-                    }
-                }
-            });
+        /* Use proxy activity to handle activity result. */
+        AppCenterFuture<ReleaseInstallerActivity.Result> confirmFuture = ReleaseInstallerActivity.startActivityForResult(mContext, installIntent);
+        if (confirmFuture == null) {
+
+            /* Another installing activity already in progress. Precaution for unexpected case. */
+            return;
         }
+        confirmFuture.thenAccept(new AppCenterConsumer<ReleaseInstallerActivity.Result>() {
+
+            @Override
+            public void accept(ReleaseInstallerActivity.Result result) {
+                if (result.code == RESULT_FIRST_USER) {
+                    onError("Install failed");
+                } else if (result.code == RESULT_CANCELED) {
+                    onCancel();
+                }
+            }
+        });
     }
 
     @NonNull

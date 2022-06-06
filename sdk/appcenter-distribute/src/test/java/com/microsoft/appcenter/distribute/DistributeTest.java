@@ -44,7 +44,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.os.Build;
+import android.net.Uri;
 
 import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -57,11 +57,9 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
-import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -95,11 +93,6 @@ public class DistributeTest extends AbstractDistributeTest {
         mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
         whenNew(UpdateInstaller.class).withAnyArguments().thenReturn(mReleaseInstaller);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 
     @Test
@@ -177,20 +170,12 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void recreateLauncherActivityBeforeFullInitializationChannelNotNull() {
 
-        /* SharedPreferencesManager isn't initialized yet. */
-        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
-                .thenThrow(new NullPointerException());
-
         /* Our activity is launched once. */
         Intent intent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
         when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
-
-        /* Mock download completed. */
-        mockStatic(SharedPreferencesManager.class);
-        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED))).thenReturn(DOWNLOAD_STATE_COMPLETED);
 
         /* Channel initialization. */
         start();
@@ -202,18 +187,13 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void recreateLauncherActivityBeforeFullInitializationChannelNotNullNoDownload() {
 
-        /* SharedPreferencesManager isn't initialized yet. */
-        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
-                .thenThrow(new NullPointerException());
-
         /* Our activity is launched once. */
         Intent intent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
         when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
-        mockStatic(SharedPreferencesManager.class);
-        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED))).thenReturn(-1);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
         /* Callback. */
         start();
@@ -289,6 +269,22 @@ public class DistributeTest extends AbstractDistributeTest {
         verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
         verify(mReleaseInstaller).install(mUri);
+
+        /* Start installing second time from notified state. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mUri);
+        verifyStatic(SharedPreferencesManager.class, times(2));
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
+        verify(mReleaseInstaller, times(2)).install(mUri);
+
+        /* Installer should be aware of resume event. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(mReleaseInstaller).resume();
+
+        /* Completing workflow clears installer. */
+        Distribute.getInstance().completeWorkflow(mReleaseDetails);
+        verify(mReleaseInstaller).clear();
     }
 
     private void mockReleaseDetails(boolean mandatoryUpdate) {
@@ -318,6 +314,35 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void postDownloadNotification() {
+        when(DistributeUtils.getStoredDownloadState())
+                .thenReturn(DOWNLOAD_STATE_ENQUEUED)
+                .thenReturn(DOWNLOAD_STATE_NOTIFIED);
+
+        /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
+
+        mockReleaseDetails(false);
+        Intent intent = mock(Intent.class);
+        when(DistributeUtils.getResumeAppIntent(any(Context.class))).thenReturn(intent);
+
+        /* Set installing state. */
+        Distribute.getInstance().startFromBackground(mContext);
+        Distribute.getInstance().onStarted(mContext, mChannel, "0", null, false);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mock(Uri.class));
+
+        /* Verify. */
+        verifyStatic(DistributeUtils.class);
+        DistributeUtils.postNotification(eq(mContext), anyString(), anyString(), eq(intent));
+        verifyStatic(SharedPreferencesManager.class);
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_NOTIFIED));
+
+        /* Resume after posting notification resumes downloader that produces one more completion event. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(mReleaseDownloader).resume();
+    }
+
+    @Test
     public void updateReleaseDetailsFromBackground() {
         mockReleaseDetails(false);
 
@@ -333,6 +358,10 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
         Distribute.getInstance().startFromBackground(mContext);
         verify(mReleaseDownloader).cancel();
+
+        /* Cannot resume download without release details. */
+        Distribute.getInstance().resumeDownload();
+        verify(mReleaseDownloader, never()).resume();
     }
 
     @Test
@@ -583,13 +612,24 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* mReleaseDetails is not null and it's a mandatory update. */
         mockReleaseDetails(true);
-        resumeWorkflow(mock(Activity.class));
+        resumeWorkflow(mActivity);
+        verify(mDialog, never()).show();
 
         /*
          * Call resume twice when download already checked, mReleaseDetails are not null, package is installing.
          * current dialog is null.
          */
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialog).show();
+
+        /* Ignore if release details are not equal. */
+        Distribute.getInstance().showMandatoryDownloadReadyDialog(mock(ReleaseDetails.class));
+        verifyNoMoreInteractions(mDialog);
+
+        /* Ignore in background. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().showMandatoryDownloadReadyDialog(mReleaseDetails);
+        verifyNoMoreInteractions(mDialog);
 
         /* Call resume third time to trigger dialog refresh but it's not yet showing. */
         when(mDialog.isShowing()).thenReturn(false).thenReturn(true);

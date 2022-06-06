@@ -20,8 +20,6 @@ import com.microsoft.appcenter.distribute.install.intent.IntentReleaseInstaller;
 import com.microsoft.appcenter.distribute.install.session.SessionReleaseInstaller;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
 
@@ -100,9 +98,10 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
      * Process resume distribute workflow.
      */
     public synchronized void resume() {
-        // Show mandatory dialog if cancelled in background.
+
+        /* Show mandatory dialog if cancelled in background. */
         if (mCancelled && mReleaseDetails.isMandatoryUpdate()) {
-            Distribute.getInstance().showMandatoryDownloadReadyDialog();
+            Distribute.getInstance().showMandatoryDownloadReadyDialog(mReleaseDetails);
         }
     }
 
@@ -130,7 +129,7 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
     public synchronized void onCancel() {
         mCancelled = true;
         if (mReleaseDetails.isMandatoryUpdate()) {
-            Distribute.getInstance().showMandatoryDownloadReadyDialog();
+            Distribute.getInstance().showMandatoryDownloadReadyDialog(mReleaseDetails);
         } else {
             Distribute.getInstance().completeWorkflow(mReleaseDetails);
         }
@@ -145,7 +144,8 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
     /**
      * Message to filter MIUI error to use fallback installer.
      */
-    private static final String RECOVERABLE_ERROR = "INSTALL_FAILED_INTERNAL_ERROR: Permission Denied";
+    @VisibleForTesting
+    static final String RECOVERABLE_ERROR = "INSTALL_FAILED_INTERNAL_ERROR: Permission Denied";
 
     private static boolean isRecoverableError(String errorMessage) {
         return RECOVERABLE_ERROR.equals(errorMessage);

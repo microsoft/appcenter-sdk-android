@@ -220,6 +220,7 @@ public class AbstractDistributeTest {
         /* Mock app name and other string resources. */
         mockStatic(AppNameHelper.class);
         when(AppNameHelper.getAppName(mContext)).thenReturn("unit-test-app");
+        when(mContext.getString(anyInt())).thenReturn("localized-string");
         when(mContext.getString(R.string.appcenter_distribute_update_dialog_message_optional)).thenReturn("%s%s%d");
         when(mContext.getString(R.string.appcenter_distribute_update_dialog_message_mandatory)).thenReturn("%s%s%d");
         when(mContext.getString(R.string.appcenter_distribute_install_ready_message)).thenReturn("%s%s%d");

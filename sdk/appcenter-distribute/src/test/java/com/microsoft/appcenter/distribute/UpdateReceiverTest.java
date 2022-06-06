@@ -6,7 +6,10 @@
 package com.microsoft.appcenter.distribute;
 
 import static android.content.Intent.ACTION_MY_PACKAGE_REPLACED;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -85,5 +88,17 @@ public class UpdateReceiverTest {
 
         verifyStatic(DistributeUtils.class);
         DistributeUtils.postNotification(eq(mContext), eq("Title"), eq("Contoso ? (0)"), eq(mResumeIntent));
+    }
+
+    @Test
+    public void receiveUnknownAction() {
+        when(mIntent.getAction()).thenReturn("UnknownAction");
+
+        /* Call method with wrong action. */
+        mUpdateReceiver.onReceive(mContext, mIntent);
+
+        /* No-op in this case. */
+        verifyStatic(DistributeUtils.class, never());
+        DistributeUtils.postNotification(any(), anyString(), anyString(), any());
     }
 }

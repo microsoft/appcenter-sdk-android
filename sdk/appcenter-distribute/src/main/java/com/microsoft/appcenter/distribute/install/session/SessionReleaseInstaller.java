@@ -32,6 +32,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+/**
+ * Installer based on PackageInstaller.Session API.
+ */
 public class SessionReleaseInstaller extends AbstractReleaseInstaller {
 
     /**
@@ -44,22 +47,41 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
      */
     private static final int BUFFER_CAPACITY = 64 * 1024;
 
+    /**
+     * {@link PackageInstaller.SessionInfo#INVALID_ID} requires requires API level 29,
+     * so use our own constant.
+     */
     private static final int INVALID_SESSION_ID = -1;
 
+    /**
+     * Timeout to check cancellation state in milliseconds.
+     */
     private static final long CANCEL_TIMEOUT = 1000;
 
+    /**
+     * Install status receiver. Keep the reference to unsubscribe it.
+     */
     private BroadcastReceiver mInstallStatusReceiver;
 
+    /**
+     * Install session callback. Keep the reference to unsubscribe it.
+     */
     private PackageInstaller.SessionCallback mSessionCallback;
 
+    /**
+     * Tracking if user confirmation was requested.
+     * Needed to cancel the process in case of missing system callback.
+     */
     private boolean mUserConfirmationRequested;
 
+    /**
+     * Current install session id.
+     */
     private int mSessionId = INVALID_SESSION_ID;
 
     public SessionReleaseInstaller(Context context, Handler installerHandler, Listener listener) {
         super(context, installerHandler, listener);
     }
-
 
     private PackageInstaller getPackageInstaller() {
         return mContext.getPackageManager().getPackageInstaller();
@@ -73,7 +95,11 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
 
             @Override
             public void run() {
+
+                /* Abandon previous session if needed. */
                 abandonSession();
+
+                /* Start install session from background thread. */
                 startInstallSession(localUri);
             }
         });
@@ -81,6 +107,7 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
 
     @Override
     public synchronized void clear() {
+        super.clear();
         unregisterListeners();
         abandonSession();
     }
@@ -95,6 +122,14 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
         if (mSessionId != sessionId) {
             return;
         }
+
+        /*
+         * Reset confirmation flag.
+         * Any progress event during user confirmation means that installation is not cancelled.
+         * The only reason to track it is that system dialog might be closed by clicking
+         * outside. In this case, Android doesn't produce any event, so we have to use it
+         * as workaround to mark installation as cancelled and re-try in case of mandatory update.
+         */
         mUserConfirmationRequested = false;
     }
 
@@ -104,16 +139,23 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
         }
         AppCenterLog.info(LOG_TAG, "Ask confirmation to install a new release.");
         mUserConfirmationRequested = true;
-        AppCenterFuture<ReleaseInstallerActivity.Result> confirmFuture = ReleaseInstallerActivity.startActivityForResult(mContext, confirmIntent);
-        if (confirmFuture != null) {
-            confirmFuture.thenAccept(new AppCenterConsumer<ReleaseInstallerActivity.Result>() {
 
-                @Override
-                public void accept(ReleaseInstallerActivity.Result result) {
-                    cancelIfNoProgress();
-                }
-            });
+        /* Use proxy activity to handle closing event. */
+        AppCenterFuture<ReleaseInstallerActivity.Result> confirmFuture = ReleaseInstallerActivity.startActivityForResult(mContext, confirmIntent);
+        if (confirmFuture == null) {
+
+            /* Another installing activity already in progress. Precaution for unexpected case. */
+            return;
         }
+        confirmFuture.thenAccept(new AppCenterConsumer<ReleaseInstallerActivity.Result>() {
+
+            @Override
+            public void accept(ReleaseInstallerActivity.Result result) {
+
+                /* Check for progress events after closing confirmation dialog. */
+                cancelIfNoProgress();
+            }
+        });
     }
 
     synchronized void onInstallError(int sessionId, String message) {
@@ -133,10 +175,17 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
     }
 
     private void cancelIfNoProgress() {
+
+        /*
+         * In some cases progress event might be delayed a bit.
+         * Use threshold timeout to prevent false-alarming cancelling.
+         */
         postDelayed(new Runnable() {
 
             @Override
             public void run() {
+
+                /* Cancels installation if this flag hasn't been reset by progress event. */
                 if (mUserConfirmationRequested) {
                     onCancel();
                 }
@@ -214,12 +263,14 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
         try {
             return packageInstaller.openSession(mSessionId);
 
-            // IllegalStateException - Too many active sessions
+            /* IllegalStateException might be thrown in case of too many active sessions. */
         } catch (IllegalStateException e) {
             AppCenterLog.warn(LOG_TAG, "Cannot open session, trying to cleanup previous ones.", e);
 
-            // Leaked sessions can prevent opening new ones.
+            /* Trying to clean up leaked sessions that prevent opening new ones. */
             cleanPreviousSessions();
+
+            /* Second try to open install session. */
             return packageInstaller.openSession(mSessionId);
         }
     }

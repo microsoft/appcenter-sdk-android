@@ -18,10 +18,12 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyNoMoreInteractions;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.os.Build;
@@ -31,22 +33,29 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @PrepareForTest({
         AppCenterLog.class,
         DeviceInfoHelper.class,
+        InstallStatusReceiver.class,
+        IntentFilter.class,
         PendingIntent.class
 })
-@RunWith(PowerMockRunner.class)
 public class InstallStatusReceiverTest {
 
     private static final int SESSION_ID = 42;
+
+    @Rule
+    public PowerMockRule mRule = new PowerMockRule();
 
     @Mock
     private Context mContext;
@@ -57,20 +66,29 @@ public class InstallStatusReceiverTest {
     @Mock
     private Bundle mExtra;
 
+    private final Set<String> mExtraKeySet = new HashSet<>();
+
     @Mock
     private SessionReleaseInstaller mInstaller;
 
     private InstallStatusReceiver mInstallStatusReceiver;
 
+    private void addExtraInt(String key, int value) {
+        mExtraKeySet.add(key);
+        when(mExtra.get(eq(key))).thenReturn(value);
+        when(mExtra.getInt(eq(key))).thenReturn(value);
+    }
+
     private void installStatus(int status) {
         when(mIntent.getAction()).thenReturn(INSTALL_STATUS_ACTION);
-        when(mExtra.getInt(eq(PackageInstaller.EXTRA_SESSION_ID))).thenReturn(SESSION_ID);
-        when(mExtra.getInt(eq(PackageInstaller.EXTRA_STATUS))).thenReturn(status);
+        addExtraInt(PackageInstaller.EXTRA_SESSION_ID, SESSION_ID);
+        addExtraInt(PackageInstaller.EXTRA_STATUS, status);
     }
 
     @Before
     public void setUp() {
         when(mIntent.getExtras()).thenReturn(mExtra);
+        when(mExtra.keySet()).thenReturn(mExtraKeySet);
 
         /* Mock static classes. */
         mockStatic(AppCenterLog.class);
@@ -185,6 +203,17 @@ public class InstallStatusReceiverTest {
 
         /* No-op in this case. */
         verifyNoInteractions(mInstaller);
+    }
+
+    @Test
+    public void installerReceiverFilter() throws Exception {
+        mockStatic(IntentFilter.class);
+        IntentFilter filter = mock(IntentFilter.class);
+        whenNew(IntentFilter.class).withAnyArguments().thenReturn(filter);
+
+        /* Verify that we add install status to filter. */
+        assertEquals(filter, InstallStatusReceiver.getInstallerReceiverFilter());
+        verify(filter).addAction(INSTALL_STATUS_ACTION);
     }
 
     @Test

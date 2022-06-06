@@ -12,6 +12,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
+import androidx.annotation.VisibleForTesting;
+
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
@@ -37,7 +39,8 @@ public class ReleaseInstallerActivity extends Activity {
     /**
      * Tracking last request to send result to the listener.
      */
-    private static DefaultAppCenterFuture<Result> sResultFuture;
+    @VisibleForTesting
+    static DefaultAppCenterFuture<Result> sResultFuture;
 
     /**
      * Starts wrapper activity and system dialog inside.
@@ -72,6 +75,8 @@ public class ReleaseInstallerActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         final Intent intent = getIntent().getParcelableExtra(Intent.EXTRA_INTENT);
+
+        /* Precaution check of external usage of this wrapper activity. */
         if (intent == null) {
             AppCenterLog.warn(LOG_TAG, "Missing extra intent.");
             finish();
@@ -80,7 +85,10 @@ public class ReleaseInstallerActivity extends Activity {
         try {
             startActivityForResult(intent, 0);
         } catch (SecurityException e) {
+
+            /* SecurityException means that installation is blocked by user. */
             complete(new Result(RESULT_FIRST_USER, e.getMessage()));
+            finish();
         }
     }
 
@@ -94,6 +102,11 @@ public class ReleaseInstallerActivity extends Activity {
     @Override
     public void finish() {
         super.finish();
+
+        /*
+         * Prevent closing animation because we don't need any animation or visual effect
+         * from this wrapper activity.
+         */
         overridePendingTransition(0, 0);
     }
 }

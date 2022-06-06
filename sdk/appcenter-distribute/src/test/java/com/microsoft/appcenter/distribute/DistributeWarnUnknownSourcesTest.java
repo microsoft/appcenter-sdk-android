@@ -5,38 +5,6 @@
 
 package com.microsoft.appcenter.distribute;
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.ActivityNotFoundException;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Build;
-import android.provider.Settings;
-
-import com.microsoft.appcenter.http.HttpClient;
-import com.microsoft.appcenter.http.HttpResponse;
-import com.microsoft.appcenter.http.ServiceCall;
-import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.test.TestUtils;
-import com.microsoft.appcenter.utils.AsyncTaskUtils;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-
-import java.util.Arrays;
-import java.util.Collection;
-
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
@@ -55,6 +23,38 @@ import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Build;
+import android.provider.Settings;
+
+import com.microsoft.appcenter.http.HttpClient;
+import com.microsoft.appcenter.http.HttpResponse;
+import com.microsoft.appcenter.http.ServiceCall;
+import com.microsoft.appcenter.http.ServiceCallback;
+import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
+
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.reflect.Whitebox;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 @SuppressWarnings("CanBeFinal")
 @RunWith(Parameterized.class)
@@ -147,7 +147,7 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
     @After
     public void tearDown() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 
     @Test
@@ -318,14 +318,14 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
         verify(mDialogBuilder).setPositiveButton(eq(R.string.appcenter_distribute_unknown_sources_dialog_settings), clickListener.capture());
 
         /* Verify behaviour on old version. */
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", BuildConfig.MIN_SDK_VERSION);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", BuildConfig.MIN_SDK_VERSION);
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         verify(mFirstActivity).startActivity(intentSecuritySettings);
         verify(mFirstActivity, never()).startActivity(intentManageUnknownAppSources);
         reset(mFirstActivity);
 
         /* Verify behaviour on Android O. */
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.O);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.O);
         clickListener.getValue().onClick(mUnknownSourcesDialog, DialogInterface.BUTTON_POSITIVE);
         verify(mFirstActivity, never()).startActivity(intentSecuritySettings);
         verify(mFirstActivity).startActivity(intentManageUnknownAppSources);

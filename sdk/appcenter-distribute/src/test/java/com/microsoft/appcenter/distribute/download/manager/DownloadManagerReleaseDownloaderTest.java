@@ -20,6 +20,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -380,13 +381,26 @@ public class DownloadManagerReleaseDownloaderTest {
 
     @Test
     public void doNotOnDownloadProgressAfterCancellation() {
+        Cursor cursor = mock(Cursor.class);
+        when(mListener.onProgress(anyLong(), anyLong())).thenReturn(true);
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        when(mMainHandler.postAtTime(runnableCaptor.capture(), anyString(), anyLong())).thenReturn(true);
 
         /* Update download progress. */
-        mReleaseDownloader.cancel();
-        mReleaseDownloader.onDownloadProgress(mock(Cursor.class));
+        mReleaseDownloader.onDownloadProgress(cursor);
+        verify(mListener).onProgress(anyLong(), anyLong());
 
-        /* Verify. */
-        verify(mListener, never()).onProgress(anyLong(), anyLong());
+        /* Cancel downloading. */
+        mReleaseDownloader.cancel();
+
+        /* Delayed update does nothing after cancellation. */
+        runnableCaptor.getValue().run();
+        verifyStatic(AsyncTaskUtils.class, never());
+        AsyncTaskUtils.execute(anyString(), isA(DownloadManagerUpdateTask.class), any());
+
+        /* Update download progress does nothing after cancellation. */
+        mReleaseDownloader.onDownloadProgress(cursor);
+        verifyNoMoreInteractions(mListener);
     }
 
     @Test

@@ -48,7 +48,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-@SuppressWarnings({"deprecation", "RedundantSuppression"})
+@SuppressWarnings({"deprecation", "RedundantSuppression", "Convert2Lambda", "ConstantConditions"})
 @PrepareForTest({
         AppCenter.class,
         AppCenterLog.class,
@@ -351,5 +351,16 @@ public class ReleaseDownloadListenerTest {
 
         /* Verify that completeWorkflow() is called on error. */
         verify(mDistribute).completeWorkflow(mockReleaseDetails);
+    }
+
+    @Test
+    public void onComplete() throws Exception {
+        ReleaseDetails releaseDetails = mockReleaseDetails(true);
+        ReleaseDownloadListener releaseDownloadListener = new ReleaseDownloadListener(mContext, releaseDetails);
+        Uri uri = mock(Uri.class);
+        releaseDownloadListener.onComplete(uri);
+
+        /* Verify that setInstalling() is called. */
+        verify(mDistribute).setInstalling(eq(releaseDetails), eq(uri));
     }
 }

@@ -55,7 +55,6 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
-import com.microsoft.appcenter.test.TestUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
@@ -70,12 +69,14 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.reflect.Whitebox;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
+@SuppressWarnings({"Convert2Lambda", "RedundantSuppression"})
 @PrepareForTest({
         DistributeUtils.class,
         SessionContext.class
@@ -94,7 +95,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     @Test
     public void moreRecentWithIncompatibleMinApiLevel() throws Exception {
         mockSessionContext();
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
         when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
@@ -156,7 +157,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         String distributionGroupId = UUID.randomUUID().toString();
         when(releaseDetails.getDistributionGroupId()).thenReturn(distributionGroupId);
         when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N_MR1);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N_MR1);
 
         /* Trigger call. */
         start();
@@ -898,7 +899,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void shouldNotRemoveReleaseHashStorageIfHashesDontMatch() throws Exception {
+    public void shouldNotRemoveReleaseHashStorageIfHashesDoNotMatch() throws Exception {
 
         /* Mock release hash storage. */
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH)).thenReturn("fake-hash");
@@ -1092,7 +1093,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
     }
 
     @After
-    public void tearDown() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
+    public void tearDown() {
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 }

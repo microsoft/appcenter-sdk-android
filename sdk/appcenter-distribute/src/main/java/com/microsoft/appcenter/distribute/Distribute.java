@@ -69,7 +69,6 @@ import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.DistributeIngestion;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
-import com.microsoft.appcenter.distribute.install.ReleaseInstaller;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
@@ -557,13 +556,7 @@ public class Distribute extends AbstractAppCenterService {
     @WorkerThread
     private void resumeWorkflowIfForeground() {
         if (mForegroundActivity != null) {
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    resumeDistributeWorkflow();
-                }
-            });
+            HandlerUtils.runOnUiThread(this::resumeDistributeWorkflow);
         } else {
             AppCenterLog.debug(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
         }
@@ -671,13 +664,7 @@ public class Distribute extends AbstractAppCenterService {
      * Implements {@link #checkForUpdate()}.
      */
     private void instanceCheckForUpdate() {
-        post(new Runnable() {
-
-            @Override
-            public void run() {
-                handleCheckForUpdate();
-            }
-        });
+        post(this::handleCheckForUpdate);
     }
 
     @WorkerThread
@@ -822,7 +809,7 @@ public class Distribute extends AbstractAppCenterService {
                 if (mReleaseDetails.isMandatoryUpdate()) {
 
                     /* Show a new modal dialog with only install button. */
-                    showMandatoryDownloadReadyDialog();
+                    showMandatoryDownloadReadyDialog(mReleaseDetails);
                 } else {
 
                     /* Resume installing by ensuring that download completed. */
@@ -1775,7 +1762,10 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show modal dialog with install button if mandatory update ready and user cancelled install.
      */
-    synchronized void showMandatoryDownloadReadyDialog() {
+    synchronized void showMandatoryDownloadReadyDialog(@NonNull final ReleaseDetails releaseDetails) {
+        if (releaseDetails != mReleaseDetails) {
+            return;
+        }
 
         /* Do not attempt to show dialog if application is in the background. */
         if (mForegroundActivity == null) {
@@ -1784,7 +1774,6 @@ public class Distribute extends AbstractAppCenterService {
         if (!shouldRefreshDialog(mCompletedDownloadDialog)) {
             return;
         }
-        final ReleaseDetails releaseDetails = mReleaseDetails;
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
         dialogBuilder.setCancelable(false);
         dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);

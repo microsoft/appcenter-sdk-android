@@ -89,7 +89,8 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     @AnyThread
     @Override
     public synchronized void resume() {
-        // Force resume means that we want another completion event
+
+        /* Force resume means that we want another completion event. */
         mCompleted = false;
 
         /*
@@ -221,7 +222,8 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         if (isCompleted()) {
             return;
         }
-        // Mark completed
+
+        /* Mark download completed. */
         mCompleted = true;
         if (!isDownloadedFileValid()) {
             mListener.onError("Downloaded package file is invalid.");
