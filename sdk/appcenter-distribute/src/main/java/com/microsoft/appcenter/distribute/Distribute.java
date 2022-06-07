@@ -711,7 +711,7 @@ public class Distribute extends AbstractAppCenterService {
             return;
         }
 
-        /* Don't go any further it this is a debug app. */
+        /* Don't go any further if this is a debug app. */
         if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
             AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
             mWorkflowCompleted = true;
@@ -1696,7 +1696,22 @@ public class Distribute extends AbstractAppCenterService {
      * that will likely never happen but we guard for it.
      */
     private void showDisabledToast() {
-        Toast.makeText(mContext, R.string.appcenter_distribute_dialog_actioned_on_disabled_toast, Toast.LENGTH_SHORT).show();
+        showToast(R.string.appcenter_distribute_dialog_actioned_on_disabled_toast);
+    }
+
+    /**
+     * Show toast using foreground activity context if possible.
+     *
+      * @param messageId the resource id of the string resource to use.
+     */
+    void showToast(int messageId) {
+
+        /*
+         * Use Activity context if possible to avoid
+         * StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
+         */
+        Context context = mForegroundActivity != null ? mForegroundActivity : mContext;
+        Toast.makeText(context, messageId, Toast.LENGTH_SHORT).show();
     }
 
     /**

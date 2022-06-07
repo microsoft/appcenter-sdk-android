@@ -45,6 +45,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
+import android.widget.Toast;
 
 import com.microsoft.appcenter.DependencyConfiguration;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
@@ -751,5 +752,24 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Verify that check release for update was called again. */
         verify(mHttpClient, times(2)).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+    }
+
+    @Test
+    public void showToast() {
+        int messageId = R.string.appcenter_distribute_dialog_actioned_on_disabled_toast;
+        start();
+
+        /* Without activity. */
+        Distribute.getInstance().showToast(messageId);
+        verify(mToast).show();
+        verifyStatic(Toast.class);
+        Toast.makeText(eq(mContext), eq(messageId), anyInt());
+
+        /* With activity. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        Distribute.getInstance().showToast(messageId);
+        verify(mToast, times(2)).show();
+        verifyStatic(Toast.class);
+        Toast.makeText(eq(mActivity), eq(messageId), anyInt());
     }
 }

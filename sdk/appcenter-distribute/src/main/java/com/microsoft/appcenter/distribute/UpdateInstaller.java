@@ -122,6 +122,7 @@ class UpdateInstaller implements ReleaseInstaller, ReleaseInstaller.Listener {
                 return;
             }
         }
+        Distribute.getInstance().showToast(R.string.appcenter_distribute_install_error);
         Distribute.getInstance().completeWorkflow(mReleaseDetails);
     }
 
