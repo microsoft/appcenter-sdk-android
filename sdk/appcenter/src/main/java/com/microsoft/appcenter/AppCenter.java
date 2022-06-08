@@ -138,6 +138,7 @@ public class AppCenter {
      * Application context.
      */
     private Application mApplication;
+    private Context mContext;
 
     /**
      * Application lifecycle listener.
@@ -712,6 +713,7 @@ public class AppCenter {
 
         /* Store state. */
         mApplication = application;
+        mContext = ApplicationContextUtils.getApplicationContext(application);
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");
@@ -825,11 +827,11 @@ public class AppCenter {
     private void finishConfiguration(boolean configureFromApp) {
 
         /* Load some global constants. */
-        Constants.loadFromContext(mApplication);
+        Constants.loadFromContext(mContext);
 
         /* If parameters are valid, init context related resources. */
-        FileManager.initialize(mApplication);
-        SharedPreferencesManager.initialize(mApplication);
+        FileManager.initialize(mContext);
+        SharedPreferencesManager.initialize(mContext);
 
         /* Set network requests allowed. */
         if (mAllowedNetworkRequests != null) {
@@ -845,13 +847,13 @@ public class AppCenter {
         /* Instantiate HTTP client if it doesn't exist as a dependency. */
         HttpClient httpClient = DependencyConfiguration.getHttpClient();
         if (httpClient == null) {
-            httpClient = createHttpClient(mApplication);
+            httpClient = createHttpClient(mContext);
         }
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, httpClient, mHandler);
+        mChannel = new DefaultChannel(mContext, mAppSecret, mLogSerializer, httpClient, mHandler);
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {
@@ -877,7 +879,7 @@ public class AppCenter {
 
         /* Disable listening network if we start while being disabled. */
         if (!enabled) {
-            NetworkStateHelper.getSharedInstance(mApplication).close();
+            NetworkStateHelper.getSharedInstance(mContext).close();
         }
 
         /* Init uncaught exception handler. */
@@ -902,7 +904,7 @@ public class AppCenter {
             AppCenterLog.error(LOG_TAG, "Cannot start services, services array is null. Failed to start services.");
             return;
         }
-        if (mApplication == null) {
+        if (!isInstanceConfigured()) {
             StringBuilder serviceNames = new StringBuilder();
             for (Class<? extends AppCenterService> service : services) {
                 serviceNames.append("\t").append(service.getName()).append("\n");
@@ -1011,10 +1013,10 @@ public class AppCenter {
                 service.setInstanceEnabled(false);
             }
             if (startFromApp) {
-                service.onStarted(mApplication, mChannel, mAppSecret, mTransmissionTargetToken, true);
+                service.onStarted(mContext, mChannel, mAppSecret, mTransmissionTargetToken, true);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from application.");
             } else {
-                service.onStarted(mApplication, mChannel, null, null, false);
+                service.onStarted(mContext, mChannel, null, null, false);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from library.");
             }
         }
@@ -1118,10 +1120,10 @@ public class AppCenter {
         /* Update uncaught exception subscription. */
         if (switchToEnabled) {
             mUncaughtExceptionHandler.register();
-            NetworkStateHelper.getSharedInstance(mApplication).reopen();
+            NetworkStateHelper.getSharedInstance(mContext).reopen();
         } else if (switchToDisabled) {
             mUncaughtExceptionHandler.unregister();
-            NetworkStateHelper.getSharedInstance(mApplication).close();
+            NetworkStateHelper.getSharedInstance(mContext).close();
         }
 
         /* Update state now if true, services are checking this. */
