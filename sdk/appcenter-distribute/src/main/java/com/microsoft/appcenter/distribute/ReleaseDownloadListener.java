@@ -5,17 +5,19 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.KIBIBYTE_IN_BYTES;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
+
 import android.app.Activity;
 import android.content.Context;
+import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
-
-import android.content.Intent;
-import android.net.Uri;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -23,11 +25,6 @@ import com.microsoft.appcenter.utils.HandlerUtils;
 
 import java.text.NumberFormat;
 import java.util.Locale;
-
-import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.KIBIBYTE_IN_BYTES;
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.MEBIBYTE_IN_BYTES;
 
 /**
  * Listener for downloading progress.
@@ -97,16 +94,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
             @Override
             public void run() {
-
-                /* Use intent to just resume app instead on install intent. */
-                Intent intent = DistributeUtils.getResumeAppIntent(mContext);
-
-                /* Check if app should install now. */
-                if (!Distribute.getInstance().notifyDownload(mReleaseDetails, intent)) {
-                    AppCenterLog.info(LOG_TAG, "Release is downloaded. Starting to install it.");
-                    Distribute.getInstance().installUpdate(localUri);
-                    Distribute.getInstance().setInstalling(mReleaseDetails);
-                }
+                Distribute.getInstance().setInstalling(mReleaseDetails, localUri);
             }
         });
     }
@@ -122,8 +110,7 @@ class ReleaseDownloadListener implements ReleaseDownloader.Listener {
 
             @Override
             public void run() {
-                // FIXME: StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
-                Toast.makeText(mContext, R.string.appcenter_distribute_downloading_error, Toast.LENGTH_SHORT).show();
+                Distribute.getInstance().showToast(R.string.appcenter_distribute_downloading_error);
                 Distribute.getInstance().completeWorkflow(mReleaseDetails);
             }
         });

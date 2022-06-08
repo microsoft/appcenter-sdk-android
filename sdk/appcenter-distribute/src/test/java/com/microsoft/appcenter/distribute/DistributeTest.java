@@ -5,13 +5,12 @@
 
 package com.microsoft.appcenter.distribute;
 
-import static android.content.Context.NOTIFICATION_SERVICE;
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
@@ -19,7 +18,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -27,8 +25,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isA;
-import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -36,25 +32,19 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.widget.Toast;
 
 import com.microsoft.appcenter.DependencyConfiguration;
@@ -68,18 +58,15 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.ingestion.models.json.LogFactory;
-import com.microsoft.appcenter.test.TestUtils;
-import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.reflect.Whitebox;
 
@@ -98,9 +85,15 @@ public class DistributeTest extends AbstractDistributeTest {
 
     private static final int RELEASE_ID = 123;
 
-    @After
-    public void tearDown() throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 0);
+    @Mock
+    private UpdateInstaller mReleaseInstaller;
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        mockStatic(DistributeUtils.class);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
+        whenNew(UpdateInstaller.class).withAnyArguments().thenReturn(mReleaseInstaller);
     }
 
     @Test
@@ -178,20 +171,12 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void recreateLauncherActivityBeforeFullInitializationChannelNotNull() {
 
-        /* SharedPreferencesManager isn't initialized yet. */
-        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
-                .thenThrow(new NullPointerException());
-
         /* Our activity is launched once. */
         Intent intent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
         when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
-
-        /* Mock download completed. */
-        mockStatic(SharedPreferencesManager.class);
-        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED))).thenReturn(DOWNLOAD_STATE_COMPLETED);
 
         /* Channel initialization. */
         start();
@@ -203,18 +188,13 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void recreateLauncherActivityBeforeFullInitializationChannelNotNullNoDownload() {
 
-        /* SharedPreferencesManager isn't initialized yet. */
-        when(SharedPreferencesManager.getInt(anyString(), anyInt()))
-                .thenThrow(new NullPointerException());
-
         /* Our activity is launched once. */
         Intent intent = mock(Intent.class);
         when(mPackageManager.getLaunchIntentForPackage(anyString())).thenReturn(intent);
         ComponentName componentName = mock(ComponentName.class);
         when(intent.resolveActivity(mPackageManager)).thenReturn(componentName);
         when(componentName.getClassName()).thenReturn(mActivity.getClass().getName());
-        mockStatic(SharedPreferencesManager.class);
-        when(SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED))).thenReturn(-1);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
         /* Callback. */
         start();
@@ -266,7 +246,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void setInstallingReleaseDetailsNotEqualTest() {
-        Distribute.getInstance().setInstalling(mReleaseDetails);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mUri);
         verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.getInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_COMPLETED));
         verifyStatic(SharedPreferencesManager.class, never());
@@ -275,36 +255,37 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void setInstallingTest() {
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
-        /* Mock release details and startFromBackground to apply it. */
+        /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
+
+        /* Mock release details and resumeWorkflow to apply it. */
         mockReleaseDetails(false);
-        Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().setInstalling(mReleaseDetails);
+        resumeWorkflow(mActivity);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mUri);
 
         /* Verify. */
-        verifyStatic(SharedPreferencesManager.class);
-        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_RELEASE_DETAILS));
-        verifyStatic(SharedPreferencesManager.class);
-        SharedPreferencesManager.remove(eq(PREFERENCE_KEY_DOWNLOAD_STATE));
-        verifyStatic(SharedPreferencesManager.class, never());
-        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
         verifyReleaseDetailsAreStored();
-    }
-
-    @Test
-    public void setInstallingMandatoryReleaseDetailsTest() {
-
-        /* Mock release details and startFromBackground to apply it. */
-        mockReleaseDetails(true);
-        Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().setInstalling(mReleaseDetails);
-
-        /* Verify. */
-        verifyStatic(DistributeUtils.class);
-        DistributeUtils.getStoredDownloadState();
         verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
-        verifyReleaseDetailsAreStored();
+        verify(mReleaseInstaller).install(mUri);
+
+        /* Start installing second time from notified state. */
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mUri);
+        verifyStatic(SharedPreferencesManager.class, times(2));
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_INSTALLING));
+        verify(mReleaseInstaller, times(2)).install(mUri);
+
+        /* Installer should be aware of resume event. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(mReleaseInstaller).resume();
+
+        /* Completing workflow clears installer. */
+        Distribute.getInstance().completeWorkflow(mReleaseDetails);
+        verify(mReleaseInstaller).clear();
     }
 
     private void mockReleaseDetails(boolean mandatoryUpdate) {
@@ -312,7 +293,6 @@ public class DistributeTest extends AbstractDistributeTest {
         when(mReleaseDetails.getDistributionGroupId()).thenReturn(DISTRIBUTION_GROUP_ID);
         when(mReleaseDetails.getReleaseHash()).thenReturn(RELEASE_HASH);
         when(mReleaseDetails.getId()).thenReturn(RELEASE_ID);
-        mockStatic(DistributeUtils.class);
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
     }
 
@@ -327,100 +307,45 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void cancelingNotification() {
-        spy(DistributeUtils.class);
-        PowerMockito.doReturn(DOWNLOAD_STATE_NOTIFIED).when(DistributeUtils.class);
-        DistributeUtils.getStoredDownloadState();
-        PowerMockito.doReturn(0).when(DistributeUtils.class);
-        DistributeUtils.getNotificationId();
-        NotificationManager manager = mock(NotificationManager.class);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
         Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
         Distribute.getInstance().completeWorkflow();
-        verify(manager).cancel(any(Integer.class));
+        verifyStatic(DistributeUtils.class);
+        DistributeUtils.cancelNotification(mContext);
     }
 
     @Test
-    public void firstDownloadNotificationApi26() throws Exception {
-        firstDownloadNotification(Build.VERSION_CODES.O);
-    }
+    public void postDownloadNotification() {
+        when(DistributeUtils.getStoredDownloadState())
+                .thenReturn(DOWNLOAD_STATE_ENQUEUED)
+                .thenReturn(DOWNLOAD_STATE_NOTIFIED);
 
-    @Test
-    public void firstDownloadNotificationApi21() throws Exception {
-        firstDownloadNotification(Build.VERSION_CODES.LOLLIPOP);
-    }
+        /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
+        when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
-    @Test
-    public void notifyDownloadNoReleaseDetails() throws Exception {
-        mockStatic(DistributeUtils.class);
-        whenNew(Notification.Builder.class).withAnyArguments()
-                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
+        mockReleaseDetails(false);
+        Intent intent = mock(Intent.class);
+        when(DistributeUtils.getResumeAppIntent(any(Context.class))).thenReturn(intent);
+
+        /* Set installing state. */
         Distribute.getInstance().startFromBackground(mContext);
-
-        /* Mock another ReleaseDetails. */
-        ReleaseDetails mockReleaseDetails = mock(ReleaseDetails.class);
-
-        /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mockReleaseDetails, null);
+        Distribute.getInstance().onStarted(mContext, mChannel, "0", null, false);
+        Distribute.getInstance().setInstalling(mReleaseDetails, mock(Uri.class));
 
         /* Verify. */
-        assertTrue(notifyDownloadResult);
-        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
+        verifyStatic(DistributeUtils.class);
+        DistributeUtils.postNotification(eq(mContext), anyString(), anyString(), eq(intent));
+        verifyStatic(SharedPreferencesManager.class);
+        SharedPreferencesManager.putInt(eq(PREFERENCE_KEY_DOWNLOAD_STATE), eq(DOWNLOAD_STATE_NOTIFIED));
 
-    @Test
-    public void notifyDownloadStateNotified() throws Exception {
-        mockStatic(DistributeUtils.class);
-        whenNew(Notification.Builder.class).withAnyArguments()
-                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Mock notified state. */
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_NOTIFIED);
-
-        /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, null);
-
-        /* Verify. */
-        assertFalse(notifyDownloadResult);
-        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
-
-    @Test
-    public void notifyDownloadForegroundActivity() throws Exception {
-        mockStatic(DistributeUtils.class);
-        whenNew(Notification.Builder.class).withAnyArguments()
-                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(mNotificationManager);
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Mock foreground activity. */
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
-
-        /* Call notify download. */
-        boolean notifyDownloadResult = Distribute.getInstance().notifyDownload(mReleaseDetails, null);
-
-        /* Verify. */
-        assertFalse(notifyDownloadResult);
-        verify(mNotificationManager, never()).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
-
-    @Test
-    public void checkNotificationState() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        Distribute.getInstance().startFromBackground(mContext);
-        assertTrue(Distribute.getInstance().notifyDownload(mock(ReleaseDetails.class), null));
+        /* Resume after posting notification resumes downloader that produces one more completion event. */
+        Distribute.getInstance().onActivityResumed(mActivity);
+        verify(mReleaseDownloader).resume();
     }
 
     @Test
     public void updateReleaseDetailsFromBackground() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
+        mockReleaseDetails(false);
 
         /* mReleaseDownloader is null and is created. */
         Distribute.getInstance().startFromBackground(mContext);
@@ -434,17 +359,20 @@ public class DistributeTest extends AbstractDistributeTest {
         when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(null);
         Distribute.getInstance().startFromBackground(mContext);
         verify(mReleaseDownloader).cancel();
+
+        /* Cannot resume download without release details. */
+        Distribute.getInstance().resumeDownload();
+        verify(mReleaseDownloader, never()).resume();
     }
 
     @Test
     public void discardDownloadAsAppUpdateTest() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_INSTALLING);
 
         /* Mock that download time is smaller than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(1L);
 
-        resumeWorkflow(mock(Activity.class));
+        resumeWorkflow(mActivity);
 
         /* Verify that previous tasks are cancelled. */
         verifyStatic(SharedPreferencesManager.class);
@@ -457,65 +385,52 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void restartDownloadNotEnqueued() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's not mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(false);
-
-        resumeWorkflow(mock(Activity.class));
+        mockReleaseDetails(false);
+        resumeWorkflow(mActivity);
 
         verify(mDialog, never()).show();
     }
 
     @Test
     public void showDownloadProgressTest() {
-        mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
+        mockReleaseDetails(true);
         resumeWorkflow(mActivity);
         verify(mReleaseDownloaderListener).showDownloadProgress(mActivity);
     }
 
     @Test
     public void doNotShowDownloadProgressTestInBackground() {
-        mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
+        mockReleaseDetails(true);
         resumeWorkflowWithNoOnResume();
         verify(mReleaseDownloaderListener, never()).showDownloadProgress(mActivity);
     }
 
     @Test
     public void showDownloadProgressTestInForeground() {
-        mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
+        mockReleaseDetails(true);
         resumeWorkflow(mActivity);
         verify(mReleaseDownloaderListener).showDownloadProgress(mActivity);
     }
@@ -549,17 +464,16 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void showDownloadProgressAndActivityTest() {
-        mockStatic(DistributeUtils.class);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+        mockReleaseDetails(true);
 
-        ProgressDialog progressDialog = mock(ProgressDialog.class);
+        @SuppressWarnings({"deprecation", "RedundantSuppression"})
+        android.app.ProgressDialog progressDialog = mock(android.app.ProgressDialog.class);
         doReturn(progressDialog).when(mReleaseDownloaderListener).showDownloadProgress(mActivity);
 
         resumeWorkflow(mActivity);
@@ -569,16 +483,16 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void showDownloadProgressNullDownloaderListenerTest() throws Exception {
-        whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class), any(ReleaseDetails.class)).thenReturn(null);
-        mockStatic(DistributeUtils.class);
+        whenNew(ReleaseDownloadListener.class)
+                .withArguments(any(Context.class), any(ReleaseDetails.class))
+                .thenReturn(null);
         when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
+        mockReleaseDetails(true);
 
         resumeWorkflow(mock(Activity.class));
         verify(mReleaseDownloaderListener, never()).showDownloadProgress(mActivity);
@@ -586,30 +500,26 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void restartedDuringMandatoryUpdate() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
-        resumeWorkflow(mock(Activity.class));
+        mockReleaseDetails(true);
+        resumeWorkflow(mActivity);
 
         verify(mDialog, never()).show();
     }
 
     @Test
     public void downloadAlreadyCheckedTest() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_ENQUEUED);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
-        resumeWorkflow(mock(Activity.class));
+        resumeWorkflow(mActivity);
 
         /* Call resume twice when download already checked. */
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
@@ -617,27 +527,17 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void showUpdateDialogReleaseDownloaderNullTest() {
+        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_AVAILABLE);
 
         /* Mock mReleaseDownloader null. */
         when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(null);
-
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
-        resumeWorkflow(mock(Activity.class));
-
-        /*
-         * Call resume twice when download already checked, mReleaseDetails are not null, package is installing.
-         * mReleaseDownloader is null.
-         */
-        Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        mockReleaseDetails(true);
+        resumeWorkflow(mActivity);
         verify(mDialogBuilder).create();
     }
 
@@ -647,17 +547,12 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Mock mReleaseDownloader is downloading. */
         when(mReleaseDownloader.isDownloading()).thenReturn(true);
 
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1);
-
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
-        resumeWorkflow(mock(Activity.class));
+        mockReleaseDetails(true);
+        resumeWorkflow(mActivity);
 
         /*
          * Call resume twice when download already checked, mReleaseDetails are not null, package is installing.
@@ -686,7 +581,6 @@ public class DistributeTest extends AbstractDistributeTest {
         /* Prepare data. */
         HttpClient mockHttpClient = mock(HttpClient.class);
         DependencyConfiguration.setHttpClient(mockHttpClient);
-        mockStatic(DistributeUtils.class);
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("mock-hash");
         Distribute.getInstance().startFromBackground(mContext);
 
@@ -710,23 +604,33 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void showMandatoryDownloadReadyDialogTest() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(-1).thenReturn(DOWNLOAD_STATE_INSTALLING);
+        when(DistributeUtils.getStoredDownloadState())
+                .thenReturn(DOWNLOAD_STATE_COMPLETED)
+                .thenReturn(DOWNLOAD_STATE_INSTALLING);
 
         /* Mock that download time is bigger than packageInfo.lastUpdateTime. */
         when(SharedPreferencesManager.getLong(eq(PREFERENCE_KEY_DOWNLOAD_TIME))).thenReturn(3L);
 
         /* mReleaseDetails is not null and it's a mandatory update. */
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
-
-        resumeWorkflow(mock(Activity.class));
+        mockReleaseDetails(true);
+        resumeWorkflow(mActivity);
+        verify(mDialog, never()).show();
 
         /*
          * Call resume twice when download already checked, mReleaseDetails are not null, package is installing.
          * current dialog is null.
          */
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
+        verify(mDialog).show();
+
+        /* Ignore if release details are not equal. */
+        Distribute.getInstance().showMandatoryDownloadReadyDialog(mock(ReleaseDetails.class));
+        verifyNoMoreInteractions(mDialog);
+
+        /* Ignore in background. */
+        Distribute.getInstance().onActivityPaused(mActivity);
+        Distribute.getInstance().showMandatoryDownloadReadyDialog(mReleaseDetails);
+        verifyNoMoreInteractions(mDialog);
 
         /* Call resume third time to trigger dialog refresh but it's not yet showing. */
         when(mDialog.isShowing()).thenReturn(false).thenReturn(true);
@@ -750,6 +654,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Click. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
+        verify(mReleaseDownloader).resume();
 
         /* Complete workflow and unset mReleaseDetails. */
         Distribute.getInstance().completeWorkflow();
@@ -757,17 +662,11 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Click. */
         clickListener.getValue().onClick(mDialog, DialogInterface.BUTTON_POSITIVE);
-
-        /* Verify that download is resumed after click Install but only twice (on third time Distribute is disabled). */
-        verify(mReleaseDownloader, times(2)).resume();
+        verifyNoMoreInteractions(mReleaseDownloader);
     }
 
     @Test
     public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNull() {
-
-        /* Mock download state. */
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
         final ServiceCall call = mock(ServiceCall.class);
         doAnswer(new Answer<ServiceCall>() {
 
@@ -791,10 +690,6 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void tryResetWorkflowWhenApplicationEnterForegroundWhenChannelNotNull() {
-
-        /* Prepare data. */
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.getStoredDownloadState()).thenReturn(DOWNLOAD_STATE_COMPLETED);
         final ServiceCall call = mock(ServiceCall.class);
         doAnswer(new Answer<ServiceCall>() {
 
@@ -832,13 +727,9 @@ public class DistributeTest extends AbstractDistributeTest {
 
     @Test
     public void checkUpdateReleaseAfterInterruptDownloading() {
-
-        /* Prepare data. */
-        mockStatic(DistributeUtils.class);
+        mockReleaseDetails(true);
         when(mReleaseDetails.getVersion()).thenReturn(1);
-        when(mReleaseDetails.isMandatoryUpdate()).thenReturn(true);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(0);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
 
         /* Start distribute. */
         start();
@@ -864,150 +755,21 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void applyEnableStateRegistersInstallReceiver() {
-        start();
-
-        /* Verify that register receiver was called after activity is resumed. */
-        verify(mContext).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
-
-        /* Disable Distribute. */
-        Distribute.setEnabled(false);
-
-        /* Check that receiver was unregistered. */
-        verify(mContext).unregisterReceiver(any(BroadcastReceiver.class));
-    }
-
-    @Test
-    public void checkProgressWhenActivityNull() {
-        mockStatic(DistributeUtils.class);
-
-        /* Start distribute. */
-        start();
-
-        /* Notify install progress. */
-        Distribute.getInstance().notifyInstallProgress(true);
-
-        /* Verify that progress dialog was not trying to display. */
-        verifyStatic(AppCenterLog.class);
-        AppCenterLog.warn(eq(LOG_TAG), eq("Could not display install progress dialog in the background."));
-
-        /* Resume workflow. */
-        resumeWorkflow(mock(Activity.class));
-
-        /* Verify that it does nothing. */
-        verifyStatic(DistributeUtils.class, never());
-        DistributeUtils.getStoredDownloadState();
-    }
-
-    @Test
-    public void checkProgressWhenReleaseInstallerIsNull() {
-
-        /* Start distribute. */
-        start();
-
-        /* Initialize mReleaseInstallerListener. */
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Call resume with the activity reference so that mForegroundActivity not null. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Remove listener if it is not null. */
-        Distribute.getInstance().notifyInstallProgress(true);
-        verify(mReleaseInstallerListener, never()).showInstallProgressDialog(any(Activity.class));
-        verify(mReleaseInstallerListener, never()).hideInstallProgressDialog();
-
-        /* Verify hide install progress was not invoked. */
-        Distribute.getInstance().notifyInstallProgress(false);
-        verify(mReleaseInstallerListener, never()).hideInstallProgressDialog();
-    }
-
-    @Test
-    public void checkInstallProgressState() {
-
-        /* Mock Distribute Utils. */
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-
-        /* Start distribute. */
-        Distribute.getInstance().onStarting(mAppCenterHandler);
-        Distribute.getInstance().onStarted(mContext, mChannel, null, null, true);
-        when(mReleaseInstallerListener.showInstallProgressDialog(any(Activity.class))).thenReturn(mDialog);
-
-        /* Resume activity. */
-        Distribute.getInstance().onActivityResumed(mActivity);
-
-        /* Verify that release listener was initialized. */
-        Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().notifyInstallProgress(true);
-        verify(mReleaseInstallerListener).hideInstallProgressDialog();
-        verify(mReleaseInstallerListener).showInstallProgressDialog(any(Activity.class));
-
-        /* Stop installing and verify thad dialog was hide. */
-        Distribute.getInstance().notifyInstallProgress(false);
-        verify(mReleaseInstallerListener, times(2)).hideInstallProgressDialog();
-    }
-
-    private void firstDownloadNotification(int apiLevel) throws Exception {
-        TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", apiLevel);
-        spy(DistributeUtils.class);
-        NotificationManager manager = mock(NotificationManager.class);
-        whenNew(Notification.Builder.class).withAnyArguments()
-                .thenReturn(mock(Notification.Builder.class, RETURNS_MOCKS));
-        PowerMockito.doReturn(mReleaseDetails).when(DistributeUtils.class);
-        DistributeUtils.loadCachedReleaseDetails();
-        PowerMockito.doReturn(0).when(DistributeUtils.class);
-        DistributeUtils.getNotificationId();
-        when(mContext.getSystemService(NOTIFICATION_SERVICE)).thenReturn(manager);
-        Distribute.getInstance().startFromBackground(mContext);
-        Distribute.getInstance().onStarted(mContext, mChannel, "0", "test", false);
-        Distribute.getInstance().notifyDownload(mReleaseDetails, null);
-        verify(manager).notify(eq(DistributeUtils.getNotificationId()), any(Notification.class));
-    }
-
-    @Test
-    public void installUpdate() {
-        mockStatic(DistributeUtils.class);
-        when(DistributeUtils.loadCachedReleaseDetails()).thenReturn(mReleaseDetails);
-        Distribute.getInstance().startFromBackground(mContext);
-
-        /* Try to start installation. */
-        Uri localUri = mock(Uri.class);
-        start();
-        Distribute.getInstance().installUpdate(localUri);
-
-        /* Verify that it calls InstallerUtils. */
-        verifyStatic(InstallerUtils.class);
-        InstallerUtils.installPackage(eq(localUri), eq(mContext), isA(ReleaseInstallerListener.class));
-    }
-
-    @Test
-    public void installUpdateWhenPackageInstallerNull() {
-
-        /* Try to start installation. */
-        Uri localUri = mock(Uri.class);
-        start();
-        Distribute.getInstance().installUpdate(localUri);
-
-        /* Verify that it was called. */
-        verifyStatic(InstallerUtils.class, never());
-        InstallerUtils.installPackage(any(), any(), any());
-    }
-
-    @Test
-    public void showInstallingErrorToast() {
+    public void showToast() {
+        int messageId = R.string.appcenter_distribute_dialog_actioned_on_disabled_toast;
         start();
 
         /* Without activity. */
-        Distribute.getInstance().showInstallingErrorToast();
+        Distribute.getInstance().showToast(messageId);
         verify(mToast).show();
         verifyStatic(Toast.class);
-        Toast.makeText(eq(mContext), anyInt(), anyInt());
+        Toast.makeText(eq(mContext), eq(messageId), anyInt());
 
         /* With activity. */
         Distribute.getInstance().onActivityResumed(mActivity);
-        Distribute.getInstance().showInstallingErrorToast();
+        Distribute.getInstance().showToast(messageId);
         verify(mToast, times(2)).show();
         verifyStatic(Toast.class);
-        Toast.makeText(eq(mActivity), anyInt(), anyInt());
+        Toast.makeText(eq(mActivity), eq(messageId), anyInt());
     }
 }

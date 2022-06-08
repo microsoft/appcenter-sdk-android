@@ -176,11 +176,6 @@ public final class DistributeConstants {
     public static final String HANDLER_TOKEN_CHECK_PROGRESS = SERVICE_NAME + ".handler_token_check_progress";
 
     /**
-     * The download progress will be reported after loading this number of bytes.
-     */
-    public static final long UPDATE_PROGRESS_BYTES_THRESHOLD = 512 * 1024;
-
-    /**
      * The download progress will be reported not more often than this number of milliseconds.
      */
     public static final long UPDATE_PROGRESS_TIME_THRESHOLD = 500;
