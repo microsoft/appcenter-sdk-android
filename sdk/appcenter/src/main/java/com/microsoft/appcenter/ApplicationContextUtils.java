@@ -10,7 +10,14 @@ import android.content.Context;
 import android.os.Build;
 import android.os.UserManager;
 
+/**
+ * Context utility.
+ */
 class ApplicationContextUtils {
+
+    /**
+     * Conditions for taking a context.
+     */
     static Context getApplicationContext(Application application) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             UserManager userManager = (UserManager) application.getSystemService(Context.USER_SERVICE);

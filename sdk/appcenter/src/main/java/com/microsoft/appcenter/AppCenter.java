@@ -138,6 +138,10 @@ public class AppCenter {
      * Application context.
      */
     private Application mApplication;
+
+    /**
+     * Context.
+     */
     private Context mContext;
 
     /**
