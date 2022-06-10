@@ -2,6 +2,10 @@
 
 ## Version 4.4.4 (Under active development)
 
+### App Center
+
+* **[Fix]** Crash when direct boot is used.
+
 ### App Center Distribute
 
 * **[Improvement]** Remove optional `SYSTEM_ALERT_WINDOW` permission that was required to automatically restart the app after installing the update.
