@@ -5,17 +5,6 @@
 
 package com.microsoft.appcenter;
 
-import android.content.Context;
-
-import com.microsoft.appcenter.channel.Channel;
-import com.microsoft.appcenter.channel.OneCollectorChannelListener;
-import com.microsoft.appcenter.utils.AppCenterLog;
-
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.microsoft.appcenter.AppCenter.CORE_GROUP;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 import static com.microsoft.appcenter.AppCenter.PAIR_DELIMITER;
@@ -34,6 +23,17 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
+
+import android.content.Context;
+
+import com.microsoft.appcenter.channel.Channel;
+import com.microsoft.appcenter.channel.OneCollectorChannelListener;
+import com.microsoft.appcenter.utils.AppCenterLog;
+
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AppCenterLibraryTest extends AbstractAppCenterTest {
 
@@ -347,7 +347,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         AppCenter.startFromLibrary(mApplication, DummyService.class);
 
         /* Verify second service started without secrets with library flag. */
-        verify(DummyService.getInstance()).onStarted(mApplication, mChannel, null, null, false);
+        verify(DummyService.getInstance()).onStarted(mContext, mChannel, null, null, false);
 
         /* Now start from app. */
         AppCenter.start(DummyService.class);

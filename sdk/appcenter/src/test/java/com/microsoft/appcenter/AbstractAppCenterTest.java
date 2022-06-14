@@ -5,6 +5,19 @@
 
 package com.microsoft.appcenter;
 
+import static com.microsoft.appcenter.AppCenter.KEY_VALUE_DELIMITER;
+import static com.microsoft.appcenter.AppCenter.TRANSMISSION_TARGET_TOKEN_KEY;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -43,20 +56,8 @@ import org.powermock.modules.junit4.rule.PowerMockRule;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.microsoft.appcenter.AppCenter.KEY_VALUE_DELIMITER;
-import static com.microsoft.appcenter.AppCenter.TRANSMISSION_TARGET_TOKEN_KEY;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-
 @PrepareForTest({
+        ApplicationContextUtils.class,
         AppCenter.class,
         UncaughtExceptionHandler.class,
         DefaultChannel.class,
@@ -83,6 +84,9 @@ public class AbstractAppCenterTest {
 
     @Rule
     public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Mock
+    Context mContext;
 
     @Mock
     DefaultChannel mChannel;
@@ -124,6 +128,11 @@ public class AbstractAppCenterTest {
         mApplicationInfo.flags = ApplicationInfo.FLAG_DEBUGGABLE;
         when(mApplication.getApplicationInfo()).thenReturn(mApplicationInfo);
 
+        /* Mock ApplicationContextUtils. */
+        mockStatic(ApplicationContextUtils.class);
+        when(ApplicationContextUtils.getApplicationContext(mApplication)).thenReturn(mContext);
+
+        /* Mock static classes. */
         mockStatic(Constants.class);
         mockStatic(AppCenterLog.class);
         mockStatic(FileManager.class);
