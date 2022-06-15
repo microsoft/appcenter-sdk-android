@@ -57,22 +57,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 @PrepareForTest({
-        ApplicationContextUtils.class,
         AppCenter.class,
-        UncaughtExceptionHandler.class,
-        DefaultChannel.class,
-        Constants.class,
         AppCenterLog.class,
-        StartServiceLog.class,
-        FileManager.class,
-        SharedPreferencesManager.class,
-        IdHelper.class,
+        ApplicationContextUtils.class,
+        Constants.class,
+        DefaultChannel.class,
         DeviceInfoHelper.class,
-        Thread.class,
-        ShutdownHelper.class,
+        FileManager.class,
+        IdHelper.class,
         InstrumentationRegistryHelper.class,
+        JSONUtils.class,
         NetworkStateHelper.class,
-        JSONUtils.class
+        SharedPreferencesManager.class,
+        ShutdownHelper.class,
+        StartServiceLog.class,
+        Thread.class,
+        UncaughtExceptionHandler.class
 })
 public class AbstractAppCenterTest {
 
@@ -131,6 +131,7 @@ public class AbstractAppCenterTest {
         /* Mock ApplicationContextUtils. */
         mockStatic(ApplicationContextUtils.class);
         when(ApplicationContextUtils.getApplicationContext(mApplication)).thenReturn(mContext);
+        when(ApplicationContextUtils.isDeviceProtectedStorage(mContext)).thenReturn(false);
 
         /* Mock static classes. */
         mockStatic(Constants.class);

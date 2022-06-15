@@ -6,6 +6,7 @@
 package com.microsoft.appcenter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -102,6 +103,29 @@ public class ApplicationContextUtilsTest {
 
         /* Verify get application context. */
         verify(mApplication).getApplicationContext();
+    }
+
+    @Test
+    public void ifTheDeviceAPIVersionSupportsDeviceProtectedStorage() {
+
+        /* Mock SDK_INT to N. */
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N);
+
+        /* Method call. */
+        ApplicationContextUtils.isDeviceProtectedStorage(mProtectedContext);
+
+        /* Verify protected storage. */
+        verify(mProtectedContext).isDeviceProtectedStorage();
+    }
+
+    @Test
+    public void ifTheDeviceAPIVersionDoesNotSupportDeviceProtectedStorage() {
+
+        /* Mock SDK_INT to M. */
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
+
+        /* Verify isDeviceProtectedStorage is false. */
+        assertFalse(ApplicationContextUtils.isDeviceProtectedStorage(mProtectedContext));
     }
 
     @After

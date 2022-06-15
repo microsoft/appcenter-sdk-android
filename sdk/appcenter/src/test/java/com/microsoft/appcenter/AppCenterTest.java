@@ -668,6 +668,21 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
+    public void configureWithDeviceProtectedStorage() {
+        when(ApplicationContextUtils.isDeviceProtectedStorage(mContext)).thenReturn(true);
+
+        /* Configure App Center. */
+        AppCenter.configure(mApplication);
+
+        /* App Center is configured that way. */
+        assertTrue(AppCenter.isConfigured());
+
+        /* Verify warning call. */
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.warn(eq(LOG_TAG), anyString());
+    }
+
+    @Test
     public void configureWithoutAppSecretTest() {
 
         /* Configure and start App Center without an app secret. */
