@@ -52,6 +52,8 @@ import java.util.logging.Logger;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
+import static com.microsoft.appcenter.ApplicationContextUtils.getApplicationContext;
+import static com.microsoft.appcenter.ApplicationContextUtils.isDeviceProtectedStorage;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
@@ -135,12 +137,15 @@ public class AppCenter {
     private String mLogUrl;
 
     /**
-     * Application context.
+     * Android application object that was passed during configuration.
+     * It shouldn't be used directly, but only for getting right context.
+     * It's null until SDK is configured.
      */
     private Application mApplication;
 
     /**
-     * Context.
+     * Application context. Might be special context with device-protected storage.
+     * See {@link ApplicationContextUtils#getApplicationContext(Application)}.
      */
     private Context mContext;
 
@@ -715,9 +720,20 @@ public class AppCenter {
             return true;
         }
 
-        /* Store state. */
+        /* Store application to use it later for registering services as lifecycle callbacks. */
         mApplication = application;
-        mContext = ApplicationContextUtils.getApplicationContext(application);
+        mContext = getApplicationContext(application);
+        if (isDeviceProtectedStorage(mContext)) {
+
+            /*
+             * In this mode storing sensitive is strongly discouraged, but App Center considers regular storage as
+             * not secure as well, so all tokens are encrypted separately anyway. Just warn about it.
+             */
+            AppCenterLog.warn(LOG_TAG,
+                    "A user is locked, credential-protected private app data storage is not available.\n" +
+                    "App Center will use device-protected data storage that available without user authentication.\n" +
+                    "Please note that it's a separate storage, all settings and pending logs won't be shared with regular storage.");
+        }
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");
