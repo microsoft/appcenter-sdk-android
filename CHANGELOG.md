@@ -4,7 +4,7 @@
 
 ### App Center
 
-* **[Fix]** Fix crash when storage is encrypted during direct boot. Please note that settings and pending logs database are not shared between regular and encrypted storage.
+* **[Fix]** Fix crash when storage is encrypted during direct boot. Please note that settings and pending logs database are not shared between regular and device-protected storage.
 
 ### App Center Distribute
 
