@@ -7,7 +7,9 @@ package com.microsoft.appcenter;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import android.app.Application;
@@ -27,7 +29,7 @@ import org.powermock.reflect.Whitebox;
 public class ApplicationContextUtilsTest {
 
     @Mock
-    private Context mProtectedContext;
+    private Context mDeviceProtectedStorageContext;
 
     @Mock
     private Application mApplication;
@@ -38,18 +40,20 @@ public class ApplicationContextUtilsTest {
     @Before
     public void setUp() {
         when(mApplication.getApplicationContext()).thenReturn(mApplication);
-        when(mApplication.createDeviceProtectedStorageContext()).thenReturn(mProtectedContext);
+        when(mApplication.isDeviceProtectedStorage()).thenReturn(false);
+        when(mApplication.createDeviceProtectedStorageContext()).thenReturn(mDeviceProtectedStorageContext);
         when(mApplication.getSystemService(Context.USER_SERVICE)).thenReturn(mUserManager);
+        when(mDeviceProtectedStorageContext.isDeviceProtectedStorage()).thenReturn(true);
     }
 
     @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
-    public void ConstructorCoverage() {
+    public void constructorCoverage() {
         new ApplicationContextUtils();
     }
 
     @Test
-    public void getContextWhenVersionIsHigherOrEqualThanNAndUnlockedIsFalse() {
+    public void contextOnNewLockedDevice() {
 
         /* Mock SDK_INT to N. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N);
@@ -57,18 +61,15 @@ public class ApplicationContextUtilsTest {
         /* When user is locked. */
         when(mUserManager.isUserUnlocked()).thenReturn(false);
 
-        /* Method call. */
-        Context result = ApplicationContextUtils.getApplicationContext(mApplication);
-
-        /* Compare of two results. */
-        assertEquals(mProtectedContext, result);
+        /* It should be device-protected storage context. */
+        assertEquals(mDeviceProtectedStorageContext, ApplicationContextUtils.getApplicationContext(mApplication));
 
         /* Verify create protected storage. */
         verify(mApplication).createDeviceProtectedStorageContext();
     }
 
     @Test
-    public void getContextWhenVersionIsHigherOrEqualThanNAndUnlockedIsTrue() {
+    public void contextOnNewUnlockedDevice() {
 
         /* Mock SDK_INT to N. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N);
@@ -76,18 +77,15 @@ public class ApplicationContextUtilsTest {
         /* When user is unlocked. */
         when(mUserManager.isUserUnlocked()).thenReturn(true);
 
-        /* Method call. */
-        Context result = ApplicationContextUtils.getApplicationContext(mApplication);
-
-        /* Compare of two results. */
-        assertEquals(mApplication, result);
+        /* It should be regular context. */
+        assertEquals(mApplication, ApplicationContextUtils.getApplicationContext(mApplication));
 
         /* Verify get application context. */
         verify(mApplication).getApplicationContext();
     }
 
     @Test
-    public void getContextWhenVersionIsLowerThanN() {
+    public void contextOnOldDevice() {
 
         /* Mock SDK_INT to M. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
@@ -95,41 +93,37 @@ public class ApplicationContextUtilsTest {
         /* When user is locked. */
         when(mUserManager.isUserUnlocked()).thenReturn(false);
 
-        /* Method call. */
-        Context result = ApplicationContextUtils.getApplicationContext(mApplication);
-
-        /* Compare of two results. */
-        assertEquals(mApplication, result);
+        /* It should be regular context. */
+        assertEquals(mApplication, ApplicationContextUtils.getApplicationContext(mApplication));
 
         /* Verify get application context. */
         verify(mApplication).getApplicationContext();
     }
 
     @Test
-    public void ifTheDeviceAPIVersionSupportsDeviceProtectedStorage() {
+    public void checkDeviceProtectedStorageOnNewDevice() {
 
         /* Mock SDK_INT to N. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.N);
 
-        /* Method call. */
-        ApplicationContextUtils.isDeviceProtectedStorage(mProtectedContext);
-
-        /* Verify protected storage. */
-        verify(mProtectedContext).isDeviceProtectedStorage();
+        /* It should rely on context. */
+        assertTrue(ApplicationContextUtils.isDeviceProtectedStorage(mDeviceProtectedStorageContext));
+        assertFalse(ApplicationContextUtils.isDeviceProtectedStorage(mApplication));
     }
 
     @Test
-    public void ifTheDeviceAPIVersionDoesNotSupportDeviceProtectedStorage() {
+    public void checkDeviceProtectedStorageOnOldDevice() {
 
         /* Mock SDK_INT to M. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
 
-        /* Verify isDeviceProtectedStorage is false. */
-        assertFalse(ApplicationContextUtils.isDeviceProtectedStorage(mProtectedContext));
+        /* It cannot be device-protected storage on old devices. */
+        assertFalse(ApplicationContextUtils.isDeviceProtectedStorage(mApplication));
+        verifyNoInteractions(mApplication);
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 0);
     }
 }
