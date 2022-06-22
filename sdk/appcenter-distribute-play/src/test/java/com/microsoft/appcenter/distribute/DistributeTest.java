@@ -5,6 +5,9 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static org.mockito.Mockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+
 import android.app.Activity;
 import android.content.Context;
 
@@ -17,20 +20,19 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(AppCenterLog.class)
 public class DistributeTest {
 
     @Before
     public void setUp() {
-        new DistributeConstants();
         mockStatic(AppCenterLog.class);
+    }
+
+    @SuppressWarnings("InstantiationOfUtilityClass")
+    @Test
+    public void init() {
+        new DistributeConstants();
     }
 
     @Test

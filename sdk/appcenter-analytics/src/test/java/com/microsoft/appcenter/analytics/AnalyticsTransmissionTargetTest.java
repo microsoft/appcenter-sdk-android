@@ -39,19 +39,20 @@ import static com.microsoft.appcenter.Flags.CRITICAL;
 import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_CRITICAL_GROUP;
 import static com.microsoft.appcenter.analytics.Analytics.ANALYTICS_GROUP;
+import static com.microsoft.appcenter.analytics.LogNameMatcher.logName;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -91,7 +92,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertNull(Analytics.getTransmissionTarget(null));
 
         /* Verify log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), contains("Transmission target token may not be null or empty."));
     }
 
@@ -101,7 +102,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertNull(Analytics.getTransmissionTarget(""));
 
         /* Verify log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), contains("Transmission target token may not be null or empty."));
     }
 
@@ -135,9 +136,9 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
             verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
                 @Override
-                public boolean matches(Object item) {
-                    if (item instanceof EventLog) {
-                        EventLog eventLog = (EventLog) item;
+                public boolean matches(Log log) {
+                    if (log instanceof EventLog) {
+                        EventLog eventLog = (EventLog) log;
                         boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                         boolean tokenMatch;
                         boolean tagMatch;
@@ -163,9 +164,9 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
+            public boolean matches(Log log) {
+                if (log instanceof EventLog) {
+                    EventLog eventLog = (EventLog) log;
                     boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token");
                     boolean tagMatch = target.equals(eventLog.getTag());
@@ -183,9 +184,9 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
+            public boolean matches(Log log) {
+                if (log instanceof EventLog) {
+                    EventLog eventLog = (EventLog) log;
                     boolean nameMatches = eventLog.getName().equals("name");
                     List<TypedProperty> typedProperties = new ArrayList<>();
                     StringTypedProperty stringTypedProperty = new StringTypedProperty();
@@ -207,9 +208,9 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
 
             @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
+            public boolean matches(Log log) {
+                if (log instanceof EventLog) {
+                    EventLog eventLog = (EventLog) log;
                     boolean nameAndPropertiesMatch = eventLog.getName().equals("name") && eventLog.getTypedProperties() == null;
                     boolean tokenMatch = eventLog.getTransmissionTargetTokens().size() == 1 && eventLog.getTransmissionTargetTokens().contains("token3");
                     boolean tagMatch = childTarget.equals(eventLog.getTag());
@@ -231,33 +232,13 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         AnalyticsTransmissionTarget transmissionTarget = Analytics.getTransmissionTarget("test");
         assertTrue(transmissionTarget.isEnabledAsync().get());
         transmissionTarget.trackEvent("eventName1");
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    return eventLog.getName().equals("eventName1");
-                }
-                return false;
-            }
-        }), anyString(), eq(DEFAULTS));
+        verify(mChannel).enqueue(logName(EventLog.class, "eventName1"), anyString(), eq(DEFAULTS));
 
         /* Set enabled to false and assert that it cannot track event. */
         transmissionTarget.setEnabledAsync(false).get();
         assertFalse(transmissionTarget.isEnabledAsync().get());
         transmissionTarget.trackEvent("eventName2");
-        verify(mChannel, never()).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    return eventLog.getName().equals("eventName2");
-                }
-                return false;
-            }
-        }), anyString(), anyInt());
+        verify(mChannel, never()).enqueue(logName(EventLog.class, "eventName2"), anyString(), anyInt());
     }
 
     @Test
@@ -272,32 +253,12 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         assertFalse(parentTransmissionTarget.isEnabledAsync().get());
         assertFalse(childTransmissionTarget.isEnabledAsync().get());
         childTransmissionTarget.trackEvent("eventName1");
-        verify(mChannel, never()).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    return eventLog.getName().equals("eventName1");
-                }
-                return false;
-            }
-        }), anyString(), anyInt());
+        verify(mChannel, never()).enqueue(logName(EventLog.class, "eventName1"), anyString(), anyInt());
 
         /* Set enabled to true on parent. Verify that child can track event. */
         parentTransmissionTarget.setEnabledAsync(true);
         childTransmissionTarget.trackEvent("eventName2");
-        verify(mChannel).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object item) {
-                if (item instanceof EventLog) {
-                    EventLog eventLog = (EventLog) item;
-                    return eventLog.getName().equals("eventName2");
-                }
-                return false;
-            }
-        }), anyString(), eq(DEFAULTS));
+        verify(mChannel).enqueue(logName(EventLog.class, "eventName2"), anyString(), eq(DEFAULTS));
     }
 
     @Test
@@ -472,7 +433,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         Analytics analytics = Analytics.getInstance();
         AppCenterHandler handler = mock(AppCenterHandler.class);
         ArgumentCaptor<Runnable> backgroundRunnable = ArgumentCaptor.forClass(Runnable.class);
-        doNothing().when(handler).post(backgroundRunnable.capture(), any(Runnable.class));
+        doNothing().when(handler).post(backgroundRunnable.capture(), any());
         analytics.onStarting(handler);
         analytics.onStarted(mock(Context.class), mChannel, null, "test", true);
 
@@ -496,14 +457,17 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         /* Track an event. */
         Analytics.trackEvent("test1");
         Runnable trackEvent1Command = backgroundRunnable.getValue();
+        assertNotNull(trackEvent1Command);
 
         /* Update authentication provider before the commands run and track a second event. */
         AuthenticationProvider.TokenProvider tokenProvider2 = mock(AuthenticationProvider.TokenProvider.class);
         AuthenticationProvider authenticationProvider2 = spy(new AuthenticationProvider(AuthenticationProvider.Type.MSA_COMPACT, "key2", tokenProvider2));
         AnalyticsTransmissionTarget.addAuthenticationProvider(authenticationProvider2);
         Runnable addAuthProvider2Command = backgroundRunnable.getValue();
+        assertNotNull(addAuthProvider2Command);
         Analytics.trackEvent("test2");
         Runnable trackEvent2Command = backgroundRunnable.getValue();
+        assertNotNull(trackEvent2Command);
 
         /* Simulate background thread doing everything in a sequence. */
         trackEvent1Command.run();
@@ -511,12 +475,14 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         trackEvent2Command.run();
 
         /* Verify first log has first ticket. */
+        assertTrue(sentLogs.size() > 0);
         assertEquals(Collections.singletonList(authenticationProvider1.getTicketKeyHash()), sentLogs.get(0).getExt().getProtocol().getTicketKeys());
 
         /* And that we checked expiry. */
         verify(authenticationProvider1).checkTokenExpiry();
 
         /* Verify second log has the second ticket. */
+        assertTrue(sentLogs.size() > 1);
         assertEquals(Collections.singletonList(authenticationProvider2.getTicketKeyHash()), sentLogs.get(1).getExt().getProtocol().getTicketKeys());
 
         /* And that we checked expiry. */
@@ -636,7 +602,7 @@ public class AnalyticsTransmissionTargetTest extends AbstractAnalyticsTest {
         target.trackEvent("eventName1", (Map<String, String>) null, 0x03);
         target.trackEvent("eventName2", (EventProperties) null, 0x03);
         verify(mChannel, times(2)).enqueue(isA(EventLog.class), anyString(), eq(DEFAULTS));
-        verifyStatic(times(2));
+        verifyStatic(AppCenterLog.class, times(2));
         AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
     }
 }

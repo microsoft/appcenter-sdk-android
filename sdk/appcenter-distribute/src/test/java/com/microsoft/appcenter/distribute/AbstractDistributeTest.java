@@ -5,6 +5,23 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK_REQUEST;
+import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.doCallRealMethod;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -29,6 +46,7 @@ import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
+import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.HashUtils;
 import com.microsoft.appcenter.utils.IdHelper;
@@ -49,23 +67,6 @@ import org.powermock.reflect.Whitebox;
 
 import java.util.UUID;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK_REQUEST;
-import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-
 @SuppressWarnings("CanBeFinal")
 @PrepareForTest({
         AppCenter.class,
@@ -73,8 +74,8 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
         AppNameHelper.class,
         BrowserUtils.class,
         CryptoUtils.class,
+        DeviceInfoHelper.class,
         Distribute.class,
-        DistributeUtils.class,
         HandlerUtils.class,
         HttpUtils.class,
         IdHelper.class,
@@ -101,7 +102,7 @@ public class AbstractDistributeTest {
      * Use a timeout to fail test if deadlocks happen due to a code change.
      */
     @Rule
-    public Timeout mGlobalTimeout = Timeout.seconds(10);
+    public Timeout mGlobalTimeout = Timeout.seconds(15);
 
     @Mock
     Context mContext;
@@ -148,9 +149,6 @@ public class AbstractDistributeTest {
     ReleaseDownloadListener mReleaseDownloaderListener;
 
     @Mock
-    ReleaseInstallerListener mReleaseInstallerListener;
-
-    @Mock
     ReleaseDetails mReleaseDetails;
 
     @Mock
@@ -175,10 +173,10 @@ public class AbstractDistributeTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) {
-                ((Runnable) invocation.getArguments()[0]).run();
+                invocation.<Runnable>getArgument(0).run();
                 return null;
             }
-        }).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        }).when(mAppCenterHandler).post(any(Runnable.class), any());
         whenNew(DistributeInfoTracker.class).withAnyArguments().thenReturn(mDistributeInfoTracker);
         mockStatic(IdHelper.class);
         when(IdHelper.getInstallId()).thenReturn(mInstallId);
@@ -195,15 +193,12 @@ public class AbstractDistributeTest {
             public Void answer(InvocationOnMock invocation) {
 
                 /* Whenever the new state is persisted, make further calls return the new state. */
-                boolean enabled = (Boolean) invocation.getArguments()[1];
+                boolean enabled = invocation.getArgument(1);
                 when(SharedPreferencesManager.getBoolean(DISTRIBUTE_ENABLED_KEY, true)).thenReturn(enabled);
                 return null;
             }
         }).when(SharedPreferencesManager.class);
         SharedPreferencesManager.putBoolean(eq(DISTRIBUTE_ENABLED_KEY), anyBoolean());
-
-        /* Default download id when not found. */
-        when(SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_ID, INVALID_DOWNLOAD_IDENTIFIER)).thenReturn(INVALID_DOWNLOAD_IDENTIFIER);
 
         /* Mock package manager. */
         when(mContext.getApplicationContext()).thenReturn(mContext);
@@ -211,11 +206,12 @@ public class AbstractDistributeTest {
         when(mActivity.getPackageName()).thenReturn("com.contoso");
         when(mActivity.getApplicationContext()).thenReturn(mContext);
         when(mContext.getApplicationInfo()).thenReturn(mApplicationInfo);
-        when(mActivity.getApplicationInfo()).thenReturn(mApplicationInfo);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
-        when(mActivity.getPackageManager()).thenReturn(mPackageManager);
+
+        mockStatic(DeviceInfoHelper.class);
         PackageInfo packageInfo = mock(PackageInfo.class);
-        when(mPackageManager.getPackageInfo("com.contoso", 0)).thenReturn(packageInfo);
+        when(DeviceInfoHelper.getPackageInfo(any(Context.class))).thenReturn(packageInfo);
+        when(DeviceInfoHelper.getVersionCode(eq(packageInfo))).thenReturn(6);
         Whitebox.setInternalState(packageInfo, "packageName", "com.contoso");
         Whitebox.setInternalState(packageInfo, "versionName", "1.2.3");
         Whitebox.setInternalState(packageInfo, "versionCode", 6);
@@ -224,6 +220,7 @@ public class AbstractDistributeTest {
         /* Mock app name and other string resources. */
         mockStatic(AppNameHelper.class);
         when(AppNameHelper.getAppName(mContext)).thenReturn("unit-test-app");
+        when(mContext.getString(anyInt())).thenReturn("localized-string");
         when(mContext.getString(R.string.appcenter_distribute_update_dialog_message_optional)).thenReturn("%s%s%d");
         when(mContext.getString(R.string.appcenter_distribute_update_dialog_message_mandatory)).thenReturn("%s%s%d");
         when(mContext.getString(R.string.appcenter_distribute_install_ready_message)).thenReturn("%s%s%d");
@@ -232,14 +229,18 @@ public class AbstractDistributeTest {
         mockStatic(NetworkStateHelper.class);
         mNetworkStateHelper = mock(NetworkStateHelper.class, new Returns(true));
         when(NetworkStateHelper.getSharedInstance(any(Context.class))).thenReturn(mNetworkStateHelper);
-        spy(HttpUtils.class);
-        doReturn(mHttpClient).when(HttpUtils.class, "createHttpClient", any(Context.class));
+        mockStatic(HttpUtils.class);
+        when(HttpUtils.createHttpClient(any(Context.class))).thenReturn(mHttpClient);
+        doCallRealMethod().when(HttpUtils.class);
+        HttpUtils.hideSecret(anyString());
+        doCallRealMethod().when(HttpUtils.class);
+        HttpUtils.isRecoverableError(any(Throwable.class));
 
         /* Mock some statics. */
         mockStatic(BrowserUtils.class);
         mockStatic(TextUtils.class);
         mockStatic(InstallerUtils.class);
-        when(TextUtils.isEmpty(any(CharSequence.class))).thenAnswer(new Answer<Boolean>() {
+        when(TextUtils.isEmpty(any())).thenAnswer(new Answer<Boolean>() {
 
             @Override
             public Boolean answer(InvocationOnMock invocation) {
@@ -291,7 +292,7 @@ public class AbstractDistributeTest {
         mockStatic(Toast.class);
         when(Toast.makeText(any(Context.class), anyInt(), anyInt())).thenReturn(mToast);
 
-        /* Mock Handler .*/
+        /* Mock Handler. */
         mockStatic(HandlerUtils.class);
         doAnswer(new Answer<Void>() {
 
@@ -309,16 +310,12 @@ public class AbstractDistributeTest {
 
         /* Mock Release Downloader. */
         mockStatic(ReleaseDownloaderFactory.class);
-        when(ReleaseDownloaderFactory.create(any(Context.class), any(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(mReleaseDownloader);
+        when(ReleaseDownloaderFactory.create(any(Context.class), any(), any())).thenReturn(mReleaseDownloader);
         when(mReleaseDownloader.getReleaseDetails()).thenReturn(mReleaseDetails);
 
         /* Mock Release Downloader Listener. */
         mReleaseDownloaderListener = spy(new ReleaseDownloadListener(mContext, mReleaseDetails));
         whenNew(ReleaseDownloadListener.class).withArguments(any(Context.class), any(ReleaseDetails.class)).thenReturn(mReleaseDownloaderListener);
-
-        /* Mock Release Installer Listener. */
-        mReleaseInstallerListener = mock(ReleaseInstallerListener.class);
-        whenNew(ReleaseInstallerListener.class).withArguments(any(Context.class)).thenReturn(mReleaseInstallerListener);
 
         /* Mock Uri. */
         when(mUri.toString()).thenReturn(LOCAL_FILENAME_PATH_MOCK);
@@ -338,6 +335,22 @@ public class AbstractDistributeTest {
     void start() {
         Distribute.getInstance().onStarting(mAppCenterHandler);
         Distribute.getInstance().onStarted(mContext, mChannel, "a", null, true);
+    }
+    
+    void withTesterApp() {
+        try {
+            when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0))
+                    .thenReturn(mock(PackageInfo.class));
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+    }
+
+    void withoutTesterApp() {
+        try {
+            when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0))
+                    .thenThrow(new PackageManager.NameNotFoundException());
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
     }
 
     /* Shared code to mock a restart of an activity considered to be the launcher. */

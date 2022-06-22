@@ -14,7 +14,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -32,7 +32,7 @@ public class FlagsTest {
     public void persistenceNone() {
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(0, false));
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(0, true));
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
@@ -40,7 +40,7 @@ public class FlagsTest {
     public void persistenceNormal() {
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.NORMAL, false));
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.NORMAL, true));
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
@@ -48,7 +48,7 @@ public class FlagsTest {
     public void persistenceCritical() {
         assertEquals(Flags.CRITICAL, Flags.getPersistenceFlag(Flags.CRITICAL, false));
         assertEquals(Flags.CRITICAL, Flags.getPersistenceFlag(Flags.CRITICAL, true));
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
@@ -57,7 +57,7 @@ public class FlagsTest {
     public void persistenceBackwardCompatible() {
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_NORMAL, true));
         assertEquals(Flags.CRITICAL, Flags.getPersistenceFlag(Flags.PERSISTENCE_CRITICAL, true));
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
@@ -65,7 +65,7 @@ public class FlagsTest {
     public void persistenceDefaults() {
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.DEFAULTS, false));
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(Flags.DEFAULTS, true));
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
@@ -73,7 +73,7 @@ public class FlagsTest {
     public void persistenceCriticalPlusOtherFlag() {
         assertEquals(Flags.CRITICAL, Flags.getPersistenceFlag(Flags.CRITICAL | 0x0100, false));
         assertEquals(Flags.CRITICAL, Flags.getPersistenceFlag(Flags.CRITICAL | 0x0200, true));
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
     }
 
@@ -82,12 +82,12 @@ public class FlagsTest {
 
         /* Fallback without warning. */
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(0x09, false));
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
 
         /* Fallback with warning. */
         assertEquals(Flags.NORMAL, Flags.getPersistenceFlag(0x09, true));
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.warn(anyString(), anyString());
     }
 }

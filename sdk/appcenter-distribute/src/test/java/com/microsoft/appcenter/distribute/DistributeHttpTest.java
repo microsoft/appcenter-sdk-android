@@ -5,6 +5,17 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+
 import android.util.Log;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -13,10 +24,8 @@ import com.microsoft.appcenter.http.HttpUtils;
 import com.microsoft.appcenter.http.ServiceCall;
 import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
-import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -27,19 +36,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
-import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK_REQUEST;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-
-@SuppressWarnings("unused")
 public class DistributeHttpTest extends AbstractDistributeTest {
 
     @Test
@@ -66,17 +62,14 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
 
         /* Verify header logs. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
-            verifyStatic();
-            if (header.getKey().equals(HEADER_API_TOKEN)) {
-                AppCenterLog.verbose(anyString(), contains(obfuscatedToken));
-            } else {
-                AppCenterLog.verbose(anyString(), contains(header.getValue()));
-            }
+            String expected = header.getKey().equals(HEADER_API_TOKEN) ? obfuscatedToken : header.getValue();
+            verifyStatic(AppCenterLog.class);
+            AppCenterLog.verbose(anyString(), contains(expected));
         }
     }
 
@@ -98,12 +91,12 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(obfuscatedUrlString));
 
         /* Verify header log. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
-            verifyStatic();
+            verifyStatic(AppCenterLog.class);
             AppCenterLog.verbose(anyString(), contains(header.getValue()));
         }
     }
@@ -124,7 +117,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         callTemplate.onBeforeCalling(mock(URL.class), mock(Map.class));
 
         /* Verify. */
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.verbose(anyString(), anyString());
     }
 
@@ -147,7 +140,7 @@ public class DistributeHttpTest extends AbstractDistributeTest {
         Distribute.getInstance().onStarted(mContext, mock(Channel.class), appSecret, null, true);
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {

@@ -6,7 +6,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.microsoft.appcenter.distribute">
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
 
@@ -14,19 +13,23 @@
      Android 11 brings in a lot of changes regarding privacy. By default, list of installed apps is now hidden.
      Manifest block below make browsers on user devices acessible in order to let SDK check for updates in private update track.
      See more about managing package visibility: https://developer.android.com/training/basics/intents/package-visibility
-     -->
+    -->
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
-            <data android:scheme="https"/>
+            <data android:scheme="https" />
         </intent>
     </queries>
 
     <application>
         <activity
+            android:name="com.microsoft.appcenter.distribute.install.ReleaseInstallerActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false" />
+        <activity
             android:name="com.microsoft.appcenter.distribute.DeepLinkActivity"
-            android:theme="@android:style/Theme.NoDisplay"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -41,17 +44,14 @@
         </activity>
 
         <receiver
-            android:name="com.microsoft.appcenter.distribute.AppCenterPackageInstallerReceiver"
-            android:enabled="true"
+            android:name="com.microsoft.appcenter.distribute.UpdateReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-                <action android:name="com.microsoft.appcenter.action.START" />
-                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
 
-        <receiver 
+        <receiver
             android:name="com.microsoft.appcenter.distribute.DownloadManagerReceiver"
             android:exported="true">
             <intent-filter>

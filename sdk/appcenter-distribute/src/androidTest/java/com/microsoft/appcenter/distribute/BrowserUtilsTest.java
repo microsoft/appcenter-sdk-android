@@ -48,6 +48,7 @@ public class BrowserUtilsTest {
         }
     };
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void init() {
         new BrowserUtils();
@@ -75,7 +76,7 @@ public class BrowserUtilsTest {
         PackageManager packageManager = mock(PackageManager.class);
         doThrow(new ActivityNotFoundException()).when(activity).startActivity(any(Intent.class));
         when(activity.getPackageManager()).thenReturn(packageManager);
-        when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.<ResolveInfo>emptyList());
+        when(packageManager.queryIntentActivities(any(Intent.class), anyInt())).thenReturn(Collections.emptyList());
 
         /* Open Browser then abort. */
         BrowserUtils.openBrowser(TEST_URL, activity);

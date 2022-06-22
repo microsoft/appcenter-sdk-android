@@ -41,6 +41,7 @@ public class CommonSchemaDataUtilsAndroidTest {
         return stringTypedProperty;
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void coverInit() {
         new CommonSchemaDataUtils();
@@ -57,7 +58,7 @@ public class CommonSchemaDataUtilsAndroidTest {
     @Test
     public void emptyProperties() {
         MockCommonSchemaLog log = new MockCommonSchemaLog();
-        CommonSchemaDataUtils.addCommonSchemaData(Collections.<TypedProperty>emptyList(), log);
+        CommonSchemaDataUtils.addCommonSchemaData(Collections.emptyList(), log);
         assertEquals(0, log.getData().getProperties().length());
         assertNull(log.getExt());
     }

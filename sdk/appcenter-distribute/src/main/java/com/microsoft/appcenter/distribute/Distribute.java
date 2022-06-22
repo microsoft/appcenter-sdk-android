@@ -5,32 +5,60 @@
 
 package com.microsoft.appcenter.distribute;
 
+import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
+import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT;
+import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT;
+import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
+import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.DownloadManager;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import android.text.TextUtils;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.annotation.UiThread;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
-import android.text.TextUtils;
-import android.widget.Toast;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Flags;
@@ -67,41 +95,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_API_URL;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DEFAULT_INSTALL_URL;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_ENQUEUED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_INSTALLING;
-import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_NOTIFIED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT;
-import static com.microsoft.appcenter.distribute.DistributeConstants.GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT;
-import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_TOKEN;
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.NOTIFICATION_CHANNEL_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
-import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_RELEASE_DETAILS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_REQUEST_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
-import static com.microsoft.appcenter.distribute.DistributeUtils.computeReleaseHash;
-import static com.microsoft.appcenter.distribute.DistributeUtils.getStoredDownloadState;
 
 /**
  * Distribute service.
@@ -216,11 +209,6 @@ public class Distribute extends AbstractAppCenterService {
     private Dialog mUnknownSourcesDialog;
 
     /**
-     * Alert system dialog that was shown.
-     */
-    private Dialog mAlertSystemWindowsDialog;
-
-    /**
      * Mandatory download completed in app notification.
      */
     private Dialog mCompletedDownloadDialog;
@@ -237,7 +225,7 @@ public class Distribute extends AbstractAppCenterService {
     private WeakReference<Activity> mLastActivityWithDialog = new WeakReference<>(null);
 
     /**
-     * Release downloader. It can use {@link DownloadManager} or direct HTTPS downloading.
+     * Release downloader. It will use {@link android.app.DownloadManager}.
      */
     private ReleaseDownloader mReleaseDownloader;
 
@@ -247,29 +235,9 @@ public class Distribute extends AbstractAppCenterService {
     private ReleaseDownloadListener mReleaseDownloaderListener;
 
     /**
-     * Install release listener.
+     * Release installer. It can use {@link PackageInstaller.Session} or {@link Intent#ACTION_INSTALL_PACKAGE}.
      */
-    private ReleaseInstallerListener mReleaseInstallerListener;
-
-    /**
-     * Receiver of installing a new release.
-     */
-    private AppCenterPackageInstallerReceiver mAppCenterPackageInstallerReceiver;
-
-    /**
-     * Intent filter of receiver for a new release.
-     */
-    private IntentFilter mPackageInstallerReceiverFilter;
-
-    /**
-     * Remember if we checked download since our own process restarted.
-     */
-    private boolean mCheckedDownload;
-
-    /**
-     * Remember whether the installation of a new release is started.
-     */
-    private boolean mInstallInProgress;
+    private UpdateInstaller mReleaseInstaller;
 
     /**
      * True when distribute workflow reached final state.
@@ -317,10 +285,6 @@ public class Distribute extends AbstractAppCenterService {
     private Distribute() {
         mFactories = new HashMap<>();
         mFactories.put(DistributionStartSessionLog.TYPE, new DistributionStartSessionLogFactory());
-        mAppCenterPackageInstallerReceiver = new AppCenterPackageInstallerReceiver();
-        mPackageInstallerReceiverFilter = new IntentFilter();
-        mPackageInstallerReceiverFilter.addAction(AppCenterPackageInstallerReceiver.START_ACTION);
-        mPackageInstallerReceiverFilter.addAction(AppCenterPackageInstallerReceiver.MY_PACKAGE_REPLACED_ACTION);
     }
 
     /**
@@ -392,8 +356,6 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Get the current update track (public vs private).
      */
-    // TODO Remove suppress when app uses it without reflection on jCenter
-    @SuppressWarnings("WeakerAccess")
     public static int getUpdateTrack() {
         return getInstance().getInstanceUpdateTrack();
     }
@@ -456,7 +418,7 @@ public class Distribute extends AbstractAppCenterService {
      * Implements {@link #disableAutomaticCheckForUpdate()}.
      */
     private synchronized void instanceDisableAutomaticCheckForUpdate() {
-        if (mChannel != null) {
+        if (isStarted()) {
             AppCenterLog.error(LOG_TAG, "Automatic check for update cannot be disabled after Distribute is started.");
             return;
         }
@@ -497,11 +459,7 @@ public class Distribute extends AbstractAppCenterService {
     public synchronized void onStarted(@NonNull Context context, @NonNull Channel channel, String appSecret, String transmissionTargetToken, boolean startedFromApp) {
         mContext = context;
         mAppSecret = appSecret;
-        try {
-            mPackageInfo = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0);
-        } catch (PackageManager.NameNotFoundException e) {
-            AppCenterLog.error(LOG_TAG, "Could not get self package info.", e);
-        }
+        mPackageInfo = DeviceInfoHelper.getPackageInfo(context);
 
         /*
          * Apply enabled state is called by this method, we need fields to be initialized before.
@@ -531,7 +489,7 @@ public class Distribute extends AbstractAppCenterService {
      * @return true if workflow was reset, false otherwise.
      */
     private boolean tryResetWorkflow() {
-        if (getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED && mCheckReleaseCallId == null) {
+        if (DistributeUtils.getStoredDownloadState() == DOWNLOAD_STATE_COMPLETED && mCheckReleaseCallId == null) {
             mWorkflowCompleted = false;
             mBrowserOpenedOrAborted = false;
             return true;
@@ -540,17 +498,11 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     @Override
-    public void onActivityStarted(Activity activity) {
-        super.onActivityStarted(activity);
-        registerReceiver(activity);
-    }
-
-    @Override
     public synchronized void onActivityResumed(Activity activity) {
         mForegroundActivity = activity;
 
         /* If started, resume now, otherwise this will be called by onStarted. */
-        if (mChannel != null) {
+        if (isStarted()) {
             resumeDistributeWorkflow();
         }
     }
@@ -567,7 +519,7 @@ public class Distribute extends AbstractAppCenterService {
 
     @Override
     public void onApplicationEnterForeground() {
-        if (mChannel != null) {
+        if (isStarted()) {
             AppCenterLog.debug(LOG_TAG, "Resetting workflow on entering foreground.");
             tryResetWorkflow();
         }
@@ -585,9 +537,6 @@ public class Distribute extends AbstractAppCenterService {
 
             /* Resume distribute workflow only if there is foreground activity. */
             resumeWorkflowIfForeground();
-
-            /* Register package installer receiver. */
-            registerReceiver(mForegroundActivity);
         } else {
 
             /* Clean all state on disabling, cancel everything. Keep only redirection parameters. */
@@ -604,48 +553,13 @@ public class Distribute extends AbstractAppCenterService {
             /* Disable the distribute info tracker. */
             mChannel.removeListener(mDistributeInfoTracker);
             mDistributeInfoTracker = null;
-
-            /* Unregister package installer receiver. */
-            unregisterReceiver(mForegroundActivity);
-        }
-    }
-
-    /**
-     * Register package installer receiver.
-     */
-    private synchronized void registerReceiver(Activity activity) {
-        if (!isInstanceEnabled()) {
-            AppCenterLog.warn(LOG_TAG, "Couldn't register receiver due to Distribute module is disabled.");
-            return;
-        }
-        if (activity != null) {
-            mAppCenterPackageInstallerReceiver.tryRegisterReceiver(activity.getApplicationContext(), mPackageInstallerReceiverFilter);
-        } else {
-            AppCenterLog.warn(LOG_TAG, "Couldn't register receiver due to activity is null.");
-        }
-    }
-
-    /**
-     * Unregister package installer receiver.
-     */
-    private synchronized void unregisterReceiver(Activity activity) {
-        if (activity != null) {
-            mAppCenterPackageInstallerReceiver.tryUnregisterReceiver(activity.getApplicationContext());
-        } else {
-            AppCenterLog.warn(LOG_TAG, "Couldn't unregister due to activity is null.");
         }
     }
 
     @WorkerThread
     private void resumeWorkflowIfForeground() {
         if (mForegroundActivity != null) {
-            HandlerUtils.runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    resumeDistributeWorkflow();
-                }
-            });
+            HandlerUtils.runOnUiThread(this::resumeDistributeWorkflow);
         } else {
             AppCenterLog.debug(LOG_TAG, "Distribute workflow will be resumed on activity resume event.");
         }
@@ -670,7 +584,7 @@ public class Distribute extends AbstractAppCenterService {
                     return;
                 }
                 boolean isDownloading = mReleaseDownloader != null && mReleaseDownloader.isDownloading();
-                if (getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || isDownloading) {
+                if (DistributeUtils.getStoredDownloadState() != DOWNLOAD_STATE_AVAILABLE || isDownloading) {
                     AppCenterLog.error(LOG_TAG, "Cannot handle user update action at this time.");
                     return;
                 }
@@ -753,13 +667,7 @@ public class Distribute extends AbstractAppCenterService {
      * Implements {@link #checkForUpdate()}.
      */
     private void instanceCheckForUpdate() {
-        post(new Runnable() {
-
-            @Override
-            public void run() {
-                handleCheckForUpdate();
-            }
-        });
+        post(this::handleCheckForUpdate);
     }
 
     @WorkerThread
@@ -783,13 +691,10 @@ public class Distribute extends AbstractAppCenterService {
         mCheckReleaseCallId = null;
         mUpdateDialog = null;
         mUnknownSourcesDialog = null;
-        mAlertSystemWindowsDialog = null;
         mCompletedDownloadDialog = null;
         mUpdateSetupFailedDialog = null;
         mLastActivityWithDialog.clear();
         mUsingDefaultUpdateDialog = null;
-        mCheckedDownload = false;
-        mInstallInProgress = false;
         mManualCheckForUpdateRequested = false;
         updateReleaseDetails(null);
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
@@ -802,221 +707,207 @@ public class Distribute extends AbstractAppCenterService {
      */
     @UiThread
     private synchronized void resumeDistributeWorkflow() {
+        if (mPackageInfo == null || mForegroundActivity == null || mWorkflowCompleted || !isInstanceEnabled()) {
+            return;
+        }
+
+        /* Don't go any further if this is a debug app. */
+        if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
+            AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
+            mWorkflowCompleted = true;
+            mManualCheckForUpdateRequested = false;
+            return;
+        }
+
+        /* Don't go any further if the app was installed from an app store. */
+        if (InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext)) {
+            AppCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
+            mWorkflowCompleted = true;
+            mManualCheckForUpdateRequested = false;
+            return;
+        }
+
+        /* The installer takes care of resume event during installing a new release. */
+        if (mReleaseInstaller != null) {
+            mReleaseInstaller.resume();
+            return;
+        }
         AppCenterLog.debug(LOG_TAG, "Resume distribute workflow...");
-        if (mPackageInfo != null && mForegroundActivity != null && !mWorkflowCompleted && isInstanceEnabled()) {
 
-            /* Don't go any further it this is a debug app. */
-            if ((mContext.getApplicationInfo().flags & FLAG_DEBUGGABLE) == FLAG_DEBUGGABLE && !mEnabledForDebuggableBuild) {
-                AppCenterLog.info(LOG_TAG, "Not checking for in-app updates in debuggable build.");
-                mWorkflowCompleted = true;
-                mManualCheckForUpdateRequested = false;
-                return;
-            }
-
-            /* Don't go any further if the app was installed from an app store. */
-            if (InstallerUtils.isInstalledFromAppStore(LOG_TAG, mContext)) {
-                AppCenterLog.info(LOG_TAG, "Not checking in app updates as installed from a store.");
-                mWorkflowCompleted = true;
-                mManualCheckForUpdateRequested = false;
-                return;
-            }
-
-            /* Continue installing a new release if the dialog was shown before resumeDistributeWorkflow. */
-            if (mAlertSystemWindowsDialog != null) {
-                mAlertSystemWindowsDialog.dismiss();
-                mAlertSystemWindowsDialog = null;
-                installUpdate();
-                return;
-            }
-
-            /* Do nothing during installing a new release. */
-            if (mInstallInProgress) {
-                AppCenterLog.info(LOG_TAG, "Installing in progress...");
-                return;
-            }
-
-            /*
-             * If failed to enable in-app updates on the same app build before, don't go any further.
-             * Only if the app build is different (different package hash), try enabling in-app updates again.
-             * This applies to private track only.
-             */
-            boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
-            if (!isPublicTrack) {
-                String updateSetupFailedPackageHash = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-                if (updateSetupFailedPackageHash != null) {
-                    String releaseHash = DistributeUtils.computeReleaseHash(this.mPackageInfo);
-                    if (releaseHash.equals(updateSetupFailedPackageHash)) {
-                        AppCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
-                        return;
-                    } else {
-                        AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
-                        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
-                        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-                        SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-                    }
+        /*
+         * If failed to enable in-app updates on the same app build before, don't go any further.
+         * Only if the app build is different (different package hash), try enabling in-app updates again.
+         * This applies to private track only.
+         */
+        boolean isPublicTrack = mUpdateTrack == UpdateTrack.PUBLIC;
+        if (!isPublicTrack) {
+            String updateSetupFailedPackageHash = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+            if (updateSetupFailedPackageHash != null) {
+                String releaseHash = DistributeUtils.computeReleaseHash(mPackageInfo);
+                if (releaseHash.equals(updateSetupFailedPackageHash)) {
+                    AppCenterLog.info(LOG_TAG, "Skipping in-app updates setup, because it already failed on this release before.");
+                    return;
+                } else {
+                    AppCenterLog.info(LOG_TAG, "Re-attempting in-app updates setup and cleaning up failure info from storage.");
+                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_PACKAGE_HASH_KEY);
+                    SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+                    SharedPreferencesManager.remove(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
                 }
             }
+        }
 
-            /* If we received the redirection parameters before App Center was started/enabled, process them now. */
-            if (mBeforeStartRequestId != null) {
-                AppCenterLog.debug(LOG_TAG, "Processing redirection parameters we kept in memory before onStarted");
-                if (mBeforeStartDistributionGroupId != null) {
-                    storeRedirectionParameters(mBeforeStartRequestId, mBeforeStartDistributionGroupId, mBeforeStartUpdateToken);
-                } else if (mBeforeStartUpdateSetupFailed != null) {
-                    storeUpdateSetupFailedParameter(mBeforeStartRequestId, mBeforeStartUpdateSetupFailed);
-                }
-                if (mBeforeStartTesterAppUpdateSetupFailed != null) {
-                    storeTesterAppUpdateSetupFailedParameter(mBeforeStartRequestId, mBeforeStartTesterAppUpdateSetupFailed);
-                }
-                mBeforeStartRequestId = null;
-                mBeforeStartDistributionGroupId = null;
-                mBeforeStartUpdateToken = null;
-                mBeforeStartUpdateSetupFailed = null;
-                mBeforeStartTesterAppUpdateSetupFailed = null;
-                return;
+        /* If we received the redirection parameters before App Center was started/enabled, process them now. */
+        if (mBeforeStartRequestId != null) {
+            AppCenterLog.debug(LOG_TAG, "Processing redirection parameters we kept in memory before onStarted");
+            if (mBeforeStartDistributionGroupId != null) {
+                storeRedirectionParameters(mBeforeStartRequestId, mBeforeStartDistributionGroupId, mBeforeStartUpdateToken);
+            } else if (mBeforeStartUpdateSetupFailed != null) {
+                storeUpdateSetupFailedParameter(mBeforeStartRequestId, mBeforeStartUpdateSetupFailed);
             }
-
-            /* Load cached release details if process restarted and we have such a cache. */
-            int downloadState = getStoredDownloadState();
-            if (mReleaseDetails == null && downloadState != DOWNLOAD_STATE_COMPLETED) {
-                updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
-
-                /* If cached release is optional and we have network, we should not reuse it. */
-                if (mReleaseDetails != null && !mReleaseDetails.isMandatoryUpdate() &&
-                        NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected() &&
-                        downloadState == DOWNLOAD_STATE_AVAILABLE) {
-                    cancelPreviousTasks();
-                }
+            if (mBeforeStartTesterAppUpdateSetupFailed != null) {
+                storeTesterAppUpdateSetupFailedParameter(mBeforeStartRequestId, mBeforeStartTesterAppUpdateSetupFailed);
             }
+            mBeforeStartRequestId = null;
+            mBeforeStartDistributionGroupId = null;
+            mBeforeStartUpdateToken = null;
+            mBeforeStartUpdateSetupFailed = null;
+            mBeforeStartTesterAppUpdateSetupFailed = null;
+            return;
+        }
 
-            /* If process restarted during workflow. */
-            if (downloadState != DOWNLOAD_STATE_COMPLETED && downloadState != DOWNLOAD_STATE_AVAILABLE && !mCheckedDownload) {
+        /* Load cached release details if process restarted and we have such a cache. */
+        int downloadState = DistributeUtils.getStoredDownloadState();
+        if (mReleaseDetails == null && downloadState != DOWNLOAD_STATE_COMPLETED) {
+            updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
 
-                /* Discard release if application updated. Then immediately check release. */
-                if (mPackageInfo.lastUpdateTime > SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
-                    AppCenterLog.debug(LOG_TAG, "Discarding previous download as application updated.");
-                    cancelPreviousTasks();
-                }
-
-                /* Otherwise check currently processed release. */
-                else {
-
-                    /*
-                     * If app restarted, try to resume (or restart if not available) download.
-                     * Install UI will be shown by listener once download will be completed.
-                     */
-                    mCheckedDownload = true;
-                    resumeDownload();
-
-                    /* If downloading mandatory update proceed to restore progress dialog in the meantime. */
-                    if (mReleaseDetails == null || !mReleaseDetails.isMandatoryUpdate() || downloadState != DOWNLOAD_STATE_ENQUEUED) {
-                        return;
-                    }
-                }
+            /* If cached release is optional and we have network, we should not reuse it. */
+            if (mReleaseDetails != null && !mReleaseDetails.isMandatoryUpdate() &&
+                    NetworkStateHelper.getSharedInstance(mContext).isNetworkConnected() &&
+                    downloadState == DOWNLOAD_STATE_AVAILABLE) {
+                cancelPreviousTasks();
             }
+        }
 
-            /*
-             * If we got a release information but application backgrounded then resumed,
-             * check what dialog to restore.
-             */
-            if (mReleaseDetails != null) {
+        /* If process restarted during workflow. */
+        if (downloadState != DOWNLOAD_STATE_COMPLETED && downloadState != DOWNLOAD_STATE_AVAILABLE) {
 
-                /* If we go back to application without installing the mandatory update. */
-                if (downloadState == DOWNLOAD_STATE_INSTALLING) {
+            /* Discard release if application updated. Then immediately check release. */
+            if (mPackageInfo.lastUpdateTime > SharedPreferencesManager.getLong(PREFERENCE_KEY_DOWNLOAD_TIME)) {
+                AppCenterLog.debug(LOG_TAG, "Discarding previous download as application updated.");
+                cancelPreviousTasks();
+
+                // Close notification about success update.
+                DistributeUtils.cancelNotification(mContext);
+            }
+        }
+
+        /*
+         * If we got a release information but application backgrounded then resumed,
+         * check what dialog to restore.
+         */
+        if (mReleaseDetails != null) {
+
+            /* If we go back to application without installing the mandatory update. */
+            if (downloadState == DOWNLOAD_STATE_INSTALLING || downloadState == DOWNLOAD_STATE_NOTIFIED) {
+                if (mReleaseDetails.isMandatoryUpdate()) {
 
                     /* Show a new modal dialog with only install button. */
-                    showMandatoryDownloadReadyDialog();
-                }
+                    showMandatoryDownloadReadyDialog(mReleaseDetails);
+                } else {
 
-                /* If we are still downloading. */
-                else if (downloadState == DOWNLOAD_STATE_ENQUEUED) {
-
-                    /* Resume (or restart if not available) download. */
+                    /* Resume installing by ensuring that download completed. */
                     resumeDownload();
-
-                    /* Refresh mandatory dialog progress or do nothing otherwise. */
-                    showDownloadProgress();
                 }
+            }
 
-                /* If we were showing unknown sources dialog, restore it. */
-                else if (mUnknownSourcesDialog != null) {
+            /* If we are still downloading. */
+            else if (downloadState == DOWNLOAD_STATE_ENQUEUED) {
 
-                    /*
-                     * Resume click download step if last time we were showing unknown source dialog.
-                     * Note that we could be executed here after going to enable settings and being back in app.
-                     * We can start download if the setting is now enabled,
-                     * otherwise restore dialog if activity rotated or was covered.
-                     */
-                    enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
-                }
+                /* Resume (or restart if not available) download. */
+                resumeDownload();
+
+                /* Refresh mandatory dialog progress or do nothing otherwise. */
+                showDownloadProgress();
+            }
+
+            /* If we were showing unknown sources dialog, restore it. */
+            else if (mUnknownSourcesDialog != null) {
 
                 /*
-                 * Or restore update dialog if that's the last thing we did before being paused.
-                 * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
+                 * Resume click download step if last time we were showing unknown source dialog.
+                 * Note that we could be executed here after going to enable settings and being back in app.
+                 * We can start download if the setting is now enabled,
+                 * otherwise restore dialog if activity rotated or was covered.
                  */
-                else if (mReleaseDownloader == null || !mReleaseDownloader.isDownloading()) {
-                    showUpdateDialog();
-                }
-
-                /*
-                 * Normally we would stop processing here after showing/restoring a dialog.
-                 * But if we keep restoring a dialog for an update, we should still
-                 * check in background if this release is replaced by a more recent one.
-                 * Do that extra release check if app restarted AND we are
-                 * displaying either an update/unknown sources dialog OR the install dialog.
-                 * Basically if we are still downloading an update, we won't check a new one.
-                 */
-                if (downloadState != DOWNLOAD_STATE_AVAILABLE && downloadState != DOWNLOAD_STATE_INSTALLING) {
-                    return;
-                }
+                enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
             }
 
             /*
-             * If the in-app updates setup failed, and user ignores the failure, store the error
-             * message and also store the package hash that the failure occurred on. The setup
-             * will only be re-attempted the next time the app gets updated (and package hash changes).
+             * Or restore update dialog if that's the last thing we did before being paused.
+             * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
              */
-            String updateSetupFailedMessage = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            if (updateSetupFailedMessage != null) {
-                AppCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
-                showUpdateSetupFailedDialog();
-                return;
-            }
-
-            /* Nothing more to do for now if we are already calling API to check release. */
-            if (mCheckReleaseCallId != null) {
-                AppCenterLog.verbose(LOG_TAG, "Already checking or checked latest release.");
-                return;
-            }
-
-            /* Do not proceed if automatic check for update is disabled and manual check for update has not been called. */
-            if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
-                AppCenterLog.debug(LOG_TAG, "Automatic check for update is disabled. The SDK will not check for update now.");
-                return;
+            else if (mReleaseDownloader == null || !mReleaseDownloader.isDownloading()) {
+                showUpdateDialog();
             }
 
             /*
-             * Check if we have previously stored the redirection parameters from private group or we simply use public track.
+             * Normally we would stop processing here after showing/restoring a dialog.
+             * But if we keep restoring a dialog for an update, we should still
+             * check in background if this release is replaced by a more recent one.
+             * Do that extra release check if app restarted AND we are
+             * displaying either an update/unknown sources dialog OR the install dialog.
+             * Basically if we are still downloading an update, we won't check a new one.
              */
-            String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
-            String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-            if (isPublicTrack || updateToken != null) {
-
-                /* We have what we need to check for updates via API. */
-                decryptAndGetReleaseDetails(isPublicTrack ? null : updateToken, distributionGroupId);
+            if (downloadState != DOWNLOAD_STATE_AVAILABLE && downloadState != DOWNLOAD_STATE_INSTALLING) {
                 return;
             }
+        }
 
-            /* If not, open native app (if installed) to update setup, unless it already failed. Otherwise, use the browser. */
-            String testerAppUpdateSetupFailedMessage = SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-            boolean shouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && TextUtils.isEmpty(testerAppUpdateSetupFailedMessage) && !mContext.getPackageName().equals(DistributeUtils.TESTER_APP_PACKAGE_NAME);
-            if (shouldUseTesterAppForUpdateSetup && !mTesterAppOpenedOrAborted) {
-                DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
-                mTesterAppOpenedOrAborted = true;
-            } else if (!mBrowserOpenedOrAborted) {
-                DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
-                mBrowserOpenedOrAborted = true;
-            }
+        /*
+         * If the in-app updates setup failed, and user ignores the failure, store the error
+         * message and also store the package hash that the failure occurred on. The setup
+         * will only be re-attempted the next time the app gets updated (and package hash changes).
+         */
+        String updateSetupFailedMessage = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+        if (updateSetupFailedMessage != null) {
+            AppCenterLog.debug(LOG_TAG, "In-app updates setup failure detected.");
+            showUpdateSetupFailedDialog();
+            return;
+        }
+
+        /* Nothing more to do for now if we are already calling API to check release. */
+        if (mCheckReleaseCallId != null) {
+            AppCenterLog.verbose(LOG_TAG, "Already checking or checked latest release.");
+            return;
+        }
+
+        /* Do not proceed if automatic check for update is disabled and manual check for update has not been called. */
+        if (mAutomaticCheckForUpdateDisabled && !mManualCheckForUpdateRequested) {
+            AppCenterLog.debug(LOG_TAG, "Automatic check for update is disabled. The SDK will not check for update now.");
+            return;
+        }
+
+        /*
+         * Check if we have previously stored the redirection parameters from private group or we simply use public track.
+         */
+        String updateToken = SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_TOKEN);
+        String distributionGroupId = SharedPreferencesManager.getString(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+        if (isPublicTrack || updateToken != null) {
+
+            /* We have what we need to check for updates via API. */
+            decryptAndGetReleaseDetails(isPublicTrack ? null : updateToken, distributionGroupId);
+            return;
+        }
+
+        /* If not, open native app (if installed) to update setup, unless it already failed. Otherwise, use the browser. */
+        String testerAppUpdateSetupFailedMessage = SharedPreferencesManager.getString(PREFERENCE_KEY_TESTER_APP_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+        boolean shouldUseTesterAppForUpdateSetup = isAppCenterTesterAppInstalled() && TextUtils.isEmpty(testerAppUpdateSetupFailedMessage) && !mContext.getPackageName().equals(DistributeUtils.TESTER_APP_PACKAGE_NAME);
+        if (shouldUseTesterAppForUpdateSetup && !mTesterAppOpenedOrAborted) {
+            DistributeUtils.updateSetupUsingTesterApp(mForegroundActivity, mPackageInfo);
+            mTesterAppOpenedOrAborted = true;
+        } else if (!mBrowserOpenedOrAborted) {
+            DistributeUtils.updateSetupUsingBrowser(mForegroundActivity, mInstallUrl, mAppSecret, mPackageInfo);
+            mBrowserOpenedOrAborted = true;
         }
     }
 
@@ -1059,38 +950,26 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
-     * Cancel notification if needed.
-     */
-    private synchronized void cancelNotification() {
-        if (getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
-            AppCenterLog.debug(LOG_TAG, "Delete notification");
-            NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-
-            //noinspection ConstantConditions
-            notificationManager.cancel(DistributeUtils.getNotificationId());
-        }
-    }
-
-    /**
      * Reset all variables that matter to restart checking a new release on launcher activity restart.
      */
     synchronized void completeWorkflow() {
-        cancelNotification();
+        AppCenterLog.debug(LOG_TAG, "Complete current updating process.");
+        cancelDownloadCompletedNotification();
         SharedPreferencesManager.remove(PREFERENCE_KEY_RELEASE_DETAILS);
         SharedPreferencesManager.remove(PREFERENCE_KEY_DOWNLOAD_STATE);
+        if (mReleaseInstaller != null) {
+            mReleaseInstaller.clear();
+            mReleaseInstaller = null;
+        }
         mCheckReleaseApiCall = null;
         mCheckReleaseCallId = null;
         mUpdateDialog = null;
         mUpdateSetupFailedDialog = null;
         mUnknownSourcesDialog = null;
-        mAlertSystemWindowsDialog = null;
         mLastActivityWithDialog.clear();
         mReleaseDetails = null;
         if (mReleaseDownloaderListener != null) {
             mReleaseDownloaderListener.hideProgressDialog();
-        }
-        if (mReleaseInstallerListener != null) {
-            mReleaseInstallerListener.hideInstallProgressDialog();
         }
         mWorkflowCompleted = true;
         mManualCheckForUpdateRequested = false;
@@ -1174,8 +1053,8 @@ public class Distribute extends AbstractAppCenterService {
      */
     @VisibleForTesting
     synchronized void getLatestReleaseDetails(final String distributionGroupId, String updateToken) {
-        AppCenterLog.debug(LOG_TAG, "Get latest release details...");
-        String releaseHash = computeReleaseHash(mPackageInfo);
+        AppCenterLog.info(LOG_TAG, "Get latest release details...");
+        String releaseHash = DistributeUtils.computeReleaseHash(mPackageInfo);
         String url = mApiUrl;
         if (updateToken == null) {
             url += String.format(GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(true, distributionGroupId));
@@ -1212,52 +1091,54 @@ public class Distribute extends AbstractAppCenterService {
     private synchronized void handleApiCallFailure(Object releaseCallId, Exception e) {
 
         /* Check if state did not change. */
-        if (mCheckReleaseCallId == releaseCallId) {
+        if (mCheckReleaseCallId != releaseCallId) {
+            return;
+        }
 
-            /* Complete workflow in error. */
-            completeWorkflow();
+        /* Complete workflow in error. */
+        completeWorkflow();
 
-            /* Delete token on unrecoverable HTTP error. */
-            if (!HttpUtils.isRecoverableError(e)) {
+        /* Delete token only on unrecoverable HTTP error. */
+        if (HttpUtils.isRecoverableError(e)) {
+            return;
+        }
 
-                /*
-                 * Unless its a special case: 404 with json code that no release is found.
-                 * Could happen by cleaning releases with remove button.
-                 */
-                if (e instanceof HttpException) {
-                    HttpException httpException = (HttpException) e;
-                    String code = null;
-                    try {
+        /*
+         * Unless its a special case: 404 with json code that no release is found.
+         * Could happen by cleaning releases with remove button.
+         */
+        if (e instanceof HttpException) {
+            HttpException httpException = (HttpException) e;
+            String code = null;
+            try {
 
-                        /* We actually don't care of the http code if JSON code is specified. */
-                        ErrorDetails errorDetails = ErrorDetails.parse(httpException.getHttpResponse().getPayload());
-                        code = errorDetails.getCode();
-                    } catch (JSONException je) {
-                        AppCenterLog.verbose(LOG_TAG, "Cannot read the error as JSON", je);
-                    }
-                    if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code) || ErrorDetails.NO_RELEASES_FOUND.equals(code)) {
-                        AppCenterLog.info(LOG_TAG, "No release available to the current user.");
-                        if (mListener != null && mForegroundActivity != null) {
-                            AppCenterLog.debug(LOG_TAG, "Calling listener.onNoReleaseAvailable.");
-                            mListener.onNoReleaseAvailable(mForegroundActivity);
-                        }
-                    } else {
-                        AppCenterLog.error(LOG_TAG, "Failed to check latest release (delete setup state)", e);
-                        SharedPreferencesManager.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
-                        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
-                        SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
-                        mDistributeInfoTracker.removeDistributionGroupId();
-                    }
-                }
-
-                /*
-                 * Non HTTP errors: just no retry but keep token for next launch,
-                 * it could be SSL error due to WIFI sign-in for example.
-                 */
-                else {
-                    AppCenterLog.error(LOG_TAG, "Failed to check latest release", e);
-                }
+                /* We actually don't care of the http code if JSON code is specified. */
+                ErrorDetails errorDetails = ErrorDetails.parse(httpException.getHttpResponse().getPayload());
+                code = errorDetails.getCode();
+            } catch (JSONException je) {
+                AppCenterLog.verbose(LOG_TAG, "Cannot read the error as JSON", je);
             }
+            if (ErrorDetails.NO_RELEASES_FOR_USER_CODE.equals(code) || ErrorDetails.NO_RELEASES_FOUND.equals(code)) {
+                AppCenterLog.info(LOG_TAG, "No release available to the current user.");
+                if (mListener != null && mForegroundActivity != null) {
+                    AppCenterLog.debug(LOG_TAG, "Calling listener.onNoReleaseAvailable.");
+                    mListener.onNoReleaseAvailable(mForegroundActivity);
+                }
+            } else {
+                AppCenterLog.error(LOG_TAG, "Failed to check latest release (delete setup state)", e);
+                SharedPreferencesManager.remove(PREFERENCE_KEY_DISTRIBUTION_GROUP_ID);
+                SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_TOKEN);
+                SharedPreferencesManager.remove(PREFERENCE_KEY_POSTPONE_TIME);
+                mDistributeInfoTracker.removeDistributionGroupId();
+            }
+        }
+
+        /*
+         * Non HTTP errors: just no retry but keep token for next launch,
+         * it could be SSL error due to WIFI sign-in for example.
+         */
+        else {
+            AppCenterLog.error(LOG_TAG, "Failed to check latest release", e);
         }
     }
 
@@ -1277,66 +1158,67 @@ public class Distribute extends AbstractAppCenterService {
         }
 
         /* Check if state did not change. */
-        if (mCheckReleaseCallId == releaseCallId) {
+        if (mCheckReleaseCallId != releaseCallId) {
+            return;
+        }
 
-            /* Reset state. */
-            mCheckReleaseApiCall = null;
+        /* Reset state. */
+        mCheckReleaseApiCall = null;
 
-            /* If we didn't know what distribution group we were originally tied to (public track). */
-            if (sourceDistributionId == null) {
-                processDistributionGroupId(releaseDetails.getDistributionGroupId());
-            }
+        /* If we didn't know what distribution group we were originally tied to (public track). */
+        if (sourceDistributionId == null) {
+            processDistributionGroupId(releaseDetails.getDistributionGroupId());
+        }
 
-            /* Check minimum Android API level. */
-            if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
+        /* Check minimum Android API level. */
+        if (Build.VERSION.SDK_INT >= releaseDetails.getMinApiLevel()) {
 
-                /* Check version code is equals or higher and hash is different. */
-                AppCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
-                boolean moreRecent = isMoreRecent(releaseDetails);
-                if (!moreRecent) {
-                    if (mListener != null && mForegroundActivity != null) {
-                        AppCenterLog.debug(LOG_TAG, "Calling listener.onNoReleaseAvailable.");
-                        mListener.onNoReleaseAvailable(mForegroundActivity);
-                    }
-                } else if (canUpdateNow(releaseDetails)) {
+            /* Check version code is equals or higher and hash is different. */
+            AppCenterLog.debug(LOG_TAG, "Check if latest release is more recent.");
+            boolean moreRecent = isMoreRecent(releaseDetails);
+            if (!moreRecent) {
+                if (mListener != null && mForegroundActivity != null) {
+                    AppCenterLog.debug(LOG_TAG, "Calling listener.onNoReleaseAvailable.");
+                    mListener.onNoReleaseAvailable(mForegroundActivity);
+                }
+            } else if (canUpdateNow(releaseDetails)) {
 
-                    /* Load last known release to see if we need to prepare a cleanup. */
-                    if (mReleaseDetails == null) {
-                        updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
-                    }
+                /* Load last known release to see if we need to prepare a cleanup. */
+                if (mReleaseDetails == null) {
+                    updateReleaseDetails(DistributeUtils.loadCachedReleaseDetails());
+                }
 
-                    /* Update cache. */
-                    SharedPreferencesManager.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
+                /* Update cache. */
+                SharedPreferencesManager.putString(PREFERENCE_KEY_RELEASE_DETAILS, rawReleaseDetails);
 
-                    /* If previous release is mandatory and still processing, don't do anything right now. */
-                    if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
-                        if (mReleaseDetails.getId() != releaseDetails.getId()) {
-                            AppCenterLog.debug(LOG_TAG, "Latest release is more recent than the previous mandatory.");
-                            SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
-                        } else {
-                            AppCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
-                        }
-                        return;
-                    }
-
-                    /* Prepare download and cleanup older files if needed. */
-                    updateReleaseDetails(releaseDetails);
-
-                    /* Show update dialog. */
-                    AppCenterLog.debug(LOG_TAG, "Latest release is more recent.");
-                    SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
-                    if (mForegroundActivity != null) {
-                        showUpdateDialog();
+                /* If previous release is mandatory and still processing, don't do anything right now. */
+                if (mReleaseDetails != null && mReleaseDetails.isMandatoryUpdate()) {
+                    if (mReleaseDetails.getId() != releaseDetails.getId()) {
+                        AppCenterLog.debug(LOG_TAG, "Latest release is more recent than the previous mandatory.");
+                        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+                    } else {
+                        AppCenterLog.debug(LOG_TAG, "The latest release is mandatory and already being processed.");
                     }
                     return;
                 }
-            } else {
-                AppCenterLog.info(LOG_TAG, "This device is not compatible with the latest release.");
-            }
 
-            /* If update dialog was not shown or scheduled, complete workflow. */
-            completeWorkflow();
+                /* Prepare download and cleanup older files if needed. */
+                updateReleaseDetails(releaseDetails);
+
+                /* Show update dialog. */
+                AppCenterLog.debug(LOG_TAG, "Latest release is more recent.");
+                SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
+                if (mForegroundActivity != null) {
+                    showUpdateDialog();
+                }
+                return;
+            }
+        } else {
+            AppCenterLog.info(LOG_TAG, "This device is not compatible with the latest release.");
         }
+
+        /* If update dialog was not shown or scheduled, complete workflow. */
+        completeWorkflow();
     }
 
     private synchronized void updateReleaseDetails(ReleaseDetails releaseDetails) {
@@ -1356,16 +1238,11 @@ public class Distribute extends AbstractAppCenterService {
             mReleaseDownloaderListener.hideProgressDialog();
             mReleaseDownloaderListener = null;
         }
-        if (mReleaseInstallerListener != null) {
-            mReleaseInstallerListener.hideInstallProgressDialog();
-            mReleaseInstallerListener = null;
-        }
         mReleaseDetails = releaseDetails;
         if (mReleaseDetails != null) {
 
             /* Create release downloader here to be able correctly cancel downloading from previous runs. */
             mReleaseDownloaderListener = new ReleaseDownloadListener(mContext, mReleaseDetails);
-            mReleaseInstallerListener = new ReleaseInstallerListener(mContext);
             mReleaseDownloader = ReleaseDownloaderFactory.create(mContext, mReleaseDetails, mReleaseDownloaderListener);
         }
     }
@@ -1435,7 +1312,7 @@ public class Distribute extends AbstractAppCenterService {
         if (mPackageInfo == null || TextUtils.isEmpty(lastDownloadedReleaseHash)) {
             return false;
         }
-        String currentInstalledReleaseHash = computeReleaseHash(mPackageInfo);
+        String currentInstalledReleaseHash = DistributeUtils.computeReleaseHash(mPackageInfo);
         return currentInstalledReleaseHash.equals(lastDownloadedReleaseHash);
     }
 
@@ -1489,6 +1366,7 @@ public class Distribute extends AbstractAppCenterService {
      * @param dialog existing dialog if any, always returning true when null.
      * @return true if a new dialog should be displayed, false otherwise.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean shouldRefreshDialog(@Nullable Dialog dialog) {
 
         /* We could be in another activity now, refresh dialog. */
@@ -1625,65 +1503,6 @@ public class Distribute extends AbstractAppCenterService {
         } else {
             showDisabledToast();
         }
-    }
-
-
-    /**
-     * Show system alerts windows setting dialog.
-     */
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    private synchronized void showSystemAlertsWindowsSettingsDialog() {
-
-        /* Do not attempt to show dialog if application is in the background. */
-        if (mForegroundActivity == null) {
-            AppCenterLog.warn(LOG_TAG, "The application is in background mode, the system alerts windows won't be displayed.");
-            return;
-        }
-
-        /* Check if we need to replace dialog. */
-        if (!shouldRefreshDialog(mAlertSystemWindowsDialog)) {
-            return;
-        }
-        AppCenterLog.debug(LOG_TAG, "Show new system alerts windows dialog.");
-
-        /* Build confirmation dialog on enabled system alerts windows permission. */
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-        dialogBuilder.setMessage(R.string.appcenter_distribute_alert_system_dialog_message);
-        dialogBuilder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                mAlertSystemWindowsDialog = null;
-                AppCenterLog.debug(LOG_TAG, "Permission request on alert system windows denied. Continue installing...");
-
-                /* It is optional and installing can be continued if customer reject permission request. */
-                installUpdate();
-            }
-        });
-        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                mAlertSystemWindowsDialog = null;
-                AppCenterLog.debug(LOG_TAG, "Permission request on alert system windows denied. Continue installing...");
-
-                /* It is optional and installing can be continued if customer reject permission request. */
-                installUpdate();
-            }
-        });
-        dialogBuilder.setPositiveButton(R.string.appcenter_distribute_unknown_sources_dialog_settings, new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-
-                /* Open system alerts windows settings activity. */
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:" + mForegroundActivity.getPackageName()));
-                mForegroundActivity.startActivity(intent);
-            }
-        });
-        mAlertSystemWindowsDialog = dialogBuilder.create();
-        showAndRememberDialogActivity(mAlertSystemWindowsDialog);
     }
 
     /**
@@ -1830,7 +1649,7 @@ public class Distribute extends AbstractAppCenterService {
      */
     private synchronized void postponeRelease(ReleaseDetails releaseDetails) {
         if (releaseDetails == mReleaseDetails) {
-            AppCenterLog.debug(LOG_TAG, "Postpone updates for a day.");
+            AppCenterLog.info(LOG_TAG, "Postpone updates for a day.");
             SharedPreferencesManager.putLong(PREFERENCE_KEY_POSTPONE_TIME, System.currentTimeMillis());
             completeWorkflow();
         } else {
@@ -1877,7 +1696,22 @@ public class Distribute extends AbstractAppCenterService {
      * that will likely never happen but we guard for it.
      */
     private void showDisabledToast() {
-        Toast.makeText(mContext, R.string.appcenter_distribute_dialog_actioned_on_disabled_toast, Toast.LENGTH_SHORT).show();
+        showToast(R.string.appcenter_distribute_dialog_actioned_on_disabled_toast);
+    }
+
+    /**
+     * Show toast using foreground activity context if possible.
+     *
+      * @param messageId the resource id of the string resource to use.
+     */
+    void showToast(int messageId) {
+
+        /*
+         * Use Activity context if possible to avoid
+         * StrictMode policy violation: android.os.strictmode.IncorrectContextUseViolation
+         */
+        Context context = mForegroundActivity != null ? mForegroundActivity : mContext;
+        Toast.makeText(context, messageId, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -1889,144 +1723,33 @@ public class Distribute extends AbstractAppCenterService {
 
         /* Nothing to do if already in foreground. */
         if (mForegroundActivity == null) {
-
-            /*
-             * Use our deep link activity with no parameter just to resume app correctly
-             * without duplicating activities or clearing task.
-             */
-            Intent intent = new Intent(context, DeepLinkActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Intent intent = DistributeUtils.getResumeAppIntent(context);
             context.startActivity(intent);
         }
     }
 
-    @UiThread
-    @VisibleForTesting
-    synchronized void notifyInstallProgress(boolean isInProgress) {
-        mInstallInProgress = isInProgress;
-        if (isInProgress) {
-
-            /* Do not attempt to show dialog if application is in the background. */
-            if (mForegroundActivity == null) {
-                AppCenterLog.warn(LOG_TAG, "Could not display install progress dialog in the background.");
-                return;
-            }
-            if (mReleaseInstallerListener == null) {
-                return;
-            }
-
-            /* Close to avoid dialog duplicates. */
-            mReleaseInstallerListener.hideInstallProgressDialog();
-
-            /* Create and show a new dialog. */
-            Dialog progressDialog = mReleaseInstallerListener.showInstallProgressDialog(mForegroundActivity);
-            showAndRememberDialogActivity(progressDialog);
-        } else {
-            if (mReleaseInstallerListener != null) {
-                mReleaseInstallerListener.hideInstallProgressDialog();
-                mReleaseInstallerListener = null;
-            }
-        }
-    }
-
     /**
-     * Start to install a new update.
-     */
-    synchronized private void installUpdate() {
-        if (mReleaseInstallerListener == null) {
-            AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
-            return;
-        }
-        mReleaseInstallerListener.startInstall();
-    }
-
-    /**
-     * Ask permission on start application after update or start to install a new update.
-     *
-     * @param downloadId downloadId of downloaded file.
-     * @param totalSize total size of downloaded file.
-     */
-    synchronized void showSystemSettingsDialogOrStartInstalling(long downloadId, long totalSize) {
-        if (mReleaseInstallerListener == null) {
-            AppCenterLog.debug(LOG_TAG, "Installing couldn't start due to the release installer wasn't initialized.");
-            return;
-        }
-        mReleaseInstallerListener.setDownloadId(downloadId);
-        mReleaseInstallerListener.setTotalSize(totalSize);
-
-        /* Check permission on start application after update. */
-        if (InstallerUtils.isSystemAlertWindowsEnabled(mContext)) {
-            installUpdate();
-        } else {
-            showSystemAlertsWindowsSettingsDialog();
-        }
-    }
-
-    /**
-     * Post notification about a completed download if we are in background when download completes.
-     * If this method is called on app process restart or if application is in foreground
-     * when download completes, it will not notify and return that the install U.I. should be shown now.
-     *
-     * @param releaseDetails release details to check state.
-     * @return false if install U.I should be shown now, true if a notification was posted or if the task was canceled.
+     * Post notification about a completed download.
      */
     @UiThread
-    synchronized boolean notifyDownload(ReleaseDetails releaseDetails) {
-
-        /* Check state. */
-        if (releaseDetails != mReleaseDetails) {
-            return true;
-        }
-
-        /*
-         * If we already notified, that means this check was triggered by application being resumed,
-         * thus in foreground at the moment the check download async task was started.
-         *
-         * We should not hold the install any longer now, even if the async task was long enough
-         * for app to be in background again, we should show install U.I. now.
-         */
-        if (mForegroundActivity != null || getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
-            return false;
-        }
+    private synchronized void notifyDownloadCompleted() {
 
         /* Post notification. */
         AppCenterLog.debug(LOG_TAG, "Post a notification as the download finished in background.");
-        NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification.Builder builder;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-            /* Create or update notification channel (mandatory on Android 8 target). */
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                    mContext.getString(R.string.appcenter_distribute_notification_category),
-                    NotificationManager.IMPORTANCE_DEFAULT);
-
-            //noinspection ConstantConditions
-            notificationManager.createNotificationChannel(channel);
-            builder = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID);
-        } else {
-            builder = getOldNotificationBuilder();
-        }
-        builder.setTicker(mContext.getString(R.string.appcenter_distribute_install_ready_title))
-                .setContentTitle(mContext.getString(R.string.appcenter_distribute_install_ready_title))
-                .setContentText(getInstallReadyMessage())
-                .setSmallIcon(mContext.getApplicationInfo().icon);
-        builder.setStyle(new Notification.BigTextStyle().bigText(getInstallReadyMessage()));
-        Notification notification = builder.build();
-        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-
-        //noinspection ConstantConditions
-        notificationManager.notify(DistributeUtils.getNotificationId(), notification);
+        String title = mContext.getString(R.string.appcenter_distribute_install_ready_title);
+        Intent intent = DistributeUtils.getResumeAppIntent(mContext);
+        DistributeUtils.postNotification(mContext, title, getInstallReadyMessage(), intent);
         SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_NOTIFIED);
-
-        /* Reset check download flag to show install U.I. on resume if notification ignored. */
-        mCheckedDownload = false;
-        return true;
     }
 
-    @NonNull
-    @SuppressWarnings({"deprecation", "RedundantSuppression"})
-    private Notification.Builder getOldNotificationBuilder() {
-        return new Notification.Builder(mContext);
+    /**
+     * Cancel notification if needed.
+     */
+    private synchronized void cancelDownloadCompletedNotification() {
+        if (DistributeUtils.getStoredDownloadState() == DOWNLOAD_STATE_NOTIFIED) {
+            AppCenterLog.debug(LOG_TAG, "Cancel download notification.");
+            DistributeUtils.cancelNotification(mContext);
+        }
     }
 
     /**
@@ -2056,11 +1779,18 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show modal dialog with install button if mandatory update ready and user cancelled install.
      */
-    private synchronized void showMandatoryDownloadReadyDialog() {
+    synchronized void showMandatoryDownloadReadyDialog(@NonNull final ReleaseDetails releaseDetails) {
+        if (releaseDetails != mReleaseDetails) {
+            return;
+        }
+
+        /* Do not attempt to show dialog if application is in the background. */
+        if (mForegroundActivity == null) {
+            return;
+        }
         if (!shouldRefreshDialog(mCompletedDownloadDialog)) {
             return;
         }
-        final ReleaseDetails releaseDetails = mReleaseDetails;
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
         dialogBuilder.setCancelable(false);
         dialogBuilder.setTitle(R.string.appcenter_distribute_install_ready_title);
@@ -2110,7 +1840,6 @@ public class Distribute extends AbstractAppCenterService {
     synchronized void resumeDownload() {
         if (mReleaseDownloader != null) {
             mReleaseDownloader.resume();
-            mCheckedDownload = true;
         }
     }
 
@@ -2135,19 +1864,36 @@ public class Distribute extends AbstractAppCenterService {
      * @param releaseDetails to check state change.
      */
     @UiThread
-    synchronized void setInstalling(@NonNull ReleaseDetails releaseDetails) {
+    synchronized void setInstalling(@NonNull ReleaseDetails releaseDetails, @NonNull Uri localUri) {
         if (releaseDetails != mReleaseDetails) {
             return;
         }
-        if (releaseDetails.isMandatoryUpdate()) {
-            cancelNotification();
-            SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
-        } else {
-            completeWorkflow(releaseDetails);
+
+        /*
+         * If we already notified, that means this check was triggered by application being resumed,
+         * thus in foreground at the moment the check download async task was started.
+         *
+         * We should not hold the install any longer now, even if the async task was long enough
+         * for app to be in background again, we should show install U.I. now.
+         */
+        if (mForegroundActivity == null && DistributeUtils.getStoredDownloadState() != DOWNLOAD_STATE_NOTIFIED) {
+            notifyDownloadCompleted();
+            return;
         }
-        String groupId = releaseDetails.getDistributionGroupId();
-        String releaseHash = releaseDetails.getReleaseHash();
-        int releaseId = releaseDetails.getId();
+        cancelDownloadCompletedNotification();
+        AppCenterLog.info(LOG_TAG, "Start installing new release...");
+        SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_INSTALLING);
+        storeInstallingReleaseDetails();
+        if (mReleaseInstaller == null) {
+            mReleaseInstaller = new UpdateInstaller(mContext, mReleaseDetails);
+        }
+        mReleaseInstaller.install(localUri);
+    }
+
+    private void storeInstallingReleaseDetails() {
+        String groupId = mReleaseDetails.getDistributionGroupId();
+        String releaseHash = mReleaseDetails.getReleaseHash();
+        int releaseId = mReleaseDetails.getId();
         AppCenterLog.debug(LOG_TAG, "Stored release details: group id=" + groupId + " release hash=" + releaseHash + " release id=" + releaseId);
         SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_DISTRIBUTION_GROUP_ID, groupId);
         SharedPreferencesManager.putString(PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH, releaseHash);

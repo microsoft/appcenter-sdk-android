@@ -22,7 +22,6 @@ import com.microsoft.appcenter.crashes.ingestion.models.StackFrame;
 import com.microsoft.appcenter.crashes.ingestion.models.Thread;
 import com.microsoft.appcenter.crashes.model.ErrorReport;
 import com.microsoft.appcenter.ingestion.models.Device;
-import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
 import com.microsoft.appcenter.utils.context.UserIdContext;

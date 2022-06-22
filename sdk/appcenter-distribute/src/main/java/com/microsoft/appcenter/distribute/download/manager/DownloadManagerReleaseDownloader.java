@@ -5,10 +5,20 @@
 
 package com.microsoft.appcenter.distribute.download.manager;
 
+import static android.content.Context.DOWNLOAD_SERVICE;
+import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
+import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
+import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
+
 import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
+import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
@@ -21,19 +31,18 @@ import com.microsoft.appcenter.utils.AsyncTaskUtils;
 import com.microsoft.appcenter.utils.HandlerUtils;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
-import static android.content.Context.DOWNLOAD_SERVICE;
-import static com.microsoft.appcenter.distribute.DistributeConstants.HANDLER_TOKEN_CHECK_PROGRESS;
-import static com.microsoft.appcenter.distribute.DistributeConstants.INVALID_DOWNLOAD_IDENTIFIER;
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.UPDATE_PROGRESS_TIME_THRESHOLD;
+import java.io.IOException;
 
 public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader {
 
-    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull Listener listener) {
-        super(context, releaseDetails, listener);
-    }
+    /**
+     * Timeout to start download the package, in milliseconds.
+     */
+    private final static int PENDING_TIMEOUT = 10 * 1000;
 
+    /**
+     * Current download identifier.
+     */
     private long mDownloadId = INVALID_DOWNLOAD_IDENTIFIER;
 
     /**
@@ -45,6 +54,10 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
      * Current task inspecting the latest release details that we fetched from server.
      */
     private DownloadManagerRequestTask mRequestTask;
+
+    public DownloadManagerReleaseDownloader(@NonNull Context context, @NonNull ReleaseDetails releaseDetails, @NonNull Listener listener) {
+        super(context, releaseDetails, listener);
+    }
 
     DownloadManager getDownloadManager() {
         return (DownloadManager) mContext.getSystemService(DOWNLOAD_SERVICE);
@@ -77,6 +90,9 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     @Override
     public synchronized void resume() {
 
+        /* Force resume means that we want another completion event. */
+        mCompleted = false;
+
         /*
          * Just update the current downloading status.
          * All checks will be performed in the background thread.
@@ -86,9 +102,6 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
 
     @Override
     public synchronized void cancel() {
-        if (isCancelled()) {
-            return;
-        }
         super.cancel();
         if (mRequestTask != null) {
             mRequestTask.cancel(true);
@@ -106,10 +119,20 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     /**
+     * Clears download id if it's active.
+     */
+    synchronized void clearDownloadId(long downloadId) {
+        if (downloadId == getDownloadId()) {
+            remove(downloadId);
+            setDownloadId(INVALID_DOWNLOAD_IDENTIFIER);
+        }
+    }
+
+    /**
      * Start new download.
      */
     private synchronized void request() {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
         if (mRequestTask != null) {
@@ -123,7 +146,7 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
      * Update the state on current download.
      */
     private synchronized void update() {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
         mUpdateTask = AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerUpdateTask(this));
@@ -134,6 +157,16 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerRemoveTask(mContext, downloadId));
     }
 
+    /**
+     * Cancels download if it's still in pending state.
+     */
+    private void cancelPendingDownload(long downloadId) {
+        if (isCompleted()) {
+            return;
+        }
+        AsyncTaskUtils.execute(LOG_TAG, new DownloadManagerCancelPendingTask(this, downloadId));
+    }
+
     @WorkerThread
     synchronized void onStart() {
         request();
@@ -141,7 +174,7 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
 
     @WorkerThread
     synchronized void onDownloadStarted(long downloadId, long enqueueTime) {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
 
@@ -153,11 +186,20 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         if (mReleaseDetails.isMandatoryUpdate()) {
             update();
         }
+
+        /* Handle pending timeout. */
+        HandlerUtils.getMainHandler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                cancelPendingDownload(downloadId);
+            }
+        }, PENDING_TIMEOUT);
     }
 
     @WorkerThread
     synchronized void onDownloadProgress(Cursor cursor) {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
         long totalSize = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
@@ -176,20 +218,42 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     @WorkerThread
-    synchronized void onDownloadComplete(long totalSize) {
-        if (isCancelled()) {
+    synchronized void onDownloadComplete() {
+        if (isCompleted()) {
+            return;
+        }
+
+        /* Mark download completed. */
+        mCompleted = true;
+        if (!isDownloadedFileValid()) {
+            mListener.onError("Downloaded package file is invalid.");
             return;
         }
         AppCenterLog.debug(LOG_TAG, "Download was successful for id=" + mDownloadId);
-        mListener.onComplete(mDownloadId, totalSize);
+        Uri localUri = getDownloadManager().getUriForDownloadedFile(mDownloadId);
+        if (localUri != null) {
+            mListener.onComplete(localUri);
+        } else {
+            mListener.onError("Downloaded file not found.");
+        }
     }
 
     @WorkerThread
     synchronized void onDownloadError(RuntimeException e) {
-        if (isCancelled()) {
+        if (isCompleted()) {
             return;
         }
+        mCompleted = true;
         AppCenterLog.error(LOG_TAG, "Failed to download update id=" + mDownloadId, e);
         mListener.onError(e.getMessage());
+    }
+
+    private boolean isDownloadedFileValid() {
+        try (ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId)) {
+            return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
+        } catch (IOException e) {
+            AppCenterLog.error(LOG_TAG, "Cannot open downloaded file for id=" + mDownloadId, e);
+            return false;
+        }
     }
 }

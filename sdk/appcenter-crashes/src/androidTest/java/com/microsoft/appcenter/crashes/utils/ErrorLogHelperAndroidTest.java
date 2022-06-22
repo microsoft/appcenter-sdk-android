@@ -90,7 +90,7 @@ public class ErrorLogHelperAndroidTest {
         /* Generate test files. */
         long date = 1000000;
         for (int i = 0; i < 3; i++) {
-            File file = new File(mErrorDirectory, new UUID(0, i).toString() + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
+            File file = new File(mErrorDirectory, new UUID(0, i) + ErrorLogHelper.ERROR_LOG_FILE_EXTENSION);
 
             /*
              * file.setLastModified does not work on most devices or emulators and returns false.
@@ -103,7 +103,7 @@ public class ErrorLogHelperAndroidTest {
 
         assertEquals(testFiles[2], ErrorLogHelper.getLastErrorLogFile());
 
-        testFiles[3] = new File(mErrorDirectory, new UUID(0, 3).toString() + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
+        testFiles[3] = new File(mErrorDirectory, new UUID(0, 3) + ErrorLogHelper.THROWABLE_FILE_EXTENSION);
         FileManager.write(testFiles[3], "contents");
 
         /* Get all error logs stored in the file system when logs exist. */

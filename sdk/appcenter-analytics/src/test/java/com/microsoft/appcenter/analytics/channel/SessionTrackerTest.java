@@ -20,7 +20,6 @@ import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.api.mockito.PowerMockito;
@@ -40,13 +39,12 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySetOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -58,7 +56,13 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
-@PrepareForTest({SessionTracker.class, SessionContext.class, SharedPreferencesManager.class, SystemClock.class, AppCenterLog.class})
+@PrepareForTest({
+        AppCenterLog.class,
+        SessionTracker.class,
+        SessionContext.class,
+        SharedPreferencesManager.class,
+        SystemClock.class
+})
 public class SessionTrackerTest {
 
     private final static String TEST_GROUP = "group_test";
@@ -103,7 +107,7 @@ public class SessionTrackerTest {
                 return null;
             }
         }).when(SharedPreferencesManager.class);
-        SharedPreferencesManager.putStringSet(anyString(), anySetOf(String.class));
+        SharedPreferencesManager.putStringSet(anyString(), anySet());
         when(SharedPreferencesManager.getStringSet(anyString())).thenReturn(null);
         SessionContext.unsetInstance();
         spendTime(1000);
@@ -310,31 +314,25 @@ public class SessionTrackerTest {
         }
 
         /* In total we sent only 2 session logs. */
-        verify(mChannel, times(2)).enqueue(argThat(new ArgumentMatcher<Log>() {
-
-            @Override
-            public boolean matches(Object argument) {
-                return argument instanceof StartSessionLog;
-            }
-        }), anyString(), eq(DEFAULTS));
+        verify(mChannel, times(2)).enqueue(isA(StartSessionLog.class), anyString(), eq(DEFAULTS));
     }
 
     @Test
     public void startSessionWithoutLogs() {
 
         final AtomicReference<StartSessionLog> startSessionLog = new AtomicReference<>();
-        doAnswer(new Answer() {
+        doAnswer(new Answer<Object>() {
 
             @Override
             public Object answer(InvocationOnMock invocation) {
                 startSessionLog.set((StartSessionLog) invocation.getArguments()[0]);
                 return null;
             }
-        }).when(mChannel).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), anyInt());
+        }).when(mChannel).enqueue(isA(StartSessionLog.class), eq(TEST_GROUP), anyInt());
 
         /* Go foreground, start session is sent. */
         mSessionTracker.onActivityResumed();
-        verify(mChannel, times(1)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
+        verify(mChannel, times(1)).enqueue(isA(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
         assertNotNull(startSessionLog.get());
         UUID sid = startSessionLog.get().getSid();
         assertNotNull(sid);
@@ -344,14 +342,14 @@ public class SessionTrackerTest {
         mSessionTracker.onActivityPaused();
         spendTime(1);
         mSessionTracker.onActivityResumed();
-        verify(mChannel, times(1)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
+        verify(mChannel, times(1)).enqueue(isA(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
 
         /* Go background and come back after timeout, second session. */
         spendTime(1);
         mSessionTracker.onActivityPaused();
         spendTime(30000);
         mSessionTracker.onActivityResumed();
-        verify(mChannel, times(2)).enqueue(notNull(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
+        verify(mChannel, times(2)).enqueue(isA(StartSessionLog.class), eq(TEST_GROUP), eq(DEFAULTS));
         assertNotEquals(sid, startSessionLog.get().getSid());
     }
 
@@ -536,7 +534,7 @@ public class SessionTrackerTest {
 
         /* Clear sessions. */
         mSessionTracker.clearSessions();
-        verifyStatic();
+        verifyStatic(SharedPreferencesManager.class);
         SharedPreferencesManager.remove("sessions");
     }
 
@@ -647,7 +645,7 @@ public class SessionTrackerTest {
         assertNull(log.getSid());
 
         /* Verify that method was called. */
-        verifyStatic();
+        verifyStatic(SystemClock.class);
         SystemClock.elapsedRealtime();
 
         /* Set manual session tracker. */
@@ -659,12 +657,12 @@ public class SessionTrackerTest {
         assertNull(log.getSid());
 
         /* Verify that method wasn't called. */
-        verifyStatic();
+        verifyStatic(SystemClock.class);
         SystemClock.elapsedRealtime();
 
         /* Call pause and verify that method wasn't called again. */
         mSessionTracker.onActivityPaused();
-        verifyStatic();
+        verifyStatic(SystemClock.class);
         SystemClock.elapsedRealtime();
 
         /* Call start session and verify that log has session id. */
@@ -673,7 +671,7 @@ public class SessionTrackerTest {
         assertNotNull(log.getSid());
 
         /* Verify that method wasn't called. */
-        verifyStatic();
+        verifyStatic(SystemClock.class);
         SystemClock.elapsedRealtime();
     }
 }

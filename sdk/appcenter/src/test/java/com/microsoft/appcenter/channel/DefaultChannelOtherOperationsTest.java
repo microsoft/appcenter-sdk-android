@@ -14,20 +14,19 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.persistence.Persistence;
 
 import org.junit.Test;
-import org.mockito.Matchers;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -96,14 +95,14 @@ public class DefaultChannelOtherOperationsTest extends AbstractDefaultChannelTes
         AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
         when(mockIngestion.isEnabled()).thenReturn(true);
         Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
-        when(mockPersistence.getLogs(any(String.class), anyListOf(String.class), anyInt(), Matchers.<List<Log>>any()))
-                .then(getGetLogsAnswer(1));
+        when(mockPersistence.getLogs(anyString(), anyCollection(), anyInt(), anyList()))
+                .thenAnswer(getGetLogsAnswer(1));
         DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
         channel.addGroup(TEST_GROUP, 1, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
         /* Enqueuing 1 event. */
         channel.enqueue(mock(Log.class), TEST_GROUP, Flags.DEFAULTS);
-        verify(mockListener).onBeforeSending(notNull(Log.class));
+        verify(mockListener).onBeforeSending(notNull());
 
         channel.shutdown();
         verify(mockListener, never()).onFailure(any(Log.class), any(Exception.class));

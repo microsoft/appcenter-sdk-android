@@ -1,5 +1,23 @@
 # App Center SDK for Android Change Log
 
+## Version 4.4.4
+
+### App Center
+
+* **[Fix]** Fix crash when storage is encrypted during direct boot. Please note that settings and pending logs database are not shared between regular and device-protected storage.
+
+### App Center Distribute
+
+* **[Improvement]** Remove optional `SYSTEM_ALERT_WINDOW` permission that was required to automatically restart the app after installing the update.
+* **[Improvement]** Add fallback to the old [ACTION_INSTALL_PACKAGE](https://developer.android.com/reference/android/content/Intent#ACTION_INSTALL_PACKAGE) installation method if the update cannot be installed by `PackageInstaller` API (e.g. when MIUI optimizations block installation).
+* **[Fix]** Fix possible crash on resume event before initialization.
+* **[Fix]** Fix clicks on the download completion notification.
+* **[Fix]** Fix ANR on installing large packages.
+* **[Fix]** Fix cancellation handling of confirmation dialog for mandatory updates.
+* **[Fix]** Fix strict mode issues.
+
+ ___
+
 ## Version 4.4.3
 
 ### App Center Crashes

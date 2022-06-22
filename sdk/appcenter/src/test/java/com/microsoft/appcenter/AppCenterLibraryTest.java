@@ -5,6 +5,25 @@
 
 package com.microsoft.appcenter;
 
+import static com.microsoft.appcenter.AppCenter.CORE_GROUP;
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.AppCenter.PAIR_DELIMITER;
+import static com.microsoft.appcenter.Flags.DEFAULTS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.content.Context;
 
 import com.microsoft.appcenter.channel.Channel;
@@ -16,32 +35,13 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.microsoft.appcenter.AppCenter.CORE_GROUP;
-import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static com.microsoft.appcenter.AppCenter.PAIR_DELIMITER;
-import static com.microsoft.appcenter.Flags.DEFAULTS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-
 public class AppCenterLibraryTest extends AbstractAppCenterTest {
 
     @Test
     public void nullApplicationTest() {
         AppCenter.startFromLibrary(null, DummyService.class);
         verify(DummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString());
     }
 
@@ -91,7 +91,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         assertEquals(1, AppCenter.getInstance().getServices().size());
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(false));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), isNull(), eq(false));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
         verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP), anyInt());
         verify(mChannel, never()).setAppSecret(anyString());
@@ -114,13 +114,13 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
 
         /* Verify previous behaviors happened only once, thus not again. */
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(false));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), isNull(), eq(false));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
 
         /* Verify second service started. */
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
         verify(AnotherDummyService.getInstance()).getLogFactories();
-        verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(String.class), eq(true));
+        verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
 
         /* And enabled. */
@@ -147,7 +147,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         assertEquals(1, AppCenter.getInstance().getServices().size());
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(false));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), isNull(), eq(false));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
         verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP), anyInt());
         verify(mChannel, never()).setAppSecret(anyString());
@@ -163,13 +163,13 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
 
         /* Verify previous behaviors happened only once, thus not again. */
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(false));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), isNull(), eq(false));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
 
         /* Verify second service started. */
         assertFalse(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
         verify(AnotherDummyService.getInstance(), never()).getLogFactories();
-        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
+        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), isNull(), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
         verify(mApplication, never()).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
 
         /* Verify start service log is sent. */
@@ -193,7 +193,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         assertEquals(1, AppCenter.getInstance().getServices().size());
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(false));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), isNull(), eq(false));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
         verify(mChannel, never()).enqueue(eq(mStartServiceLog), eq(CORE_GROUP), anyInt());
         verify(mChannel, never()).setAppSecret(anyString());
@@ -210,7 +210,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
 
         /* Verify previous behaviors happened only once, thus not again. */
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), isNull(String.class), eq(false));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), isNull(), eq(false));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
 
         /* Verify second service started. */
@@ -242,13 +242,13 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         /* Verify first service started. */
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(String.class), eq(true));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
 
         /* Verify second service started. */
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
         verify(AnotherDummyService.getInstance()).getLogFactories();
-        verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(String.class), eq(true));
+        verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
 
         /* Verify start service log is sent. */
@@ -263,18 +263,18 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         AppCenter.startFromLibrary(mApplication, AnotherDummyService.class, DummyService.class);
 
         /* We get no warnings as app started those. */
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.warn(anyString(), anyString());
 
         /* Check nothing changes as everything was already initialized by app start. */
         assertEquals(2, AppCenter.getInstance().getServices().size());
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(String.class), eq(true));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
         assertTrue(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
         verify(AnotherDummyService.getInstance()).getLogFactories();
-        verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(String.class), eq(true));
+        verify(AnotherDummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), eq(DUMMY_APP_SECRET), isNull(), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP), eq(DEFAULTS));
         services = new ArrayList<>();
@@ -298,13 +298,13 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         /* Verify first service started. */
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
 
         /* Verify second service not started. */
         assertFalse(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
         verify(AnotherDummyService.getInstance(), never()).getLogFactories();
-        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
+        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), isNull(), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
         verify(mApplication, never()).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
 
         /* Verify start service log is sent with only first service. */
@@ -321,11 +321,11 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         assertEquals(1, AppCenter.getInstance().getServices().size());
         assertTrue(AppCenter.getInstance().getServices().contains(DummyService.getInstance()));
         verify(DummyService.getInstance()).getLogFactories();
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
         verify(mApplication).registerActivityLifecycleCallbacks(DummyService.getInstance());
         assertFalse(AppCenter.getInstance().getServices().contains(AnotherDummyService.getInstance()));
         verify(AnotherDummyService.getInstance(), never()).getLogFactories();
-        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), isNull(String.class), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
+        verify(AnotherDummyService.getInstance(), never()).onStarted(any(Context.class), any(Channel.class), isNull(), eq(DUMMY_TRANSMISSION_TARGET_TOKEN), eq(true));
         verify(mApplication, never()).registerActivityLifecycleCallbacks(AnotherDummyService.getInstance());
         verify(mChannel).enqueue(eq(mStartServiceLog), eq(CORE_GROUP), eq(DEFAULTS));
         services = new ArrayList<>();
@@ -347,7 +347,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         AppCenter.startFromLibrary(mApplication, DummyService.class);
 
         /* Verify second service started without secrets with library flag. */
-        verify(DummyService.getInstance()).onStarted(mApplication, mChannel, null, null, false);
+        verify(DummyService.getInstance()).onStarted(mContext, mChannel, null, null, false);
 
         /* Now start from app. */
         AppCenter.start(DummyService.class);
@@ -356,7 +356,7 @@ public class AppCenterLibraryTest extends AbstractAppCenterTest {
         verify(DummyService.getInstance()).onConfigurationUpdated(DUMMY_APP_SECRET, DUMMY_TRANSMISSION_TARGET_TOKEN);
 
         /* And not call onStarted again (verify 1 total call). */
-        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), anyString(), anyString(), anyBoolean());
+        verify(DummyService.getInstance()).onStarted(any(Context.class), any(Channel.class), isNull(), isNull(), anyBoolean());
     }
 
     @Test

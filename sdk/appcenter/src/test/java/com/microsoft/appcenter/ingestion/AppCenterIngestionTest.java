@@ -27,7 +27,6 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,17 +40,18 @@ import static com.microsoft.appcenter.utils.PrefStorageConstants.ALLOWED_NETWORK
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
@@ -70,6 +70,7 @@ public class AppCenterIngestionTest {
 
     @Before
     public void setUp() {
+        spy(AppCenterLog.class);
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(ALLOWED_NETWORK_REQUEST, true)).thenReturn(true);
     }
@@ -89,7 +90,7 @@ public class AppCenterIngestionTest {
         /* Configure mock HTTP. */
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
                 callTemplate.set((HttpClient.CallTemplate) invocation.getArguments()[3]);
@@ -109,7 +110,7 @@ public class AppCenterIngestionTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
-        verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(), eq(serviceCallback));
         assertNotNull(callTemplate.get());
         assertEquals("mockPayload", callTemplate.get().buildRequestBody());
 
@@ -138,7 +139,7 @@ public class AppCenterIngestionTest {
         /* Configure mock HTTP. */
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -159,7 +160,7 @@ public class AppCenterIngestionTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
-        verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient).callAsync(eq("http://mock/logs?api-version=1.0.0"), eq(METHOD_POST), eq(expectedHeaders), notNull(), eq(serviceCallback));
         assertNotNull(callTemplate.get());
 
         try {
@@ -180,7 +181,6 @@ public class AppCenterIngestionTest {
         URL url = new URL("http://mock/path/file");
         String appSecret = UUID.randomUUID().toString();
         String obfuscatedSecret = HttpUtils.hideSecret(appSecret);
-        String obfuscatedToken = "Bearer ***";
         Map<String, String> headers = new HashMap<>();
         headers.put("Another-Header", "Another-Value");
         HttpClient.CallTemplate callTemplate = getCallTemplate(appSecret);
@@ -191,12 +191,12 @@ public class AppCenterIngestionTest {
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify url log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(url.toString()));
 
         /* Verify header log. */
         for (Map.Entry<String, String> header : headers.entrySet()) {
-            verifyStatic();
+            verifyStatic(AppCenterLog.class);
             AppCenterLog.verbose(anyString(), contains(header.getValue()));
         }
 
@@ -205,9 +205,8 @@ public class AppCenterIngestionTest {
         callTemplate.onBeforeCalling(url, headers);
 
         /* Verify app secret is in log. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.verbose(anyString(), contains(obfuscatedSecret));
-        AppCenterLog.verbose(anyString(), contains(obfuscatedToken));
     }
 
     @Test
@@ -225,12 +224,12 @@ public class AppCenterIngestionTest {
         callTemplate.onBeforeCalling(mock(URL.class), mock(Map.class));
 
         /* Verify. */
-        verifyStatic(never());
+        verifyStatic(AppCenterLog.class, never());
         AppCenterLog.verbose(anyString(), anyString());
     }
 
     @Test
-    public void sendLogsWhenIngestionDisable() throws JSONException, IOException {
+    public void sendLogsWhenIngestionDisable() throws JSONException {
         mockStatic(SharedPreferencesManager.class);
         when(SharedPreferencesManager.getBoolean(ALLOWED_NETWORK_REQUEST, true)).thenReturn(false);
 
@@ -258,7 +257,7 @@ public class AppCenterIngestionTest {
         HashMap<String, String> expectedHeaders = new HashMap<>();
         expectedHeaders.put(Constants.APP_SECRET, appSecret);
         expectedHeaders.put(AppCenterIngestion.INSTALL_ID, installId.toString());
-        verify(mHttpClient, never()).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(HttpClient.CallTemplate.class), eq(serviceCallback));
+        verify(mHttpClient, never()).callAsync(eq("http://mock" + AppCenterIngestion.API_PATH), eq(METHOD_POST), eq(expectedHeaders), notNull(), eq(serviceCallback));
     }
 
     private HttpClient.CallTemplate getCallTemplate(String appSecret) {
@@ -266,7 +265,7 @@ public class AppCenterIngestionTest {
         /* Configure mock HTTP to get an instance of IngestionCallTemplate. */
         final ServiceCall call = mock(ServiceCall.class);
         final AtomicReference<HttpClient.CallTemplate> callTemplate = new AtomicReference<>();
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).then(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {

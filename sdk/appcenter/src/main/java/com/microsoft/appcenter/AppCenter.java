@@ -52,6 +52,8 @@ import java.util.logging.Logger;
 
 import static android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE;
 import static android.util.Log.VERBOSE;
+import static com.microsoft.appcenter.ApplicationContextUtils.getApplicationContext;
+import static com.microsoft.appcenter.ApplicationContextUtils.isDeviceProtectedStorage;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
@@ -135,9 +137,17 @@ public class AppCenter {
     private String mLogUrl;
 
     /**
-     * Application context.
+     * Android application object that was passed during configuration.
+     * It shouldn't be used directly, but only for getting right context.
+     * It's null until SDK is configured.
      */
     private Application mApplication;
+
+    /**
+     * Application context. Might be special context with device-protected storage.
+     * See {@link ApplicationContextUtils#getApplicationContext(Application)}.
+     */
+    private Context mContext;
 
     /**
      * Application lifecycle listener.
@@ -710,8 +720,20 @@ public class AppCenter {
             return true;
         }
 
-        /* Store state. */
+        /* Store application to use it later for registering services as lifecycle callbacks. */
         mApplication = application;
+        mContext = getApplicationContext(application);
+        if (isDeviceProtectedStorage(mContext)) {
+
+            /*
+             * In this mode storing sensitive is strongly discouraged, but App Center considers regular storage as
+             * not secure as well, so all tokens are encrypted separately anyway. Just warn about it.
+             */
+            AppCenterLog.warn(LOG_TAG,
+                    "A user is locked, credential-protected private app data storage is not available.\n" +
+                    "App Center will use device-protected data storage that available without user authentication.\n" +
+                    "Please note that it's a separate storage, all settings and pending logs won't be shared with regular storage.");
+        }
 
         /* Start looper. */
         mHandlerThread = new HandlerThread("AppCenter.Looper");
@@ -825,11 +847,11 @@ public class AppCenter {
     private void finishConfiguration(boolean configureFromApp) {
 
         /* Load some global constants. */
-        Constants.loadFromContext(mApplication);
+        Constants.loadFromContext(mContext);
 
         /* If parameters are valid, init context related resources. */
-        FileManager.initialize(mApplication);
-        SharedPreferencesManager.initialize(mApplication);
+        FileManager.initialize(mContext);
+        SharedPreferencesManager.initialize(mContext);
 
         /* Set network requests allowed. */
         if (mAllowedNetworkRequests != null) {
@@ -845,13 +867,13 @@ public class AppCenter {
         /* Instantiate HTTP client if it doesn't exist as a dependency. */
         HttpClient httpClient = DependencyConfiguration.getHttpClient();
         if (httpClient == null) {
-            httpClient = createHttpClient(mApplication);
+            httpClient = createHttpClient(mContext);
         }
 
         /* Init channel. */
         mLogSerializer = new DefaultLogSerializer();
         mLogSerializer.addLogFactory(StartServiceLog.TYPE, new StartServiceLogFactory());
-        mChannel = new DefaultChannel(mApplication, mAppSecret, mLogSerializer, httpClient, mHandler);
+        mChannel = new DefaultChannel(mContext, mAppSecret, mLogSerializer, httpClient, mHandler);
 
         /* Complete set maximum storage size future if starting from app. */
         if (configureFromApp) {
@@ -877,7 +899,7 @@ public class AppCenter {
 
         /* Disable listening network if we start while being disabled. */
         if (!enabled) {
-            NetworkStateHelper.getSharedInstance(mApplication).close();
+            NetworkStateHelper.getSharedInstance(mContext).close();
         }
 
         /* Init uncaught exception handler. */
@@ -902,7 +924,7 @@ public class AppCenter {
             AppCenterLog.error(LOG_TAG, "Cannot start services, services array is null. Failed to start services.");
             return;
         }
-        if (mApplication == null) {
+        if (!isInstanceConfigured()) {
             StringBuilder serviceNames = new StringBuilder();
             for (Class<? extends AppCenterService> service : services) {
                 serviceNames.append("\t").append(service.getName()).append("\n");
@@ -1011,10 +1033,10 @@ public class AppCenter {
                 service.setInstanceEnabled(false);
             }
             if (startFromApp) {
-                service.onStarted(mApplication, mChannel, mAppSecret, mTransmissionTargetToken, true);
+                service.onStarted(mContext, mChannel, mAppSecret, mTransmissionTargetToken, true);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from application.");
             } else {
-                service.onStarted(mApplication, mChannel, null, null, false);
+                service.onStarted(mContext, mChannel, null, null, false);
                 AppCenterLog.info(LOG_TAG, service.getClass().getSimpleName() + " service started from library.");
             }
         }
@@ -1118,10 +1140,10 @@ public class AppCenter {
         /* Update uncaught exception subscription. */
         if (switchToEnabled) {
             mUncaughtExceptionHandler.register();
-            NetworkStateHelper.getSharedInstance(mApplication).reopen();
+            NetworkStateHelper.getSharedInstance(mContext).reopen();
         } else if (switchToDisabled) {
             mUncaughtExceptionHandler.unregister();
-            NetworkStateHelper.getSharedInstance(mApplication).close();
+            NetworkStateHelper.getSharedInstance(mContext).close();
         }
 
         /* Update state now if true, services are checking this. */

@@ -176,11 +176,6 @@ public final class DistributeConstants {
     public static final String HANDLER_TOKEN_CHECK_PROGRESS = SERVICE_NAME + ".handler_token_check_progress";
 
     /**
-     * The download progress will be reported after loading this number of bytes.
-     */
-    public static final long UPDATE_PROGRESS_BYTES_THRESHOLD = 512 * 1024;
-
-    /**
      * The download progress will be reported not more often than this number of milliseconds.
      */
     public static final long UPDATE_PROGRESS_TIME_THRESHOLD = 500;
@@ -199,11 +194,6 @@ public final class DistributeConstants {
      * Time to wait for installing optional updates if user postponed, in millis.
      */
     static final long POSTPONE_TIME_THRESHOLD = 24 * 60 * 60 * 1000;
-
-    /**
-     * Notification channel identifier.
-     */
-    static final String NOTIFICATION_CHANNEL_ID = "appcenter.distribute";
 
     /**
      * Base key for stored preferences.

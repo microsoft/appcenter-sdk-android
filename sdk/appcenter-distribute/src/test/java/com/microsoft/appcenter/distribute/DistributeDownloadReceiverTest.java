@@ -11,17 +11,23 @@ import android.content.Intent;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.Test;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import static android.app.DownloadManager.ACTION_NOTIFICATION_CLICKED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-public class DistributePlusDownloadReceiverTest extends AbstractDistributeTest {
+@PrepareForTest({
+        DistributeUtils.class
+})
+public class DistributeDownloadReceiverTest extends AbstractDistributeTest {
+
+    DownloadManagerReceiver mDownloadManagerReceiver = new DownloadManagerReceiver();
 
     @Test
     public void resumeAppBeforeStart() throws Exception {
@@ -29,7 +35,7 @@ public class DistributePlusDownloadReceiverTest extends AbstractDistributeTest {
         when(clickIntent.getAction()).thenReturn(ACTION_NOTIFICATION_CLICKED);
         Intent startIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(mContext, DeepLinkActivity.class).thenReturn(startIntent);
-        new DownloadManagerReceiver().onReceive(mContext, clickIntent);
+        mDownloadManagerReceiver.onReceive(mContext, clickIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         verify(mContext).startActivity(startIntent);
     }
@@ -41,7 +47,7 @@ public class DistributePlusDownloadReceiverTest extends AbstractDistributeTest {
         start();
         Intent startIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(mContext, DeepLinkActivity.class).thenReturn(startIntent);
-        new DownloadManagerReceiver().onReceive(mContext, clickIntent);
+        mDownloadManagerReceiver.onReceive(mContext, clickIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         verify(mContext).startActivity(startIntent);
     }
@@ -55,12 +61,12 @@ public class DistributePlusDownloadReceiverTest extends AbstractDistributeTest {
         Intent startIntent = mock(Intent.class);
         whenNew(Intent.class).withArguments(mContext, DeepLinkActivity.class).thenReturn(startIntent);
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
-        new DownloadManagerReceiver().onReceive(mContext, clickIntent);
+        mDownloadManagerReceiver.onReceive(mContext, clickIntent);
         verify(mContext, never()).startActivity(startIntent);
 
         /* Then pause and test again. */
         Distribute.getInstance().onActivityPaused(mock(Activity.class));
-        new DownloadManagerReceiver().onReceive(mContext, clickIntent);
+        mDownloadManagerReceiver.onReceive(mContext, clickIntent);
         verify(startIntent).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         verify(mContext).startActivity(startIntent);
     }

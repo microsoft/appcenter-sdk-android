@@ -24,10 +24,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import static org.junit.Assert.assertFalse;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -65,7 +65,7 @@ abstract class AbstractAnalyticsTest {
                 return null;
             }
         };
-        doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any(Runnable.class));
+        doAnswer(runNow).when(mAppCenterHandler).post(any(Runnable.class), any());
         mockStatic(HandlerUtils.class);
         doAnswer(runNow).when(HandlerUtils.class);
         HandlerUtils.runOnUiThread(any(Runnable.class));

@@ -5,10 +5,29 @@
 
 package com.microsoft.appcenter.crashes.utils;
 
+import static com.microsoft.appcenter.test.TestUtils.generateString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.powermock.api.mockito.PowerMockito.doThrow;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Process;
 import android.text.TextUtils;
@@ -37,9 +56,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -48,29 +65,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.microsoft.appcenter.test.TestUtils.generateString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
-
-@SuppressWarnings("unused")
-@PrepareForTest({DeviceInfoHelper.class, Process.class, Build.class, ErrorLogHelper.class, FileManager.class, TextUtils.class, AppCenterLog.class})
+@PrepareForTest({
+        AppCenterLog.class,
+        Build.class,
+        DeviceInfoHelper.class,
+        ErrorLogHelper.class,
+        FileManager.class,
+        Process.class,
+        TextUtils.class
+})
 public class ErrorLogHelperTest {
 
     @Rule
@@ -92,6 +95,7 @@ public class ErrorLogHelperTest {
         TestUtils.setInternalState(Build.class, "CPU_ABI", null);
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void createErrorLog() throws java.lang.Exception {
 
@@ -129,7 +133,14 @@ public class ErrorLogHelperTest {
 
         /* Test. */
         long launchTimeStamp = 2000;
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new IOException(new TestCrashException())), java.lang.Thread.getAllStackTraces(), launchTimeStamp);
+        mockStatic(java.lang.Thread.class); // Workaround for PowerMock class loading issue.
+        Map<java.lang.Thread, StackTraceElement[]> allStackTraces = java.lang.Thread.getAllStackTraces();
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(
+                mockContext,
+                java.lang.Thread.currentThread(),
+                new RuntimeException(new IOException(new TestCrashException())),
+                allStackTraces,
+                launchTimeStamp);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertEquals(logTimestamp, errorLog.getTimestamp());
@@ -168,7 +179,7 @@ public class ErrorLogHelperTest {
 
         /* Check threads. */
         assertNotNull(errorLog.getThreads());
-        assertEquals(java.lang.Thread.getAllStackTraces().size(), errorLog.getThreads().size());
+        assertEquals(allStackTraces.size(), errorLog.getThreads().size());
         for (Thread thread : errorLog.getThreads()) {
             assertNotNull(thread);
             assertTrue(thread.getId() > 0);
@@ -211,7 +222,8 @@ public class ErrorLogHelperTest {
         });
 
         /* Mock device. */
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class)))
+                .thenThrow(new DeviceInfoHelper.DeviceInfoException("mock"));
 
         /* Mock architecture. */
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", 15);
@@ -219,7 +231,7 @@ public class ErrorLogHelperTest {
 
         /* Test. */
         long launchTimeStamp = 2000;
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), launchTimeStamp);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), new HashMap<>(), launchTimeStamp);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertEquals(logTimestamp, errorLog.getTimestamp());
@@ -252,7 +264,8 @@ public class ErrorLogHelperTest {
         });
 
         /* Mock device. */
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("mock", new PackageManager.NameNotFoundException()));
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class)))
+                .thenThrow(new DeviceInfoHelper.DeviceInfoException("mock"));
 
         /* Mock activity manager to return null active processes. */
         ActivityManager activityManager = mock(ActivityManager.class);
@@ -265,7 +278,7 @@ public class ErrorLogHelperTest {
 
         /* Test. */
         long launchTimeStamp = 2000;
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), java.lang.Thread.getAllStackTraces(), launchTimeStamp);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new java.lang.Exception(), new HashMap<>(), launchTimeStamp);
         assertNotNull(errorLog);
         assertNotNull(errorLog.getId());
         assertEquals(logTimestamp, errorLog.getTimestamp());
@@ -305,7 +318,7 @@ public class ErrorLogHelperTest {
         TestUtils.setInternalState(Build.class, "SUPPORTED_ABIS", new String[]{"armeabi-v7a", "arm"});
 
         /* Create an error log. */
-        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), java.lang.Thread.getAllStackTraces(), 900);
+        ManagedErrorLog errorLog = ErrorLogHelper.createErrorLog(mockContext, java.lang.Thread.currentThread(), new RuntimeException(new TestCrashException()), new HashMap<>(), 900);
         assertNotNull(errorLog);
 
         /* Test. */
@@ -381,7 +394,7 @@ public class ErrorLogHelperTest {
         ErrorLogHelper.cleanPendingMinidumps();
 
         /* Verify clean function was called. */
-        verifyStatic();
+        verifyStatic(FileManager.class);
         FileManager.cleanDirectory(ErrorLogHelper.getPendingMinidumpDirectory());
 
         /* Clean up. */
@@ -450,20 +463,15 @@ public class ErrorLogHelperTest {
     public void throwIOExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
 
         /* Prepare data. */
-        BufferedWriter mockBufferedWriter = mock(BufferedWriter.class);
-        FileWriter mockFileWriter = mock(FileWriter.class);
-        whenNew(BufferedWriter.class).withAnyArguments().thenReturn(mockBufferedWriter);
-        whenNew(FileWriter.class).withAnyArguments().thenReturn(mockFileWriter);
-        doThrow(new IOException()).when(mockBufferedWriter).write(anyString());
-        mockStatic(TextUtils.class);
-        when(TextUtils.isEmpty(anyString())).thenReturn(false);
-        when(TextUtils.getTrimmedLength(anyString())).thenReturn(1);
         Device mockDevice = mock(Device.class);
         mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenReturn(mockDevice);
         Context mockContext = mock(Context.class);
         File mockFile = mock(File.class);
         whenNew(File.class).withAnyArguments().thenReturn(mockFile);
+        mockStatic(FileManager.class);
+        doThrow(new IOException()).when(FileManager.class);
+        FileManager.write(eq(mockFile), any());
 
         /* Verify. */
         ErrorLogHelper.getNewMinidumpSubfolderWithContextData(mockContext);
@@ -474,9 +482,9 @@ public class ErrorLogHelperTest {
     public void throwDeviceInfoExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
 
         /* Prepare data. */
-        Device mockDevice = mock(Device.class);
         mockStatic(DeviceInfoHelper.class);
-        when(DeviceInfoHelper.getDeviceInfo(any(Context.class))).thenThrow(new DeviceInfoHelper.DeviceInfoException("crash", new java.lang.Exception()));
+        when(DeviceInfoHelper.getDeviceInfo(any(Context.class)))
+                .thenThrow(new DeviceInfoHelper.DeviceInfoException("crash"));
         Context mockContext = mock(Context.class);
         File mockFile = mock(File.class);
         whenNew(File.class).withAnyArguments().thenReturn(mockFile);
@@ -547,12 +555,12 @@ public class ErrorLogHelperTest {
 
         /* Verify removing files when getErrorStorageDirectory return some files. */
         ErrorLogHelper.removeLostThrowableFiles();
-        verifyStatic(times(2));
+        verifyStatic(FileManager.class, times(2));
         FileManager.delete(any(File.class));
     }
 
     @Test
-    public void removeLostThrowableFilesWhenListOfFilesIsEmpty() throws java.lang.Exception {
+    public void removeLostThrowableFilesWhenListOfFilesIsEmpty() {
 
         /* Mock FileManager class. */
         mockStatic(FileManager.class);
@@ -566,12 +574,12 @@ public class ErrorLogHelperTest {
 
         /* Verify removing files when getErrorStorageDirectory return null. */
         ErrorLogHelper.removeLostThrowableFiles();
-        verifyStatic(never());
+        verifyStatic(FileManager.class, never());
         FileManager.delete(any(File.class));
 
         /* Verify removing files when getErrorStorageDirectory return 0. */
         ErrorLogHelper.removeLostThrowableFiles();
-        verifyStatic(never());
+        verifyStatic(FileManager.class, never());
         FileManager.delete(any(File.class));
     }
 

@@ -14,13 +14,14 @@ import com.microsoft.appcenter.http.ServiceCallback;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.powermock.api.mockito.PowerMockito;
 
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -63,35 +64,37 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
     }
 
     @Test
-    public void switchTrack() throws PackageManager.NameNotFoundException {
+    public void switchTrack() {
 
         /* Start (in public mode). */
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Check http call done. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.<String, String>emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
+        verify(mHttpClient).callAsync(anyString(), anyString(), eq(Collections.emptyMap()), any(HttpClient.CallTemplate.class), httpCallback.capture());
 
         /* Without browser because its public. */
-        verifyStatic(never());
+        verifyStatic(BrowserUtils.class, never());
         BrowserUtils.openBrowser(anyString(), any(Activity.class));
 
         /* Complete call with no new release (this will return the default mock mReleaseDetails with version 0). */
-        httpCallback.getValue().onCallSucceeded(mock(HttpResponse.class));
+        HttpResponse response = mock(HttpResponse.class);
+        PowerMockito.when(response.getPayload()).thenReturn("<mock_release_details>");
+        httpCallback.getValue().onCallSucceeded(response);
 
         /* If we switch to private, browser must not open. We disallow changes. */
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
-        verifyStatic(never());
+        verifyStatic(BrowserUtils.class, never());
         BrowserUtils.openBrowser(anyString(), eq(mActivity));
     }
 
     @Test
-    public void switchTrackBeforeForeground() throws PackageManager.NameNotFoundException {
+    public void switchTrackBeforeForeground() {
 
         /* Start (in public mode) in background. */
-        when(mPackageManager.getPackageInfo(DistributeUtils.TESTER_APP_PACKAGE_NAME, 0)).thenThrow(new PackageManager.NameNotFoundException());
+        withoutTesterApp();
         start();
 
         /* Switch to private. */
@@ -104,7 +107,7 @@ public class DistributeUpdateTrackTest extends AbstractDistributeTest {
         Distribute.getInstance().onActivityResumed(mActivity);
 
         /* Verify browser is not opened. Changes are allowed only before start. */
-        verifyStatic(never());
+        verifyStatic(BrowserUtils.class, never());
         BrowserUtils.openBrowser(anyString(), eq(mActivity));
     }
 }

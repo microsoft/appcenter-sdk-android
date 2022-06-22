@@ -34,14 +34,14 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_ST
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOAD_STATE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_POSTPONE_TIME;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyMapOf;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.contains;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -53,8 +53,10 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
-@SuppressWarnings("unused")
-@PrepareForTest({ErrorDetails.class, DistributeUtils.class, DeviceInfoHelper.class})
+@PrepareForTest({
+        DistributeUtils.class,
+        ErrorDetails.class
+})
 public class DistributeCustomizationTest extends AbstractDistributeTest {
 
     private void start(Distribute distribute) {
@@ -70,7 +72,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         when(DistributeUtils.computeReleaseHash(any(PackageInfo.class))).thenReturn("some_hash");
 
         /* Set the package version equal to the portal's one. */
-        mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(10);
 
         /* Mock http call. */
@@ -157,7 +158,6 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     public void distributeNotRecent() throws Exception {
 
         /* Set the package version higher than the portal's one. */
-        mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(11);
 
         /* Mock http call. */
@@ -206,12 +206,11 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     private void distributeNotRecentCoverage(DistributeListener actualListener, DistributeListener verificationListener, boolean onPause) throws Exception {
 
         /* Set the package version higher than the portal's one. */
-        mockStatic(DeviceInfoHelper.class);
         when(DeviceInfoHelper.getVersionCode(any(PackageInfo.class))).thenReturn(11);
 
         /* Mock http call. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
 
         /* Mock data model. */
         mockStatic(ReleaseDetails.class);
@@ -277,7 +276,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Mock http call. */
         ArgumentCaptor<ServiceCallback> httpCallback = ArgumentCaptor.forClass(ServiceCallback.class);
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), httpCallback.capture())).thenReturn(mock(ServiceCall.class));
 
         /* Start Distribute service. */
         restartProcessAndSdk();
@@ -357,7 +356,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
         /* Disable the service. */
@@ -365,7 +364,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* mReleaseListener is null. */
@@ -373,25 +372,25 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
         ReleaseDownloader cleanupReleaseDownloader = mock(ReleaseDownloader.class);
-        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), isNull(ReleaseDetails.class), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
+        Mockito.when(ReleaseDownloaderFactory.create(any(Context.class), isNull(), any(ReleaseDownloadListener.class))).thenReturn(cleanupReleaseDownloader);
         distribute.setInstanceEnabled(true);
 
         /* Verify the method is called by resumeDistributeWorkflow. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
@@ -401,9 +400,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Verify again to make sure the user action has NOT been processed yet. */
@@ -432,7 +431,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.onActivityResumed(mActivity);
 
         /* Verify the method is called by onActivityCreated. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
         /* Disable the service. */
@@ -442,23 +441,23 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Enable the service. */
         distribute.setInstanceEnabled(true);
 
         /* Verify the method is called by resumeDistributeWorkflow. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
 
         /* Call handleUpdateAction. */
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Mock the download state to DOWNLOAD_STATE_AVAILABLE. */
@@ -468,9 +467,9 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.POSTPONE);
 
         /* Verify the user action has NOT been processed. */
-        verifyStatic(times(++getStoredDownloadStateCounter));
+        verifyStatic(DistributeUtils.class, times(++getStoredDownloadStateCounter));
         DistributeUtils.getStoredDownloadState();
-        verifyStatic(times(++appCenterLogErrorCounter));
+        verifyStatic(AppCenterLog.class, times(++appCenterLogErrorCounter));
         AppCenterLog.error(anyString(), anyString());
 
         /* Verify again to make sure the user action has NOT been processed yet. */
@@ -680,7 +679,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
 
         /* Verify POSTPONE has NOT been processed. */
         verify(distribute, never()).completeWorkflow();
-        verifyStatic(never());
+        verifyStatic(SharedPreferencesManager.class, never());
         SharedPreferencesManager.putLong(eq(PREFERENCE_KEY_POSTPONE_TIME), anyLong());
     }
 
@@ -739,7 +738,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         Distribute.notifyUpdateAction(invalidUserAction);
 
         /* Verify update has NOT been processed. */
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(anyString(), contains(String.valueOf(invalidUserAction)));
     }
 
@@ -777,7 +776,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
     private ReleaseDetails mockForCustomizationTest(boolean mandatory) throws Exception {
 
         /* Mock http call. */
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {
@@ -805,7 +804,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         final HttpException httpException = new HttpException(new HttpResponse(404, payload));
 
         /* Mock http call. */
-        when(mHttpClient.callAsync(anyString(), anyString(), anyMapOf(String.class, String.class), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
+        when(mHttpClient.callAsync(anyString(), anyString(), anyMap(), any(HttpClient.CallTemplate.class), any(ServiceCallback.class))).thenAnswer(new Answer<ServiceCall>() {
 
             @Override
             public ServiceCall answer(InvocationOnMock invocation) {

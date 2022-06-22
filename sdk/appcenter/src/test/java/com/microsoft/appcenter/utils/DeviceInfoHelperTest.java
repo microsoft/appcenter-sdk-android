@@ -37,7 +37,7 @@ import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.atLeastOnce;
@@ -86,6 +86,7 @@ public class DeviceInfoHelperTest {
     public void setup() {
         DeviceInfoHelper.setCountryCode(null);
         when(mContext.getPackageManager()).thenReturn(mPackageManager);
+        when(mContext.getPackageName()).thenReturn("package-name");
     }
 
     @Before
@@ -251,7 +252,7 @@ public class DeviceInfoHelperTest {
         Device device = DeviceInfoHelper.getDeviceInfo(mContext);
         assertNull(device.getCarrierCountry());
         assertNull(device.getCarrierName());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(Exception.class));
     }
 
@@ -288,7 +289,7 @@ public class DeviceInfoHelperTest {
         /* Verify. */
         Device device = DeviceInfoHelper.getDeviceInfo(mContext);
         assertNull(device.getScreenSize());
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(Exception.class));
     }
 
@@ -355,7 +356,7 @@ public class DeviceInfoHelperTest {
         DeviceInfoHelper.setCountryCode(countryCode);
 
         /* Verify that log was called.*/
-        verifyStatic();
+        verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), eq("App Center accepts only the two-letter ISO country code."));
 
         /* Verify that invalid value wasn't set. */

@@ -6,10 +6,18 @@
 package com.microsoft.appcenter.distribute;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
+import android.os.Build;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.DeviceInfoHelper;
@@ -48,12 +56,59 @@ class DistributeUtils {
     static final String TESTER_APP_PACKAGE_NAME = "com.microsoft.hockeyapp.testerapp";
 
     /**
+     * Notification channel identifier.
+     */
+    static final String NOTIFICATION_CHANNEL_ID = "appcenter.distribute";
+
+    /**
      * Get the notification identifier for downloads.
      *
      * @return notification identifier for downloads.
      */
+    @VisibleForTesting
     static int getNotificationId() {
         return Distribute.class.getName().hashCode();
+    }
+
+    static void postNotification(@NonNull Context context, String title, String message, Intent intent) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification.Builder builder;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            /* Create or update notification channel (mandatory on Android 8 target). */
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
+                    context.getString(R.string.appcenter_distribute_notification_category),
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+            builder = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID);
+        } else {
+            builder = getOldNotificationBuilder(context);
+        }
+        int pendingIntentFlag = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            pendingIntentFlag = PendingIntent.FLAG_IMMUTABLE;
+        }
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, pendingIntentFlag);
+        builder.setTicker(title)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setSmallIcon(context.getApplicationInfo().icon)
+                .setStyle(new Notification.BigTextStyle().bigText(message))
+                .setContentIntent(pendingIntent);
+        Notification notification = builder.build();
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        notificationManager.notify(DistributeUtils.getNotificationId(), notification);
+    }
+
+    static void cancelNotification(@NonNull Context context) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(DistributeUtils.getNotificationId());
+    }
+
+    @NonNull
+    @SuppressWarnings({"deprecation", "RedundantSuppression"})
+    private static Notification.Builder getOldNotificationBuilder(@NonNull Context context) {
+        return new Notification.Builder(context);
     }
 
     /**
@@ -63,6 +118,17 @@ class DistributeUtils {
      */
     static int getStoredDownloadState() {
         return SharedPreferencesManager.getInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_COMPLETED);
+    }
+
+    static Intent getResumeAppIntent(@NonNull Context context) {
+
+        /*
+         * Use our deep link activity with no parameter just to resume app correctly
+         * without duplicating activities or clearing task.
+         */
+        Intent intent = new Intent(context, DeepLinkActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return intent;
     }
 
     @NonNull

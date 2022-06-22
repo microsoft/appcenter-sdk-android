@@ -16,14 +16,15 @@ import com.microsoft.appcenter.ingestion.models.json.LogSerializer;
 import org.junit.After;
 import org.junit.Test;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isA;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.verifyNew;
 
 public class DependencyConfigurationTest extends AbstractAppCenterTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void ConstructorCoverage() {
         new DependencyConfiguration();

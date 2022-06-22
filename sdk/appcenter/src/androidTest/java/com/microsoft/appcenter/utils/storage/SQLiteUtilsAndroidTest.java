@@ -12,6 +12,7 @@ import static org.junit.Assert.assertNotNull;
 @SuppressWarnings("unused")
 public class SQLiteUtilsAndroidTest {
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
     public void test() {
         new SQLiteUtils();
