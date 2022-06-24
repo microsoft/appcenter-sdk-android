@@ -39,7 +39,6 @@ public class ApplicationContextUtilsTest {
 
     @Before
     public void setUp() {
-        when(mApplication.getApplicationContext()).thenReturn(mApplication);
         when(mApplication.isDeviceProtectedStorage()).thenReturn(false);
         when(mApplication.createDeviceProtectedStorageContext()).thenReturn(mDeviceProtectedStorageContext);
         when(mApplication.getSystemService(Context.USER_SERVICE)).thenReturn(mUserManager);
@@ -79,9 +78,6 @@ public class ApplicationContextUtilsTest {
 
         /* It should be regular context. */
         assertEquals(mApplication, ApplicationContextUtils.getApplicationContext(mApplication));
-
-        /* Verify get application context. */
-        verify(mApplication).getApplicationContext();
     }
 
     @Test
@@ -95,9 +91,6 @@ public class ApplicationContextUtilsTest {
 
         /* It should be regular context. */
         assertEquals(mApplication, ApplicationContextUtils.getApplicationContext(mApplication));
-
-        /* Verify get application context. */
-        verify(mApplication).getApplicationContext();
     }
 
     @Test
