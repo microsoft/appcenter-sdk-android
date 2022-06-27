@@ -1,5 +1,13 @@
 # App Center SDK for Android Change Log
 
+## Version 4.4.5
+
+### App Center
+
+* **[Fix]** Fix crash when SDK is started from overridden `Application.attachBaseContext`.
+
+ ___
+
 ## Version 4.4.4
 
 ### App Center

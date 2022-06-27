@@ -35,7 +35,7 @@ class ApplicationContextUtils {
                 return application.createDeviceProtectedStorageContext();
             }
         }
-        return application.getApplicationContext();
+        return application;
     }
 
     /**
