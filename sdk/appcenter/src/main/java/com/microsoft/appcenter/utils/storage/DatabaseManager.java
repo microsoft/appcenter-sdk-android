@@ -18,9 +18,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
+import java.io.File;
 import java.util.Arrays;
 
 import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
@@ -180,42 +182,15 @@ public class DatabaseManager implements Closeable {
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
-        Long id = null;
-        Cursor cursor = null;
+        long id;
         try {
-            while (id == null) {
-                try {
-
-                    /* Insert data. */
-                    id = getDatabase().insertOrThrow(mDefaultTable, null, values);
-                } catch (SQLiteFullException e) {
-
-                    /* Delete the oldest log. */
-                    AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log");
-                    if (cursor == null) {
-                        String priority = values.getAsString(priorityColumn);
-                        SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
-                        queryBuilder.appendWhere(priorityColumn + " <= ?");
-                        cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn + " , " + PRIMARY_KEY);
-                    }
-                    if (cursor.moveToNext()) {
-                        long deletedId = cursor.getLong(0);
-                        delete(deletedId);
-                        AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
-                    } else {
-                        throw e;
-                    }
-                }
-            }
+            /* Insert data. */
+            id = getDatabase().insertOrThrow(mDefaultTable, null, values);
+        } catch (SQLiteFullException e) {
+            throw e;
         } catch (RuntimeException e) {
             id = -1L;
             AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
-        }
-        if (cursor != null) {
-            try {
-                cursor.close();
-            } catch (RuntimeException ignore) {
-            }
         }
         return id;
     }
@@ -227,6 +202,21 @@ public class DatabaseManager implements Closeable {
      */
     public void delete(@IntRange(from = 0) long id) {
         delete(mDefaultTable, PRIMARY_KEY, id);
+    }
+
+    public long deleteTheOldestRecord(@NonNull String priorityColumn, int priority) {
+        SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+        queryBuilder.appendWhere(priorityColumn + " <= ?");
+        Cursor cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{String.valueOf(priority)}, priorityColumn + " , " + PRIMARY_KEY);
+        if (cursor.moveToNext()) {
+            long deletedId = cursor.getLong(0);
+            delete(deletedId);
+            AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
+            return  deletedId;
+        } else {
+            AppCenterLog.error(LOG_TAG, String.format("Failed to delete the oldest log from database %s.", mDatabase));
+        }
+        return -1;
     }
 
     /**
@@ -416,6 +406,16 @@ public class DatabaseManager implements Closeable {
             AppCenterLog.error(LOG_TAG, "Could not get maximum database size.", e);
             return -1;
         }
+    }
+
+    /**
+     * Gets the current size of the database file.
+     *
+     * @return The current size of database in bytes.
+     */
+    public long getCurrentSize() {
+        File dbFile = mContext.getDatabasePath(mDatabase);
+        return dbFile.length();
     }
 
     /**

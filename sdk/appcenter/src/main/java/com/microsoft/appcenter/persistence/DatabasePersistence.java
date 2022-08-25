@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteQueryBuilder;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
@@ -29,8 +30,10 @@ import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 import org.json.JSONException;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -115,6 +118,12 @@ public class DatabasePersistence extends Persistence {
     static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0);
 
     /**
+     * Default maximum cache size for database and large payloads in separated files.
+     */
+    @VisibleForTesting
+    private static final long DEFAULT_MAX_CACHE_SIZE_IN_BYTES = 10 * 1024 * 1024;
+
+    /**
      * Order by clause to select logs.
      */
     private static final String GET_SORT_ORDER = COLUMN_PRIORITY + " DESC, " + PRIMARY_KEY;
@@ -187,12 +196,36 @@ public class DatabasePersistence extends Persistence {
     private final File mLargePayloadDirectory;
 
     /**
+     * The size of the separated large files
+     */
+    private long mLargePayloadsSize;
+
+    /**
+     * The separated large files max size
+     */
+    private long mLargePayloadsMaxSize;
+
+    /**
+     * List of the large payloads files
+     */
+    private ArrayList<File> mLargePayloadFiles;
+
+    /**
      * Initializes variables with default values.
      *
      * @param context application context.
      */
     public DatabasePersistence(Context context) {
-        this(context, VERSION, SCHEMA);
+        this(context, VERSION, SCHEMA, DEFAULT_MAX_CACHE_SIZE_IN_BYTES);
+    }
+
+    /**
+     * Initializes variables with default cache size.
+     *
+     * @param context application context.
+     */
+    public DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") final ContentValues schema) {
+        this(context, version, schema, DEFAULT_MAX_CACHE_SIZE_IN_BYTES);
     }
 
     /**
@@ -202,7 +235,7 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") final ContentValues schema) {
+    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") final ContentValues schema, long maxCacheSize) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
@@ -232,6 +265,16 @@ public class DatabasePersistence extends Persistence {
 
         //noinspection ResultOfMethodCallIgnored we handle errors at read/write time for each file.
         mLargePayloadDirectory.mkdirs();
+
+        mLargePayloadsMaxSize = maxCacheSize;
+        mLargePayloadFiles = collectAllLargePayloadsFiles();
+        mLargePayloadsSize = 0;
+
+        for (File file: mLargePayloadFiles) {
+            mLargePayloadsSize += file.length();
+        }
+
+        deleteLogsThatNotFitMaxSize();
     }
 
     /**
@@ -258,6 +301,10 @@ public class DatabasePersistence extends Persistence {
     @Override
     public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
         return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
+    }
+
+    public void setMaxLargePayloadsSize(long maxLargePayloadsSizeInBytes) {
+        mLargePayloadsSize = maxLargePayloadsSizeInBytes;
     }
 
     @Override
@@ -293,8 +340,22 @@ public class DatabasePersistence extends Persistence {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
-            long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
+
+            int priority = Flags.getPersistenceFlag(flags, false);
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, priority);
+
+            Long databaseId = null;
+            while (databaseId == null) {
+                try {
+                    databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
+                } catch (SQLiteFullException e) {
+                    AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log");
+                    if (deleteTheOldestLog(COLUMN_PRIORITY, priority) == -1) {
+                        throw e;
+                    }
+                }
+            }
+
             if (databaseId == -1) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
             }
@@ -308,6 +369,8 @@ public class DatabasePersistence extends Persistence {
                 File payloadFile = getLargePayloadFile(directory, databaseId);
                 try {
                     FileManager.write(payloadFile, payload);
+                    mLargePayloadFiles.add(payloadFile);
+                    mLargePayloadsSize += payloadFile.length();
                 } catch (IOException e) {
 
                     /* Remove database entry if we cannot save payload as a file. */
@@ -316,6 +379,8 @@ public class DatabasePersistence extends Persistence {
                 }
                 AppCenterLog.debug(LOG_TAG, "Payload written to " + payloadFile);
             }
+            deleteLogsThatNotFitMaxSize();
+
             return databaseId;
         } catch (JSONException e) {
             throw new PersistenceException("Cannot convert to JSON string.", e);
@@ -577,6 +642,55 @@ public class DatabasePersistence extends Persistence {
     @Override
     public void close() {
         mDatabaseManager.close();
+    }
+
+    public void deleteLogsThatNotFitMaxSize() {
+        int normalPriority = Flags.getPersistenceFlag(Flags.NORMAL, false);
+        while (getCacheSize() >= mLargePayloadsMaxSize) {
+            if (deleteTheOldestLog(COLUMN_PRIORITY, normalPriority) == -1) {
+                break;
+            }
+        }
+    }
+
+    private long getCacheSize() {
+        return  mDatabaseManager.getCurrentSize() + mLargePayloadsSize;
+    }
+
+    private long deleteTheOldestLog(@NonNull String priorityColumn, int priority) {
+        long deletedId = mDatabaseManager.deleteTheOldestRecord(priorityColumn, priority);
+        if (deletedId != -1) {
+            for (File file: mLargePayloadFiles) {
+                if (file.getName().equalsIgnoreCase(deletedId + PAYLOAD_FILE_EXTENSION)) {
+                    long fileSize = file.length();
+                    if (file.delete()) {
+                        mLargePayloadsSize -= fileSize;
+                        mLargePayloadFiles.remove(file);
+                    } else {
+                        AppCenterLog.error(LOG_TAG, "Cannot delete large payload file with id " + deletedId);
+                    }
+                    break;
+                }
+            }
+        }
+        return  deletedId;
+    }
+
+    private ArrayList<File> collectAllLargePayloadsFiles() {
+        FilenameFilter filter = (file, filename) -> filename.endsWith(PAYLOAD_FILE_EXTENSION);
+
+        ArrayList<File> largePayloadFiles = new ArrayList<>();
+        File[] groupFiles = mLargePayloadDirectory.listFiles();
+        if (groupFiles != null) {
+            for (File groupFile : groupFiles) {
+                File[] files = groupFile.listFiles(filter);
+                if (files != null) {
+                    largePayloadFiles.addAll(Arrays.asList(files));
+                }
+            }
+        }
+
+        return largePayloadFiles;
     }
 
     private List<Long> getLogsIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
