@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.utils.storage;
 
+import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -13,19 +15,18 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
+
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import com.microsoft.appcenter.persistence.DatabasePersistence;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
 import java.io.File;
 import java.util.Arrays;
-
-import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+import java.util.Set;
 
 /**
  * Database manager for SQLite.
@@ -41,6 +42,11 @@ public class DatabaseManager implements Closeable {
      * Primary key selection for {@link #getCursor(SQLiteQueryBuilder, String[], String[], String)}.
      */
     public static final String[] SELECT_PRIMARY_KEY = {PRIMARY_KEY};
+
+    /**
+     * Flag indicating the failure of the database operation
+     */
+    public static final long OPERATION_FAILED_FLAG = -1;
 
     /**
      * Application context instance.
@@ -178,10 +184,9 @@ public class DatabaseManager implements Closeable {
      * the log is not inserted.
      *
      * @param values         The entry to be stored.
-     * @param priorityColumn When storage full and deleting data, use this column to determine which entries to delete first.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
-    public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
+    public long put(@NonNull ContentValues values) throws SQLiteFullException {
         long id;
         try {
             /* Insert data. */
@@ -189,7 +194,7 @@ public class DatabaseManager implements Closeable {
         } catch (SQLiteFullException e) {
             throw e;
         } catch (RuntimeException e) {
-            id = -1L;
+            id = OPERATION_FAILED_FLAG;
             AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
         }
         return id;
@@ -204,19 +209,22 @@ public class DatabaseManager implements Closeable {
         delete(mDefaultTable, PRIMARY_KEY, id);
     }
 
-    public long deleteTheOldestRecord(@NonNull String priorityColumn, int priority) {
+    @Nullable
+    public ContentValues deleteTheOldestRecord(@NonNull Set<String> columnsToReturn, @NonNull String priorityColumn, int priority) {
         SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere(priorityColumn + " <= ?");
-        Cursor cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{String.valueOf(priority)}, priorityColumn + " , " + PRIMARY_KEY);
-        if (cursor.moveToNext()) {
-            long deletedId = cursor.getLong(0);
+        columnsToReturn.add(PRIMARY_KEY);
+        Cursor cursor = getCursor(queryBuilder, columnsToReturn.toArray(new String[0]), new String[]{String.valueOf(priority)}, priorityColumn + " , " + PRIMARY_KEY);
+        ContentValues rowData = nextValues(cursor);
+        if (rowData != null) {
+            long deletedId = rowData.getAsLong(PRIMARY_KEY);
             delete(deletedId);
             AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
-            return  deletedId;
+            return rowData;
         } else {
             AppCenterLog.error(LOG_TAG, String.format("Failed to delete the oldest log from database %s.", mDatabase));
         }
-        return -1;
+        return null;
     }
 
     /**
@@ -283,7 +291,7 @@ public class DatabaseManager implements Closeable {
             return DatabaseUtils.queryNumEntries(getDatabase(), mDefaultTable);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get row count of database.", e);
-            return -1;
+            return OPERATION_FAILED_FLAG;
         }
     }
 
@@ -404,7 +412,7 @@ public class DatabaseManager implements Closeable {
             return getDatabase().getMaximumSize();
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Could not get maximum database size.", e);
-            return -1;
+            return OPERATION_FAILED_FLAG;
         }
     }
 

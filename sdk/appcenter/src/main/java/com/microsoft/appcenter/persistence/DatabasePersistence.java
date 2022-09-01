@@ -5,12 +5,17 @@
 
 package com.microsoft.appcenter.persistence;
 
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteQueryBuilder;
+
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +27,7 @@ import com.microsoft.appcenter.ingestion.models.Log;
 import com.microsoft.appcenter.ingestion.models.one.CommonSchemaLog;
 import com.microsoft.appcenter.ingestion.models.one.PartAUtils;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.FileHelper;
 import com.microsoft.appcenter.utils.crypto.CryptoUtils;
 import com.microsoft.appcenter.utils.storage.DatabaseManager;
 import com.microsoft.appcenter.utils.storage.FileManager;
@@ -33,7 +39,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,10 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
-import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class DatabasePersistence extends Persistence {
@@ -116,12 +117,6 @@ public class DatabasePersistence extends Persistence {
      */
     @VisibleForTesting
     static final ContentValues SCHEMA = getContentValues("", "", "", "", "", 0);
-
-    /**
-     * Default maximum cache size for database and large payloads in separated files.
-     */
-    @VisibleForTesting
-    private static final long DEFAULT_MAX_CACHE_SIZE_IN_BYTES = 10 * 1024 * 1024;
 
     /**
      * Order by clause to select logs.
@@ -201,31 +196,12 @@ public class DatabasePersistence extends Persistence {
     private long mLargePayloadsSize;
 
     /**
-     * The separated large files max size
-     */
-    private long mLargePayloadsMaxSize;
-
-    /**
-     * List of the large payloads files
-     */
-    private ArrayList<File> mLargePayloadFiles;
-
-    /**
      * Initializes variables with default values.
      *
      * @param context application context.
      */
     public DatabasePersistence(Context context) {
-        this(context, VERSION, SCHEMA, DEFAULT_MAX_CACHE_SIZE_IN_BYTES);
-    }
-
-    /**
-     * Initializes variables with default cache size.
-     *
-     * @param context application context.
-     */
-    public DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") final ContentValues schema) {
-        this(context, version, schema, DEFAULT_MAX_CACHE_SIZE_IN_BYTES);
+        this(context, VERSION, SCHEMA);
     }
 
     /**
@@ -235,7 +211,7 @@ public class DatabasePersistence extends Persistence {
      * @param version The version of current schema.
      * @param schema  schema.
      */
-    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") final ContentValues schema, long maxCacheSize) {
+    DatabasePersistence(Context context, int version, @SuppressWarnings("SameParameterValue") final ContentValues schema) {
         mContext = context;
         mPendingDbIdentifiersGroups = new HashMap<>();
         mPendingDbIdentifiers = new HashSet<>();
@@ -266,15 +242,7 @@ public class DatabasePersistence extends Persistence {
         //noinspection ResultOfMethodCallIgnored we handle errors at read/write time for each file.
         mLargePayloadDirectory.mkdirs();
 
-        mLargePayloadsMaxSize = maxCacheSize;
-        mLargePayloadFiles = collectAllLargePayloadsFiles();
-        mLargePayloadsSize = 0;
-
-        for (File file: mLargePayloadFiles) {
-            mLargePayloadsSize += file.length();
-        }
-
-        deleteLogsThatNotFitMaxSize();
+        mLargePayloadsSize = checkLargePayloadFilesAndCollectTheirSize();
     }
 
     /**
@@ -300,11 +268,9 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
-        return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
-    }
-
-    public void setMaxLargePayloadsSize(long maxLargePayloadsSizeInBytes) {
-        mLargePayloadsSize = maxLargePayloadsSizeInBytes;
+        boolean success = mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
+        deleteLogsThatNotFitMaxSize();
+        return success;
     }
 
     @Override
@@ -333,7 +299,7 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             long maxSize = mDatabaseManager.getMaxSize();
-            if (maxSize == -1) {
+            if (maxSize == DatabaseManager.OPERATION_FAILED_FLAG) {
                 throw new PersistenceException("Failed to store a log to the Persistence database.");
             }
             if (!isLargePayload && maxSize <= payloadSize) {
@@ -347,16 +313,16 @@ public class DatabasePersistence extends Persistence {
             Long databaseId = null;
             while (databaseId == null) {
                 try {
-                    databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
+                    databaseId = mDatabaseManager.put(contentValues);
                 } catch (SQLiteFullException e) {
                     AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log");
-                    if (deleteTheOldestLog(COLUMN_PRIORITY, priority) == -1) {
-                        throw e;
+                    if (deleteTheOldestLog(COLUMN_PRIORITY, priority) == DatabaseManager.OPERATION_FAILED_FLAG) {
+                        databaseId = -1L;
                     }
                 }
             }
 
-            if (databaseId == -1) {
+            if (databaseId == DatabaseManager.OPERATION_FAILED_FLAG) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
             }
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
@@ -369,7 +335,6 @@ public class DatabasePersistence extends Persistence {
                 File payloadFile = getLargePayloadFile(directory, databaseId);
                 try {
                     FileManager.write(payloadFile, payload);
-                    mLargePayloadFiles.add(payloadFile);
                     mLargePayloadsSize += payloadFile.length();
                 } catch (IOException e) {
 
@@ -530,7 +495,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                List<Long> corruptedIds = getLogsIds(builder, selectionArgsArray);
+                Set<Long> corruptedIds = getLogsIds(builder, selectionArgsArray);
                 for (Long corruptedId : corruptedIds) {
                     if (!mPendingDbIdentifiers.contains(corruptedId) && !candidates.containsKey(corruptedId)) {
 
@@ -646,55 +611,82 @@ public class DatabasePersistence extends Persistence {
 
     public void deleteLogsThatNotFitMaxSize() {
         int normalPriority = Flags.getPersistenceFlag(Flags.NORMAL, false);
-        while (getCacheSize() >= mLargePayloadsMaxSize) {
-            if (deleteTheOldestLog(COLUMN_PRIORITY, normalPriority) == -1) {
+        while (getStoredDataSize() >= mDatabaseManager.getMaxSize()) {
+            if (deleteTheOldestLog(COLUMN_PRIORITY, normalPriority) == DatabaseManager.OPERATION_FAILED_FLAG) {
                 break;
             }
         }
     }
 
-    private long getCacheSize() {
+    private long getStoredDataSize() {
         return  mDatabaseManager.getCurrentSize() + mLargePayloadsSize;
     }
 
     private long deleteTheOldestLog(@NonNull String priorityColumn, int priority) {
-        long deletedId = mDatabaseManager.deleteTheOldestRecord(priorityColumn, priority);
-        if (deletedId != -1) {
-            for (File file: mLargePayloadFiles) {
-                if (file.getName().equalsIgnoreCase(deletedId + PAYLOAD_FILE_EXTENSION)) {
-                    long fileSize = file.length();
-                    if (file.delete()) {
-                        mLargePayloadsSize -= fileSize;
-                        mLargePayloadFiles.remove(file);
-                    } else {
-                        AppCenterLog.error(LOG_TAG, "Cannot delete large payload file with id " + deletedId);
-                    }
-                    break;
-                }
-            }
+        Set<String> columnsToGet = new HashSet<>();
+        columnsToGet.add(PRIMARY_KEY);
+        columnsToGet.add(COLUMN_GROUP);
+
+        ContentValues deletedRow = mDatabaseManager.deleteTheOldestRecord(columnsToGet, priorityColumn, priority);
+        if (deletedRow == null) {
+            return DatabaseManager.OPERATION_FAILED_FLAG;
         }
-        return  deletedId;
+
+        long deletedId = deletedRow.getAsLong(PRIMARY_KEY);
+        String group = deletedRow.getAsString(COLUMN_GROUP);
+        File file = getLargePayloadFile(getLargePayloadGroupDirectory(group), deletedId);
+        if (!file.exists()) {
+            return  deletedId;
+        }
+
+        long fileSize = file.length();
+        if (file.delete()) {
+            mLargePayloadsSize -= fileSize;
+        } else {
+            AppCenterLog.warn(LOG_TAG, "Cannot delete large payload file with id " + deletedId);
+        }
+        return deletedId;
     }
 
-    private ArrayList<File> collectAllLargePayloadsFiles() {
-        FilenameFilter filter = (file, filename) -> filename.endsWith(PAYLOAD_FILE_EXTENSION);
+    private long checkLargePayloadFilesAndCollectTheirSize() {
+        FilenameFilter filter = new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String filename) {
+                return filename.endsWith(PAYLOAD_FILE_EXTENSION);
+            }
+        };
 
-        ArrayList<File> largePayloadFiles = new ArrayList<>();
+        long size = 0;
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        Set<Long> logsIds = getLogsIds(builder, new String[0]);
         File[] groupFiles = mLargePayloadDirectory.listFiles();
-        if (groupFiles != null) {
-            for (File groupFile : groupFiles) {
-                File[] files = groupFile.listFiles(filter);
-                if (files != null) {
-                    largePayloadFiles.addAll(Arrays.asList(files));
+
+        if (groupFiles == null) {
+            return size;
+        }
+
+        for (File groupFile : groupFiles) {
+            File[] files = groupFile.listFiles(filter);
+            if (files == null) {
+                continue;
+            }
+            for (File file: files) {
+                long id = Integer.parseInt(FileHelper.getNameWithOutExtension(file));
+                if (logsIds.contains(id)) {
+                    size += file.length();
+                    continue;
+                }
+                if (!file.delete()) {
+                    AppCenterLog.warn(LOG_TAG, "Cannot delete redundant large payload file with id " + id);
                 }
             }
         }
 
-        return largePayloadFiles;
+        return size;
     }
 
-    private List<Long> getLogsIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
-        List<Long> result = new ArrayList<>();
+    private Set<Long> getLogsIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
+        Set<Long> result = new HashSet<>();
         try {
             Cursor cursor = mDatabaseManager.getCursor(builder, SELECT_PRIMARY_KEY, selectionArgs, null);
             try {
