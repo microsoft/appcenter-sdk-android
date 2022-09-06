@@ -3,18 +3,26 @@ package com.microsoft.appcenter.distribute.permissions;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.VisibleForTesting;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
+import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
 public class PermissionRequestActivity extends Activity {
 
     public static class Result {
-        // TODO add request result
+        public final boolean isPermissionGranted;
+
+        public Result(boolean isPermissionGranted) {
+            this.isPermissionGranted = isPermissionGranted;
+        }
     }
 
     static final String EXTRA_PERMISSIONS = "intent.extra.PERMISSIONS";
@@ -30,7 +38,7 @@ public class PermissionRequestActivity extends Activity {
 
     public static AppCenterFuture<Result> requestPermissions(Context context, String... permissions) {
         if (sResultFuture != null) {
-            // TODO log error
+            AppCenterLog.error(LOG_TAG, "Result future flag is null.");
             return null;
         }
         sResultFuture = new DefaultAppCenterFuture<>();
@@ -55,8 +63,8 @@ public class PermissionRequestActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            // TODO log error
-            // TODO return result
+            AppCenterLog.error(LOG_TAG, "Android version incompatible.");
+            complete(new Result(false));
             finish();
             return;
         }
@@ -69,9 +77,8 @@ public class PermissionRequestActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_CODE) {
-            // grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            // TODO add it to result
-            complete(new Result());
+            boolean isGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            complete(new Result(isGranted));
             finish();
         }
     }
