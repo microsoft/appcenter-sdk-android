@@ -7,9 +7,10 @@ package com.microsoft.appcenter.utils.storage;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.text.TextUtils;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -265,5 +266,21 @@ public class FileManager {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void mkdir(@NonNull String path) {
         new File(path).mkdirs();
+    }
+
+    /**
+     * Remove the extension part from filename.
+     *
+     * @param file The file which name without extension needed.
+     * @return Filename without extension.
+     */
+    @NonNull
+    public static String getNameWithoutExtension(@NonNull File file) {
+        String fileName = file.getName();
+        int indexOfLastDot = fileName.lastIndexOf(".");
+        if (indexOfLastDot > 0 && indexOfLastDot < fileName.length() - 1) {
+            return fileName.substring(0, indexOfLastDot);
+        }
+        return fileName;
     }
 }

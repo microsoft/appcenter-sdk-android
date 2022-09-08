@@ -183,7 +183,7 @@ public class DatabaseManager implements Closeable {
      * new one can fit. If the log is larger than the max table size, database will be cleared and
      * the log is not inserted.
      *
-     * @param values         The entry to be stored.
+     * @param values The entry to be stored.
      * @return If a log was inserted, the database identifier. Otherwise -1.
      */
     public long put(@NonNull ContentValues values) throws SQLiteFullException {

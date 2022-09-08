@@ -5,29 +5,6 @@
 
 package com.microsoft.appcenter.utils.storage;
 
-import android.text.TextUtils;
-
-import com.microsoft.appcenter.utils.AppCenterLog;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.internal.stubbing.answers.ThrowsException;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
-
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -43,6 +20,30 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.spy;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
+
+import android.text.TextUtils;
+
+import com.microsoft.appcenter.utils.AppCenterLog;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.ThrowsException;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
 
 @SuppressWarnings("unused")
 @PrepareForTest({FileManager.class, AppCenterLog.class, TextUtils.class})
@@ -241,5 +242,39 @@ public class FileManagerTest {
 
         /* Verify when directory is not directory, that no crashes happen */
         FileManager.cleanDirectory(file1);
+    }
+
+    @Test
+    public void getNameWithDotAtTheEnd() {
+        File mockFile = Mockito.mock(File.class);
+        String fileName = "someName.";
+        when(mockFile.getName()).thenReturn(fileName);
+        String result = FileManager.getNameWithoutExtension(mockFile);
+        assertEquals(result, fileName);
+    }
+
+    @Test
+    public void getNameWithDotAtTheStart() {
+        File mockFile = Mockito.mock(File.class);
+        String fileName = ".someName";
+        when(mockFile.getName()).thenReturn(fileName);
+        String result = FileManager.getNameWithoutExtension(mockFile);
+        assertEquals(result, fileName);
+    }
+
+    @Test
+    public void getNameWithOutExtension() {
+        File mockFile = Mockito.mock(File.class);
+        when(mockFile.getName()).thenReturn("someName.ext");
+        String result = FileManager.getNameWithoutExtension(mockFile);
+        assertEquals(result, "someName");
+    }
+
+    @Test
+    public void getNameWithDotsWithOutExtension() {
+        File mockFile = Mockito.mock(File.class);
+        when(mockFile.getName()).thenReturn("someName.someInfo.ext");
+        String result = FileManager.getNameWithoutExtension(mockFile);
+        assertEquals(result, "someName.someInfo");
     }
 }
