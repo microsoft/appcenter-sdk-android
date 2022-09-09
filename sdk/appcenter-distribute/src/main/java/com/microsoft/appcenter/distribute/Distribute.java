@@ -283,6 +283,11 @@ public class Distribute extends AbstractAppCenterService {
     private boolean mManualCheckForUpdateRequested;
 
     /**
+     * Flag to check if Android13 notifications are granted.
+     */
+    private boolean mIfPermissionNotificationsGranted;
+
+    /**
      * Init.
      */
     private Distribute() {
@@ -849,7 +854,7 @@ public class Distribute extends AbstractAppCenterService {
              * Or restore update dialog if that's the last thing we did before being paused.
              * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
              */
-            else if (mReleaseDownloader == null || !mReleaseDownloader.isDownloading()) {
+            else if ((mReleaseDownloader == null || !mReleaseDownloader.isDownloading()) && !mIfPermissionNotificationsGranted) {
                 showUpdateDialog();
             }
 
@@ -1213,6 +1218,7 @@ public class Distribute extends AbstractAppCenterService {
                 SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                 if (mForegroundActivity != null) {
                     showUpdateDialog();
+                    mIfPermissionNotificationsGranted = true;
                 }
                 return;
             }
