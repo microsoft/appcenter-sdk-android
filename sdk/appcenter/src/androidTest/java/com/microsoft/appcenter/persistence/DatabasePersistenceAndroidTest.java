@@ -1120,7 +1120,7 @@ public class DatabasePersistenceAndroidTest {
             ContentValues contentValues = new ContentValues();
             contentValues.put(DatabasePersistence.COLUMN_GROUP, "test");
             contentValues.put(DatabasePersistence.COLUMN_LOG, logSerializer.serializeLog(oldLog));
-            databaseManager.put(contentValues, DatabasePersistence.COLUMN_PRIORITY);
+            databaseManager.put(contentValues);
         } finally {
             databaseManager.close();
         }

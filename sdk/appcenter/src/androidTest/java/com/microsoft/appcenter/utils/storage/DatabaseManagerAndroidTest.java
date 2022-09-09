@@ -120,11 +120,11 @@ public class DatabaseManagerAndroidTest {
         ContentValues value3 = generateContentValues();
 
         /* Put. */
-        long value1Id = databaseManager.put(value1, "COL_INTEGER");
+        long value1Id = databaseManager.put(value1);
         assertTrue(value1Id >= 0);
 
         /* Put another. */
-        long value2Id = databaseManager.put(value2, "COL_INTEGER");
+        long value2Id = databaseManager.put(value2);
         assertTrue(value2Id >= 0);
 
         /* Generate an ID that is neither value1Id nor value2Id. */
@@ -182,8 +182,8 @@ public class DatabaseManagerAndroidTest {
         ContentValues value5 = generateContentValues();
         value4.put("COL_STRING", value2.getAsString("COL_STRING"));
         value5.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
-        long value4Id = databaseManager.put(value4, "COL_INTEGER");
-        long value5Id = databaseManager.put(value5, "COL_INTEGER");
+        long value4Id = databaseManager.put(value4);
+        long value5Id = databaseManager.put(value5);
         assertTrue(value4Id >= 0);
         assertTrue(value5Id >= 0);
 
