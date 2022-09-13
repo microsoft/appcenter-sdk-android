@@ -215,10 +215,10 @@ public class DatabaseManager implements Closeable {
     /**
      * Delete the oldest record from the database.
      *
-     * @param columnsToReturn Set of deleted record column names whose values need to be returned
-     * @param priorityColumn The name of the priority column for sorting records
-     * @param priority Maximum record priority value to delete
-     * @return Return values of fields of a deleted record
+     * @param columnsToReturn Set of deleted record column names whose values need to be returned.
+     * @param priorityColumn The name of the priority column for sorting records.
+     * @param priority Maximum record priority value to delete.
+     * @return Return values of fields of a deleted record.
      */
     @Nullable
     public ContentValues deleteTheOldestRecord(@NonNull Set<String> columnsToReturn, @NonNull String priorityColumn, int priority) {
@@ -428,7 +428,7 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Gets the current size of the database file.
-     * Disclaimer: The returned file size may not change immediately after editing the file.
+     * Disclaimer: The returned file size may not change immediately after performing SQL request.
      *
      * @return The current size of database in bytes.
      */

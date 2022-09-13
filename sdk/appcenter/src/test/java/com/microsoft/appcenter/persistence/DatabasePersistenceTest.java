@@ -83,26 +83,21 @@ public class DatabasePersistenceTest {
 
     /* Create the DatabasePersistence with avoiding scanning large payload files. */
     private DatabasePersistence createDatabasePersistenceInstance(
-            Context mContextMock,
             @Nullable Integer version,
-            @Nullable @SuppressWarnings("SameParameterValue") final ContentValues schema,
-            @Nullable DatabaseManager databaseManagerMock,
-            @Nullable Cursor cursorMock
+            @Nullable @SuppressWarnings("SameParameterValue") final ContentValues schema
     ) throws Exception {
-        if (databaseManagerMock == null) {
-            databaseManagerMock = mDatabaseManager;
-        }
-        if (cursorMock == null) {
-            cursorMock = mCursor;
-        }
-        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(databaseManagerMock);
-        when(cursorMock.moveToNext()).thenReturn(false);
-        when(databaseManagerMock.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), eq(null))).thenReturn(cursorMock);
+        whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mDatabaseManager);
+        when(mCursor.moveToNext()).thenReturn(false);
+        when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), eq(null))).thenReturn(mCursor);
         if (version == null || schema == null) {
-            return new DatabasePersistence(mContextMock);
+            return new DatabasePersistence(mContext);
         } else {
-            return new DatabasePersistence(mContextMock, version, schema);
+            return new DatabasePersistence(mContext, version, schema);
         }
+    }
+
+    private DatabasePersistence createDatabasePersistenceInstance() throws Exception {
+        return createDatabasePersistenceInstance(null, null);
     }
 
     @Test
@@ -110,17 +105,16 @@ public class DatabasePersistenceTest {
 
         /* Mock instances. */
         mockStatic(AppCenterLog.class);
-        DatabaseManager mockDatabaseManager = mDatabaseManager;
-        Cursor mockCursor = mCursor;
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, 1, DatabasePersistence.SCHEMA, mockDatabaseManager, mockCursor);
-        when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString())).thenReturn(mockCursor);
-        when(mockCursor.moveToNext()).thenThrow(new RuntimeException());
+        DatabasePersistence persistence = createDatabasePersistenceInstance(1, DatabasePersistence.SCHEMA);
+        when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString())).thenReturn(mCursor);
+        when(mCursor.moveToNext()).thenThrow(new RuntimeException());
 
         /* Try to get logs count. */
         //noinspection TryFinallyCanBeTryWithResources
         try {
             assertEquals(0, persistence.countLogs("test-p1"));
         } finally {
+
             /* Close. */
             persistence.close();
         }
@@ -151,13 +145,12 @@ public class DatabasePersistenceTest {
         }
 
         /* Mock instances. */
-        DatabaseManager mockDatabaseManager = mDatabaseManager;
-        when(mockDatabaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, null, null, mockDatabaseManager, null);
+        when(mDatabaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
         for (int i = 0; i < groupCount; i++) {
             MockCursor mockCursor = new MockCursor(list.get(i));
-            mockCursor.mockBuildValues(mockDatabaseManager);
-            when(mockDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), eq(new String[]{String.valueOf(i)}), anyString()))
+            mockCursor.mockBuildValues(mDatabaseManager);
+            when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), eq(new String[]{String.valueOf(i)}), anyString()))
                     .thenReturn(mockCursor);
         }
         LogSerializer mockLogSerializer = mock(LogSerializer.class);
@@ -187,7 +180,7 @@ public class DatabasePersistenceTest {
         /* Mock instances. */
         mockStatic(AppCenterLog.class);
         when(mDatabaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, 1, DatabasePersistence.SCHEMA, mDatabaseManager, null);
+        DatabasePersistence persistence = createDatabasePersistenceInstance(1, DatabasePersistence.SCHEMA);
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString())).thenThrow(new RuntimeException());
 
         /* Try to get logs. */
@@ -206,7 +199,7 @@ public class DatabasePersistenceTest {
         /* Mock instances. */
         mockStatic(AppCenterLog.class);
         when(mDatabaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, 1, DatabasePersistence.SCHEMA, mDatabaseManager, mCursor);
+        DatabasePersistence persistence = createDatabasePersistenceInstance(1, DatabasePersistence.SCHEMA);
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString())).thenReturn(mCursor);
         when(mCursor.moveToNext()).thenThrow(new RuntimeException());
 
@@ -226,7 +219,7 @@ public class DatabasePersistenceTest {
         /* Mock instances. */
         mockStatic(AppCenterLog.class);
         when(mDatabaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, null, null, mDatabaseManager, null);
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
 
         /* Make corrupted log. */
         List<ContentValues> fieldValues = new ArrayList<>();
@@ -263,7 +256,7 @@ public class DatabasePersistenceTest {
         /* Mock instances. */
         int logCount = 3;
         when(mDatabaseManager.nextValues(any(Cursor.class))).thenCallRealMethod();
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, null, null, mDatabaseManager, null);
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
 
         /* Make 3 logs, the second one will be corrupted. */
         List<ContentValues> fieldValues = new ArrayList<>(logCount);
@@ -418,7 +411,7 @@ public class DatabasePersistenceTest {
     public void checkSetStorageSizeForwarding() throws Exception {
 
         /* The real Android test for checking size is in DatabaseManagerAndroidTest. */
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, null, null, mDatabaseManager, null);
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), anyString()))
                 .thenReturn(mCursor);
         when(mDatabaseManager.setMaxSize(anyLong())).thenReturn(true).thenReturn(false);
@@ -430,7 +423,7 @@ public class DatabasePersistenceTest {
 
     @Test(expected = PersistenceException.class)
     public void failsToDeleteLogDuringPutWhenFull() throws Exception {
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, null, null, mDatabaseManager, null);
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -460,14 +453,15 @@ public class DatabasePersistenceTest {
         when(mDatabaseManager.buildValues(mCursor)).thenReturn(mockContentValues);
         when(mockContentValues.getAsLong(PRIMARY_KEY)).thenReturn(1L);
 
-        /* Setup behaviour for files and directories mocks for searching in the file hierarchy.
-         *  There are 6 iterations:
-         *   1) Directory without files.
-         *   2) Redundant file in the large payload directory.
-         *   3) File that corresponds with log id from database.
-         *   4) File that with name that cannot be converted to number.
-         *   5) Lasted log file that should be deleted successfully.
-         *   6) Redundant file in the group directory.
+        /*
+         * Setup behaviour for files and directories mocks for searching in the file hierarchy.
+         * There are 6 iterations:
+         *  1) Directory without files.
+         *  2) Redundant file in the large payload directory.
+         *  3) File that corresponds with log id from database.
+         *  4) File that with name that cannot be converted to number.
+         *  5) Lasted log file that should be deleted successfully.
+         *  6) Redundant file in the group directory.
          */
         File largePayloadDirectory = mLargePayloadsFolder.getRoot();
         File groupDirectoryFirst = mLargePayloadsFolder.newFolder("group1");
@@ -494,7 +488,8 @@ public class DatabasePersistenceTest {
     @Test
     public void failedToDeleteFileWhileFileScanning() throws Exception {
         /* Initialize mocks. */
-        ContentValues mockContentValues = mock(ContentValues.class);
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(PRIMARY_KEY, 1L);
         mockStatic(AppCenterLog.class);
         File mockLargePayloadDirectory = mock(File.class);
         File mockGroupDirectory = mock(File.class);
@@ -504,11 +499,11 @@ public class DatabasePersistenceTest {
         whenNew(DatabaseManager.class).withAnyArguments().thenReturn(mDatabaseManager);
         when(mDatabaseManager.getCursor(any(SQLiteQueryBuilder.class), any(), any(String[].class), any())).thenReturn(mCursor);
         when(mCursor.moveToNext()).thenReturn(true).thenReturn(false);
-        when(mDatabaseManager.buildValues(mCursor)).thenReturn(mockContentValues);
-        when(mockContentValues.getAsLong(PRIMARY_KEY)).thenReturn(1L);
+        when(mDatabaseManager.buildValues(mCursor)).thenReturn(contentValues);
 
-        /* Setup behaviour for files and directories mocks for searching in the file hierarchy.
-         *  There would be the lasted log file that should be deleted unsuccessfully.
+        /*
+         * Setup behaviour for files and directories mocks for searching in the file hierarchy.
+         * There would be the lasted log file that should be deleted unsuccessfully.
          */
         whenNew(File.class).withAnyArguments().thenReturn(mockLargePayloadDirectory);
         when(mockLargePayloadDirectory.listFiles()).thenReturn(new File[]{mockGroupDirectory});
@@ -531,7 +526,7 @@ public class DatabasePersistenceTest {
     public void failedToDeleteLargePayloadFileWhatDoesNotFitMaxSize() throws Exception {
         /* Initialize mocks. */
         mockStatic(AppCenterLog.class);
-        Persistence persistence = createDatabasePersistenceInstance(mContext, null, null, mDatabaseManager, mCursor);
+        Persistence persistence = createDatabasePersistenceInstance();
         ContentValues mockContentValues = mock(ContentValues.class);
         File mockGroupDirectory = mock(File.class);
         File mockLargePayloadFile = mock(File.class);
@@ -551,9 +546,10 @@ public class DatabasePersistenceTest {
         when(mockContentValues.getAsLong(PRIMARY_KEY)).thenReturn(logId).thenReturn(errorLogId);
         when(mockContentValues.getAsString(DatabasePersistence.COLUMN_GROUP)).thenReturn(mockGroup);
 
-        /* Setup behaviour for files and directories mocks.
-         *  There are 2 files: one with successfully deleting,
-         *  one with error while deleting.
+        /*
+         * Setup behaviour for files and directories mocks.
+         * There are 2 files: one with successfully deleting,
+         * one with error while deleting.
          */
         whenNew(File.class).withAnyArguments().thenReturn(mockGroupDirectory);
         whenNew(File.class).withArguments(mockGroupDirectory, logId + logFileExtension).thenReturn(mockLargePayloadFile);
@@ -577,8 +573,7 @@ public class DatabasePersistenceTest {
 
     @Test(expected = PersistenceException.class)
     public void putLogWithJSONException() throws Exception {
-        DatabaseManager databaseManager = mDatabaseManager;
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, null, null, databaseManager, null);
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = mock(LogSerializer.class);
@@ -592,7 +587,7 @@ public class DatabasePersistenceTest {
     @Test(expected = PersistenceException.class)
     public void putLogWithOpenDatabaseException() throws Exception {
         when(mDatabaseManager.getMaxSize()).thenReturn(-1L);
-        DatabasePersistence persistence = createDatabasePersistenceInstance(mContext, null, null, mDatabaseManager, null);
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
 
         /* Set a mock log serializer. */
         LogSerializer logSerializer = mock(LogSerializer.class);

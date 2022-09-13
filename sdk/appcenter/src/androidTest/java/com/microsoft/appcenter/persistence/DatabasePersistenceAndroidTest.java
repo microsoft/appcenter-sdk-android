@@ -1035,12 +1035,14 @@ public class DatabasePersistenceAndroidTest {
 
             /* Generate a log and persist. */
             Log[] logs = new Log[numberOfLogs];
-            for (int i = 0; i < logs.length; i++)
+            for (int i = 0; i < logs.length; i++) {
                 logs[i] = AndroidTestUtils.generateMockLog();
+            }
 
             /* Put. */
-            for (Log log : logs)
+            for (Log log : logs) {
                 persistence.putLog(log, "test", NORMAL);
+            }
 
             /* Get. */
             List<Log> outputLogs = new ArrayList<>();

@@ -607,7 +607,7 @@ public class DatabasePersistence extends Persistence {
     }
 
     /**
-     * Delete the oldest logs that not fit max storage size.
+     * Delete the oldest logs that do not fit max storage size.
      */
     public void deleteLogsThatNotFitMaxSize() {
         int normalPriority = Flags.getPersistenceFlag(Flags.NORMAL, false);

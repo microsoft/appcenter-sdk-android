@@ -4,7 +4,7 @@
 
 ### AppCenter
 
-* **[Fix]** Fixed accounting of large payload files when saving logs locally
+* **[Fix]** Fix ignoring maximum storage size limit in case logs contain large payloads.
 
  ___
 
