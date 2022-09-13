@@ -44,7 +44,7 @@ public class DatabaseManager implements Closeable {
     public static final String[] SELECT_PRIMARY_KEY = {PRIMARY_KEY};
 
     /**
-     * Flag indicating the failure of the database operation
+     * Flag indicating the failure of the database operation.
      */
     public static final long OPERATION_FAILED_FLAG = -1;
 
@@ -185,6 +185,8 @@ public class DatabaseManager implements Closeable {
      *
      * @param values The entry to be stored.
      * @return If a log was inserted, the database identifier. Otherwise -1.
+     *
+     * @throws SQLiteFullException Thrown if the storage is full when trying to insert.
      */
     public long put(@NonNull ContentValues values) throws SQLiteFullException {
         long id;
@@ -209,6 +211,15 @@ public class DatabaseManager implements Closeable {
         delete(mDefaultTable, PRIMARY_KEY, id);
     }
 
+
+    /**
+     * Delete the oldest record from the database.
+     *
+     * @param columnsToReturn Set of deleted record column names whose values need to be returned
+     * @param priorityColumn The name of the priority column for sorting records
+     * @param priority Maximum record priority value to delete
+     * @return Return values of fields of a deleted record
+     */
     @Nullable
     public ContentValues deleteTheOldestRecord(@NonNull Set<String> columnsToReturn, @NonNull String priorityColumn, int priority) {
         SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
@@ -221,9 +232,8 @@ public class DatabaseManager implements Closeable {
             delete(deletedId);
             AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
             return rowData;
-        } else {
-            AppCenterLog.error(LOG_TAG, String.format("Failed to delete the oldest log from database %s.", mDatabase));
         }
+        AppCenterLog.error(LOG_TAG, String.format("Failed to delete the oldest log from database %s.", mDatabase));
         return null;
     }
 
@@ -418,6 +428,7 @@ public class DatabaseManager implements Closeable {
 
     /**
      * Gets the current size of the database file.
+     * Disclaimer: The returned file size may not change immediately after editing the file.
      *
      * @return The current size of database in bytes.
      */

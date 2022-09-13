@@ -5,13 +5,33 @@
 
 package com.microsoft.appcenter.persistence;
 
+import static com.microsoft.appcenter.Flags.CRITICAL;
+import static com.microsoft.appcenter.Flags.NORMAL;
+import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.CREATE_LOGS_SQL;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.SCHEMA;
+import static com.microsoft.appcenter.test.TestUtils.generateString;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteQueryBuilder;
-import androidx.annotation.NonNull;
 
+import androidx.annotation.NonNull;
 import androidx.test.filters.MediumTest;
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -53,26 +73,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.microsoft.appcenter.Flags.CRITICAL;
-import static com.microsoft.appcenter.Flags.NORMAL;
-import static com.microsoft.appcenter.ingestion.models.json.MockLog.MOCK_LOG_TYPE;
-import static com.microsoft.appcenter.persistence.DatabasePersistence.CREATE_LOGS_SQL;
-import static com.microsoft.appcenter.persistence.DatabasePersistence.SCHEMA;
-import static com.microsoft.appcenter.test.TestUtils.generateString;
-import static org.hamcrest.CoreMatchers.hasItems;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 @MediumTest

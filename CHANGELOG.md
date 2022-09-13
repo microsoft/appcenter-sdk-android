@@ -2,6 +2,10 @@
 
 ## Version 4.4.6 (Under development)
 
+### AppCenter
+
+* **[Fix]** Fixed accounting of large payload files when saving logs locally
+
  ___
 
 ## Version 4.4.5

@@ -28,7 +28,6 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -246,7 +245,7 @@ public class FileManagerTest {
 
     @Test
     public void getNameWithDotAtTheEnd() {
-        File mockFile = Mockito.mock(File.class);
+        File mockFile = mock(File.class);
         String fileName = "someName.";
         when(mockFile.getName()).thenReturn(fileName);
         String result = FileManager.getNameWithoutExtension(mockFile);
@@ -255,7 +254,7 @@ public class FileManagerTest {
 
     @Test
     public void getNameWithDotAtTheStart() {
-        File mockFile = Mockito.mock(File.class);
+        File mockFile = mock(File.class);
         String fileName = ".someName";
         when(mockFile.getName()).thenReturn(fileName);
         String result = FileManager.getNameWithoutExtension(mockFile);
@@ -264,7 +263,7 @@ public class FileManagerTest {
 
     @Test
     public void getNameWithOutExtension() {
-        File mockFile = Mockito.mock(File.class);
+        File mockFile = mock(File.class);
         when(mockFile.getName()).thenReturn("someName.ext");
         String result = FileManager.getNameWithoutExtension(mockFile);
         assertEquals(result, "someName");
@@ -272,7 +271,7 @@ public class FileManagerTest {
 
     @Test
     public void getNameWithDotsWithOutExtension() {
-        File mockFile = Mockito.mock(File.class);
+        File mockFile = mock(File.class);
         when(mockFile.getName()).thenReturn("someName.someInfo.ext");
         String result = FileManager.getNameWithoutExtension(mockFile);
         assertEquals(result, "someName.someInfo");
