@@ -603,7 +603,7 @@ public class Distribute extends AbstractAppCenterService {
                 switch (updateAction) {
 
                     case UpdateAction.UPDATE:
-                        enqueueDownloadOrRequestPermissions(mReleaseDetails, true);
+                        enqueueDownloadOrRequestPermissions(mReleaseDetails);
                         break;
 
                     case UpdateAction.POSTPONE:
@@ -847,7 +847,7 @@ public class Distribute extends AbstractAppCenterService {
                  * We can start download if the setting is now enabled,
                  * otherwise restore dialog if activity rotated or was covered.
                  */
-                enqueueDownloadOrRequestPermissions(mReleaseDetails, true);
+                enqueueDownloadOrRequestPermissions(mReleaseDetails);
             }
 
             /*
@@ -1442,7 +1442,7 @@ public class Distribute extends AbstractAppCenterService {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    enqueueDownloadOrRequestPermissions(releaseDetails, true);
+                    enqueueDownloadOrRequestPermissions(releaseDetails);
                 }
             });
             dialogBuilder.setCancelable(false);
@@ -1671,10 +1671,10 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails release details.
      */
-    synchronized void enqueueDownloadOrRequestPermissions(final ReleaseDetails releaseDetails, final boolean shouldRequestPermissions) {
+    synchronized void enqueueDownloadOrRequestPermissions(final ReleaseDetails releaseDetails) {
 
         if (releaseDetails == mReleaseDetails) {
-            if (!shouldRequestPermissions || requestPermissionsForDownload()) {
+            if (requestPermissionsForDownload()) {
                 AppCenterLog.debug(LOG_TAG, "Schedule download...");
                 resumeDownload();
 
@@ -1714,7 +1714,13 @@ public class Distribute extends AbstractAppCenterService {
                     public void accept(PermissionRequestActivity.Result result) {
                         // TODO check result and print warn log if not granted.
                         // TODO DO NOT USE mReleaseDetails as parameter, it's used as state changing check.
-                        enqueueDownloadOrRequestPermissions(mReleaseDetails, false);
+
+                        if (result == null) {
+                            AppCenterLog.warn(LOG_TAG, "Failed to get result of attempt to get permissions.");
+                        } else if (result.exception != null) {
+                            AppCenterLog.warn(LOG_TAG, "Error when trying to get permissions", result.exception);
+                        }
+                        enqueueDownloadOrRequestPermissions(mReleaseDetails);
                     }
                 });
                 return false;

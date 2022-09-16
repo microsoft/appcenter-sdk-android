@@ -589,7 +589,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
-        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+        verify(distribute).enqueueDownloadOrRequestPermissions(any(ReleaseDetails.class));
     }
 
     @Test
@@ -619,7 +619,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has not been processed. */
-        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+        verify(distribute).enqueueDownloadOrRequestPermissions(any(ReleaseDetails.class));
         verify(mDialogBuilder, never()).create();
     }
 
@@ -649,7 +649,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
-        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+        verify(distribute).enqueueDownloadOrRequestPermissions(any(ReleaseDetails.class));
         verify(mDialogBuilder).create();
     }
 
@@ -709,7 +709,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has been processed. */
-        verify(distribute).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+        verify(distribute).enqueueDownloadOrRequestPermissions(any(ReleaseDetails.class));
     }
 
     @Test
@@ -770,7 +770,7 @@ public class DistributeCustomizationTest extends AbstractDistributeTest {
         distribute.handleUpdateAction(UpdateAction.UPDATE);
 
         /* Verify UPDATE has NOT been processed. */
-        verify(distribute, never()).enqueueDownloadOrShowUnknownSourcesDialog(any(ReleaseDetails.class));
+        verify(distribute, never()).enqueueDownloadOrRequestPermissions(any(ReleaseDetails.class));
     }
 
     private ReleaseDetails mockForCustomizationTest(boolean mandatory) throws Exception {

@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
@@ -19,9 +20,11 @@ public class PermissionRequestActivity extends Activity {
 
     public static class Result {
         public final boolean isPermissionGranted;
+        public final Exception exception;
 
-        public Result(boolean isPermissionGranted) {
+        public Result(boolean isPermissionGranted, @Nullable Exception exception) {
             this.isPermissionGranted = isPermissionGranted;
+            this.exception = exception;
         }
     }
 
@@ -64,13 +67,20 @@ public class PermissionRequestActivity extends Activity {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             AppCenterLog.error(LOG_TAG, "Android version incompatible.");
-            complete(new Result(false));
+            complete(new Result(false, null));
             finish();
             return;
         }
 
-        // TODO NPE check
-        final String[] permissions = getIntent().getExtras().getStringArray(EXTRA_PERMISSIONS);
+        final String[] permissions;
+        try {
+            permissions = getIntent().getExtras().getStringArray(EXTRA_PERMISSIONS);
+        } catch (Exception e) {
+            AppCenterLog.error(LOG_TAG, "Error while getting permissions list.", e);
+            complete(new Result(false, e));
+            finish();
+            return;
+        }
         requestPermissions(permissions, REQUEST_CODE);
     }
 
@@ -78,7 +88,7 @@ public class PermissionRequestActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_CODE) {
             boolean isGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-            complete(new Result(isGranted));
+            complete(new Result(isGranted, null));
             finish();
         }
     }
