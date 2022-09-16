@@ -302,19 +302,27 @@ public class DatabasePersistence extends Persistence {
             if (maxSize == OPERATION_FAILED_FLAG) {
                 throw new PersistenceException("Failed to store a log to the Persistence database.");
             }
-            if (!isLargePayload && maxSize <= payloadSize) {
+            if (maxSize <= payloadSize) {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
             }
             int priority = Flags.getPersistenceFlag(flags, false);
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, priority);
+            long storedDataSize = getStoredDataSize();
+            while (payloadSize + getStoredDataSize() > maxSize)
+            {
+                AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log.");
+                if (deleteTheOldestLog(priority) == OPERATION_FAILED_FLAG) {
+                    throw new PersistenceException("Failed to clear space for new log record.");
+                }
+            }
             Long databaseId = null;
             while (databaseId == null) {
                 try {
                     databaseId = mDatabaseManager.put(contentValues);
                 } catch (SQLiteFullException e) {
                     AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log.");
-                    if (deleteTheOldestLog(COLUMN_PRIORITY, priority) == OPERATION_FAILED_FLAG) {
+                    if (deleteTheOldestLog(priority) == OPERATION_FAILED_FLAG) {
                         databaseId = OPERATION_FAILED_FLAG;
                     }
                 }
@@ -612,7 +620,7 @@ public class DatabasePersistence extends Persistence {
     public void deleteLogsThatNotFitMaxSize() {
         int normalPriority = Flags.getPersistenceFlag(Flags.NORMAL, false);
         while (getStoredDataSize() >= mDatabaseManager.getMaxSize()) {
-            if (deleteTheOldestLog(COLUMN_PRIORITY, normalPriority) == OPERATION_FAILED_FLAG) {
+            if (deleteTheOldestLog(normalPriority) == OPERATION_FAILED_FLAG) {
                 break;
             }
         }
@@ -625,15 +633,14 @@ public class DatabasePersistence extends Persistence {
     /**
      * Delete the log record from the database and the large payload file associated with this record if it exists.
      *
-     * @param priorityColumn Name of priority column.
      * @param priority Value of maximum priority of record to delete.
      * @return Id of deleted record.
      */
-    private long deleteTheOldestLog(@NonNull String priorityColumn, int priority) {
+    private long deleteTheOldestLog(int priority) {
         Set<String> columnsToGet = new HashSet<>();
         columnsToGet.add(PRIMARY_KEY);
         columnsToGet.add(COLUMN_GROUP);
-        ContentValues deletedRow = mDatabaseManager.deleteTheOldestRecord(columnsToGet, priorityColumn, priority);
+        ContentValues deletedRow = mDatabaseManager.deleteTheOldestRecord(columnsToGet, COLUMN_PRIORITY, priority);
         if (deletedRow == null) {
             return OPERATION_FAILED_FLAG;
         }
