@@ -309,7 +309,7 @@ public class DatabasePersistence extends Persistence {
             int priority = Flags.getPersistenceFlag(flags, false);
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, priority);
             long storedDataSize = getStoredDataSize();
-            while (payloadSize + getStoredDataSize() > maxSize)
+            while (isLargePayload && payloadSize + getStoredDataSize() > maxSize)
             {
                 AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log.");
                 if (deleteTheOldestLog(priority) == OPERATION_FAILED_FLAG) {
