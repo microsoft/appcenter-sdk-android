@@ -56,12 +56,10 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.FilenameFilter;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 @SuppressWarnings("unused")
 @PrepareForTest({
@@ -603,11 +601,17 @@ public class DatabasePersistenceTest {
 
     @Test(expected = PersistenceException.class)
     public void putLargePayloadWhatDoNotFitMaxSizeFailed() throws Exception {
+        mockStatic(AppCenterLog.class);
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
+        File mockLargePayloadFile = mock(File.class);
+        ContentValues mockContentValues = mock(ContentValues.class);
+
+        /* Set a mock of database manager. */
         when(mDatabaseManager.getMaxSize()).thenReturn(PAYLOAD_MAX_SIZE + 2L);
         when(mDatabaseManager.getCurrentSize()).thenReturn(2L);
-        DatabasePersistence persistence = createDatabasePersistenceInstance();
+        when(mDatabaseManager.deleteTheOldestRecord(anySet(), anyString(), anyInt())).thenReturn(mockContentValues).thenReturn(null);
 
-        /* Set a mock payload */
+        /* Set a mock payload. */
         byte[] array = new byte[PAYLOAD_MAX_SIZE + 1];
         String payloadMock = new String(array, StandardCharsets.UTF_8);
 
@@ -615,6 +619,12 @@ public class DatabasePersistenceTest {
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(Log.class))).thenReturn(payloadMock);
         persistence.setLogSerializer(logSerializer);
+
+        /* Setup mock for the firs successful try of deleting the oldest log record. */
+        when(mockContentValues.getAsLong(PRIMARY_KEY)).thenReturn(1L);
+        when(mockContentValues.getAsString(DatabasePersistence.COLUMN_GROUP)).thenReturn("mockGroup");
+        whenNew(File.class).withAnyArguments().thenReturn(mockLargePayloadFile);
+        when(mockLargePayloadFile.exists()).thenReturn(false);
 
         /* Persist a log. */
         persistence.putLog(mock(Log.class), "test-p1", NORMAL);
