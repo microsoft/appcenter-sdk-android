@@ -127,7 +127,8 @@ public class DatabasePersistence extends Persistence {
      * Size limit (in bytes) for a database row log payload.
      * A separate file is used if payload is larger.
      */
-    private static final int PAYLOAD_MAX_SIZE = (int) (1.9 * 1024 * 1024);
+    @VisibleForTesting
+    static final int PAYLOAD_MAX_SIZE = (int) (1.9 * 1024 * 1024);
 
     /**
      * Sub path for directory where to store large payloads.
@@ -308,9 +309,7 @@ public class DatabasePersistence extends Persistence {
             }
             int priority = Flags.getPersistenceFlag(flags, false);
             contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, priority);
-            long storedDataSize = getStoredDataSize();
-            while (isLargePayload && payloadSize + getStoredDataSize() > maxSize)
-            {
+            while (isLargePayload && payloadSize + getStoredDataSize() > maxSize) {
                 AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log.");
                 if (deleteTheOldestLog(priority) == OPERATION_FAILED_FLAG) {
                     throw new PersistenceException("Failed to clear space for new log record.");

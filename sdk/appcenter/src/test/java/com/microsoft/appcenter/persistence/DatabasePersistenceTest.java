@@ -7,6 +7,7 @@ package com.microsoft.appcenter.persistence;
 
 import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
+import static com.microsoft.appcenter.persistence.DatabasePersistence.PAYLOAD_MAX_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -55,10 +56,12 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 @SuppressWarnings("unused")
 @PrepareForTest({
@@ -592,6 +595,25 @@ public class DatabasePersistenceTest {
         /* Set a mock log serializer. */
         LogSerializer logSerializer = mock(LogSerializer.class);
         when(logSerializer.serializeLog(any(Log.class))).thenReturn("mock");
+        persistence.setLogSerializer(logSerializer);
+
+        /* Persist a log. */
+        persistence.putLog(mock(Log.class), "test-p1", NORMAL);
+    }
+
+    @Test(expected = PersistenceException.class)
+    public void putLargePayloadWhatDoNotFitMaxSizeFailed() throws Exception {
+        when(mDatabaseManager.getMaxSize()).thenReturn(PAYLOAD_MAX_SIZE + 2L);
+        when(mDatabaseManager.getCurrentSize()).thenReturn(2L);
+        DatabasePersistence persistence = createDatabasePersistenceInstance();
+
+        /* Set a mock payload */
+        byte[] array = new byte[PAYLOAD_MAX_SIZE + 1];
+        String payloadMock = new String(array, StandardCharsets.UTF_8);
+
+        /* Set a mock log serializer. */
+        LogSerializer logSerializer = mock(LogSerializer.class);
+        when(logSerializer.serializeLog(any(Log.class))).thenReturn(payloadMock);
         persistence.setLogSerializer(logSerializer);
 
         /* Persist a log. */
