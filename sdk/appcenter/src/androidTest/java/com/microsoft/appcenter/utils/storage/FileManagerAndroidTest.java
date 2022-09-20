@@ -5,7 +5,17 @@
 
 package com.microsoft.appcenter.utils.storage;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.AfterClass;
@@ -21,13 +31,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 public class FileManagerAndroidTest {
 
     /**
@@ -39,6 +42,27 @@ public class FileManagerAndroidTest {
      * Root path for private files.
      */
     private static String sAndroidFilesPath;
+
+    /* Get an array of filenames in the path. */
+    @SuppressWarnings("WeakerAccess")
+    @NonNull
+    public static String[] getFilenames(@NonNull String path, @Nullable FilenameFilter filter) {
+        File dir = new File(path);
+        if (dir.exists()) {
+            String[] filenames = dir.list(filter);
+            if (filenames != null) {
+                return filenames;
+            }
+        }
+        return new String[0];
+    }
+
+    /* Get the most recently modified file in the directory specified. */
+    @SuppressWarnings("WeakerAccess")
+    @Nullable
+    public static File lastModifiedFile(@NonNull String path, @Nullable FilenameFilter filter) {
+        return FileManager.lastModifiedFile(new File(path), filter);
+    }
 
     @BeforeClass
     public static void setUpClass() {
@@ -60,8 +84,7 @@ public class FileManagerAndroidTest {
                 return filename.endsWith(FILE_STORAGE_TEST_FILE_EXTENSION);
             }
         };
-
-        String[] filenames = FileManager.getFilenames(sAndroidFilesPath, filter);
+        String[] filenames = getFilenames(sAndroidFilesPath, filter);
 
         /* Delete the files to clean up. */
         for (String filename : filenames) {
@@ -109,7 +132,7 @@ public class FileManagerAndroidTest {
         FileManager.write(sAndroidFilesPath + filename4, "  ");
 
         /* Get file names in the root path. */
-        String[] filenames = FileManager.getFilenames(sAndroidFilesPath, filter);
+        String[] filenames = getFilenames(sAndroidFilesPath, filter);
 
         /* Verify the files are created. */
         assertNotNull(filenames);
@@ -121,7 +144,7 @@ public class FileManagerAndroidTest {
         assertFalse(list.contains(filename4));
 
         /* Get the most recent file. */
-        File lastModifiedFile = FileManager.lastModifiedFile(sAndroidFilesPath, filter);
+        File lastModifiedFile = lastModifiedFile(sAndroidFilesPath, filter);
 
         /* Verify the most recent file. */
         assertNotNull(lastModifiedFile);
@@ -140,12 +163,12 @@ public class FileManagerAndroidTest {
         }
 
         /* Verify all the files are properly deleted. */
-        assertEquals(0, FileManager.getFilenames(sAndroidFilesPath, filter).length);
+        assertEquals(0, getFilenames(sAndroidFilesPath, filter).length);
 
         /* Verify invalid accesses. */
         assertNull(FileManager.read("not-exist-filename"));
-        assertArrayEquals(new String[0], FileManager.getFilenames("not-exist-path", null));
-        assertNull(FileManager.lastModifiedFile("not-exist-path", null));
+        assertArrayEquals(new String[0], getFilenames("not-exist-path", null));
+        assertNull(lastModifiedFile("not-exist-path", null));
     }
 
     @Test

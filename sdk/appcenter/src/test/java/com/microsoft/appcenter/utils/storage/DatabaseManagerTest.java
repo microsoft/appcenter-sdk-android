@@ -5,16 +5,30 @@
 
 package com.microsoft.appcenter.utils.storage;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDiskIOException;
-import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
 import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.junit.Before;
@@ -23,20 +37,7 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import java.util.HashSet;
 
 @SuppressWarnings("unused")
 @RunWith(PowerMockRunner.class)
@@ -60,7 +61,7 @@ public class DatabaseManagerTest {
     @Test
     public void putFailed() {
         DatabaseManager databaseManagerMock = getDatabaseManagerMock();
-        databaseManagerMock.put(new ContentValues(), "priority");
+        databaseManagerMock.put(new ContentValues());
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
@@ -175,62 +176,33 @@ public class DatabaseManagerTest {
     }
 
     @Test
-    public void failsToDeleteLogDuringPutWhenFull() {
-
+    public void failedToDeleteOldestRecord() throws Exception {
         /* Mocking instances. */
+        mockStatic(AppCenterLog.class);
         Context contextMock = mock(Context.class);
+        Cursor cursorMock = mock(Cursor.class);
+        SQLiteQueryBuilder queryBuilderMock = mock(SQLiteQueryBuilder.class);
         SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
-        SQLiteDatabase sqLiteDatabase = mock(SQLiteDatabase.class);
-        when(helperMock.getWritableDatabase()).thenReturn(sqLiteDatabase);
+        SQLiteDatabase databaseMock = mock(SQLiteDatabase.class);
 
-        /* Mock the select cursor we are using to find logs to evict to fail. */
-        mockStatic(SQLiteUtils.class);
-        Cursor cursor = mock(Cursor.class);
-        SQLiteDiskIOException fatalException = new SQLiteDiskIOException();
-        when(cursor.moveToNext()).thenThrow(fatalException);
-        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class);
-        when(sqLiteQueryBuilder.query(any(), any(), any(), any(), any(), any(), any())).thenReturn(cursor);
-        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
+        /* Setup behaviour of the SQL stuff. */
+        whenNew(SQLiteQueryBuilder.class).withNoArguments().thenReturn(queryBuilderMock);
+        when(queryBuilderMock.query(any(SQLiteDatabase.class), any(String[].class), eq(null), any(String[].class), eq(null), eq(null), any(String.class))).thenReturn(cursorMock);
+        when(helperMock.getWritableDatabase()).thenReturn(databaseMock);
 
-        /* Simulate that database is full and that deletes fail because of the cursor. */
-        when(sqLiteDatabase.insertOrThrow(anyString(), isNull(), any(ContentValues.class))).thenThrow(new SQLiteFullException());
+        /* Setup behaviour of the cursor mock. */
+        when(cursorMock.moveToNext()).thenReturn(false);
+        when(cursorMock.getColumnCount()).thenReturn(0);
 
         /* Instantiate real instance for DatabaseManager. */
         DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
         databaseManager.setSQLiteOpenHelper(helperMock);
 
-        /* When we put a log, it will fail to purge. */
-        assertEquals(-1, databaseManager.put(mock(ContentValues.class), "priority"));
-    }
+        /* Try to delete the oldest log record. */
+        databaseManager.deleteTheOldestRecord(new HashSet<>(), "priorityColumn", Flags.NORMAL);
 
-    @Test
-    public void cursorFailsToCloseAfterPut() {
-
-        /* Mocking instances. */
-        Context contextMock = mock(Context.class);
-        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
-        SQLiteDatabase sqLiteDatabase = mock(SQLiteDatabase.class);
-        when(helperMock.getWritableDatabase()).thenReturn(sqLiteDatabase);
-
-        /* Mock the select cursor we are using to find logs to evict to fail. */
-        mockStatic(SQLiteUtils.class);
-        Cursor cursor = mock(Cursor.class);
-        SQLiteDiskIOException exception = new SQLiteDiskIOException();
-        doThrow(exception).when(cursor).close();
-        when(cursor.moveToNext()).thenReturn(true).thenReturn(false);
-        SQLiteQueryBuilder sqLiteQueryBuilder = mock(SQLiteQueryBuilder.class);
-        when(sqLiteQueryBuilder.query(any(), any(), any(), any(), any(), any(), any())).thenReturn(cursor);
-        when(SQLiteUtils.newSQLiteQueryBuilder()).thenReturn(sqLiteQueryBuilder);
-
-        /* Simulate that database is full only once (will work after purging 1 log). */
-        when(sqLiteDatabase.insertOrThrow(anyString(), isNull(), any(ContentValues.class))).thenThrow(new SQLiteFullException()).thenReturn(1L);
-
-        /* Instantiate real instance for DatabaseManager. */
-        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
-        databaseManager.setSQLiteOpenHelper(helperMock);
-
-        /* When we put a log, it succeeds even if a problem occurred while closing purge cursor. */
-        long id = databaseManager.put(mock(ContentValues.class), "priority");
-        assertEquals(1, id);
+        /* There is an error log. */
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 }

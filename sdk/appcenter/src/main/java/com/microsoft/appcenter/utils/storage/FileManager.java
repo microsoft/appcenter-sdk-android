@@ -7,9 +7,10 @@ package com.microsoft.appcenter.utils.storage;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.text.TextUtils;
 
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -147,37 +148,6 @@ public class FileManager {
     }
 
     /**
-     * Get an array of filenames in the path.
-     *
-     * @param path   The directory path.
-     * @param filter The filter to match file names against, may be {@code null}.
-     * @return An array of filename that doesn't include paths.
-     */
-    @SuppressWarnings("WeakerAccess")
-    @NonNull
-    public static String[] getFilenames(@NonNull String path, @Nullable FilenameFilter filter) {
-        File dir = new File(path);
-        if (dir.exists()) {
-            return dir.list(filter);
-        }
-
-        return new String[0];
-    }
-
-    /**
-     * Get the most recently modified file in the directory specified.
-     *
-     * @param path   The directory path.
-     * @param filter The filter to match file names against, may be {@code null}.
-     * @return The last modified file in the directory matching the specified filter, if any matches. {@code null} otherwise.
-     */
-    @SuppressWarnings("WeakerAccess")
-    @Nullable
-    public static File lastModifiedFile(@NonNull String path, @Nullable FilenameFilter filter) {
-        return lastModifiedFile(new File(path), filter);
-    }
-
-    /**
      * Get the most recently modified file in the directory specified.
      *
      * @param dir    The directory.
@@ -198,7 +168,6 @@ public class FileManager {
                         lastModifiedFile = file;
                     }
                 }
-
                 return lastModifiedFile;
             }
         }
@@ -265,5 +234,21 @@ public class FileManager {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void mkdir(@NonNull String path) {
         new File(path).mkdirs();
+    }
+
+    /**
+     * Remove the extension part from filename.
+     *
+     * @param file The file which name without extension needed.
+     * @return Filename without extension.
+     */
+    @NonNull
+    public static String getNameWithoutExtension(@NonNull File file) {
+        String fileName = file.getName();
+        int indexOfLastDot = fileName.lastIndexOf(".");
+        if (indexOfLastDot > 0 && indexOfLastDot < fileName.length() - 1) {
+            return fileName.substring(0, indexOfLastDot);
+        }
+        return fileName;
     }
 }
