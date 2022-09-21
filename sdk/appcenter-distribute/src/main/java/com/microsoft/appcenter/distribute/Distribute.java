@@ -283,11 +283,6 @@ public class Distribute extends AbstractAppCenterService {
     private boolean mManualCheckForUpdateRequested;
 
     /**
-     * Flag to check if Android13 notifications are granted.
-     */
-    private boolean mIfPermissionNotificationsGranted;
-
-    /**
      * Init.
      */
     private Distribute() {
@@ -603,7 +598,7 @@ public class Distribute extends AbstractAppCenterService {
                 switch (updateAction) {
 
                     case UpdateAction.UPDATE:
-                        enqueueDownloadOrRequestPermissions(mReleaseDetails);
+                        enqueueDownloadAndRequestPermissions(mReleaseDetails);
                         break;
 
                     case UpdateAction.POSTPONE:
@@ -847,14 +842,14 @@ public class Distribute extends AbstractAppCenterService {
                  * We can start download if the setting is now enabled,
                  * otherwise restore dialog if activity rotated or was covered.
                  */
-                enqueueDownloadOrRequestPermissions(mReleaseDetails);
+                enqueueDownloadAndRequestPermissions(mReleaseDetails);
             }
 
             /*
              * Or restore update dialog if that's the last thing we did before being paused.
              * Also checking we are not about to download (DownloadTask might still be running and thus not enqueued yet).
              */
-            else if ((mReleaseDownloader == null || !mReleaseDownloader.isDownloading()) && !mIfPermissionNotificationsGranted) {
+            else if (mReleaseDownloader == null || !mReleaseDownloader.isDownloading()) {
                 showUpdateDialog();
             }
 
@@ -1218,7 +1213,6 @@ public class Distribute extends AbstractAppCenterService {
                 SharedPreferencesManager.putInt(PREFERENCE_KEY_DOWNLOAD_STATE, DOWNLOAD_STATE_AVAILABLE);
                 if (mForegroundActivity != null) {
                     showUpdateDialog();
-                    mIfPermissionNotificationsGranted = true;
                 }
                 return;
             }
@@ -1442,7 +1436,7 @@ public class Distribute extends AbstractAppCenterService {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    enqueueDownloadOrRequestPermissions(releaseDetails);
+                    enqueueDownloadAndRequestPermissions(releaseDetails);
                 }
             });
             dialogBuilder.setCancelable(false);
@@ -1671,26 +1665,25 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails release details.
      */
-    synchronized void enqueueDownloadOrRequestPermissions(final ReleaseDetails releaseDetails) {
+    synchronized void enqueueDownloadAndRequestPermissions(final ReleaseDetails releaseDetails) {
 
         if (releaseDetails == mReleaseDetails) {
-            if (requestPermissionsForDownload()) {
-                AppCenterLog.debug(LOG_TAG, "Schedule download...");
-                resumeDownload();
+            requestPermissionsForDownload();
+            AppCenterLog.debug(LOG_TAG, "Schedule download...");
+            resumeDownload();
 
-                /* Refresh mandatory dialog progress or do nothing otherwise. */
-                showDownloadProgress();
+            /* Refresh mandatory dialog progress or do nothing otherwise. */
+            showDownloadProgress();
 
-                /*
-                 * If we restored a cached dialog, we also started a new check release call.
-                 * We might have time to click on download before the call completes (easy to
-                 * reproduce with network down).
-                 * In that case the download will start and we'll see a new update dialog if we
-                 * don't cancel the call.
-                 */
-                if (mCheckReleaseApiCall != null) {
-                    mCheckReleaseApiCall.cancel();
-                }
+            /*
+             * If we restored a cached dialog, we also started a new check release call.
+             * We might have time to click on download before the call completes (easy to
+             * reproduce with network down).
+             * In that case the download will start and we'll see a new update dialog if we
+             * don't cancel the call.
+             */
+            if (mCheckReleaseApiCall != null) {
+                mCheckReleaseApiCall.cancel();
             }
         } else {
             showDisabledToast();
@@ -1712,15 +1705,11 @@ public class Distribute extends AbstractAppCenterService {
 
                     @Override
                     public void accept(PermissionRequestActivity.Result result) {
-                        // TODO check result and print warn log if not granted.
-                        // TODO DO NOT USE mReleaseDetails as parameter, it's used as state changing check.
-
                         if (result == null) {
                             AppCenterLog.warn(LOG_TAG, "Failed to get result of attempt to get permissions.");
                         } else if (result.exception != null) {
                             AppCenterLog.warn(LOG_TAG, "Error when trying to get permissions", result.exception);
                         }
-                        enqueueDownloadOrRequestPermissions(mReleaseDetails);
                     }
                 });
                 return false;
@@ -1742,7 +1731,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show toast using foreground activity context if possible.
      *
-      * @param messageId the resource id of the string resource to use.
+     * @param messageId the resource id of the string resource to use.
      */
     void showToast(int messageId) {
 
