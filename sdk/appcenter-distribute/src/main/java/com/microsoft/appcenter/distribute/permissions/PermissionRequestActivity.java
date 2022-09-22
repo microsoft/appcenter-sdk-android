@@ -1,5 +1,7 @@
 package com.microsoft.appcenter.distribute.permissions;
 
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -10,14 +12,18 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
-
-import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.AppCenterLog;
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
+/**
+ * Activity for requesting permissions.
+ */
 public class PermissionRequestActivity extends Activity {
 
+    /**
+     * Result of requesting permissions.
+     */
     public static class Result {
         public final boolean isPermissionGranted;
         public final Exception exception;
@@ -39,6 +45,13 @@ public class PermissionRequestActivity extends Activity {
     @VisibleForTesting
     static DefaultAppCenterFuture<Result> sResultFuture;
 
+    /**
+     * Start activity for requesting permissions.
+     *
+     * @param context The context from which the activity will be started.
+     * @param permissions List of requested permissions.
+     * @return Future with the result of a permissions request.
+     */
     public static AppCenterFuture<Result> requestPermissions(Context context, String... permissions) {
         if (sResultFuture != null) {
             AppCenterLog.error(LOG_TAG, "Result future flag is null.");
@@ -67,21 +80,20 @@ public class PermissionRequestActivity extends Activity {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             AppCenterLog.error(LOG_TAG, "Android version incompatible.");
-            complete(new Result(false, null));
+            complete(new Result(false, new Exception("Android version incompatible.")));
             finish();
             return;
         }
 
-        final String[] permissions;
-        try {
-            permissions = getIntent().getExtras().getStringArray(EXTRA_PERMISSIONS);
-        } catch (Exception e) {
-            AppCenterLog.error(LOG_TAG, "Error while getting permissions list.", e);
-            complete(new Result(false, e));
+        if (getIntent() != null && getIntent().getExtras() != null && getIntent().getExtras().getStringArray(EXTRA_PERMISSIONS) != null) {
+            String[] permissions = getIntent().getExtras().getStringArray(EXTRA_PERMISSIONS);
+            requestPermissions(permissions, REQUEST_CODE);
+        } else {
+            NullPointerException exception = new NullPointerException("Error while getting permissions list from intents extras.");
+            AppCenterLog.error(LOG_TAG, "Error while getting permissions list.", exception);
+            complete(new Result(false, exception));
             finish();
-            return;
         }
-        requestPermissions(permissions, REQUEST_CODE);
     }
 
     @Override

@@ -1695,25 +1695,27 @@ public class Distribute extends AbstractAppCenterService {
             showUnknownSourcesDialog();
             return false;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!PermissionUtils.permissionsAreGranted(mContext, Manifest.permission.POST_NOTIFICATIONS)) {
-                AppCenterFuture<PermissionRequestActivity.Result> confirmFuture = PermissionUtils.requestPermissions(mContext, Manifest.permission.POST_NOTIFICATIONS);
-                if (confirmFuture == null) {
-                    return false;
-                }
-                confirmFuture.thenAccept(new AppCenterConsumer<PermissionRequestActivity.Result>() {
-
-                    @Override
-                    public void accept(PermissionRequestActivity.Result result) {
-                        if (result == null) {
-                            AppCenterLog.warn(LOG_TAG, "Failed to get result of attempt to get permissions.");
-                        } else if (result.exception != null) {
-                            AppCenterLog.warn(LOG_TAG, "Error when trying to get permissions", result.exception);
-                        }
-                    }
-                });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !PermissionUtils.permissionsAreGranted(mContext, Manifest.permission.POST_NOTIFICATIONS)) {
+            AppCenterFuture<PermissionRequestActivity.Result> confirmFuture = PermissionUtils.requestPermissions(mContext, Manifest.permission.POST_NOTIFICATIONS);
+            if (confirmFuture == null) {
                 return false;
             }
+            confirmFuture.thenAccept(new AppCenterConsumer<PermissionRequestActivity.Result>() {
+
+                @Override
+                public void accept(PermissionRequestActivity.Result result) {
+                    if (result == null) {
+                        AppCenterLog.warn(LOG_TAG, "Failed to get result of attempt to get permissions.");
+                    } else if (result.exception != null) {
+                        AppCenterLog.warn(LOG_TAG, "Error when trying to request permissions.", result.exception);
+                    } else if (result.isPermissionGranted) {
+                        AppCenterLog.info(LOG_TAG, "Permissions has been successfully granted.");
+                    } else {
+                        AppCenterLog.info(LOG_TAG, "Permissions were not granted.");
+                    }
+                }
+            });
+            return false;
         }
         return true;
     }
