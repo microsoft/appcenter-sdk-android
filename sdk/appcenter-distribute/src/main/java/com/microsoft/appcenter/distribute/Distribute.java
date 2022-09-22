@@ -62,6 +62,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
@@ -1668,6 +1669,10 @@ public class Distribute extends AbstractAppCenterService {
     synchronized void enqueueDownloadAndRequestPermissions(final ReleaseDetails releaseDetails) {
 
         if (releaseDetails == mReleaseDetails) {
+            if (!InstallerUtils.isUnknownSourcesEnabled(mContext)) {
+                showUnknownSourcesDialog();
+                return;
+            }
             requestPermissionsForDownload();
             AppCenterLog.debug(LOG_TAG, "Schedule download...");
             resumeDownload();
@@ -1690,34 +1695,35 @@ public class Distribute extends AbstractAppCenterService {
         }
     }
 
-    private boolean requestPermissionsForDownload() {
-        if (!InstallerUtils.isUnknownSourcesEnabled(mContext)) {
-            showUnknownSourcesDialog();
-            return false;
+    private void requestPermissionsForDownload() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            AppCenterLog.info(LOG_TAG, "There is no need to request permissions in runtime on Android earlier than 6.0.");
+            return;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !PermissionUtils.permissionsAreGranted(mContext, Manifest.permission.POST_NOTIFICATIONS)) {
-            AppCenterFuture<PermissionRequestActivity.Result> confirmFuture = PermissionUtils.requestPermissions(mContext, Manifest.permission.POST_NOTIFICATIONS);
-            if (confirmFuture == null) {
-                return false;
-            }
-            confirmFuture.thenAccept(new AppCenterConsumer<PermissionRequestActivity.Result>() {
+        if (PermissionUtils.permissionsAreGranted(mContext, Manifest.permission.POST_NOTIFICATIONS)) {
+            AppCenterLog.info(LOG_TAG, "Permissions already granted.");
+            return;
+        }
+        AppCenterFuture<PermissionRequestActivity.Result> confirmFuture = PermissionUtils.requestPermissions(mContext, Manifest.permission.POST_NOTIFICATIONS);
+        if (confirmFuture == null) {
+            AppCenterLog.error(LOG_TAG, "Future to get the result of a permission request is null.");
+            return;
+        }
+        confirmFuture.thenAccept(new AppCenterConsumer<PermissionRequestActivity.Result>() {
 
-                @Override
-                public void accept(PermissionRequestActivity.Result result) {
-                    if (result == null) {
-                        AppCenterLog.warn(LOG_TAG, "Failed to get result of attempt to get permissions.");
-                    } else if (result.exception != null) {
-                        AppCenterLog.warn(LOG_TAG, "Error when trying to request permissions.", result.exception);
-                    } else if (result.isPermissionGranted) {
-                        AppCenterLog.info(LOG_TAG, "Permissions has been successfully granted.");
-                    } else {
-                        AppCenterLog.info(LOG_TAG, "Permissions were not granted.");
-                    }
+            @Override
+            public void accept(PermissionRequestActivity.Result result) {
+                if (result == null) {
+                    AppCenterLog.warn(LOG_TAG, "Failed to get result of attempt to get permissions.");
+                } else if (result.exception != null) {
+                    AppCenterLog.warn(LOG_TAG, "Error when trying to request permissions.", result.exception);
+                } else if (result.isPermissionGranted) {
+                    AppCenterLog.info(LOG_TAG, "Permissions has been successfully granted.");
+                } else {
+                    AppCenterLog.info(LOG_TAG, "Permissions were not granted.");
                 }
-            });
-            return false;
-        }
-        return true;
+            }
+        });
     }
 
     /**

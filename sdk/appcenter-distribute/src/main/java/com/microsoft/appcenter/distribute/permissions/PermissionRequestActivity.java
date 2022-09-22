@@ -74,26 +74,39 @@ public class PermissionRequestActivity extends Activity {
         }
     }
 
+    @Nullable
+    private String[] getPermissionsList() {
+        Intent intent = getIntent();
+        if (intent == null) {
+            return null;
+        }
+        Bundle extras = intent.getExtras();
+        if (extras == null) {
+            return null;
+        }
+        return extras.getStringArray(EXTRA_PERMISSIONS);
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             AppCenterLog.error(LOG_TAG, "Android version incompatible.");
-            complete(new Result(false, new Exception("Android version incompatible.")));
+            complete(new Result(false, new Exception("There is no need to request permissions in runtime on Android earlier than 6.0.")));
             finish();
             return;
         }
 
-        if (getIntent() != null && getIntent().getExtras() != null && getIntent().getExtras().getStringArray(EXTRA_PERMISSIONS) != null) {
-            String[] permissions = getIntent().getExtras().getStringArray(EXTRA_PERMISSIONS);
-            requestPermissions(permissions, REQUEST_CODE);
-        } else {
-            NullPointerException exception = new NullPointerException("Error while getting permissions list from intents extras.");
+        String[] permissions = getPermissionsList();
+        if (permissions == null) {
+            Exception exception = new Exception("Error while getting permissions list from intents extras.");
             AppCenterLog.error(LOG_TAG, "Error while getting permissions list.", exception);
             complete(new Result(false, exception));
             finish();
+            return;
         }
+        requestPermissions(permissions, REQUEST_CODE);
     }
 
     @Override
