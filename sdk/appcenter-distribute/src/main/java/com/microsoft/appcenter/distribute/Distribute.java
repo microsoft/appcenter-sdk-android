@@ -1697,7 +1697,7 @@ public class Distribute extends AbstractAppCenterService {
 
     private void requestPermissionsForDownload() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            AppCenterLog.info(LOG_TAG, "There is no need to request permissions in runtime on Android earlier than 6.0.");
+            AppCenterLog.debug(LOG_TAG, "There is no need to request permissions in runtime on Android earlier than 6.0.");
             return;
         }
         if (PermissionUtils.permissionsAreGranted(mContext, Manifest.permission.POST_NOTIFICATIONS)) {
