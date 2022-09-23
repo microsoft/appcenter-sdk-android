@@ -1701,7 +1701,7 @@ public class Distribute extends AbstractAppCenterService {
             return;
         }
         if (PermissionUtils.permissionsAreGranted(mContext, Manifest.permission.POST_NOTIFICATIONS)) {
-            AppCenterLog.info(LOG_TAG, "Permissions already granted.");
+            AppCenterLog.debug(LOG_TAG, "Post notification permission already granted.");
             return;
         }
         AppCenterFuture<PermissionRequestActivity.Result> confirmFuture = PermissionUtils.requestPermissions(mContext, Manifest.permission.POST_NOTIFICATIONS);
