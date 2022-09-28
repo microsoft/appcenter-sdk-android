@@ -54,12 +54,12 @@ public class PermissionsRequestActivityTest extends AbstractDistributeTest {
 
         /* With right request code, but without response. */
         permissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[0], new int[0]);
-        verifyStatic(PermissionRequestActivity.class, times(2));
+        verifyStatic(PermissionRequestActivity.class, times(3));
         PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
 
         /* With different request code. */
         permissionRequestActivity.onRequestPermissionsResult(0, new String[0], new int[]{PackageManager.PERMISSION_GRANTED});
-        verifyStatic(PermissionRequestActivity.class, times(2));
+        verifyStatic(PermissionRequestActivity.class, times(3));
         PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
     }
 
