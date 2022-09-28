@@ -8,6 +8,7 @@ package com.microsoft.appcenter.distribute;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
@@ -34,10 +35,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import static org.powermock.api.mockito.PowerMockito.doAnswer;
+import static org.powermock.api.mockito.PowerMockito.field;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
@@ -51,6 +54,8 @@ import android.os.Build;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
+import com.microsoft.appcenter.distribute.permissions.PermissionRequestActivity;
+import com.microsoft.appcenter.distribute.permissions.PermissionUtils;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -58,6 +63,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -71,6 +77,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.reflect.Whitebox;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -79,7 +86,9 @@ import java.util.concurrent.atomic.AtomicReference;
 @SuppressWarnings({"Convert2Lambda", "RedundantSuppression"})
 @PrepareForTest({
         DistributeUtils.class,
-        SessionContext.class
+        SessionContext.class,
+        PermissionUtils.class,
+        Build.VERSION.class
 })
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
@@ -1090,6 +1099,85 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify prompt is shown. */
         verify(mDialog).show();
+    }
+
+    @Test
+    public void requestPermissionsForAndroid13() throws Exception {
+        mockStatic(AppCenterLog.class);
+        Distribute distribute = Distribute.getInstance();
+
+        /* Setup release notes. */
+        ReleaseDetails releaseDetails = mock(ReleaseDetails.class);
+        when(releaseDetails.getId()).thenReturn(4);
+        when(releaseDetails.getVersion()).thenReturn(7);
+        when(ReleaseDetails.parse(anyString())).thenReturn(releaseDetails);
+
+        /* Setup release notes field of the distribute instance. */
+        Field releaseDetailsField = field(Distribute.class, "mReleaseDetails");
+        releaseDetailsField.setAccessible(true);
+        releaseDetailsField.set(distribute, releaseDetails);
+
+        /* Setup context field of the distribute instance. */
+        Field contextField = field(Distribute.class, "mContext");
+        contextField.setAccessible(true);
+        contextField.set(distribute, mContext);
+
+        /* Setup build version to TIRAMISU. */
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.TIRAMISU);
+
+        /* Setup futures with return permission request results:
+         * 1) Null.
+         * 2) With exception.
+         * 3) With not granted permissions.
+         * 4) With granted permissions.
+         */
+        PermissionRequestActivity.Result permissionsRequestResultWithException = new PermissionRequestActivity.Result(false, new Exception());
+        PermissionRequestActivity.Result permissionsRequestResultNotGranted = new PermissionRequestActivity.Result(false, null);
+        PermissionRequestActivity.Result permissionsRequestResultGranted = new PermissionRequestActivity.Result(true, null);
+        DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureNull = new DefaultAppCenterFuture<>();
+        DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureWithException = new DefaultAppCenterFuture<>();
+        DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureNotGranted = new DefaultAppCenterFuture<>();
+        DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureGranted = new DefaultAppCenterFuture<>();
+        resultFutureNull.complete(null);
+        resultFutureWithException.complete(permissionsRequestResultWithException);
+        resultFutureNotGranted.complete(permissionsRequestResultNotGranted);
+        resultFutureGranted.complete(permissionsRequestResultGranted);
+
+        /* Mock PermissionUtils methods. */
+        mockStatic(PermissionUtils.class);
+        when(PermissionUtils.permissionsAreGranted(eq(mContext), eq(Manifest.permission.POST_NOTIFICATIONS))).thenReturn(true).thenCallRealMethod();
+        when(PermissionUtils.requestPermissions(eq(mContext), eq(Manifest.permission.POST_NOTIFICATIONS))).thenReturn(null).thenReturn(resultFutureNull).thenReturn(resultFutureWithException).thenReturn(resultFutureNotGranted).thenReturn(resultFutureGranted);
+        when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(true);
+
+        /* Try to request permissions but them already granted. */
+        distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
+        verifyStatic(AppCenterLog.class, times(2));
+        AppCenterLog.debug(eq(LOG_TAG), anyString());
+
+        /* Try to request permissions but returned future is null. */
+        distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.error(eq(LOG_TAG), anyString());
+
+        /* Try to request permissions with null result. */
+        distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
+        verifyStatic(AppCenterLog.class, times(4));
+        AppCenterLog.warn(eq(LOG_TAG), anyString());
+
+        /* Try to request permissions with exception result. */
+        distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.warn(eq(LOG_TAG), anyString(), any(Exception.class));
+
+        /* Try to request permissions with not granted permissions. */
+        distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.error(eq(LOG_TAG), anyString());
+
+        /* Try to request permissions with granted permissions. */
+        distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.error(eq(LOG_TAG), anyString());
     }
 
     @After

@@ -34,6 +34,7 @@ public class PermissionRequestActivity extends Activity {
         }
     }
 
+    @VisibleForTesting
     static final String EXTRA_PERMISSIONS = "intent.extra.PERMISSIONS";
 
     @VisibleForTesting
@@ -67,11 +68,14 @@ public class PermissionRequestActivity extends Activity {
         return sResultFuture;
     }
 
-    private static void complete(Result result) {
+    @VisibleForTesting
+    static void complete(Result result) {
         if (sResultFuture != null) {
             sResultFuture.complete(result);
             sResultFuture = null;
+            return;
         }
+        AppCenterLog.debug(LOG_TAG, "The start of the activity was not called using the requestPermissions function or the future has already been completed");
     }
 
     @Nullable
@@ -90,14 +94,13 @@ public class PermissionRequestActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            AppCenterLog.error(LOG_TAG, "Android version incompatible.");
-            complete(new Result(false, new Exception("There is no need to request permissions in runtime on Android earlier than 6.0.")));
+            Exception exception = new Exception("There is no need to request permissions in runtime on Android earlier than 6.0.");
+            AppCenterLog.error(LOG_TAG, "Android version incompatible.", exception);
+            complete(new Result(false, exception));
             finish();
             return;
         }
-
         String[] permissions = getPermissionsList();
         if (permissions == null) {
             Exception exception = new Exception("Error while getting permissions list from intents extras.");

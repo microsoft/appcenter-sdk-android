@@ -62,7 +62,6 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
-import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
 import com.microsoft.appcenter.distribute.channel.DistributeInfoTracker;
@@ -1718,9 +1717,9 @@ public class Distribute extends AbstractAppCenterService {
                 } else if (result.exception != null) {
                     AppCenterLog.warn(LOG_TAG, "Error when trying to request permissions.", result.exception);
                 } else if (result.isPermissionGranted) {
-                    AppCenterLog.info(LOG_TAG, "Permissions has been successfully granted.");
+                    AppCenterLog.debug(LOG_TAG, "Permissions has been successfully granted.");
                 } else {
-                    AppCenterLog.info(LOG_TAG, "Permissions were not granted.");
+                    AppCenterLog.debug(LOG_TAG, "Permissions were not granted.");
                 }
             }
         });
