@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.utils.storage;
 
+import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -13,6 +15,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
+
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,9 +24,9 @@ import androidx.annotation.VisibleForTesting;
 import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.io.Closeable;
+import java.io.File;
 import java.util.Arrays;
-
-import static com.microsoft.appcenter.utils.AppCenterLog.LOG_TAG;
+import java.util.Set;
 
 /**
  * Database manager for SQLite.
@@ -39,6 +42,11 @@ public class DatabaseManager implements Closeable {
      * Primary key selection for {@link #getCursor(SQLiteQueryBuilder, String[], String[], String)}.
      */
     public static final String[] SELECT_PRIMARY_KEY = {PRIMARY_KEY};
+
+    /**
+     * Flag indicating the failure of the database operation.
+     */
+    public static final long OPERATION_FAILED_FLAG = -1;
 
     /**
      * Application context instance.
@@ -175,47 +183,21 @@ public class DatabaseManager implements Closeable {
      * new one can fit. If the log is larger than the max table size, database will be cleared and
      * the log is not inserted.
      *
-     * @param values         The entry to be stored.
-     * @param priorityColumn When storage full and deleting data, use this column to determine which entries to delete first.
+     * @param values The entry to be stored.
      * @return If a log was inserted, the database identifier. Otherwise -1.
+     *
+     * @throws SQLiteFullException Thrown if the storage is full when trying to insert.
      */
-    public long put(@NonNull ContentValues values, @NonNull String priorityColumn) {
-        Long id = null;
-        Cursor cursor = null;
+    public long put(@NonNull ContentValues values) throws SQLiteFullException {
+        long id;
         try {
-            while (id == null) {
-                try {
-
-                    /* Insert data. */
-                    id = getDatabase().insertOrThrow(mDefaultTable, null, values);
-                } catch (SQLiteFullException e) {
-
-                    /* Delete the oldest log. */
-                    AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log");
-                    if (cursor == null) {
-                        String priority = values.getAsString(priorityColumn);
-                        SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
-                        queryBuilder.appendWhere(priorityColumn + " <= ?");
-                        cursor = getCursor(queryBuilder, SELECT_PRIMARY_KEY, new String[]{priority}, priorityColumn + " , " + PRIMARY_KEY);
-                    }
-                    if (cursor.moveToNext()) {
-                        long deletedId = cursor.getLong(0);
-                        delete(deletedId);
-                        AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
-                    } else {
-                        throw e;
-                    }
-                }
-            }
+            /* Insert data. */
+            id = getDatabase().insertOrThrow(mDefaultTable, null, values);
+        } catch (SQLiteFullException e) {
+            throw e;
         } catch (RuntimeException e) {
-            id = -1L;
+            id = OPERATION_FAILED_FLAG;
             AppCenterLog.error(LOG_TAG, String.format("Failed to insert values (%s) to database %s.", values.toString(), mDatabase), e);
-        }
-        if (cursor != null) {
-            try {
-                cursor.close();
-            } catch (RuntimeException ignore) {
-            }
         }
         return id;
     }
@@ -227,6 +209,32 @@ public class DatabaseManager implements Closeable {
      */
     public void delete(@IntRange(from = 0) long id) {
         delete(mDefaultTable, PRIMARY_KEY, id);
+    }
+
+
+    /**
+     * Delete the oldest record from the database.
+     *
+     * @param columnsToReturn Set of deleted record column names whose values need to be returned.
+     * @param priorityColumn The name of the priority column for sorting records.
+     * @param priority Maximum record priority value to delete.
+     * @return Return values of fields of a deleted record.
+     */
+    @Nullable
+    public ContentValues deleteTheOldestRecord(@NonNull Set<String> columnsToReturn, @NonNull String priorityColumn, int priority) {
+        SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
+        queryBuilder.appendWhere(priorityColumn + " <= ?");
+        columnsToReturn.add(PRIMARY_KEY);
+        Cursor cursor = getCursor(queryBuilder, columnsToReturn.toArray(new String[0]), new String[]{String.valueOf(priority)}, priorityColumn + " , " + PRIMARY_KEY);
+        ContentValues rowData = nextValues(cursor);
+        if (rowData != null) {
+            long deletedId = rowData.getAsLong(PRIMARY_KEY);
+            delete(deletedId);
+            AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
+            return rowData;
+        }
+        AppCenterLog.error(LOG_TAG, String.format("Failed to delete the oldest log from database %s.", mDatabase));
+        return null;
     }
 
     /**
@@ -293,7 +301,7 @@ public class DatabaseManager implements Closeable {
             return DatabaseUtils.queryNumEntries(getDatabase(), mDefaultTable);
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Failed to get row count of database.", e);
-            return -1;
+            return OPERATION_FAILED_FLAG;
         }
     }
 
@@ -414,8 +422,19 @@ public class DatabaseManager implements Closeable {
             return getDatabase().getMaximumSize();
         } catch (RuntimeException e) {
             AppCenterLog.error(LOG_TAG, "Could not get maximum database size.", e);
-            return -1;
+            return OPERATION_FAILED_FLAG;
         }
+    }
+
+    /**
+     * Gets the current size of the database file.
+     * Disclaimer: The returned file size may not change immediately after performing SQL request.
+     *
+     * @return The current size of database in bytes.
+     */
+    public long getCurrentSize() {
+        File dbFile = mContext.getDatabasePath(mDatabase);
+        return dbFile.length();
     }
 
     /**

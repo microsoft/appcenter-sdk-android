@@ -2,6 +2,10 @@
 
 ## Version 4.4.6 (Under development)
 
+### AppCenter
+
+* **[Fix]** Fix ignoring maximum storage size limit in case logs contain large payloads.
+
  ___
 
 ## Version 4.4.5
