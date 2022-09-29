@@ -103,8 +103,8 @@ public class PermissionRequestActivity extends Activity {
         }
         String[] permissions = getPermissionsList();
         if (permissions == null) {
-            Exception exception = new Exception("Error while getting permissions list from intents extras.");
-            AppCenterLog.error(LOG_TAG, "Error while getting permissions list.", exception);
+            Exception exception = new Exception("Failed to get permissions list from intents extras.");
+            AppCenterLog.error(LOG_TAG, "Failed to get permissions list.", exception);
             complete(new Result(false, exception));
             finish();
             return;

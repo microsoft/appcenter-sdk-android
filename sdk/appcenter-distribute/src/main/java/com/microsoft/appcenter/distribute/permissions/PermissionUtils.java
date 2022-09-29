@@ -39,7 +39,7 @@ public class PermissionUtils {
     /**
      * Checks if the specified permissions' states are equal to {@link PackageManager#PERMISSION_GRANTED}.
      *
-     * @param context     context.
+     * @param context context.
      * @param permissions an array with specified permissions.
      * @return true if granted, false otherwise.
      */
