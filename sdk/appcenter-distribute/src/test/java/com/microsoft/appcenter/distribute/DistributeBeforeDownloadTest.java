@@ -1126,19 +1126,16 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.TIRAMISU);
 
         /* Setup futures with return permission request results:
-         * 1) Null.
-         * 2) With exception.
-         * 3) With not granted permissions.
-         * 4) With granted permissions.
+         * 1) With exception.
+         * 2) With not granted permissions.
+         * 3) With granted permissions.
          */
         PermissionRequestActivity.Result permissionsRequestResultWithException = new PermissionRequestActivity.Result(false, new Exception());
         PermissionRequestActivity.Result permissionsRequestResultNotGranted = new PermissionRequestActivity.Result(false, null);
         PermissionRequestActivity.Result permissionsRequestResultGranted = new PermissionRequestActivity.Result(true, null);
-        DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureNull = new DefaultAppCenterFuture<>();
         DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureWithException = new DefaultAppCenterFuture<>();
         DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureNotGranted = new DefaultAppCenterFuture<>();
         DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureGranted = new DefaultAppCenterFuture<>();
-        resultFutureNull.complete(null);
         resultFutureWithException.complete(permissionsRequestResultWithException);
         resultFutureNotGranted.complete(permissionsRequestResultNotGranted);
         resultFutureGranted.complete(permissionsRequestResultGranted);
@@ -1146,7 +1143,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Mock PermissionUtils methods. */
         mockStatic(PermissionUtils.class);
         when(PermissionUtils.permissionsAreGranted(eq(mContext), eq(Manifest.permission.POST_NOTIFICATIONS))).thenReturn(true).thenCallRealMethod();
-        when(PermissionUtils.requestPermissions(eq(mContext), eq(Manifest.permission.POST_NOTIFICATIONS))).thenReturn(null).thenReturn(resultFutureNull).thenReturn(resultFutureWithException).thenReturn(resultFutureNotGranted).thenReturn(resultFutureGranted);
+        when(PermissionUtils.requestPermissions(eq(mContext), eq(Manifest.permission.POST_NOTIFICATIONS))).thenReturn(null).thenReturn(resultFutureWithException).thenReturn(resultFutureNotGranted).thenReturn(resultFutureGranted);
         when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(true);
 
         /* Try to request permissions but them already granted. */
@@ -1159,11 +1156,6 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString());
 
-        /* Try to request permissions with null result. */
-        distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
-        verifyStatic(AppCenterLog.class, times(4));
-        AppCenterLog.warn(eq(LOG_TAG), anyString());
-
         /* Try to request permissions with exception result. */
         distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
         verifyStatic(AppCenterLog.class);
@@ -1172,12 +1164,12 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         /* Try to request permissions with not granted permissions. */
         distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
         verifyStatic(AppCenterLog.class);
-        AppCenterLog.error(eq(LOG_TAG), anyString());
+        AppCenterLog.info(eq(LOG_TAG), anyString());
 
         /* Try to request permissions with granted permissions. */
         distribute.enqueueDownloadAndRequestPermissions(releaseDetails);
-        verifyStatic(AppCenterLog.class);
-        AppCenterLog.error(eq(LOG_TAG), anyString());
+        verifyStatic(AppCenterLog.class, times(2));
+        AppCenterLog.info(eq(LOG_TAG), anyString());
     }
 
     @After

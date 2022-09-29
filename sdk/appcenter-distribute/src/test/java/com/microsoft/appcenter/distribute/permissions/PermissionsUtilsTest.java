@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.permissions;
 
 import static org.junit.Assert.assertNotNull;
@@ -19,15 +24,15 @@ public class PermissionsUtilsTest {
     public void requestPermissions() {
         Context contextMock = mock(Context.class);
 
+        /* Invoke with start activity. */
         {
-            /* Invoke with start activity */
             AppCenterFuture<PermissionRequestActivity.Result> future = PermissionUtils.requestPermissions(contextMock, Manifest.permission.POST_NOTIFICATIONS);
             verify(contextMock).startActivity(any());
             assertNotNull(future);
         }
 
+        /* Invoke with return null. */
         {
-            /* Invoke with return null */
             AppCenterFuture<PermissionRequestActivity.Result> future = PermissionUtils.requestPermissions(contextMock, Manifest.permission.POST_NOTIFICATIONS);
             assertNull(future);
         }

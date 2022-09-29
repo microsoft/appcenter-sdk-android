@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 package com.microsoft.appcenter.distribute.permissions;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;

@@ -1712,14 +1712,12 @@ public class Distribute extends AbstractAppCenterService {
 
             @Override
             public void accept(PermissionRequestActivity.Result result) {
-                if (result == null) {
-                    AppCenterLog.warn(LOG_TAG, "Failed to get result of attempt to get permissions.");
-                } else if (result.exception != null) {
+                if (result.exception != null) {
                     AppCenterLog.warn(LOG_TAG, "Error when trying to request permissions.", result.exception);
                 } else if (result.isPermissionGranted) {
-                    AppCenterLog.debug(LOG_TAG, "Permissions have been successfully granted.");
+                    AppCenterLog.info(LOG_TAG, "Permissions have been successfully granted.");
                 } else {
-                    AppCenterLog.debug(LOG_TAG, "Permissions were not granted.");
+                    AppCenterLog.info(LOG_TAG, "Permissions were not granted.");
                 }
             }
         });

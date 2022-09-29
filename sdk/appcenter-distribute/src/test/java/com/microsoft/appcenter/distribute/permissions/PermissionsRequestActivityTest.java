@@ -1,5 +1,9 @@
-package com.microsoft.appcenter.distribute.permissions;
+/*
+ * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Licensed under the MIT License.
+ */
 
+package com.microsoft.appcenter.distribute.permissions;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.permissions.PermissionRequestActivity.EXTRA_PERMISSIONS;
@@ -88,7 +92,7 @@ public class PermissionsRequestActivityTest extends AbstractDistributeTest {
         mockStatic(PermissionRequestActivity.class);
         PermissionRequestActivity permissionRequestActivity = new PermissionRequestActivity();
 
-        /* With build version lower then "M". */
+        /* With build version lower then "Marshmallow" (6.0). */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M - 1);
         permissionRequestActivity.onCreate(null);
         verifyStatic(AppCenterLog.class);
@@ -103,7 +107,7 @@ public class PermissionsRequestActivityTest extends AbstractDistributeTest {
         mockStatic(PermissionRequestActivity.class);
         PermissionRequestActivity permissionRequestActivity = new PermissionRequestActivity();
 
-        /* With "M" build version. */
+        /* With "Marshmallow" (6.0) build version. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
         permissionRequestActivity.onCreate(null);
         verifyStatic(AppCenterLog.class);
@@ -118,11 +122,11 @@ public class PermissionsRequestActivityTest extends AbstractDistributeTest {
         mockStatic(PermissionRequestActivity.class);
         PermissionRequestActivity permissionRequestActivity = spy(new PermissionRequestActivity());
 
-        /* Setup getIntent() for permissionRequestActivity */
+        /* Setup getIntent() for permissionRequestActivity. */
         Intent intentMock = mock(Intent.class);
         when(permissionRequestActivity.getIntent()).thenReturn(intentMock);
 
-        /* With "M" build version. */
+        /* With "Marshmallow" (6.0) build version. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
         permissionRequestActivity.onCreate(null);
         verifyStatic(AppCenterLog.class);
@@ -137,14 +141,14 @@ public class PermissionsRequestActivityTest extends AbstractDistributeTest {
         mockStatic(PermissionRequestActivity.class);
         PermissionRequestActivity permissionRequestActivity = spy(new PermissionRequestActivity());
 
-        /* Setup getIntent() for permissionRequestActivity */
+        /* Setup getIntent() for permissionRequestActivity. */
         Intent intentMock = mock(Intent.class);
         Bundle bundleMock = mock(Bundle.class);
         when(permissionRequestActivity.getIntent()).thenReturn(intentMock);
         when(intentMock.getExtras()).thenReturn(bundleMock);
         when(bundleMock.getStringArray(eq(EXTRA_PERMISSIONS))).thenReturn(new String[]{Manifest.permission.POST_NOTIFICATIONS});
 
-        /* With "M" build version. */
+        /* With "Marshmallow" (6.0) build version. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
         permissionRequestActivity.onCreate(null);
     }
