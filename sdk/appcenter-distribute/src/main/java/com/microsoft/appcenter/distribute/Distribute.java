@@ -1717,7 +1717,7 @@ public class Distribute extends AbstractAppCenterService {
                 } else if (result.exception != null) {
                     AppCenterLog.warn(LOG_TAG, "Error when trying to request permissions.", result.exception);
                 } else if (result.isPermissionGranted) {
-                    AppCenterLog.debug(LOG_TAG, "Permissions has been successfully granted.");
+                    AppCenterLog.debug(LOG_TAG, "Permissions have been successfully granted.");
                 } else {
                     AppCenterLog.debug(LOG_TAG, "Permissions were not granted.");
                 }
