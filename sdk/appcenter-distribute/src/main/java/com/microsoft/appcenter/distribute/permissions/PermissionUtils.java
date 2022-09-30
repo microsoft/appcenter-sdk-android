@@ -8,7 +8,7 @@ package com.microsoft.appcenter.distribute.permissions;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
-import androidx.annotation.VisibleForTesting;
+import androidx.annotation.NonNull;
 
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
@@ -63,7 +63,7 @@ public class PermissionUtils {
         return true;
     }
 
-    public static AppCenterFuture<PermissionRequestActivity.Result> requestPermissions(Context context, String... permissions) {
+    public static AppCenterFuture<PermissionRequestActivity.Result> requestPermissions(@NonNull Context context, String... permissions) {
         return PermissionRequestActivity.requestPermissions(context, permissions);
     }
 }

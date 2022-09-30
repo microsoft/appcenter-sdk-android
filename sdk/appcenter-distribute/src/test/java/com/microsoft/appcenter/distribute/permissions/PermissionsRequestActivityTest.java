@@ -10,11 +10,12 @@ import static com.microsoft.appcenter.distribute.permissions.PermissionRequestAc
 import static com.microsoft.appcenter.distribute.permissions.PermissionRequestActivity.REQUEST_CODE;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
@@ -26,51 +27,98 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
-import com.microsoft.appcenter.distribute.AbstractDistributeTest;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
 
 @PrepareForTest({
         AppCenterLog.class,
-        PermissionRequestActivity.class,
-        Build.VERSION.class
+        PermissionRequestActivity.class
 })
-public class PermissionsRequestActivityTest extends AbstractDistributeTest {
+public class PermissionsRequestActivityTest {
+
+    @Rule
+    public PowerMockRule mPowerMockRule = new PowerMockRule();
+
+    @Mock
+    public Intent mIntent;
+
+    private PermissionRequestActivity mPermissionRequestActivity;
+
+    @Before
+    public void setUp() {
+        PermissionRequestActivity.sResultFuture = null;
+        mPermissionRequestActivity = spy(new PermissionRequestActivity());
+    }
 
     @Test
-    public void onRequestPermissionsResult() {
+    public void onRequestPermissionsResultGranted() {
         mockStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity permissionRequestActivity = new PermissionRequestActivity();
-
-        /* With right request code. */
-        permissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[0], new int[]{PackageManager.PERMISSION_GRANTED});
+        mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[]{Manifest.permission.POST_NOTIFICATIONS}, new int[]{PackageManager.PERMISSION_GRANTED});
         verifyStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception == null &&
+                        argument.isPermissionsGranted &&
+                        argument.permissionRequestResults != null &&
+                        Boolean.TRUE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
+            }
+        }));
+    }
 
-        /* With right request code, but not granted. */
-        permissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[0], new int[]{PackageManager.PERMISSION_DENIED});
-        verifyStatic(PermissionRequestActivity.class, times(2));
-        PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
+    @Test
+    public void onRequestPermissionsResultNotGranted() {
+        mockStatic(PermissionRequestActivity.class);
+        mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[]{Manifest.permission.POST_NOTIFICATIONS}, new int[]{PackageManager.PERMISSION_DENIED});
+        verifyStatic(PermissionRequestActivity.class);
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception == null &&
+                        !argument.isPermissionsGranted &&
+                        argument.permissionRequestResults != null &&
+                        Boolean.FALSE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
+            }
+        }));
+    }
 
-        /* With right request code, but without response. */
-        permissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[0], new int[0]);
-        verifyStatic(PermissionRequestActivity.class, times(3));
-        PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
+    @Test
+    public void onRequestPermissionsResultWithoutResponse() {
+        mockStatic(PermissionRequestActivity.class);
+        mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[]{Manifest.permission.POST_NOTIFICATIONS}, new int[0]);
+        verifyStatic(PermissionRequestActivity.class);
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception == null &&
+                        !argument.isPermissionsGranted &&
+                        argument.permissionRequestResults != null &&
+                        Boolean.FALSE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
+            }
+        }));
+    }
 
-        /* With different request code. */
-        permissionRequestActivity.onRequestPermissionsResult(0, new String[0], new int[]{PackageManager.PERMISSION_GRANTED});
-        verifyStatic(PermissionRequestActivity.class, times(3));
+    @Test
+    public void onRequestPermissionsResultWithDifferentRequestCode() {
+        mockStatic(PermissionRequestActivity.class);
+        mPermissionRequestActivity.onRequestPermissionsResult(0, new String[]{Manifest.permission.POST_NOTIFICATIONS}, new int[]{PackageManager.PERMISSION_GRANTED});
+        verifyStatic(PermissionRequestActivity.class, never());
         PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
     }
 
     @Test
     public void completeWithNullFuture() {
         mockStatic(AppCenterLog.class);
-        PermissionRequestActivity.sResultFuture = null;
         PermissionRequestActivity.complete(mock(PermissionRequestActivity.Result.class));
         verifyStatic(AppCenterLog.class);
         AppCenterLog.debug(eq(LOG_TAG), anyString());
@@ -90,66 +138,84 @@ public class PermissionsRequestActivityTest extends AbstractDistributeTest {
     public void onCreateWithBuildVersionLowerThenM() {
         mockStatic(AppCenterLog.class);
         mockStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity permissionRequestActivity = new PermissionRequestActivity();
 
         /* With build version lower then "Marshmallow" (6.0). */
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M - 1);
-        permissionRequestActivity.onCreate(null);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP_MR1);
+        mPermissionRequestActivity.onCreate(null);
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString(), any(Exception.class));
         verifyStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception instanceof UnsupportedOperationException &&
+                        !argument.isPermissionsGranted &&
+                        argument.permissionRequestResults == null;
+            }
+        }));
     }
 
     @Test
     public void onCreateButIntentIsNull() {
         mockStatic(AppCenterLog.class);
         mockStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity permissionRequestActivity = new PermissionRequestActivity();
 
         /* With "Marshmallow" (6.0) build version. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
-        permissionRequestActivity.onCreate(null);
+        mPermissionRequestActivity.onCreate(null);
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString(), any(Exception.class));
         verifyStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception instanceof IllegalArgumentException &&
+                        !argument.isPermissionsGranted &&
+                        argument.permissionRequestResults == null;
+            }
+        }));
     }
 
     @Test
     public void onCreateButExtrasIsNull() {
         mockStatic(AppCenterLog.class);
         mockStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity permissionRequestActivity = spy(new PermissionRequestActivity());
 
-        /* Setup getIntent() for permissionRequestActivity. */
-        Intent intentMock = mock(Intent.class);
-        when(permissionRequestActivity.getIntent()).thenReturn(intentMock);
+        /* Setup getIntent() for mPermissionRequestActivity. */
+
+        when(mPermissionRequestActivity.getIntent()).thenReturn(mIntent);
 
         /* With "Marshmallow" (6.0) build version. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
-        permissionRequestActivity.onCreate(null);
+        mPermissionRequestActivity.onCreate(null);
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString(), any(Exception.class));
         verifyStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity.complete(any(PermissionRequestActivity.Result.class));
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception instanceof IllegalArgumentException &&
+                        !argument.isPermissionsGranted &&
+                        argument.permissionRequestResults == null;
+            }
+        }));
     }
 
     @Test
     public void onCreate() {
         mockStatic(AppCenterLog.class);
         mockStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity permissionRequestActivity = spy(new PermissionRequestActivity());
 
-        /* Setup getIntent() for permissionRequestActivity. */
-        Intent intentMock = mock(Intent.class);
+        /* Setup getIntent() for mPermissionRequestActivity. */
         Bundle bundleMock = mock(Bundle.class);
-        when(permissionRequestActivity.getIntent()).thenReturn(intentMock);
-        when(intentMock.getExtras()).thenReturn(bundleMock);
-        when(bundleMock.getStringArray(eq(EXTRA_PERMISSIONS))).thenReturn(new String[]{Manifest.permission.POST_NOTIFICATIONS});
+        when(mPermissionRequestActivity.getIntent()).thenReturn(mIntent);
+        when(mIntent.getExtras()).thenReturn(bundleMock);
+        String[] permissionsForRequest = {Manifest.permission.POST_NOTIFICATIONS};
+        when(bundleMock.getStringArray(eq(EXTRA_PERMISSIONS))).thenReturn(permissionsForRequest);
 
         /* With "Marshmallow" (6.0) build version. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
-        permissionRequestActivity.onCreate(null);
+        mPermissionRequestActivity.onCreate(null);
+        verify(mPermissionRequestActivity).requestPermissions(eq(permissionsForRequest), anyInt());
     }
 }

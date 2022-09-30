@@ -14,12 +14,16 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.async.AppCenterFuture;
 import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Activity for requesting permissions.
@@ -30,12 +34,18 @@ public class PermissionRequestActivity extends Activity {
      * Result of requesting permissions.
      */
     public static class Result {
-        public final boolean isPermissionGranted;
         public final Exception exception;
+        public final Map<String, Boolean> permissionRequestResults;
+        public final boolean isPermissionsGranted;
 
-        public Result(boolean isPermissionGranted, @Nullable Exception exception) {
-            this.isPermissionGranted = isPermissionGranted;
+        public Result(@Nullable Map<String, Boolean> permissionRequestResults, @Nullable Exception exception) {
+            this.permissionRequestResults = permissionRequestResults;
             this.exception = exception;
+            if (permissionRequestResults != null && permissionRequestResults.size() > 0) {
+                this.isPermissionsGranted = !permissionRequestResults.containsValue(false);
+                return;
+            }
+            this.isPermissionsGranted = false;
         }
     }
 
@@ -58,7 +68,7 @@ public class PermissionRequestActivity extends Activity {
      * @param permissions List of requested permissions.
      * @return Future with the result of a permissions request.
      */
-    public static AppCenterFuture<Result> requestPermissions(Context context, String... permissions) {
+    public static AppCenterFuture<Result> requestPermissions(@NonNull Context context, String... permissions) {
         if (sResultFuture != null) {
             AppCenterLog.error(LOG_TAG, "Result future flag is null.");
             return null;
@@ -74,7 +84,7 @@ public class PermissionRequestActivity extends Activity {
     }
 
     @VisibleForTesting
-    static void complete(Result result) {
+    static void complete(@NonNull Result result) {
         if (sResultFuture != null) {
             sResultFuture.complete(result);
             sResultFuture = null;
@@ -100,17 +110,17 @@ public class PermissionRequestActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            Exception exception = new Exception("There is no need to request permissions in runtime on Android earlier than 6.0.");
+            Exception exception = new UnsupportedOperationException("There is no need to request permissions in runtime on Android earlier than 6.0.");
             AppCenterLog.error(LOG_TAG, "Android version incompatible.", exception);
-            complete(new Result(false, exception));
+            complete(new Result(null, exception));
             finish();
             return;
         }
         String[] permissions = getPermissionsList();
         if (permissions == null) {
-            Exception exception = new Exception("Failed to get permissions list from intents extras.");
+            Exception exception = new IllegalArgumentException("Failed to get permissions list from intents extras.");
             AppCenterLog.error(LOG_TAG, "Failed to get permissions list.", exception);
-            complete(new Result(false, exception));
+            complete(new Result(null, exception));
             finish();
             return;
         }
@@ -120,8 +130,15 @@ public class PermissionRequestActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_CODE) {
-            boolean isGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-            complete(new Result(isGranted, null));
+            Map<String, Boolean> results = new HashMap<>();
+            for (int i = 0; i < permissions.length; i++) {
+                if (grantResults.length - 1 >= i && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    results.put(permissions[i], true);
+                    continue;
+                }
+                results.put(permissions[i], false);
+            }
+            complete(new Result(results, null));
             finish();
         }
     }
