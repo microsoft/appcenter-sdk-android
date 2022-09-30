@@ -42,7 +42,7 @@ public class PermissionRequestActivity extends Activity {
             this.exception = exception;
         }
 
-        public boolean isAllPermissionsGranted() {
+        public boolean areAllPermissionsGranted() {
             if (permissionRequestResults != null && permissionRequestResults.size() > 0) {
                 return !permissionRequestResults.containsValue(false);
             }
@@ -109,12 +109,12 @@ public class PermissionRequestActivity extends Activity {
 
     private Map<String, Boolean> getPermissionsRequestResultMap(String[] permissions, int[] results) {
         Map<String, Boolean> resultsMap = new HashMap<>();
+        if (permissions.length != results.length) {
+            AppCenterLog.error(LOG_TAG, "Invalid argument array sizes.");
+            return null;
+        }
         for (int i = 0; i < permissions.length; i++) {
-            if (results.length - 1 >= i && results[i] == PackageManager.PERMISSION_GRANTED) {
-                resultsMap.put(permissions[i], true);
-                continue;
-            }
-            resultsMap.put(permissions[i], false);
+            resultsMap.put(permissions[i], results[i] == PackageManager.PERMISSION_GRANTED);
         }
         return resultsMap;
     }

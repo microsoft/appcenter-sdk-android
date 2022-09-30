@@ -59,7 +59,7 @@ public class PermissionsRequestActivityTest {
             @Override
             public boolean matches(PermissionRequestActivity.Result argument) {
                 return argument.exception instanceof IllegalArgumentException &&
-                        !argument.isAllPermissionsGranted() &&
+                        !argument.areAllPermissionsGranted() &&
                         argument.permissionRequestResults == null;
             }
         }));
@@ -70,7 +70,7 @@ public class PermissionsRequestActivityTest {
             @Override
             public boolean matches(PermissionRequestActivity.Result argument) {
                 return argument.exception == null &&
-                        !argument.isAllPermissionsGranted() &&
+                        !argument.areAllPermissionsGranted() &&
                         argument.permissionRequestResults != null &&
                         Boolean.FALSE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
             }
@@ -92,7 +92,7 @@ public class PermissionsRequestActivityTest {
             @Override
             public boolean matches(PermissionRequestActivity.Result argument) {
                 return argument.exception == null &&
-                        argument.isAllPermissionsGranted() &&
+                        argument.areAllPermissionsGranted() &&
                         argument.permissionRequestResults != null &&
                         Boolean.TRUE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
             }
@@ -116,7 +116,7 @@ public class PermissionsRequestActivityTest {
             @Override
             public boolean matches(PermissionRequestActivity.Result argument) {
                 return argument.exception == null &&
-                        !argument.isAllPermissionsGranted() &&
+                        !argument.areAllPermissionsGranted() &&
                         argument.permissionRequestResults != null &&
                         argument.permissionRequestResults.size() == 0;
             }
@@ -172,7 +172,7 @@ public class PermissionsRequestActivityTest {
             @Override
             public boolean matches(PermissionRequestActivity.Result argument) {
                 return argument.exception instanceof UnsupportedOperationException &&
-                        !argument.isAllPermissionsGranted() &&
+                        !argument.areAllPermissionsGranted() &&
                         argument.permissionRequestResults == null;
             }
         }));
