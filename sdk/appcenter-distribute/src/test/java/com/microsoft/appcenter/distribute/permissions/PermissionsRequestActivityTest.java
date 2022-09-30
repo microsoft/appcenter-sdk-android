@@ -54,6 +54,29 @@ public class PermissionsRequestActivityTest {
 
     private PermissionRequestActivity mPermissionRequestActivity;
 
+    private void verifyCompleteWithIllegalArgumentException() {
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception instanceof IllegalArgumentException &&
+                        !argument.isAllPermissionsGranted() &&
+                        argument.permissionRequestResults == null;
+            }
+        }));
+    }
+
+    private void verifyCompleteWithNotGrantedPermissions() {
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception == null &&
+                        !argument.isAllPermissionsGranted() &&
+                        argument.permissionRequestResults != null &&
+                        Boolean.FALSE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
+            }
+        }));
+    }
+
     @Before
     public void setUp() {
         PermissionRequestActivity.sResultFuture = null;
@@ -69,7 +92,7 @@ public class PermissionsRequestActivityTest {
             @Override
             public boolean matches(PermissionRequestActivity.Result argument) {
                 return argument.exception == null &&
-                        argument.isPermissionsGranted &&
+                        argument.isAllPermissionsGranted() &&
                         argument.permissionRequestResults != null &&
                         Boolean.TRUE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
             }
@@ -81,15 +104,7 @@ public class PermissionsRequestActivityTest {
         mockStatic(PermissionRequestActivity.class);
         mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[]{Manifest.permission.POST_NOTIFICATIONS}, new int[]{PackageManager.PERMISSION_DENIED});
         verifyStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
-            @Override
-            public boolean matches(PermissionRequestActivity.Result argument) {
-                return argument.exception == null &&
-                        !argument.isPermissionsGranted &&
-                        argument.permissionRequestResults != null &&
-                        Boolean.FALSE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
-            }
-        }));
+        verifyCompleteWithNotGrantedPermissions();
     }
 
     @Test
@@ -101,7 +116,7 @@ public class PermissionsRequestActivityTest {
             @Override
             public boolean matches(PermissionRequestActivity.Result argument) {
                 return argument.exception == null &&
-                        !argument.isPermissionsGranted &&
+                        !argument.isAllPermissionsGranted() &&
                         argument.permissionRequestResults != null &&
                         argument.permissionRequestResults.size() == 0;
             }
@@ -113,15 +128,7 @@ public class PermissionsRequestActivityTest {
         mockStatic(PermissionRequestActivity.class);
         mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[]{Manifest.permission.POST_NOTIFICATIONS}, new int[0]);
         verifyStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
-            @Override
-            public boolean matches(PermissionRequestActivity.Result argument) {
-                return argument.exception == null &&
-                        !argument.isPermissionsGranted &&
-                        argument.permissionRequestResults != null &&
-                        Boolean.FALSE.equals(argument.permissionRequestResults.get(Manifest.permission.POST_NOTIFICATIONS));
-            }
-        }));
+        verifyCompleteWithNotGrantedPermissions();
     }
 
     @Test
@@ -165,7 +172,7 @@ public class PermissionsRequestActivityTest {
             @Override
             public boolean matches(PermissionRequestActivity.Result argument) {
                 return argument.exception instanceof UnsupportedOperationException &&
-                        !argument.isPermissionsGranted &&
+                        !argument.isAllPermissionsGranted() &&
                         argument.permissionRequestResults == null;
             }
         }));
@@ -182,14 +189,8 @@ public class PermissionsRequestActivityTest {
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString(), any(Exception.class));
         verifyStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
-            @Override
-            public boolean matches(PermissionRequestActivity.Result argument) {
-                return argument.exception instanceof IllegalArgumentException &&
-                        !argument.isPermissionsGranted &&
-                        argument.permissionRequestResults == null;
-            }
-        }));
+        verifyCompleteWithIllegalArgumentException();
+
     }
 
     @Test
@@ -207,14 +208,7 @@ public class PermissionsRequestActivityTest {
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(LOG_TAG), anyString(), any(Exception.class));
         verifyStatic(PermissionRequestActivity.class);
-        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
-            @Override
-            public boolean matches(PermissionRequestActivity.Result argument) {
-                return argument.exception instanceof IllegalArgumentException &&
-                        !argument.isPermissionsGranted &&
-                        argument.permissionRequestResults == null;
-            }
-        }));
+        verifyCompleteWithIllegalArgumentException();
     }
 
     @Test

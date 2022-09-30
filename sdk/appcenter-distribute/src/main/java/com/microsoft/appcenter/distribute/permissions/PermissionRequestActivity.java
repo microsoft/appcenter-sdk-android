@@ -36,16 +36,17 @@ public class PermissionRequestActivity extends Activity {
     public static class Result {
         public final Exception exception;
         public final Map<String, Boolean> permissionRequestResults;
-        public final boolean isPermissionsGranted;
 
         public Result(@Nullable Map<String, Boolean> permissionRequestResults, @Nullable Exception exception) {
             this.permissionRequestResults = permissionRequestResults;
             this.exception = exception;
+        }
+
+        public boolean isAllPermissionsGranted() {
             if (permissionRequestResults != null && permissionRequestResults.size() > 0) {
-                this.isPermissionsGranted = !permissionRequestResults.containsValue(false);
-                return;
+                return !permissionRequestResults.containsValue(false);
             }
-            this.isPermissionsGranted = false;
+            return false;
         }
     }
 
@@ -106,6 +107,18 @@ public class PermissionRequestActivity extends Activity {
         return extras.getStringArray(EXTRA_PERMISSIONS);
     }
 
+    private Map<String, Boolean> getPermissionsRequestResultMap(String[] permissions, int[] results) {
+        Map<String, Boolean> resultsMap = new HashMap<>();
+        for (int i = 0; i < permissions.length; i++) {
+            if (results.length - 1 >= i && results[i] == PackageManager.PERMISSION_GRANTED) {
+                resultsMap.put(permissions[i], true);
+                continue;
+            }
+            resultsMap.put(permissions[i], false);
+        }
+        return resultsMap;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -130,14 +143,7 @@ public class PermissionRequestActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_CODE) {
-            Map<String, Boolean> results = new HashMap<>();
-            for (int i = 0; i < permissions.length; i++) {
-                if (grantResults.length - 1 >= i && grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    results.put(permissions[i], true);
-                    continue;
-                }
-                results.put(permissions[i], false);
-            }
+            Map<String, Boolean> results = getPermissionsRequestResultMap(permissions, grantResults);
             complete(new Result(results, null));
             finish();
         }

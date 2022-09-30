@@ -67,9 +67,7 @@ import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
 import org.junit.After;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
@@ -90,9 +88,6 @@ import java.util.concurrent.atomic.AtomicReference;
         PermissionUtils.class
 })
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
-
-    @Rule
-    public Timeout mGlobalTimeout = Timeout.seconds(180);
 
     private void mockSessionContext() {
         mockStatic(SessionContext.class);
