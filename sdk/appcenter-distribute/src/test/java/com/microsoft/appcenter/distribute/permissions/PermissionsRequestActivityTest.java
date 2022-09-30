@@ -93,6 +93,22 @@ public class PermissionsRequestActivityTest {
     }
 
     @Test
+    public void onRequestPermissionsResultNotGrantedWithEmptyPermissionsList() {
+        mockStatic(PermissionRequestActivity.class);
+        mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[0], new int[]{PackageManager.PERMISSION_DENIED});
+        verifyStatic(PermissionRequestActivity.class);
+        PermissionRequestActivity.complete(ArgumentMatchers.argThat(new ArgumentMatcher<PermissionRequestActivity.Result>() {
+            @Override
+            public boolean matches(PermissionRequestActivity.Result argument) {
+                return argument.exception == null &&
+                        !argument.isPermissionsGranted &&
+                        argument.permissionRequestResults != null &&
+                        argument.permissionRequestResults.size() == 0;
+            }
+        }));
+    }
+
+    @Test
     public void onRequestPermissionsResultWithoutResponse() {
         mockStatic(PermissionRequestActivity.class);
         mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[]{Manifest.permission.POST_NOTIFICATIONS}, new int[0]);
