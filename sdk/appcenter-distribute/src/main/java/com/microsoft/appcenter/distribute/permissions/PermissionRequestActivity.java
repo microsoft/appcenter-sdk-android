@@ -144,6 +144,10 @@ public class PermissionRequestActivity extends Activity {
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == REQUEST_CODE) {
             Map<String, Boolean> results = getPermissionsRequestResultMap(permissions, grantResults);
+            if (results == null) {
+                complete(new Result(null, new IllegalArgumentException("Error while getting permission request results.")));
+                return;
+            }
             complete(new Result(results, null));
             finish();
         }
