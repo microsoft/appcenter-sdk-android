@@ -8,6 +8,7 @@ package com.microsoft.appcenter.distribute.permissions;
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.permissions.PermissionRequestActivity.EXTRA_PERMISSIONS;
 import static com.microsoft.appcenter.distribute.permissions.PermissionRequestActivity.REQUEST_CODE;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -39,6 +40,8 @@ import org.mockito.Mock;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.powermock.reflect.Whitebox;
+
+import java.util.HashMap;
 
 @PrepareForTest({
         AppCenterLog.class,
@@ -118,7 +121,7 @@ public class PermissionsRequestActivityTest {
     @Test
     public void onRequestPermissionsResultWithoutResponse() {
         mockStatic(PermissionRequestActivity.class);
-        mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[]{Manifest.permission.POST_NOTIFICATIONS}, new int[0]);
+        mPermissionRequestActivity.onRequestPermissionsResult(REQUEST_CODE, new String[0], new int[0]);
         verifyStatic(PermissionRequestActivity.class);
         verifyCompleteWithIllegalArgumentException();
     }
@@ -219,5 +222,11 @@ public class PermissionsRequestActivityTest {
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
         mPermissionRequestActivity.onCreate(null);
         verify(mPermissionRequestActivity).requestPermissions(eq(permissionsForRequest), anyInt());
+    }
+
+    @Test
+    public void resultWithEmptyResultMap() {
+        PermissionRequestActivity.Result result = new PermissionRequestActivity.Result(new HashMap<>(), null);
+        assertFalse(result.areAllPermissionsGranted());
     }
 }
