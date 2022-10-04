@@ -9,7 +9,7 @@ ext {
     versionCode = 68
     versionName = '4.4.6'
     minSdkVersion = 21
-    compileSdkVersion = 31
-    targetSdkVersion = 31
+    compileSdkVersion = 33
+    targetSdkVersion = 33
     annotationVersion = '1.2.0'
 }

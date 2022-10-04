@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-package com.microsoft.appcenter.distribute;
+package com.microsoft.appcenter.distribute.permissions;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+
+import androidx.annotation.NonNull;
+
+import com.microsoft.appcenter.utils.async.AppCenterFuture;
 
 /**
  * Permission utils.
@@ -35,6 +39,18 @@ public class PermissionUtils {
     /**
      * Checks if the specified permissions' states are equal to {@link PackageManager#PERMISSION_GRANTED}.
      *
+     * @param context context.
+     * @param permissions an array with specified permissions.
+     * @return true if granted, false otherwise.
+     */
+    public static boolean permissionsAreGranted(Context context, String... permissions) {
+        int[] permissionsState = permissionsState(context, permissions);
+        return permissionsAreGranted(permissionsState);
+    }
+
+    /**
+     * Checks if the specified permissions' states are equal to {@link PackageManager#PERMISSION_GRANTED}.
+     *
      * @param permissionsState an array with permissions' states.
      * @return true if granted, false otherwise.
      */
@@ -45,6 +61,10 @@ public class PermissionUtils {
             }
         }
         return true;
+    }
+
+    public static AppCenterFuture<PermissionRequestActivity.Result> requestPermissions(@NonNull Context context, String... permissions) {
+        return PermissionRequestActivity.requestPermissions(context, permissions);
     }
 }
 
