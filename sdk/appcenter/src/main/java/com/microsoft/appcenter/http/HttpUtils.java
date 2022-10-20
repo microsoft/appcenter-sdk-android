@@ -87,7 +87,7 @@ public class HttpUtils {
     /**
      * One Collector Ingestion API key pattern (secret key within the header value).
      */
-    private static final Pattern API_KEY_PATTERN = Pattern.compile("-[^,]+(,|$)");
+    private static final Pattern API_KEY_PATTERN = Pattern.compile("-[^,]+(?<!-)(,|$)");
 
     @VisibleForTesting
     HttpUtils() {
