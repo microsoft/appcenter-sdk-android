@@ -5,6 +5,9 @@
 ### AppCenter
 
 * **[Fix]** Fix ignoring maximum storage size limit in case logs contain large payloads.
+
+### App Center Distribute
+
 * **[Feature]** Add requesting notifications permission for Android 13 (notifications are used to inform about downloading/installing status if an application is in background)
 
  ___
