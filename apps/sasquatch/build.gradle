@@ -14,6 +14,8 @@ android {
     flavorDimensions "dependency", "distribute"
 
     defaultConfig {
+        versionCode 300
+        versionName "5.0.0"
         externalNativeBuild {
             ndkBuild {
                 arguments "NDK_APPLICATION_MK=Application.mk", "V=1"
