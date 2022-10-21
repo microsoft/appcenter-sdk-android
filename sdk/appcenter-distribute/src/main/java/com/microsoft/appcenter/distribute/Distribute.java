@@ -37,6 +37,7 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_UPDATE_TOKEN;
 import static com.microsoft.appcenter.distribute.DistributeConstants.SERVICE_NAME;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -69,6 +70,8 @@ import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.DistributeIngestion;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
 import com.microsoft.appcenter.distribute.ingestion.models.json.DistributionStartSessionLogFactory;
+import com.microsoft.appcenter.distribute.permissions.PermissionRequestActivity;
+import com.microsoft.appcenter.distribute.permissions.PermissionUtils;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.HttpUtils;
@@ -595,7 +598,7 @@ public class Distribute extends AbstractAppCenterService {
                 switch (updateAction) {
 
                     case UpdateAction.UPDATE:
-                        enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
+                        enqueueDownloadAndRequestPermissions(mReleaseDetails);
                         break;
 
                     case UpdateAction.POSTPONE:
@@ -839,7 +842,7 @@ public class Distribute extends AbstractAppCenterService {
                  * We can start download if the setting is now enabled,
                  * otherwise restore dialog if activity rotated or was covered.
                  */
-                enqueueDownloadOrShowUnknownSourcesDialog(mReleaseDetails);
+                enqueueDownloadAndRequestPermissions(mReleaseDetails);
             }
 
             /*
@@ -1433,7 +1436,7 @@ public class Distribute extends AbstractAppCenterService {
 
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
-                    enqueueDownloadOrShowUnknownSourcesDialog(releaseDetails);
+                    enqueueDownloadAndRequestPermissions(releaseDetails);
                 }
             });
             dialogBuilder.setCancelable(false);
@@ -1662,31 +1665,62 @@ public class Distribute extends AbstractAppCenterService {
      *
      * @param releaseDetails release details.
      */
-    synchronized void enqueueDownloadOrShowUnknownSourcesDialog(final ReleaseDetails releaseDetails) {
+    synchronized void enqueueDownloadAndRequestPermissions(final ReleaseDetails releaseDetails) {
+
         if (releaseDetails == mReleaseDetails) {
-            if (InstallerUtils.isUnknownSourcesEnabled(mContext)) {
-                AppCenterLog.debug(LOG_TAG, "Schedule download...");
-                resumeDownload();
-
-                /* Refresh mandatory dialog progress or do nothing otherwise. */
-                showDownloadProgress();
-
-                /*
-                 * If we restored a cached dialog, we also started a new check release call.
-                 * We might have time to click on download before the call completes (easy to
-                 * reproduce with network down).
-                 * In that case the download will start and we'll see a new update dialog if we
-                 * don't cancel the call.
-                 */
-                if (mCheckReleaseApiCall != null) {
-                    mCheckReleaseApiCall.cancel();
-                }
-            } else {
+            if (!InstallerUtils.isUnknownSourcesEnabled(mContext)) {
                 showUnknownSourcesDialog();
+                return;
+            }
+            requestPermissionsForDownload();
+            AppCenterLog.debug(LOG_TAG, "Schedule download...");
+            resumeDownload();
+
+            /* Refresh mandatory dialog progress or do nothing otherwise. */
+            showDownloadProgress();
+
+            /*
+             * If we restored a cached dialog, we also started a new check release call.
+             * We might have time to click on download before the call completes (easy to
+             * reproduce with network down).
+             * In that case the download will start and we'll see a new update dialog if we
+             * don't cancel the call.
+             */
+            if (mCheckReleaseApiCall != null) {
+                mCheckReleaseApiCall.cancel();
             }
         } else {
             showDisabledToast();
         }
+    }
+
+    private void requestPermissionsForDownload() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            AppCenterLog.debug(LOG_TAG, "There is no need to request permissions in runtime on Android earlier than 6.0.");
+            return;
+        }
+        if (PermissionUtils.permissionsAreGranted(mContext, Manifest.permission.POST_NOTIFICATIONS)) {
+            AppCenterLog.debug(LOG_TAG, "Post notification permission already granted.");
+            return;
+        }
+        AppCenterFuture<PermissionRequestActivity.Result> confirmFuture = PermissionUtils.requestPermissions(mContext, Manifest.permission.POST_NOTIFICATIONS);
+        if (confirmFuture == null) {
+            AppCenterLog.error(LOG_TAG, "Future to get the result of a permission request is null.");
+            return;
+        }
+        confirmFuture.thenAccept(new AppCenterConsumer<PermissionRequestActivity.Result>() {
+
+            @Override
+            public void accept(PermissionRequestActivity.Result result) {
+                if (result.exception != null) {
+                    AppCenterLog.warn(LOG_TAG, "Error when trying to request permissions.", result.exception);
+                } else if (result.areAllPermissionsGranted()) {
+                    AppCenterLog.info(LOG_TAG, "Permissions have been successfully granted.");
+                } else {
+                    AppCenterLog.info(LOG_TAG, "Permissions were not granted.");
+                }
+            }
+        });
     }
 
     /**
@@ -1702,7 +1736,7 @@ public class Distribute extends AbstractAppCenterService {
     /**
      * Show toast using foreground activity context if possible.
      *
-      * @param messageId the resource id of the string resource to use.
+     * @param messageId the resource id of the string resource to use.
      */
     void showToast(int messageId) {
 

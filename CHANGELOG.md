@@ -1,5 +1,17 @@
 # App Center SDK for Android Change Log
 
+## Version 5.0.0
+
+### AppCenter
+
+* **[Fix]** Fix ignoring maximum storage size limit in case logs contain large payloads.
+
+### App Center Distribute
+
+* **[Feature]** Add requesting notifications permission for Android 13 (notifications are used to inform about downloading/installing status if an application is in background)
+
+ ___
+
 ## Version 4.4.5
 
 ### App Center

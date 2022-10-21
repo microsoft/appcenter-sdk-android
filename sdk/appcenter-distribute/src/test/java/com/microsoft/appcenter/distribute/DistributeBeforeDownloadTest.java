@@ -8,6 +8,7 @@ package com.microsoft.appcenter.distribute;
 import static com.microsoft.appcenter.Flags.DEFAULTS;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_AVAILABLE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.DOWNLOAD_STATE_COMPLETED;
+import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_HASH;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PREFERENCE_KEY_DOWNLOADED_RELEASE_ID;
@@ -38,6 +39,7 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
@@ -51,6 +53,8 @@ import android.os.Build;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloaderFactory;
 import com.microsoft.appcenter.distribute.ingestion.models.DistributionStartSessionLog;
+import com.microsoft.appcenter.distribute.permissions.PermissionRequestActivity;
+import com.microsoft.appcenter.distribute.permissions.PermissionUtils;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpResponse;
 import com.microsoft.appcenter.http.ServiceCall;
@@ -58,6 +62,7 @@ import com.microsoft.appcenter.http.ServiceCallback;
 import com.microsoft.appcenter.utils.AppCenterLog;
 import com.microsoft.appcenter.utils.AppNameHelper;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
+import com.microsoft.appcenter.utils.async.DefaultAppCenterFuture;
 import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
 
@@ -79,7 +84,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @SuppressWarnings({"Convert2Lambda", "RedundantSuppression"})
 @PrepareForTest({
         DistributeUtils.class,
-        SessionContext.class
+        SessionContext.class,
+        PermissionUtils.class
 })
 public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
@@ -1090,6 +1096,72 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* Verify prompt is shown. */
         verify(mDialog).show();
+    }
+
+    @Test
+    public void requestPermissionsForAndroid13() {
+        Distribute distribute = Distribute.getInstance();
+
+        /* Setup context field of the distribute instance. */
+        distribute.onStarted(mContext, mChannel, "appSecret", "targetToken", false);
+
+        /* Setup build version to TIRAMISU. */
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.TIRAMISU);
+
+        /* Setup futures with return permission request results:
+         * 1) With exception.
+         * 2) With not granted permissions.
+         * 3) With granted permissions.
+         */
+        HashMap<String, Boolean> permissionRequestResults = new HashMap<>();
+        permissionRequestResults.put(Manifest.permission.POST_NOTIFICATIONS, true);
+        PermissionRequestActivity.Result permissionsRequestResultWithException = new PermissionRequestActivity.Result(null, new Exception());
+        PermissionRequestActivity.Result permissionsRequestResultNotGranted = new PermissionRequestActivity.Result(null, null);
+        PermissionRequestActivity.Result permissionsRequestResultGranted = new PermissionRequestActivity.Result(permissionRequestResults, null);
+        DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureWithException = new DefaultAppCenterFuture<>();
+        DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureNotGranted = new DefaultAppCenterFuture<>();
+        DefaultAppCenterFuture<PermissionRequestActivity.Result> resultFutureGranted = new DefaultAppCenterFuture<>();
+        resultFutureWithException.complete(permissionsRequestResultWithException);
+        resultFutureNotGranted.complete(permissionsRequestResultNotGranted);
+        resultFutureGranted.complete(permissionsRequestResultGranted);
+
+        /* Mock PermissionUtils methods. */
+        mockStatic(PermissionUtils.class);
+        when(PermissionUtils.permissionsAreGranted(eq(mContext), eq(Manifest.permission.POST_NOTIFICATIONS))).thenReturn(true).thenCallRealMethod();
+        when(PermissionUtils.requestPermissions(eq(mContext), eq(Manifest.permission.POST_NOTIFICATIONS)))
+                .thenReturn(null)
+                .thenReturn(resultFutureWithException)
+                .thenReturn(resultFutureNotGranted)
+                .thenReturn(resultFutureGranted);
+        when(InstallerUtils.isUnknownSourcesEnabled(eq(mContext))).thenReturn(true);
+
+        /* Mock AppCenterLog static methods. */
+        mockStatic(AppCenterLog.class);
+
+        /* Try to request permissions but them already granted. */
+        distribute.enqueueDownloadAndRequestPermissions(null);
+        verifyStatic(AppCenterLog.class, times(2));
+        AppCenterLog.debug(eq(LOG_TAG), anyString());
+
+        /* Try to request permissions but returned future is null. */
+        distribute.enqueueDownloadAndRequestPermissions(null);
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.error(eq(LOG_TAG), anyString());
+
+        /* Try to request permissions with exception result. */
+        distribute.enqueueDownloadAndRequestPermissions(null);
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.warn(eq(LOG_TAG), anyString(), any(Exception.class));
+
+        /* Try to request permissions with not granted permissions. */
+        distribute.enqueueDownloadAndRequestPermissions(null);
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.info(eq(LOG_TAG), anyString());
+
+        /* Try to request permissions with granted permissions. */
+        distribute.enqueueDownloadAndRequestPermissions(null);
+        verifyStatic(AppCenterLog.class, times(2));
+        AppCenterLog.info(eq(LOG_TAG), anyString());
     }
 
     @After

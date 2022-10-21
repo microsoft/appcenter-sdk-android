@@ -24,6 +24,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.microsoft.appcenter.distribute.permissions.PermissionUtils;
+
 @PrepareForTest({
         PermissionUtils.class,
         Context.class

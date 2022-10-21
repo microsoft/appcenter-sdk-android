@@ -5,6 +5,22 @@
 
 package com.microsoft.appcenter.utils.storage;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.spy;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
+
 import android.text.TextUtils;
 
 import com.microsoft.appcenter.utils.AppCenterLog;
@@ -27,22 +43,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 @SuppressWarnings("unused")
 @PrepareForTest({FileManager.class, AppCenterLog.class, TextUtils.class})
@@ -241,5 +241,39 @@ public class FileManagerTest {
 
         /* Verify when directory is not directory, that no crashes happen */
         FileManager.cleanDirectory(file1);
+    }
+
+    @Test
+    public void getNameWithDotAtTheEnd() {
+        File mockFile = mock(File.class);
+        String fileName = "someName.";
+        when(mockFile.getName()).thenReturn(fileName);
+        String result = FileManager.getNameWithoutExtension(mockFile);
+        assertEquals(result, fileName);
+    }
+
+    @Test
+    public void getNameWithDotAtTheStart() {
+        File mockFile = mock(File.class);
+        String fileName = ".someName";
+        when(mockFile.getName()).thenReturn(fileName);
+        String result = FileManager.getNameWithoutExtension(mockFile);
+        assertEquals(result, fileName);
+    }
+
+    @Test
+    public void getNameWithOutExtension() {
+        File mockFile = mock(File.class);
+        when(mockFile.getName()).thenReturn("someName.ext");
+        String result = FileManager.getNameWithoutExtension(mockFile);
+        assertEquals(result, "someName");
+    }
+
+    @Test
+    public void getNameWithDotsWithOutExtension() {
+        File mockFile = mock(File.class);
+        when(mockFile.getName()).thenReturn("someName.someInfo.ext");
+        String result = FileManager.getNameWithoutExtension(mockFile);
+        assertEquals(result, "someName.someInfo");
     }
 }

@@ -5,24 +5,6 @@
 
 package com.microsoft.appcenter.utils.storage;
 
-import android.annotation.SuppressLint;
-import android.content.ContentValues;
-import android.content.Context;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQueryBuilder;
-
-import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.filters.SmallTest;
-
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.util.Random;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -32,6 +14,24 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+
+import android.annotation.SuppressLint;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteQueryBuilder;
+
+import androidx.test.filters.SmallTest;
+import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.Random;
 
 @SuppressWarnings("unused")
 @SmallTest
@@ -120,11 +120,11 @@ public class DatabaseManagerAndroidTest {
         ContentValues value3 = generateContentValues();
 
         /* Put. */
-        long value1Id = databaseManager.put(value1, "COL_INTEGER");
+        long value1Id = databaseManager.put(value1);
         assertTrue(value1Id >= 0);
 
         /* Put another. */
-        long value2Id = databaseManager.put(value2, "COL_INTEGER");
+        long value2Id = databaseManager.put(value2);
         assertTrue(value2Id >= 0);
 
         /* Generate an ID that is neither value1Id nor value2Id. */
@@ -182,8 +182,8 @@ public class DatabaseManagerAndroidTest {
         ContentValues value5 = generateContentValues();
         value4.put("COL_STRING", value2.getAsString("COL_STRING"));
         value5.put("COL_STRING", value2.getAsString("COL_STRING") + "A");
-        long value4Id = databaseManager.put(value4, "COL_INTEGER");
-        long value5Id = databaseManager.put(value5, "COL_INTEGER");
+        long value4Id = databaseManager.put(value4);
+        long value5Id = databaseManager.put(value5);
         assertTrue(value4Id >= 0);
         assertTrue(value5Id >= 0);
 

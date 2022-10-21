@@ -5,11 +5,18 @@
 
 package com.microsoft.appcenter.persistence;
 
+import static com.microsoft.appcenter.AppCenter.LOG_TAG;
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.OPERATION_FAILED_FLAG;
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteFullException;
 import android.database.sqlite.SQLiteQueryBuilder;
+
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,6 +36,7 @@ import com.microsoft.appcenter.utils.storage.SQLiteUtils;
 import org.json.JSONException;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,10 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import static com.microsoft.appcenter.AppCenter.LOG_TAG;
-import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
-import static com.microsoft.appcenter.utils.storage.DatabaseManager.SELECT_PRIMARY_KEY;
 
 @SuppressWarnings("TryFinallyCanBeTryWithResources")
 public class DatabasePersistence extends Persistence {
@@ -123,7 +127,8 @@ public class DatabasePersistence extends Persistence {
      * Size limit (in bytes) for a database row log payload.
      * A separate file is used if payload is larger.
      */
-    private static final int PAYLOAD_MAX_SIZE = (int) (1.9 * 1024 * 1024);
+    @VisibleForTesting
+    static final int PAYLOAD_MAX_SIZE = (int) (1.9 * 1024 * 1024);
 
     /**
      * Sub path for directory where to store large payloads.
@@ -152,7 +157,7 @@ public class DatabasePersistence extends Persistence {
      * SQL command to drop logs table
      */
     private static final String DROP_LOGS_SQL = "DROP TABLE `logs`";
-    
+
     /**
      * SQL command to create index for logs
      */
@@ -185,6 +190,11 @@ public class DatabasePersistence extends Persistence {
      * Base directory to store large payloads outside of SQLite.
      */
     private final File mLargePayloadDirectory;
+
+    /**
+     * The size of the separated large files.
+     */
+    private long mLargePayloadsSize;
 
     /**
      * Initializes variables with default values.
@@ -232,6 +242,8 @@ public class DatabasePersistence extends Persistence {
 
         //noinspection ResultOfMethodCallIgnored we handle errors at read/write time for each file.
         mLargePayloadDirectory.mkdirs();
+
+        mLargePayloadsSize = checkLargePayloadFilesAndCollectTheirSize();
     }
 
     /**
@@ -257,7 +269,9 @@ public class DatabasePersistence extends Persistence {
 
     @Override
     public boolean setMaxStorageSize(long maxStorageSizeInBytes) {
-        return mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
+        boolean success = mDatabaseManager.setMaxSize(maxStorageSizeInBytes);
+        deleteLogsThatNotFitMaxSize();
+        return success;
     }
 
     @Override
@@ -286,16 +300,33 @@ public class DatabasePersistence extends Persistence {
                 targetToken = null;
             }
             long maxSize = mDatabaseManager.getMaxSize();
-            if (maxSize == -1) {
+            if (maxSize == OPERATION_FAILED_FLAG) {
                 throw new PersistenceException("Failed to store a log to the Persistence database.");
             }
-            if (!isLargePayload && maxSize <= payloadSize) {
+            if (maxSize <= payloadSize) {
                 throw new PersistenceException("Log is too large (" + payloadSize + " bytes) to store in database. " +
                         "Current maximum database size is " + maxSize + " bytes.");
             }
-            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, Flags.getPersistenceFlag(flags, false));
-            long databaseId = mDatabaseManager.put(contentValues, COLUMN_PRIORITY);
-            if (databaseId == -1) {
+            int priority = Flags.getPersistenceFlag(flags, false);
+            contentValues = getContentValues(group, isLargePayload ? null : payload, targetToken, log.getType(), targetKey, priority);
+            while (isLargePayload && payloadSize + getStoredDataSize() > maxSize) {
+                AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log.");
+                if (deleteTheOldestLog(priority) == OPERATION_FAILED_FLAG) {
+                    throw new PersistenceException("Failed to clear space for new log record.");
+                }
+            }
+            Long databaseId = null;
+            while (databaseId == null) {
+                try {
+                    databaseId = mDatabaseManager.put(contentValues);
+                } catch (SQLiteFullException e) {
+                    AppCenterLog.debug(LOG_TAG, "Storage is full, trying to delete the oldest log that has the lowest priority which is lower or equal priority than the new log.");
+                    if (deleteTheOldestLog(priority) == OPERATION_FAILED_FLAG) {
+                        databaseId = OPERATION_FAILED_FLAG;
+                    }
+                }
+            }
+            if (databaseId == OPERATION_FAILED_FLAG) {
                 throw new PersistenceException("Failed to store a log to the Persistence database for log type " + log.getType() + ".");
             }
             AppCenterLog.debug(LOG_TAG, "Stored a log to the Persistence database for log type " + log.getType() + " with databaseId=" + databaseId);
@@ -308,6 +339,8 @@ public class DatabasePersistence extends Persistence {
                 File payloadFile = getLargePayloadFile(directory, databaseId);
                 try {
                     FileManager.write(payloadFile, payload);
+                    mLargePayloadsSize += payloadFile.length();
+                    AppCenterLog.verbose(LOG_TAG, "Store extra " + payloadFile.length() + " KB as a separated payload file.");
                 } catch (IOException e) {
 
                     /* Remove database entry if we cannot save payload as a file. */
@@ -316,6 +349,7 @@ public class DatabasePersistence extends Persistence {
                 }
                 AppCenterLog.debug(LOG_TAG, "Payload written to " + payloadFile);
             }
+            deleteLogsThatNotFitMaxSize();
             return databaseId;
         } catch (JSONException e) {
             throw new PersistenceException("Cannot convert to JSON string.", e);
@@ -465,7 +499,7 @@ public class DatabasePersistence extends Persistence {
              */
             if (dbIdentifier == null) {
                 AppCenterLog.error(LOG_TAG, "Empty database record, probably content was larger than 2MB, need to delete as it's now corrupted.");
-                List<Long> corruptedIds = getLogsIds(builder, selectionArgsArray);
+                Set<Long> corruptedIds = getLogsIds(builder, selectionArgsArray);
                 for (Long corruptedId : corruptedIds) {
                     if (!mPendingDbIdentifiers.contains(corruptedId) && !candidates.containsKey(corruptedId)) {
 
@@ -579,8 +613,95 @@ public class DatabasePersistence extends Persistence {
         mDatabaseManager.close();
     }
 
-    private List<Long> getLogsIds(SQLiteQueryBuilder builder, String[] selectionArgs) {
-        List<Long> result = new ArrayList<>();
+    /**
+     * Delete the oldest logs that do not fit max storage size.
+     */
+    public void deleteLogsThatNotFitMaxSize() {
+        int normalPriority = Flags.getPersistenceFlag(Flags.NORMAL, false);
+        while (getStoredDataSize() >= mDatabaseManager.getMaxSize()) {
+            if (deleteTheOldestLog(normalPriority) == OPERATION_FAILED_FLAG) {
+                break;
+            }
+        }
+    }
+
+    private long getStoredDataSize() {
+        return mDatabaseManager.getCurrentSize() + mLargePayloadsSize;
+    }
+
+    /**
+     * Delete the log record from the database and the large payload file associated with this record if it exists.
+     *
+     * @param priority Value of maximum priority of record to delete.
+     * @return Id of deleted record.
+     */
+    private long deleteTheOldestLog(int priority) {
+        Set<String> columnsToGet = new HashSet<>();
+        columnsToGet.add(PRIMARY_KEY);
+        columnsToGet.add(COLUMN_GROUP);
+        ContentValues deletedRow = mDatabaseManager.deleteTheOldestRecord(columnsToGet, COLUMN_PRIORITY, priority);
+        if (deletedRow == null) {
+            return OPERATION_FAILED_FLAG;
+        }
+        long deletedId = deletedRow.getAsLong(PRIMARY_KEY);
+        String group = deletedRow.getAsString(COLUMN_GROUP);
+        File file = getLargePayloadFile(getLargePayloadGroupDirectory(group), deletedId);
+        if (!file.exists()) {
+            return deletedId;
+        }
+        long fileSize = file.length();
+        if (file.delete()) {
+            mLargePayloadsSize -= fileSize;
+            AppCenterLog.verbose(LOG_TAG, "Large payload file with id " + deletedId + " has been deleted. " + fileSize + " KB of memory has been freed.");
+        } else {
+            AppCenterLog.warn(LOG_TAG, "Cannot delete large payload file with id " + deletedId);
+        }
+        return deletedId;
+    }
+
+    private long checkLargePayloadFilesAndCollectTheirSize() {
+        FilenameFilter filter = new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String fileName) {
+                return fileName.endsWith(PAYLOAD_FILE_EXTENSION);
+            }
+        };
+        long size = 0;
+        SQLiteQueryBuilder builder = SQLiteUtils.newSQLiteQueryBuilder();
+        Set<Long> logsIds = getLogsIds(builder);
+        File[] groupFiles = mLargePayloadDirectory.listFiles();
+        if (groupFiles == null) {
+            return size;
+        }
+        for (File groupFile : groupFiles) {
+            File[] files = groupFile.listFiles(filter);
+            if (files == null) {
+                continue;
+            }
+            for (File file : files) {
+                long id;
+                try {
+                    id = Integer.parseInt(FileManager.getNameWithoutExtension(file));
+                } catch (NumberFormatException exception) {
+                    AppCenterLog.warn(LOG_TAG, "A file was found whose name does not match the pattern of naming log files: " + file.getName());
+                    continue;
+                }
+                if (logsIds.contains(id)) {
+                    size += file.length();
+                    continue;
+                }
+                if (!file.delete()) {
+                    AppCenterLog.warn(LOG_TAG, "Cannot delete redundant large payload file with id " + id);
+                    continue;
+                }
+                AppCenterLog.debug(LOG_TAG, "Lasted large payload file with name " + file.getName() + " has been deleted.");
+            }
+        }
+        return size;
+    }
+
+    private Set<Long> getLogsIds(SQLiteQueryBuilder builder, String... selectionArgs) {
+        Set<Long> result = new HashSet<>();
         try {
             Cursor cursor = mDatabaseManager.getCursor(builder, SELECT_PRIMARY_KEY, selectionArgs, null);
             try {
