@@ -1580,30 +1580,35 @@ public class Distribute extends AbstractAppCenterService {
         if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {
             return;
         }
-        AppCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
-        dialogBuilder.setCancelable(false);
-        dialogBuilder.setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
-        dialogBuilder.setMessage(R.string.appcenter_distribute_update_failed_dialog_message);
-        dialogBuilder.setPositiveButton(R.string.appcenter_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
+        if(mForegroundActivity!=null) {
+            AppCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
+            dialogBuilder.setCancelable(false);
+            dialogBuilder.setTitle(R.string.appcenter_distribute_update_failed_dialog_title);
+            dialogBuilder.setMessage(R.string.appcenter_distribute_update_failed_dialog_message);
+            dialogBuilder.setPositiveButton(R.string.appcenter_distribute_update_failed_dialog_ignore, new DialogInterface.OnClickListener() {
 
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                storeUpdateSetupFailedPackageHash(dialog);
-            }
-        });
-        dialogBuilder.setNegativeButton(R.string.appcenter_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    storeUpdateSetupFailedPackageHash(dialog);
+                }
+            });
+            dialogBuilder.setNegativeButton(R.string.appcenter_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
 
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                handleUpdateFailedDialogReinstallAction(dialog);
-            }
-        });
-        mUpdateSetupFailedDialog = dialogBuilder.create();
-        showAndRememberDialogActivity(mUpdateSetupFailedDialog);
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    handleUpdateFailedDialogReinstallAction(dialog);
+                }
+            });
+            mUpdateSetupFailedDialog = dialogBuilder.create();
+            showAndRememberDialogActivity(mUpdateSetupFailedDialog);
 
-        /* Don't show this dialog again. */
-        SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+            /* Don't show this dialog again. */
+            SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
+        }else
+        {
+            AppCenterLog.debug(LOG_TAG, "Failed to show the update setup failed dialog. The foreground activity is null");
+        }
     }
 
     /**
