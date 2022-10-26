@@ -1581,7 +1581,6 @@ public class Distribute extends AbstractAppCenterService {
             return;
         }
 
-        /* Check if foreground activity is null, if null we return, if not we proceed to show the setup failed dialog */
         if (mForegroundActivity == null) {
             AppCenterLog.debug(LOG_TAG, "Failed to show the update setup failed dialog. The foreground activity is null");
             return;
