@@ -1596,7 +1596,7 @@ public class Distribute extends AbstractAppCenterService {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                    storeUpdateSetupFailedPackageHash(dialog);
+                storeUpdateSetupFailedPackageHash(dialog);
             }
         });
         dialogBuilder.setNegativeButton(R.string.appcenter_distribute_update_failed_dialog_reinstall, new DialogInterface.OnClickListener() {
@@ -1611,7 +1611,6 @@ public class Distribute extends AbstractAppCenterService {
 
         /* Don't show this dialog again. */
         SharedPreferencesManager.remove(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY);
-
     }
 
     /**
