@@ -4,7 +4,7 @@
 
 ### App Center Distribute
 
-* **[Fix]** Fix NPE in Distribute SDK on resume of distribute work flow when showing update setup failed dialog.
+* **[Fix]** Fix NPE in Distribute module on resume distribute workflow when showing update setup failed dialog.
  ___
 
 ## Version 5.0.0
