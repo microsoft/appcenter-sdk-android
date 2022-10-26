@@ -1574,7 +1574,8 @@ public class Distribute extends AbstractAppCenterService {
      * Show update setup failed dialog.
      */
     @UiThread
-    private synchronized void showUpdateSetupFailedDialog() {
+    @VisibleForTesting
+    protected synchronized void showUpdateSetupFailedDialog() {
 
         /* Check if we need to replace the dialog. */
         if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {

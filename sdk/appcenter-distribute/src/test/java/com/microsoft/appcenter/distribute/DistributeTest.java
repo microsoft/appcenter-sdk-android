@@ -453,7 +453,8 @@ public class DistributeTest extends AbstractDistributeTest {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
 
         /* Trigger call. */
-        Distribute.getInstance().onActivityResumed(null);
+        Distribute.getInstance().showUpdateSetupFailedDialog();
+        mActivity = null;
         start();
 
         /* Verify dialog. */
