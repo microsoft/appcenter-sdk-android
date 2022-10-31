@@ -451,8 +451,8 @@ public class DistributeTest extends AbstractDistributeTest {
     @Test
     public void doNotShowUpdateSetupFailedDialogInNullForegroundActivity() {
         /* Trigger call. */
-        Distribute.getInstance().showUpdateSetupFailedDialog();
         start();
+        Distribute.getInstance().showUpdateSetupFailedDialog();
 
         /* Verify dialog. */
         verify(mDialogBuilder, never()).create();
