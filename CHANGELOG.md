@@ -5,6 +5,7 @@
 ### App Center Distribute
 
 * **[Fix]** Fix NPE in Distribute module on resume distribute workflow when showing update setup failed dialog.
+* **[Fix]** Fix Concurrent Modification Exception in DefaultChannel on setNetworkRequestsAllowed.
  ___
 
 ## Version 5.0.0

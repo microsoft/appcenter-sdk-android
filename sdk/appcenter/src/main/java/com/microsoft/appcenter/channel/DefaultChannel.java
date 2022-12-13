@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
@@ -160,7 +161,7 @@ public class DefaultChannel implements Channel {
         mContext = context;
         mAppSecret = appSecret;
         mInstallId = IdHelper.getInstallId();
-        mGroupStates = new HashMap<>();
+        mGroupStates = new ConcurrentHashMap<>();
         mListeners = new LinkedHashSet<>();
         mPersistence = persistence;
         mIngestion = ingestion;
