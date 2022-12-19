@@ -789,6 +789,11 @@ public class DefaultChannel implements Channel {
         return mGroupStates.get(groupName);
     }
 
+    @VisibleForTesting
+    Map<String, GroupState> getGroupStates() {
+        return mGroupStates;
+    }
+
     @Override
     public void addListener(Listener listener) {
         mListeners.add(listener);

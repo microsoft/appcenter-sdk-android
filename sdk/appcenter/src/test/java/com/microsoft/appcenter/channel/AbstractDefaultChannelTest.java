@@ -49,6 +49,8 @@ import static org.powermock.api.mockito.PowerMockito.mockStatic;
 public class AbstractDefaultChannelTest {
 
     static final String TEST_GROUP = "group_test";
+    static final String TEST_GROUP_TWO = "group_test_2";
+    static final String TEST_GROUP_THREE = "group_test_3";
 
     static final long BATCH_TIME_INTERVAL = 500;
 

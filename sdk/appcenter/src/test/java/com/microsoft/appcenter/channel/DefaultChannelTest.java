@@ -29,6 +29,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import android.content.Context;
 
 import com.microsoft.appcenter.CancellationException;
+import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpResponse;
@@ -55,6 +56,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -1201,49 +1203,31 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     {
         try
         {
-            //Create a concurrent hashmap that accepts modifications during iteration
-            ConcurrentHashMap<String,String> myMap = new ConcurrentHashMap<>();
-            myMap.put("1", "1");
-            myMap.put("2", "2");
-            myMap.put("3", "3");
+            Persistence mockPersistence = mock(Persistence.class);
+            AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+            Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+
+            //Get the concurrent hashmap in DefaultChannel that accepts modifications during iteration
+            DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+            Map<String, DefaultChannel.GroupState> myMap =  channel.getGroupStates();
+            channel.addGroup(TEST_GROUP_TWO, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
             //Iterate over the map and modify twice
             Iterator it1 = myMap.keySet().iterator();
             while (it1.hasNext()) {
                 String key = it1.next().toString();
-                System.out.println("Map Value:" + myMap.get(key));
-                if (key.equals("2")) {
-                    myMap.put("1", "4");
-                    myMap.put("4", "4");
+                if(key.equals(TEST_GROUP_TWO))
+                {
+                    channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+                    channel.addGroup(TEST_GROUP_THREE, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
                 }
+
             }
-            assertEquals(myMap.size(), 4);
+            assertEquals(myMap.size(), 3);
         }catch (Exception e)
         {
             fail("This code should not have thrown an Exception " + e.getMessage());
         }
 
-    }
-
-
-    @Test(expected = ConcurrentModificationException.class)
-    public void testConcurrentIterableDataStructureUpdatesFail()
-    {
-        //Create a hashmap that is sensitive to concurrent modifications by definition
-        HashMap<String,String> myMap = new HashMap<>();
-        myMap.put("1", "1");
-        myMap.put("2", "2");
-        myMap.put("3", "3");
-
-        //Iterate and modify twice. A Concurrent modification exception is expected.
-        Iterator it1 = myMap.keySet().iterator();
-        while (it1.hasNext()) {
-            String key = it1.next().toString();
-            System.out.println("Map Value:" + myMap.get(key));
-            if (key.equals("2")) {
-                myMap.put("1", "4");
-                myMap.put("4", "4");
-            }
-        }
     }
 }
