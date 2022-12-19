@@ -1199,10 +1199,8 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
     }
 
     @Test
-    public void testConcurrentIterableDataStructureUpdatesSuccess()
-    {
-        try
-        {
+    public void testConcurrentIterableDataStructureUpdatesSuccess() {
+        try {
             Persistence mockPersistence = mock(Persistence.class);
             AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
             Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
@@ -1218,39 +1216,14 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             Iterator it1 = myMap.keySet().iterator();
             while (it1.hasNext()) {
                 String key = it1.next().toString();
-                if(key.equals(TEST_GROUP_TWO))
-                {
+                if(key.equals(TEST_GROUP_TWO)) {
                     channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
                     channel.addGroup(TEST_GROUP_FOUR, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
                 }
 
             }
-        }catch (ConcurrentModificationException e)
-        {
+        }catch (ConcurrentModificationException e) {
             fail("This code should not have thrown an Exception " + e.getMessage());
-        }
-
-    }
-
-
-    @Test(expected = ConcurrentModificationException.class)
-    public void testConcurrentIterableDataStructureUpdatesFail()
-    {
-        //Create a hashmap that is sensitive to concurrent modifications by definition
-        HashMap<String,String> myMap = new HashMap<>();
-        myMap.put("1", "1");
-        myMap.put("2", "1");
-        myMap.put("3", "1");
-
-        //Iterate and modify twice. A Concurrent modification exception is expected.
-        Iterator it1 = myMap.keySet().iterator();
-        while (it1.hasNext()) {
-            String key = it1.next().toString();
-            System.out.println("Map Value:" + myMap.get(key));
-            if (key.equals("2")) {
-                myMap.put("1", "1");
-                myMap.put("4", "1");
-            }
         }
     }
 }
