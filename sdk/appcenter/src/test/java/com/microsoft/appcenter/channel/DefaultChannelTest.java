@@ -29,7 +29,6 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import android.content.Context;
 
 import com.microsoft.appcenter.CancellationException;
-import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.http.HttpException;
 import com.microsoft.appcenter.http.HttpResponse;
@@ -53,12 +52,10 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
 
@@ -1220,7 +1217,6 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                     channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
                     channel.addGroup(TEST_GROUP_FOUR, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
                 }
-
             }
         }catch (ConcurrentModificationException e) {
             fail("This code should not have thrown an Exception " + e.getMessage());
