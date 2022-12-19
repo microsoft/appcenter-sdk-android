@@ -1210,7 +1210,9 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             //Get the concurrent hashmap in DefaultChannel that accepts modifications during iteration
             DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
             Map<String, DefaultChannel.GroupState> myMap =  channel.getGroupStates();
+            channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
             channel.addGroup(TEST_GROUP_TWO, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+            channel.addGroup(TEST_GROUP_THREE, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
             //Iterate over the map and modify twice
             Iterator it1 = myMap.keySet().iterator();
@@ -1219,15 +1221,36 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
                 if(key.equals(TEST_GROUP_TWO))
                 {
                     channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
-                    channel.addGroup(TEST_GROUP_THREE, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+                    channel.addGroup(TEST_GROUP_FOUR, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
                 }
 
             }
-            assertEquals(myMap.size(), 3);
-        }catch (Exception e)
+        }catch (ConcurrentModificationException e)
         {
             fail("This code should not have thrown an Exception " + e.getMessage());
         }
 
+    }
+
+
+    @Test(expected = ConcurrentModificationException.class)
+    public void testConcurrentIterableDataStructureUpdatesFail()
+    {
+        //Create a hashmap that is sensitive to concurrent modifications by definition
+        HashMap<String,String> myMap = new HashMap<>();
+        myMap.put("1", "1");
+        myMap.put("2", "1");
+        myMap.put("3", "1");
+
+        //Iterate and modify twice. A Concurrent modification exception is expected.
+        Iterator it1 = myMap.keySet().iterator();
+        while (it1.hasNext()) {
+            String key = it1.next().toString();
+            System.out.println("Map Value:" + myMap.get(key));
+            if (key.equals("2")) {
+                myMap.put("1", "1");
+                myMap.put("4", "1");
+            }
+        }
     }
 }
