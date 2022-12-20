@@ -1213,12 +1213,12 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             Iterator it1 = myMap.keySet().iterator();
             while (it1.hasNext()) {
                 String key = it1.next().toString();
-                if(key.equals(TEST_GROUP_TWO)) {
+                if (key.equals(TEST_GROUP_TWO)) {
                     channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
                     channel.addGroup(TEST_GROUP_FOUR, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
                 }
             }
-        }catch (ConcurrentModificationException e) {
+        } catch (ConcurrentModificationException e) {
             fail("This code should not have thrown an Exception " + e.getMessage());
         }
     }
