@@ -1209,7 +1209,7 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             channel.addGroup(TEST_GROUP_TWO, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
             channel.addGroup(TEST_GROUP_THREE, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
-            //Iterate over the map and modify twice
+            // Iterate over the map and modify twice.
             Iterator it1 = myMap.keySet().iterator();
             while (it1.hasNext()) {
                 String key = it1.next().toString();
