@@ -1202,14 +1202,14 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
             AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
             Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
 
-            //Get the concurrent hashmap in DefaultChannel that accepts modifications during iteration
+            // Get the concurrent hashmap in DefaultChannel that accepts modifications during iteration.
             DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
             Map<String, DefaultChannel.GroupState> myMap =  channel.getGroupStates();
             channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
             channel.addGroup(TEST_GROUP_TWO, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
             channel.addGroup(TEST_GROUP_THREE, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
 
-            //Iterate over the map and modify twice
+            // Iterate over the map and modify twice.
             Iterator iterator = myMap.keySet().iterator();
             while (iterator.hasNext()) {
                 String key = iterator.next().toString();
