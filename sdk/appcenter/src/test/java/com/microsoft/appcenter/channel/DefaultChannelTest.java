@@ -9,6 +9,7 @@ import static com.microsoft.appcenter.Flags.NORMAL;
 import static com.microsoft.appcenter.channel.DefaultChannel.START_TIMER_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -49,8 +50,11 @@ import org.mockito.stubbing.Answer;
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class DefaultChannelTest extends AbstractDefaultChannelTest {
@@ -1189,5 +1193,33 @@ public class DefaultChannelTest extends AbstractDefaultChannelTest {
         when(mockIngestion.isEnabled()).thenReturn(true);
         channel.setNetworkRequests(true);
         verify(mockIngestion, times(2)).sendAsync(anyString(), any(UUID.class), any(LogContainer.class), any(ServiceCallback.class));
+    }
+
+    @Test
+    public void testConcurrentIterableDataStructureUpdatesSuccess() {
+        try {
+            Persistence mockPersistence = mock(Persistence.class);
+            AppCenterIngestion mockIngestion = mock(AppCenterIngestion.class);
+            Channel.GroupListener mockListener = mock(Channel.GroupListener.class);
+
+            // Get the concurrent hashmap in DefaultChannel that accepts modifications during iteration.
+            DefaultChannel channel = new DefaultChannel(mock(Context.class), UUID.randomUUID().toString(), mockPersistence, mockIngestion, mAppCenterHandler);
+            Map<String, DefaultChannel.GroupState> myMap =  channel.getGroupStates();
+            channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+            channel.addGroup(TEST_GROUP_TWO, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+            channel.addGroup(TEST_GROUP_THREE, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+
+            // Iterate over the map and modify twice.
+            Iterator iterator = myMap.keySet().iterator();
+            while (iterator.hasNext()) {
+                String key = iterator.next().toString();
+                if (key.equals(TEST_GROUP_TWO)) {
+                    channel.addGroup(TEST_GROUP, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+                    channel.addGroup(TEST_GROUP_FOUR, 50, BATCH_TIME_INTERVAL, MAX_PARALLEL_BATCHES, null, mockListener);
+                }
+            }
+        } catch (ConcurrentModificationException e) {
+            fail("This code should not have thrown an Exception " + e.getMessage());
+        }
     }
 }
