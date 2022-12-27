@@ -26,7 +26,6 @@ allprojects {
 
 subprojects {
     apply plugin: 'com.android.library'
-    apply plugin: 'com.github.dcendents.android-maven'
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
@@ -166,59 +165,64 @@ subprojects {
         archives sourcesJar
     }
 
-    afterEvaluate { project ->
-        uploadArchives {
-            repositories {
-                mavenDeployer {
-                    beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-                    repository(url: ext.mavenRepoUrl) {
-                        authentication(userName: ext.mavenUser, password: ext.mavenKey)
-                    }
-
-                    pom.project {
-
-                        // Set base information about assemble.
-                        packaging = 'aar'
-                        name = project.name
-                        description = project.description
-                        url = ext.siteUrl
-
-                        // Set identifiers of assemble.
-                        groupId = ext.groupId
-                        artifactId = project.name
-
-                        // Set license information.
-                        licenses {
-                            license {
-                                name = ext.licenseName
-                                url = ext.licenseSite
-                            }
-                        }
-
-                        // Set information about developers.
-                        developers {
-                            developer {
-                                id = ext.developerId
-                                name = ext.developerName
-                                email = ext.developerEmail
-                            }
-                        }
-
-                        // Set information about connection with developers.
-                        scm {
-                            connection = ext.gitUrl
-                            developerConnection = ext.gitUrl
-                            url = ext.siteUrl
-                        }
-                    }
+    publishing {
+        repositories {
+            maven {
+                url = ext.mavenRepoUrl
+                credentials {
+                    username = ext.mavenUser
+                    password = ext.mavenKey
                 }
             }
+        }
+        publications {
+            release(MavenPublication) {
+                pom {
 
-            signing {
-                required { gradle.taskGraph.hasTask("uploadArchives") }
-                sign configurations.archives
+                    // Set base information about assemble.
+                    packaging = 'aar'
+                    name = project.name
+                    description = project.description
+                    url = ext.siteUrl
+
+                    // Set identifiers of assemble.
+                    groupId = ext.groupId
+                    artifactId = project.name
+
+                    // Set license information.
+                    licenses {
+                        license {
+                            name = ext.licenseName
+                            url = ext.licenseSite
+                        }
+                    }
+
+                    // Set information about developers.
+                    developers {
+                        developer {
+                            id = ext.developerId
+                            name = ext.developerName
+                            email = ext.developerEmail
+                        }
+                    }
+
+                    // Set information about connection with developers.
+                    scm {
+                        connection = ext.gitUrl
+                        developerConnection = ext.gitUrl
+                        url = ext.siteUrl
+                    }
+                }
+
+                afterEvaluate {
+                    from components.release
+                }
             }
+        }
+
+        signing {
+            required { gradle.taskGraph.hasTask("uploadArchives") }
+            sign publishing.publications.release
         }
     }
 }
