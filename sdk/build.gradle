@@ -221,7 +221,7 @@ subprojects {
         }
 
         signing {
-            required { gradle.taskGraph.hasTask("uploadArchives") }
+            required { gradle.taskGraph.hasTask("publish") }
             sign publishing.publications.release
         }
     }
