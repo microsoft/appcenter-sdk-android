@@ -5,7 +5,7 @@
 ### AppCenter
 
 * **[Fix]** Fix Concurrent Modification Exception in DefaultChannel on setNetworkRequestsAllowed.
-* **[Fix]** Migrate "com.github.dcendents.android-maven" to "maven-publish" 
+* **[Improvement]** Migrate from Maven Dcendents to Maven Publish plugin.
 
 ### App Center Distribute
 
