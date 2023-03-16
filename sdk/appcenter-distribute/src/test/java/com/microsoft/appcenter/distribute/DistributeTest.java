@@ -449,6 +449,16 @@ public class DistributeTest extends AbstractDistributeTest {
     }
 
     @Test
+    public void doNotShowUpdateSetupFailedDialogInNullForegroundActivity() {
+        /* Trigger call. */
+        start();
+        Distribute.getInstance().showUpdateSetupFailedDialog();
+
+        /* Verify dialog. */
+        verify(mDialogBuilder, never()).create();
+    }
+
+    @Test
     public void showUpdateSetupFailedDialogInForeground() {
         when(SharedPreferencesManager.getString(PREFERENCE_KEY_UPDATE_SETUP_FAILED_MESSAGE_KEY)).thenReturn("failed_message");
 

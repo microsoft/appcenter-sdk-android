@@ -1574,12 +1574,19 @@ public class Distribute extends AbstractAppCenterService {
      * Show update setup failed dialog.
      */
     @UiThread
-    private synchronized void showUpdateSetupFailedDialog() {
+    @VisibleForTesting
+    protected synchronized void showUpdateSetupFailedDialog() {
 
         /* Check if we need to replace the dialog. */
         if (!shouldRefreshDialog(mUpdateSetupFailedDialog)) {
             return;
         }
+
+        if (mForegroundActivity == null) {
+            AppCenterLog.debug(LOG_TAG, "Failed to show the update setup failed dialog. The foreground activity is null");
+            return;
+        }
+
         AppCenterLog.debug(LOG_TAG, "Show update setup failed dialog.");
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(mForegroundActivity);
         dialogBuilder.setCancelable(false);

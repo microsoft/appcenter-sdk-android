@@ -1,5 +1,17 @@
 # App Center SDK for Android Change Log
 
+## Version 5.0.1
+
+### AppCenter
+
+* **[Fix]** Fix Concurrent Modification Exception in DefaultChannel on setNetworkRequestsAllowed.
+* **[Improvement]** Migrate from Maven Dcendents to Maven Publish plugin.
+
+### App Center Distribute
+
+* **[Fix]** Fix NPE in Distribute module on resume distribute workflow when showing update setup failed dialog.
+ ___
+
 ## Version 5.0.0
 
 ### AppCenter
