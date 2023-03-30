@@ -159,12 +159,6 @@ subprojects {
         from javadoc.destinationDir
     }
 
-    // Set artifacts for publish.
-    artifacts {
-        archives javadocJar
-        archives sourcesJar
-    }
-
     publishing {
         repositories {
             maven {
@@ -175,54 +169,58 @@ subprojects {
                 }
             }
         }
-        publications {
-            release(MavenPublication) {
-                pom {
 
-                    // Set base information about assemble.
-                    packaging = 'aar'
-                    name = project.name
-                    description = project.description
-                    url = ext.siteUrl
-
-                    // Set identifiers of assemble.
-                    groupId = ext.groupId
-                    artifactId = project.name
-
-                    // Set license information.
-                    licenses {
-                        license {
-                            name = ext.licenseName
-                            url = ext.licenseSite
-                        }
-                    }
-
-                    // Set information about developers.
-                    developers {
-                        developer {
-                            id = ext.developerId
-                            name = ext.developerName
-                            email = ext.developerEmail
-                        }
-                    }
-
-                    // Set information about connection with developers.
-                    scm {
-                        connection = ext.gitUrl
-                        developerConnection = ext.gitUrl
-                        url = ext.siteUrl
-                    }
-                }
-
-                afterEvaluate {
+        afterEvaluate { project ->
+            publications {
+                release(MavenPublication) {
                     from components.release
+
+                    artifact javadocJar
+                    artifact sourcesJar
+
+                    pom {
+
+                        // Set base information about assemble.
+                        packaging = 'aar'
+                        name = project.name
+                        description = project.description
+                        url = ext.siteUrl
+
+                        // Set identifiers of assemble.
+                        groupId = ext.groupId
+                        artifactId = project.name
+
+                        // Set license information.
+                        licenses {
+                            license {
+                                name = ext.licenseName
+                                url = ext.licenseSite
+                            }
+                        }
+
+                        // Set information about developers.
+                        developers {
+                            developer {
+                                id = ext.developerId
+                                name = ext.developerName
+                                email = ext.developerEmail
+                            }
+                        }
+
+                        // Set information about connection with developers.
+                        scm {
+                            connection = ext.gitUrl
+                            developerConnection = ext.gitUrl
+                            url = ext.siteUrl
+                        }
+                    }
                 }
             }
-        }
 
-        signing {
-            required { gradle.taskGraph.hasTask("publish") }
-            sign publishing.publications.release
+            signing {
+                required { gradle.taskGraph.hasTask("publish") }
+                sign publishing.publications.release
+            }
         }
     }
 }
