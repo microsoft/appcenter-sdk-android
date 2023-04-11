@@ -23,8 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static android.content.Context.CONNECTIVITY_SERVICE;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
-import com.microsoft.appcenter.ingestion.models.Log;
-
 /**
  * Network state helper.
  */
