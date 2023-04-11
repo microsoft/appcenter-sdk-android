@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static android.content.Context.CONNECTIVITY_SERVICE;
 import static com.microsoft.appcenter.AppCenter.LOG_TAG;
 
+import com.microsoft.appcenter.ingestion.models.Log;
+
 /**
  * Network state helper.
  */
@@ -143,9 +145,13 @@ public class NetworkStateHelper implements Closeable {
             return false;
         }
         for (Network network : networks) {
-            NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
-            if (info != null && info.isConnected()) {
-                return true;
+            try {
+                NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
+                if (info != null && info.isConnected()) {
+                    return true;
+                }
+            } catch (NullPointerException e) {
+                AppCenterLog.debug(LOG_TAG, network.toString());
             }
         }
         return false;
