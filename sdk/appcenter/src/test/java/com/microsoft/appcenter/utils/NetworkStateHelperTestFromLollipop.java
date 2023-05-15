@@ -165,6 +165,7 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
 
         /* Check if Runtime exception catching properly  */
         when(mConnectivityManager.getNetworkInfo(any())).thenThrow(new NullPointerException());
+        helper.isNetworkConnected();
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
