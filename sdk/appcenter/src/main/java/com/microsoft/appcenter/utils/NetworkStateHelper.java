@@ -148,8 +148,8 @@ public class NetworkStateHelper implements Closeable {
                 if (info != null && info.isConnected()) {
                     return true;
                 }
-            } catch (NullPointerException e) {
-                AppCenterLog.debug(LOG_TAG, network.toString());
+            } catch (RuntimeException e) {
+                AppCenterLog.error(LOG_TAG, network.toString());
             }
         }
         return false;

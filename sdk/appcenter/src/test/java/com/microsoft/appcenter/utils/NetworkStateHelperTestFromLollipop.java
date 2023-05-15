@@ -158,6 +158,11 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         /* Verify we didn't try to use older APIs after Lollipop on newer devices. */
         verify(mContext, never()).registerReceiver(any(BroadcastReceiver.class), any(IntentFilter.class));
         verify(mContext, never()).unregisterReceiver(any(BroadcastReceiver.class));
+
+        /* Check if Runtime exception catching properly  */
+        when(mConnectivityManager.getNetworkInfo(any())).thenThrow(new NullPointerException());
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
 
     @Test
