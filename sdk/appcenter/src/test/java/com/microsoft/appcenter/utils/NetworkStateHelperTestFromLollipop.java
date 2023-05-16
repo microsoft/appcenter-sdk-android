@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -166,6 +167,19 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         /* Check if Runtime exception catching properly  */
         when(mConnectivityManager.getNetworkInfo(any())).thenThrow(new NullPointerException());
         helper.isNetworkConnected();
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
+    }
+
+    @Test
+    public void checkCatch() {
+        NetworkStateHelper helper = new NetworkStateHelper(mContext);
+        Network network = mock(Network.class);
+
+        reset(mConnectivityManager);
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network });
+        when(mConnectivityManager.getNetworkInfo(any())).thenThrow(new NullPointerException());
+        assertFalse(helper.isNetworkConnected());
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
     }
