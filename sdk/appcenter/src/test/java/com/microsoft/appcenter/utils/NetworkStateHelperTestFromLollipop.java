@@ -38,15 +38,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest(NetworkStateHelper.class)
+@PrepareForTest({NetworkStateHelper.class, AppCenterLog.class})
 public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelperTest {
 
     @Before
     public void setUp() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
+
+        /* Mock static classes. */
+        mockStatic(AppCenterLog.class);
     }
 
     @After
