@@ -149,7 +149,7 @@ public class NetworkStateHelper implements Closeable {
                     return true;
                 }
             } catch (RuntimeException e) {
-                AppCenterLog.error(LOG_TAG, network.toString());
+                AppCenterLog.warn(LOG_TAG, "Failed to get network info", e);
             }
         }
         return false;
