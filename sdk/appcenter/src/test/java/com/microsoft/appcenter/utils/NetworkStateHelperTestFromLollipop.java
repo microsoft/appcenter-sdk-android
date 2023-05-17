@@ -32,7 +32,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -196,6 +195,6 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         when(mConnectivityManager.getNetworkInfo(any())).thenThrow(new NullPointerException());
         assertFalse(helper.isNetworkConnected());
         verifyStatic(AppCenterLog.class);
-        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString());
+        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 }
