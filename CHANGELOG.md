@@ -4,7 +4,7 @@
 
 ### AppCenter
 
-* **[Fix]** Fix SDK crash if the underlying Android call throws an exception. 
+* **[Fix]** Fix SDK crash if the `ConnectivityManager.getNetworkInfo` method call throws an exception.
 
 ## Version 5.0.1
 
