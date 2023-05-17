@@ -1,5 +1,11 @@
 # App Center SDK for Android Change Log
 
+## Version 5.0.2 (In development)
+
+### AppCenter
+
+* **[Fix]** Fix SDK crash if the underlying Android call throws an exception. 
+
 ## Version 5.0.1
 
 ### AppCenter
