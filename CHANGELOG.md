@@ -4,6 +4,7 @@
 
 ### AppCenter
 
+* **[Improvement]** Support updates using AAB file uploaded to the portal.
 * **[Fix]** Fix SDK crash if the `ConnectivityManager.getNetworkInfo` method call throws an exception.
 
 ## Version 5.0.1
