@@ -19,7 +19,6 @@ import static com.microsoft.appcenter.distribute.DistributeConstants.HEADER_API_
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_DISTRIBUTION_GROUP_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_INSTALL_ID;
-import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_IS_INSTALL_PAGE;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_RELEASE_ID;
 import static com.microsoft.appcenter.distribute.DistributeConstants.PARAMETER_UPDATE_SETUP_FAILED;
 import static com.microsoft.appcenter.distribute.DistributeConstants.POSTPONE_TIME_THRESHOLD;
@@ -1065,7 +1064,6 @@ public class Distribute extends AbstractAppCenterService {
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
-        url += "&" + PARAMETER_IS_INSTALL_PAGE + "=" + "true";
         Map<String, String> headers = new HashMap<>();
         if (updateToken != null) {
             headers.put(HEADER_API_TOKEN, updateToken);
