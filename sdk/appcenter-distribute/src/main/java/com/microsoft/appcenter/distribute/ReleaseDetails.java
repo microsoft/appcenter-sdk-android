@@ -32,6 +32,8 @@ public class ReleaseDetails {
 
     private static final String MIN_API_LEVEL = "android_min_api_level";
 
+    private static final String FILE_EXTENSION = "fileExtension";
+
     private static final String DOWNLOAD_URL = "download_url";
 
     private static final String MANDATORY_UPDATE = "mandatory_update";
@@ -80,6 +82,11 @@ public class ReleaseDetails {
     private int minApiLevel;
 
     /**
+     * The original update file extension.
+     */
+    private FileExtension fileExtension;
+
+    /**
      * The URL that hosts the binary for this release.
      */
     private Uri downloadUrl;
@@ -117,6 +124,7 @@ public class ReleaseDetails {
         releaseDetails.releaseNotes = object.isNull(RELEASE_NOTES) ? null : object.getString(RELEASE_NOTES);
         releaseDetails.releaseNotesUrl = object.isNull(RELEASE_NOTES_URL) ? null : Uri.parse(object.getString(RELEASE_NOTES_URL));
         releaseDetails.minApiLevel = object.getInt(MIN_API_LEVEL);
+        releaseDetails.fileExtension = FileExtension.valueOf(object.getString(FILE_EXTENSION));
         releaseDetails.downloadUrl = Uri.parse(object.getString(DOWNLOAD_URL));
         String scheme = releaseDetails.downloadUrl.getScheme();
         if (scheme == null || !scheme.startsWith("http")) {
@@ -193,6 +201,15 @@ public class ReleaseDetails {
      */
     int getMinApiLevel() {
         return minApiLevel;
+    }
+
+    /**
+     * Get The original update file extension value.
+     *
+     * @return the fileExtension value
+     */
+    public FileExtension getFileExtension() {
+        return fileExtension;
     }
 
     /**

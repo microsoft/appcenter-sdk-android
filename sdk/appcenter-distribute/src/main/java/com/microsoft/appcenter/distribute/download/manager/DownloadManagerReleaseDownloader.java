@@ -23,6 +23,7 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
+import com.microsoft.appcenter.distribute.FileExtension;
 import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.AbstractReleaseDownloader;
@@ -250,7 +251,10 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
 
     private boolean isDownloadedFileValid() {
         try (ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId)) {
-            return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
+            if (mReleaseDetails.getFileExtension() == FileExtension.apk) {
+                return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
+            }
+            return true;
         } catch (IOException e) {
             AppCenterLog.error(LOG_TAG, "Cannot open downloaded file for id=" + mDownloadId, e);
             return false;

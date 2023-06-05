@@ -137,6 +137,11 @@ public final class DistributeConstants {
     static final String PARAMETER_INSTALL_ID = "install_id";
 
     /**
+     * API parameter for downloading the update apk file, even if an aab file was uploaded.
+     */
+    static final String PARAMETER_IS_INSTALL_PAGE = "is_install_page";
+
+    /**
      * Invalid download identifier.
      */
     public static final long INVALID_DOWNLOAD_IDENTIFIER = -1;
