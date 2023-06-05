@@ -1065,7 +1065,7 @@ public class Distribute extends AbstractAppCenterService {
         } else {
             url += String.format(GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT, mAppSecret, releaseHash, getReportingParametersForUpdatedRelease(false, distributionGroupId));
         }
-        url += "&" + PARAMETER_IS_INSTALL_PAGE + "=" + "true";
+        url += "&" + PARAMETER_IS_INSTALL_PAGE + "=true";
         Map<String, String> headers = new HashMap<>();
         if (updateToken != null) {
             headers.put(HEADER_API_TOKEN, updateToken);
