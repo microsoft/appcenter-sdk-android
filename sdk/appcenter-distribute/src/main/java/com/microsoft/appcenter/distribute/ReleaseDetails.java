@@ -206,7 +206,7 @@ public class ReleaseDetails {
     /**
      * Get The original update file extension value.
      *
-     * @return the fileExtension value
+     * @return the FileExtension value.
      */
     public FileExtension getFileExtension() {
         return fileExtension;
