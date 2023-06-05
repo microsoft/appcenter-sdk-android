@@ -34,6 +34,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 
+import com.microsoft.appcenter.distribute.FileExtension;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.ReleaseDownloader;
 import com.microsoft.appcenter.utils.AsyncTaskUtils;
@@ -455,12 +456,31 @@ public class DownloadManagerReleaseDownloaderTest {
         /* If size is different. */
         when(mReleaseDetails.getSize()).thenReturn(142 * 1024L);
 
+        /* Define file extension. */
+        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
+
         /* Complete download. */
         mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
         verify(mFileDescriptor).close();
         verify(mListener).onError(anyString());
+    }
+
+    @Test
+    public void ignoreFileSizeComparisonForApkTransformedFromAab() {
+        /* If size is different. */
+        when(mReleaseDetails.getSize()).thenReturn(142 * 1024L);
+
+        /* Define file extension. */
+        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.aab);
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
+
+        /* Verify. */
+        verify(mFileDescriptor, times(0)).getStatSize();
+        verify(mListener, times(0)).onError(anyString());
     }
 
     @Test
