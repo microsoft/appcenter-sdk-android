@@ -47,6 +47,7 @@ public class ReleaseDetailsTest {
         assertFalse(releaseDetails.isMandatoryUpdate());
         assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
         assertEquals("fd37a4b1-4937-45ef-97fb-b864154371f0", releaseDetails.getDistributionGroupId());
+        assertEquals(FileExtension.apk, releaseDetails.getFileExtension());
     }
 
     @Test(expected = JSONException.class)
