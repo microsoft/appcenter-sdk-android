@@ -468,6 +468,19 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
+    public void sizeOfApkIsCorrect() {
+        /* Define file extension. */
+        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
+
+        /* Verify. */
+        verify(mFileDescriptor).getStatSize();
+        verify(mListener, times(0)).onError(anyString());
+    }
+
+    @Test
     public void ignoreFileSizeComparisonForApkTransformedFromAab() {
         /* If size is different. */
         when(mReleaseDetails.getSize()).thenReturn(142 * 1024L);
