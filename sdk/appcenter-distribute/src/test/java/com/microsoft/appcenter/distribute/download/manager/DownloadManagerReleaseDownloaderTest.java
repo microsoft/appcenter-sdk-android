@@ -511,7 +511,7 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void exceptionOnClosingFileDescriptor() throws IOException {
+    public void iOExceptionOnClosingFileDescriptor() throws IOException {
 
         /* Throw exception in invalid size callback. */
         doThrow(new IOException()).when(mFileDescriptor).close();
@@ -523,6 +523,26 @@ public class DownloadManagerReleaseDownloaderTest {
         verify(mFileDescriptor).close();
         verify(mListener, never()).onComplete(any(Uri.class));
         verify(mListener).onError(anyString());
+    }
+
+    @Test
+    public void notIoExceptionOnClosingFileDescriptor() throws IOException {
+
+        /* Throw exception in invalid size callback. */
+        String exceptionMessage = "Test RuntimeException";
+        doThrow(new RuntimeException(exceptionMessage)).when(mFileDescriptor).close();
+
+        /* Complete download. */
+
+        try {
+            mReleaseDownloader.onDownloadComplete();
+        } catch (Exception e) {
+            assertEquals(exceptionMessage, e.getMessage());
+        }
+
+        /* Verify. */
+        verify(mFileDescriptor).close();
+        verify(mListener, never()).onComplete(any(Uri.class));
     }
 
     @Test
