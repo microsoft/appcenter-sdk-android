@@ -406,6 +406,8 @@ public class DownloadManagerReleaseDownloaderTest {
 
     @Test
     public void completeDownload() throws IOException {
+        /* Define file extension. */
+        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
 
         /* Complete download. */
         mReleaseDownloader.onDownloadComplete();
@@ -439,6 +441,8 @@ public class DownloadManagerReleaseDownloaderTest {
 
     @Test
     public void errorOnOpenDownloadedFile() throws IOException {
+        /* Define file extension. */
+        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
 
         /* Throw exception. */
         when(mDownloadManager.openDownloadedFile(anyLong())).thenThrow(new FileNotFoundException());
@@ -498,6 +502,8 @@ public class DownloadManagerReleaseDownloaderTest {
 
     @Test
     public void errorDownloadFileNotFound() throws IOException {
+        /* Define file extension. */
+        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
 
         /* DownloadManager returns null. */
         when(mDownloadManager.getUriForDownloadedFile(anyLong())).thenReturn(null);
@@ -512,6 +518,8 @@ public class DownloadManagerReleaseDownloaderTest {
 
     @Test
     public void iOExceptionOnGetStatSizeFileDescriptor() throws IOException {
+        /* Define file extension. */
+        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
 
         /* Throw exception in invalid size callback. */
         doThrow(new IOException()).when(mFileDescriptor).close();
