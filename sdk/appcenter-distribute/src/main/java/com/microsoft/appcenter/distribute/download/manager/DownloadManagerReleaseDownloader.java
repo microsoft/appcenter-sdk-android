@@ -251,11 +251,12 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
 
     private boolean isDownloadedFileValid() {
         try {
-            ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId);
             if (mReleaseDetails.getFileExtension() == FileExtension.apk) {
-                return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
+                ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId);
+                boolean isValid = fileDescriptor.getStatSize() == mReleaseDetails.getSize();
+                fileDescriptor.close();
+                return isValid;
             }
-            fileDescriptor.close();
             return true;
         } catch (IOException e) {
             AppCenterLog.error(LOG_TAG, "Cannot open downloaded file for id=" + mDownloadId, e);
