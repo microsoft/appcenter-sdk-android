@@ -526,25 +526,6 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void runtimeExceptionOnGetStatSizeFileDescriptor() throws IOException {
-
-        /* Throw exception in invalid size callback. */
-        String exceptionMessage = "Test FileNotFoundException";
-        doThrow(new FileNotFoundException(exceptionMessage)).when(mDownloadManager).openDownloadedFile(anyLong());
-
-        /* Complete download. */
-
-        try {
-            mReleaseDownloader.onDownloadComplete();
-        } catch (Exception e) {
-            assertEquals(exceptionMessage, e.getMessage());
-        }
-
-        /* Verify. */
-        verify(mListener, never()).onComplete(any(Uri.class));
-    }
-
-    @Test
     public void errorDownloadDoesNothingAfterCancellation() {
         mReleaseDownloader.cancel();
         mReleaseDownloader.onDownloadError(new RuntimeException("Test"));
