@@ -511,7 +511,7 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void iOExceptionOnClosingFileDescriptor() throws IOException {
+    public void iOExceptionOnGetStatSizeFileDescriptor() throws IOException {
 
         /* Throw exception in invalid size callback. */
         doThrow(new IOException()).when(mFileDescriptor).close();
@@ -526,11 +526,11 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
-    public void notIoExceptionOnClosingFileDescriptor() throws IOException {
+    public void runtimeExceptionOnGetStatSizeFileDescriptor() throws IOException {
 
         /* Throw exception in invalid size callback. */
-        String exceptionMessage = "Test RuntimeException";
-        doThrow(new RuntimeException(exceptionMessage)).when(mFileDescriptor).close();
+        String exceptionMessage = "Test FileNotFoundException";
+        doThrow(new FileNotFoundException(exceptionMessage)).when(mDownloadManager).openDownloadedFile(anyLong());
 
         /* Complete download. */
 
@@ -541,7 +541,6 @@ public class DownloadManagerReleaseDownloaderTest {
         }
 
         /* Verify. */
-        verify(mFileDescriptor).close();
         verify(mListener, never()).onComplete(any(Uri.class));
     }
 
