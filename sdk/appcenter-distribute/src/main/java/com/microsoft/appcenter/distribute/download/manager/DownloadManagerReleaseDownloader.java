@@ -250,12 +250,9 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     private boolean isDownloadedFileValid() {
-        try {
+        try (ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId)) {
             if (mReleaseDetails.getFileExtension() == FileExtension.apk) {
-                ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId);
-                boolean isValid = fileDescriptor.getStatSize() == mReleaseDetails.getSize();
-                fileDescriptor.close();
-                return isValid;
+                return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
             }
             return true;
         } catch (IOException e) {
