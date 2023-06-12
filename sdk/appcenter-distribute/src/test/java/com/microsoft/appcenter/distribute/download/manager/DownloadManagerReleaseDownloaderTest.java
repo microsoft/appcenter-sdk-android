@@ -455,6 +455,21 @@ public class DownloadManagerReleaseDownloaderTest {
     }
 
     @Test
+    public void errorOnCloseFileDescriptor() throws IOException {
+        /* Define file extension. */
+        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
+
+        /* Throw exception. */
+        doThrow(new IOException()).when(mFileDescriptor).close();
+
+        /* Complete download. */
+        mReleaseDownloader.onDownloadComplete();
+
+        /* Verify. */
+        verify(mListener).onError(anyString());
+    }
+
+    @Test
     public void errorOnInvalidFile() throws IOException {
 
         /* If size is different. */
@@ -513,22 +528,6 @@ public class DownloadManagerReleaseDownloaderTest {
 
         /* Verify. */
         verify(mFileDescriptor).close();
-        verify(mListener).onError(anyString());
-    }
-
-    @Test
-    public void iOExceptionOnGetStatSizeFileDescriptor() throws IOException {
-        /* Define file extension. */
-        when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
-
-        /* Throw exception in invalid size callback. */
-        when(mDownloadManager.openDownloadedFile(anyLong())).thenThrow(new FileNotFoundException());
-
-        /* Complete download. */
-        mReleaseDownloader.onDownloadComplete();
-
-        /* Verify. */
-        verify(mListener, never()).onComplete(any(Uri.class));
         verify(mListener).onError(anyString());
     }
 
