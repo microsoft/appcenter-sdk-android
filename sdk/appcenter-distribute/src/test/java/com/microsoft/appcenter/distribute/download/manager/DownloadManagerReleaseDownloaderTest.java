@@ -522,13 +522,12 @@ public class DownloadManagerReleaseDownloaderTest {
         when(mReleaseDetails.getFileExtension()).thenReturn(FileExtension.apk);
 
         /* Throw exception in invalid size callback. */
-        doThrow(new IOException()).when(mFileDescriptor).close();
+        when(mDownloadManager.openDownloadedFile(anyLong())).thenThrow(new FileNotFoundException());
 
         /* Complete download. */
         mReleaseDownloader.onDownloadComplete();
 
         /* Verify. */
-        verify(mFileDescriptor).close();
         verify(mListener, never()).onComplete(any(Uri.class));
         verify(mListener).onError(anyString());
     }
