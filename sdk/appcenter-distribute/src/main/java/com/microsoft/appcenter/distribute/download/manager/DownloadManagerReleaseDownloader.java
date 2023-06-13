@@ -253,8 +253,9 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
         try (ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId)) {
             if (mReleaseDetails.getFileExtension() == FileExtension.apk) {
                 return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
+            } else {
+                return true;
             }
-            return true;
         } catch (IOException e) {
             AppCenterLog.error(LOG_TAG, "Cannot open downloaded file for id=" + mDownloadId, e);
             return false;
