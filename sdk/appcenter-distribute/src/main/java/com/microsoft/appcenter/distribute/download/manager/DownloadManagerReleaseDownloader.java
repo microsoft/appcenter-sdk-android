@@ -250,12 +250,11 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     private boolean isDownloadedFileValid() {
+        if (mReleaseDetails.getFileExtension() != FileExtension.apk) {
+            return true;
+        }
         try (ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId)) {
-            if (mReleaseDetails.getFileExtension() == FileExtension.apk) {
-                return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
-            } else {
-                return true;
-            }
+            return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
         } catch (IOException e) {
             AppCenterLog.error(LOG_TAG, "Cannot open downloaded file for id=" + mDownloadId, e);
             return false;
