@@ -77,14 +77,16 @@ public final class DistributeConstants {
     static final String PRIVATE_UPDATE_SETUP_PATH_FORMAT = "/apps/%s/private-update-setup/";
 
     /**
-     * Check latest private release API URL path. Contains variables: appSecret, release_hash, extra query string parameters.
+     * Check latest private release API URL path. Contains variables: is_install_page, appSecret, release_hash, extra query string parameters.
+     * is_install_page - API parameter for downloading the update apk file, even if an aab file was uploaded.
      */
-    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/private/latest?release_hash=%s%s";
+    static final String GET_LATEST_PRIVATE_RELEASE_PATH_FORMAT = "/sdk/apps/%s/releases/private/latest?is_install_page=true&release_hash=%s%s";
 
     /**
-     * Check latest public release API URL path. Contains variables: appSecret, release_hash, extra query string parameters.
+     * Check latest public release API URL path. Contains variables: is_install_page, appSecret, release_hash, extra query string parameters.
+     * is_install_page - API parameter for downloading the update apk file, even if an aab file was uploaded.
      */
-    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/releases/latest?release_hash=%s%s";
+    static final String GET_LATEST_PUBLIC_RELEASE_PATH_FORMAT = "/public/sdk/apps/%s/releases/latest?is_install_page=true&release_hash=%s%s";
 
     /**
      * API parameter for release hash.
