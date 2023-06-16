@@ -187,6 +187,7 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
 
                 /* Cancels installation if this flag hasn't been reset by progress event. */
                 if (mUserConfirmationRequested) {
+                    AppCenterLog.error(LOG_TAG, "Canceling installation due to lack of progress.");
                     onCancel();
                 }
             }
