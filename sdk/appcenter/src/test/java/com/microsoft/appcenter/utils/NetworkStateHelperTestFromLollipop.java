@@ -14,6 +14,7 @@ import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.Build;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.test.TestUtils;
 
 import org.junit.After;
@@ -26,6 +27,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -34,14 +37,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.whenNew;
 
-@PrepareForTest(NetworkStateHelper.class)
+@PrepareForTest({NetworkStateHelper.class, AppCenterLog.class})
 public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelperTest {
 
     @Before
     public void setUp() throws Exception {
         TestUtils.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.LOLLIPOP);
+
+        /* Mock static classes. */
+        mockStatic(AppCenterLog.class);
     }
 
     @After
@@ -177,5 +185,16 @@ public class NetworkStateHelperTestFromLollipop extends AbstractNetworkStateHelp
         new NetworkStateHelper(mContext);
         verify(builder).addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
         verify(builder, never()).addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+    }
+      
+    @Test
+    public void verifyNullPointerExceptionCatch() {
+        NetworkStateHelper helper = new NetworkStateHelper(mContext);
+        Network network = mock(Network.class);
+        when(mConnectivityManager.getAllNetworks()).thenReturn(new Network[] { network });
+        when(mConnectivityManager.getNetworkInfo(any())).thenThrow(new NullPointerException());
+        assertFalse(helper.isNetworkConnected());
+        verifyStatic(AppCenterLog.class);
+        AppCenterLog.warn(eq(AppCenter.LOG_TAG), anyString(), any(RuntimeException.class));
     }
 }

@@ -23,6 +23,7 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 
+import com.microsoft.appcenter.distribute.FileExtension;
 import com.microsoft.appcenter.distribute.R;
 import com.microsoft.appcenter.distribute.ReleaseDetails;
 import com.microsoft.appcenter.distribute.download.AbstractReleaseDownloader;
@@ -249,6 +250,11 @@ public class DownloadManagerReleaseDownloader extends AbstractReleaseDownloader 
     }
 
     private boolean isDownloadedFileValid() {
+        // As per the current system design, only the files with APK
+        // extension have their size correctly indicated in the release details.
+        if (mReleaseDetails.getFileExtension() != FileExtension.apk) {
+            return true;
+        }
         try (ParcelFileDescriptor fileDescriptor = getDownloadManager().openDownloadedFile(mDownloadId)) {
             return fileDescriptor.getStatSize() == mReleaseDetails.getSize();
         } catch (IOException e) {

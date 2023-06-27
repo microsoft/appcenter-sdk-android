@@ -1284,7 +1284,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mHttpClient).callAsync(matches("^https://.*?/sdk/apps/a/releases/private/latest\\?release_hash=" + TEST_HASH + "$"), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(matches("^https://.*?/sdk/apps/a/releases/private/latest\\?is_install_page=true&release_hash=" + TEST_HASH + "$"), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1301,7 +1301,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mHttpClient).callAsync(matches("^https://.*?/sdk/apps/a/releases/private/latest\\?release_hash=" + TEST_HASH + "$"), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(matches("^https://.*?/sdk/apps/a/releases/private/latest\\?is_install_page=true&release_hash=" + TEST_HASH + "$"), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1320,7 +1320,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         Distribute.setUpdateTrack(UpdateTrack.PRIVATE);
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mHttpClient).callAsync(matches("^https://.*?/sdk/apps/a/releases/private/latest\\?release_hash=" + TEST_HASH + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$"), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(matches("^https://.*?/sdk/apps/a/releases/private/latest\\?is_install_page=true&release_hash=" + TEST_HASH + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$"), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test
@@ -1337,7 +1337,7 @@ public class DistributeBeforeApiSuccessTest extends AbstractDistributeTest {
         /* Primary storage will be missing data. */
         start();
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mHttpClient).callAsync(matches("^https://.*?/public/sdk/apps/a/releases/latest\\?release_hash=" + TEST_HASH + "&install_id=" + mInstallId + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$"), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
+        verify(mHttpClient).callAsync(matches("^https://.*?/public/sdk/apps/a/releases/latest\\?is_install_page=true&release_hash=" + TEST_HASH + "&install_id=" + mInstallId + "&distribution_group_id=" + distributionGroupId + "&downloaded_release_id=4$"), eq("GET"), eq(headers), any(HttpClient.CallTemplate.class), any(ServiceCallback.class));
     }
 
     @Test

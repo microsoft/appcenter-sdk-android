@@ -31,6 +31,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
@@ -46,6 +47,7 @@ public class ReleaseDetailsTest {
         assertFalse(releaseDetails.isMandatoryUpdate());
         assertEquals("9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60", releaseDetails.getReleaseHash());
         assertEquals("fd37a4b1-4937-45ef-97fb-b864154371f0", releaseDetails.getDistributionGroupId());
+        assertEquals(FileExtension.apk, releaseDetails.getFileExtension());
     }
 
     @Test(expected = JSONException.class)
@@ -59,6 +61,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -76,6 +79,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -93,6 +97,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
@@ -119,6 +124,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -136,6 +142,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -152,6 +159,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -168,6 +176,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
@@ -195,6 +204,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
@@ -224,6 +234,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
@@ -250,6 +261,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -267,6 +279,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
@@ -294,6 +307,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -310,6 +324,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -327,6 +342,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -344,6 +360,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -360,6 +377,7 @@ public class ReleaseDetailsTest {
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "mandatory_update: false," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -377,6 +395,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: true," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);
@@ -403,6 +422,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -436,6 +456,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: []," +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -453,6 +474,7 @@ public class ReleaseDetailsTest {
                 "size: 4242," +
                 "mandatory_update: false," +
                 "package_hashes: '9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60'" +
+                "fileExtension: 'apk'," +
                 "distribution_group_id: 'fd37a4b1-4937-45ef-97fb-b864154371f0'" +
                 "}";
         ReleaseDetails.parse(json);
@@ -470,6 +492,7 @@ public class ReleaseDetailsTest {
                 "download_url: 'http://download.thinkbroadband.com/1GB.zip'," +
                 "size: 4242," +
                 "mandatory_update: false," +
+                "fileExtension: 'apk'," +
                 "package_hashes: ['9f52199c986d9210842824df695900e1656180946212bd5e8978501a5b732e60']" +
                 "}";
         ReleaseDetails releaseDetails = ReleaseDetails.parse(json);

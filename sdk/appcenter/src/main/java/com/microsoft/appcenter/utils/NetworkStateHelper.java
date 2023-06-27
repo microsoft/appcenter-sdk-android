@@ -143,9 +143,13 @@ public class NetworkStateHelper implements Closeable {
             return false;
         }
         for (Network network : networks) {
-            NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
-            if (info != null && info.isConnected()) {
-                return true;
+            try {
+                NetworkInfo info = mConnectivityManager.getNetworkInfo(network);
+                if (info != null && info.isConnected()) {
+                    return true;
+                }
+            } catch (RuntimeException e) {
+                AppCenterLog.warn(LOG_TAG, "Failed to get network info", e);
             }
         }
         return false;
