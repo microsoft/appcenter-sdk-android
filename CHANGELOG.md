@@ -1,6 +1,8 @@
 # App Center SDK for Android Change Log
 
-## Version 5.0.2 (In development)
+## Version 5.0.3 (In development)
+
+## Version 5.0.2
 
 ### AppCenter
 
