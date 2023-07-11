@@ -5,7 +5,7 @@
 
 package com.microsoft.appcenter.crashes.ingestion.models;
 
-import androidx.annotation.VisibleForTesting;
+//import android.support.annotation.VisibleForTesting;
 import android.util.Base64;
 
 import com.microsoft.appcenter.ingestion.models.AbstractLog;
@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.ingestion.models.CommonProperties.ID;
+
+import androidx.annotation.VisibleForTesting;
 
 /**
  * Error attachment log.
@@ -79,9 +81,6 @@ public class ErrorAttachmentLog extends AbstractLog {
      * @return ErrorAttachmentLog built attachment.
      */
     public static ErrorAttachmentLog attachmentWithText(String text, String fileName) {
-        if (text == null) {
-            text = "";
-        }
         return attachmentWithBinary(text.getBytes(CHARSET), fileName, CONTENT_TYPE_TEXT_PLAIN);
     }
 

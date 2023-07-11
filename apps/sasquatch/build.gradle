@@ -50,6 +50,7 @@ android {
             dimension "distribute"
         }
     }
+    ndkVersion '25.2.9519653'
 
     buildTypes {
         releaseProguard {
