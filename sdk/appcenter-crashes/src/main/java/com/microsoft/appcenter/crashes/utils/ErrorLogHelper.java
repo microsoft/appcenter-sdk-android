@@ -10,9 +10,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.crashes.Crashes;
@@ -44,6 +41,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 /**
  * ErrorLogHelper to help constructing, serializing, and de-serializing locally stored error logs.
@@ -124,11 +125,6 @@ public class ErrorLogHelper {
     public static final int MAX_PROPERTY_ITEM_LENGTH = 125;
 
     /**
-     * Minidump file extension for the NDK crashes.
-     */
-    public static final String MINIDUMP_FILE_EXTENSION = ".dmp";
-
-    /**
      * Directory for new minidump files.
      */
     private static File sNewMinidumpDirectory;
@@ -137,18 +133,6 @@ public class ErrorLogHelper {
      * Directory for pending minidump files.
      */
     private static File sPendingMinidumpDirectory;
-
-    /**
-     * Key for saving deviceInfo to JSON.
-     */
-    @VisibleForTesting
-    static String DEVICE_INFO_KEY = "DEVICE_INFO";
-
-    /**
-     * Key for saving userId to JSON.
-     */
-    @VisibleForTesting
-    static String USER_ID_KEY = "USER_ID";
 
     @NonNull
     public static ManagedErrorLog createErrorLog(@NonNull Context context, @NonNull final java.lang.Thread thread, @NonNull final Throwable throwable, @NonNull final Map<java.lang.Thread, StackTraceElement[]> allStackTraces, final long initializeTimestamp) {
@@ -286,7 +270,6 @@ public class ErrorLogHelper {
         File deviceInfoFile = new File(directorySubfolder, ErrorLogHelper.DEVICE_INFO_FILE);
         try {
             Device deviceInfo = DeviceInfoHelper.getDeviceInfo(context);
-            String userIdContext = UserIdContext.getInstance().getUserId();
             deviceInfo.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
 
             /* To JSON. */
@@ -295,12 +278,9 @@ public class ErrorLogHelper {
             deviceInfo.write(writer);
             writer.endObject();
             String deviceInfoString = writer.toString();
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put(DEVICE_INFO_KEY, deviceInfoString);
-            jsonObject.put(USER_ID_KEY, userIdContext);
 
             /* Write file. */
-            FileManager.write(deviceInfoFile, jsonObject.toString());
+            FileManager.write(deviceInfoFile, deviceInfoString);
         } catch (DeviceInfoHelper.DeviceInfoException | IOException | JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to store device info in a minidump folder.", e);
 
@@ -344,39 +324,13 @@ public class ErrorLogHelper {
     }
 
     /**
-     * Get deviceInfo data.
+     * Look for 'deviceinfo' file inside the minidump folder and parse it.
      *
      * @param logFolder folder where to look for stored device information.
      * @return a device information or null.
      */
     @Nullable
     public static Device getStoredDeviceInfo(File logFolder) {
-        String deviceInfoString = getContextInformation(logFolder);
-        if (deviceInfoString == null) {
-            return null;
-        }
-        return parseDevice(deviceInfoString);
-    }
-
-    /**
-     * Get userId data.
-     * @param logFolder folder where to look for stored userId.
-     * @return userId or null.
-     */
-    public static String getStoredUserInfo(File logFolder) {
-        String userInformationString = getContextInformation(logFolder);
-        if (userInformationString == null) {
-            return null;
-        }
-        return parseUserId(userInformationString);
-    }
-
-    /**
-     * Get data about userId and deviceInfo in JSON format.
-     * @param logFolder - path to folder where placed file with data about userId and deviceId.
-     * @return - data about userId and deviceId in JSON format or null.
-     */
-    static String getContextInformation(File logFolder) {
         File[] files = logFolder.listFiles(new FilenameFilter() {
 
             @Override
@@ -389,49 +343,20 @@ public class ErrorLogHelper {
             return null;
         }
         File deviceInfoFile = files[0];
-        String contextInfoString = FileManager.read(deviceInfoFile);
-        if (contextInfoString == null) {
+        String deviceInfoString = FileManager.read(deviceInfoFile);
+        if (deviceInfoString == null) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to read stored device info.");
             return null;
         }
-        return contextInfoString;
+        return parseDevice(deviceInfoString);
     }
 
-    /**
-     * Look for 'userId' data in file inside the minidump folder and parse it.
-     * @param contextInformation - data with information about userId.
-     * @return userId or null.
-     */
     @VisibleForTesting
-    static String parseUserId(String contextInformation) {
-        try {
-            JSONObject jsonObject = new JSONObject(contextInformation);
-            if (jsonObject.has(USER_ID_KEY)) {
-                return jsonObject.getString(USER_ID_KEY);
-            }
-        } catch (JSONException e) {
-            AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize user info.", e);
-        }
-        return null;
-    }
-
-    /**
-     * Look for 'deviceInfo' data in file inside the minidump folder and parse it.
-     * @param contextInformation - data with information about userId.
-     * @return deviceInfo or null.
-     */
-    @VisibleForTesting
-    static Device parseDevice(String contextInformation) {
+    static Device parseDevice(String deviceInfoString) {
         try {
             Device device = new Device();
-            JSONObject jsonObject = new JSONObject(contextInformation);
-            JSONObject deviceJson;
-            if (jsonObject.has(DEVICE_INFO_KEY)) {
-                deviceJson = new JSONObject(jsonObject.getString(DEVICE_INFO_KEY));
-            } else {
-                deviceJson = jsonObject;
-            }
-            device.read(deviceJson);
+            JSONObject jsonObject = new JSONObject(deviceInfoString);
+            device.read(jsonObject);
             return device;
         } catch (JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize device info.", e);
@@ -509,24 +434,6 @@ public class ErrorLogHelper {
         }
     }
 
-    /**
-     * Remove throwable files.
-     */
-    public static void removeLostThrowableFiles() {
-        File[] throwableFiles = getErrorStorageDirectory().listFiles(new FilenameFilter() {
-
-            @Override
-            public boolean accept(File dir, String filename) {
-                return filename.endsWith(THROWABLE_FILE_EXTENSION);
-            }
-        });
-        if (throwableFiles != null && throwableFiles.length > 0) {
-            for (File file : throwableFiles) {
-                removeStoredThrowableFile(UUID.fromString(file.getName().replaceFirst("\\.[^.]+$", "")));
-            }
-        }
-    }
-
     @NonNull
     public static ErrorReport getErrorReportFromErrorLog(@NonNull ManagedErrorLog log, String stackTrace) {
         ErrorReport report = new ErrorReport();
@@ -539,7 +446,8 @@ public class ErrorLogHelper {
         return report;
     }
 
-    public static void setErrorLogDirectory(File file) {
+    @VisibleForTesting
+    static void setErrorLogDirectory(File file) {
         sErrorLogDirectory = file;
     }
 
@@ -661,13 +569,6 @@ public class ErrorLogHelper {
             result.put(key, value);
         }
         return result;
-    }
-
-    /**
-     * Clear (delete all content) pending minidump directory.
-     */
-    public static void cleanPendingMinidumps() {
-        FileManager.cleanDirectory(ErrorLogHelper.getPendingMinidumpDirectory());
     }
 
     /**
