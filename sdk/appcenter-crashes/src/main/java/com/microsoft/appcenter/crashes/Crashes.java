@@ -10,12 +10,6 @@ import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Build;
-//import android.support.annotation.NonNull;
-//import android.support.annotation.Nullable;
-//import android.support.annotation.RequiresApi;
-//import android.support.annotation.VisibleForTesting;
-//import android.support.annotation.WorkerThread;
-
 import com.microsoft.appcenter.AbstractAppCenterService;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
@@ -45,9 +39,7 @@ import com.microsoft.appcenter.utils.context.SessionContext;
 import com.microsoft.appcenter.utils.context.UserIdContext;
 import com.microsoft.appcenter.utils.storage.FileManager;
 import com.microsoft.appcenter.utils.storage.SharedPreferencesManager;
-
 import org.json.JSONException;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -62,7 +54,6 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL;
 import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW;
@@ -70,7 +61,6 @@ import static android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_MODERATE;
 import static android.util.Log.getStackTraceString;
 import static com.microsoft.appcenter.Constants.WRAPPER_SDK_NAME_NDK;
 import static com.microsoft.appcenter.crashes.utils.ErrorLogHelper.DEVICE_INFO_FILE;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -81,12 +71,6 @@ import androidx.annotation.WorkerThread;
  * Crashes service.
  */
 public class Crashes extends AbstractAppCenterService {
-
-//    /**
-//     *Defines the stage of Watson process
-//     */
-//    public static int stage = 1;
-     public static WatsonStage STAGE  = WatsonStage.kWatsonStageOne;
 
     /**
      * Constant for SEND crash report.
@@ -842,49 +826,6 @@ public class Crashes extends AbstractAppCenterService {
         }
     }
 
-//    private void processPendingErrors() {
-//
-//        for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
-//            AppCenterLog.debug(LOG_TAG, "Process pending error file: " + logFile);
-//            String logfileContents = FileManager.read(logFile);
-//            if (logfileContents != null) {
-//                try {
-//                    ManagedErrorLog log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents, null);
-//                    UUID id = log.getId();
-//                    ErrorReport report = buildErrorReport(log);
-//                    if (report == null) {
-//                        removeAllStoredErrorLogFiles(id);
-//                    } else if (!mAutomaticProcessing || mCrashesListener.shouldProcess(report)) {
-//                        if (!mAutomaticProcessing) {
-//                            AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned true, continue processing log: " + id.toString());
-//                        }
-//                        mUnprocessedErrorReports.put(id, mErrorReportCache.get(id));
-//
-//                    } else {
-//                        AppCenterLog.debug(LOG_TAG, "CrashesListener.shouldProcess returned false, clean up and ignore log: " + id.toString());
-//                        removeAllStoredErrorLogFiles(id);
-//                    }
-//                } catch (JSONException e) {
-//                    AppCenterLog.error(LOG_TAG, "Error parsing error log. Deleting invalid file: " + logFile, e);
-//
-//                    //noinspection ResultOfMethodCallIgnored
-//                    logFile.delete();
-//                }
-//            }
-//        }
-//        mHasReceivedMemoryWarningInLastSession = isMemoryRunningLevelWasReceived(SharedPreferencesManager.getInt(PREF_KEY_MEMORY_RUNNING_LEVEL, -1));
-//        if (mHasReceivedMemoryWarningInLastSession) {
-//            AppCenterLog.debug(LOG_TAG, "The application received a low memory warning in the last session.");
-//        }
-//        SharedPreferencesManager.remove(PREF_KEY_MEMORY_RUNNING_LEVEL);
-//
-//        /* If automatic processing is enabled. */
-//        if (mAutomaticProcessing) {
-//
-//            /* Proceed to check if user confirmation is needed. */
-//            sendCrashReportsOrAwaitUserConfirmation();
-//        }
-//    }
         private void processPendingErrors() {
 
         for (File logFile : ErrorLogHelper.getStoredErrorLogFiles()) {
@@ -980,10 +921,6 @@ public class Crashes extends AbstractAppCenterService {
         });
         return alwaysSend;
     }
-
-
-
-
     private void removeAllStoredErrorLogFiles(UUID id) {
         ErrorLogHelper.removeStoredErrorLogFile(id);
         removeStoredThrowable(id);
@@ -1102,33 +1039,15 @@ public class Crashes extends AbstractAppCenterService {
                                 dumpFile = new File(minidumpFilePath);
                                 byte[] logfileContents = FileManager.readBytes(dumpFile);
                                 dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
-//                                sendErrorFilesToWatson(dumpFile, errorLogReport, STAGE);
                             }
                         }
-//                            }else {
-////                                AppCenterLog.warn(LOG_TAG, "NativeException found without minidump.");
-//                            }
-
-//                        /* Send report. */
-//                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP, Flags.CRITICAL);
 
 //                        /* Send dump attachment and remove file. */
                         if (dumpAttachment != null) {
-                            sendErrorFilesToWatson(dumpFile, errorLogReport, STAGE);
-
-//                            noinspection ResultOfMethodCallIgnored
+                            sendErrorFilesToWatson(dumpFile, errorLogReport, WatsonStage.kWatsonStageOne);
                             dumpFile.delete();
                         }
-                        sendErrorFilesToWatson(mUnprocessedErrorFiles.get(unprocessedEntry.getKey()), errorLogReport , STAGE);
-
-
-                        /* Get attachments from callback in automatic processing. */
-//                        if (mAutomaticProcessing) {
-//                            Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
-//                            sendErrorAttachment(errorLogReport.log.getId(), attachments);
-//                        }
-
-                        /* Clean up an error log file and map entry. */
+                        sendErrorFilesToWatson(mUnprocessedErrorFiles.get(unprocessedEntry.getKey()), errorLogReport , WatsonStage.kWatsonStageOne);
                         unprocessedIterator.remove();
                         ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
                     }
@@ -1147,166 +1066,21 @@ public class Crashes extends AbstractAppCenterService {
                 e.printStackTrace();
             }
 
-        } else if (stage == WatsonStage.kWatsonStageTwo || stage == WatsonStage.kWatsonStageRetryStageTwo) {
+        }
+        if (stage == WatsonStage.kWatsonStageTwo || stage == WatsonStage.kWatsonStageRetryStageTwo) {
             try {
                 stage = WatsonCrashReporting.executeStageTwoNewProtocol(file, errorLogReport.log);
             } catch (IOException | JSONException e) {
                 e.printStackTrace();
             }
         }
-        else{
-
-            AppCenterLog.debug(LOG_TAG, "reporting was successful. We are done");
-        }
         if (stage != WatsonStage.kWatsonStageComplete) {
             sendErrorFilesToWatson(file, errorLogReport, stage);
         }
+        else{
+            AppCenterLog.debug(LOG_TAG, "reporting was successful. We are done");
+        }
     }
-
-//    @VisibleForTesting
-//    private synchronized void handleUserConfirmation(@UserConfirmationDef final int userConfirmation) {
-//        post(new Runnable() {
-//
-//            @RequiresApi(api = Build.VERSION_CODES.N)
-//            @Override
-//            public void run() {
-//
-//                /* If we don't send. */
-//                if (userConfirmation == DONT_SEND) {
-//
-//                    /* Clean up all pending error log and throwable files. */
-//                    for (Iterator<UUID> iterator = mUnprocessedErrorReports.keySet().iterator(); iterator.hasNext(); ) {
-//                        UUID id = iterator.next();
-//                        iterator.remove();
-//                        removeAllStoredErrorLogFiles(id);
-//                    }
-//                }
-//
-//                /* We send the crash. */
-//                else {
-//
-//                    /* Always send: we remember. */
-//                    if (userConfirmation == ALWAYS_SEND) {
-//                        SharedPreferencesManager.putBoolean(PREF_KEY_ALWAYS_SEND, true);
-//                    }
-//
-//                    /* Send every pending report. */
-//                    ManagedErrorLog wlog= null;
-//                    ErrorReport wreport = null;
-//                    File wlogFile = null;
-//                    for (File curLogFile : ErrorLogHelper.getStoredErrorLogFiles()) {
-//                        ErrorReport errorReport = null;
-//                        String logfileContents = FileManager.read(curLogFile);
-//                        mLogSerializer = new DefaultLogSerializer();
-//                        mLogSerializer.addLogFactory(ManagedErrorLog.TYPE, ManagedErrorLogFactory.getInstance());
-//                        mLogSerializer.addLogFactory(ErrorAttachmentLog.TYPE, ErrorAttachmentLogFactory.getInstance());
-//                        ManagedErrorLog log = null;
-//                        try {
-//                            log = (ManagedErrorLog) mLogSerializer.deserializeLog(logfileContents, null);
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                        errorReport = buildErrorReport(log);
-//                        boolean containsLogFile = mUnprocessedErrorReports.containsKey(log.getId());
-//                        if (containsLogFile) {
-//                            wlog = log;
-//                            wreport = errorReport;
-//                            wlogFile = curLogFile;
-//                            UUID ud = log.getId();
-//                            ErrorLogReport errorLogReport = mUnprocessedErrorReports.get(log.getId());
-//
-//                            if (errorLogReport.report.getDevice() != null && WRAPPER_SDK_NAME_NDK.equals(errorLogReport.report.getDevice().getWrapperSdkName())) {
-//                                if (STAGE == 1) {
-//                                    try {
-//                                        WatsonCrashReporting.executeStageOneNewProtocol(wlogFile, wlog, wreport);
-//                                    } catch (IOException e) {
-//                                        e.printStackTrace();
-//                                    } catch (JSONException e) {
-//                                        e.printStackTrace();
-//                                    } catch (NoSuchAlgorithmException e) {
-//                                        e.printStackTrace();
-//                                    }
-//                                    STAGE = 2;
-//                                } else if (STAGE == 2) {
-//                                    try {
-//                                        WatsonCrashReporting.executeStageTwoNewProtocol(wlogFile, wlog);
-//                                    } catch (IOException e) {
-//                                        e.printStackTrace();
-//                                    } catch (JSONException e) {
-//                                        e.printStackTrace();
-//                                    }
-//
-//                                }
-//
-//
-//                            }
-//                        }
-//                    }
-//
-//                        Iterator<Map.Entry<UUID, ErrorLogReport>> unprocessedIterator = mUnprocessedErrorReports.entrySet().iterator();
-//                        while (unprocessedIterator.hasNext()) {
-//
-//                        /* If native crash, send dump as attachment and remove the fake stack trace. */
-//                        File dumpFile = null;
-//                        ErrorAttachmentLog dumpAttachment = null;
-//                        Map.Entry<UUID, ErrorLogReport> unprocessedEntry = unprocessedIterator.next();
-//                        ErrorLogReport errorLogReport = unprocessedEntry.getValue();
-//
-//                        if (errorLogReport.report.getDevice() != null && WRAPPER_SDK_NAME_NDK.equals(errorLogReport.report.getDevice().getWrapperSdkName())) {
-//
-//                            /* Get minidump file path. */
-//                            Exception exception = errorLogReport.log.getException();
-//                            String minidumpFilePath = exception.getMinidumpFilePath();
-//
-//                            /* Erase temporary field so that it's not sent to server. */
-//                            exception.setMinidumpFilePath(null);
-//
-//                            /*
-//                             * Before SDK 2.1.0, the JSON was using the stacktrace field to hold file path on file storage.
-//                             * Try reading the old field.
-//                             */
-//                            if (minidumpFilePath == null) {
-//                                minidumpFilePath = exception.getStackTrace();
-//
-//                                /* Erase temporary field so that it's not sent to server. */
-//                                exception.setStackTrace(null);
-//                            }
-//
-//                            /* It can be null when NativeException is thrown or there is already invalid stored data. */
-//                            if (minidumpFilePath != null) {
-//                                dumpFile = new File(minidumpFilePath);
-//                                byte[] logfileContents = FileManager.readBytes(dumpFile);
-//                                dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
-//                            } else {
-//                                AppCenterLog.warn(LOG_TAG, "NativeException found without minidump.");
-//                            }
-//                        }
-//
-//                        /* Send report. */
-//                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP, Flags.CRITICAL);
-//
-//                        /* Send dump attachment and remove file. */
-//                        if (dumpAttachment != null) {
-//                            sendErrorAttachment(errorLogReport.log.getId(), Collections.singleton(dumpAttachment));
-//
-//                            //noinspection ResultOfMethodCallIgnored
-//                            dumpFile.delete();
-//                        }
-//
-//                        /* Get attachments from callback in automatic processing. */
-//                        if (mAutomaticProcessing) {
-//                            Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
-//                            sendErrorAttachment(errorLogReport.log.getId(), attachments);
-//                        }
-//
-//                        /* Clean up an error log file and map entry. */
-//                        unprocessedIterator.remove();
-//                        ErrorLogHelper.removeStoredErrorLogFile(unprocessedEntry.getKey());
-//                    }
-//                }
-//            }
-//        });
-//    }
 
     /**
      * Send error attachment logs through channel.

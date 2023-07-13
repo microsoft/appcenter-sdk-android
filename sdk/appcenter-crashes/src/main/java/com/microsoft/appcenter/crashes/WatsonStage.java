@@ -3,7 +3,7 @@ package com.microsoft.appcenter.crashes;
 public enum WatsonStage {
     kWatsonStageOne,
     kWatsonStageTwo,
-    kWatsonStageDone,
+    kWatsonStageStarted,
     kWatsonStageRetryStageOne,
     kWatsonStageRetryStageTwo,
     kWatsonStageComplete
