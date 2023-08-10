@@ -20,6 +20,8 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Surface;
 
+import androidx.annotation.Nullable;
+
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
@@ -46,6 +48,11 @@ public class DeviceInfoHelper {
      * Country code.
      */
     private static String mCountryCode;
+
+    /**
+     * Residency region.
+     */
+    private static @Nullable String mDataResidencyRegion;
 
     public static PackageInfo getPackageInfo(Context context) {
         try {
@@ -97,6 +104,9 @@ public class DeviceInfoHelper {
         if (mCountryCode != null) {
             device.setCarrierCountry(mCountryCode);
         }
+
+        /* Set residency region. */
+        device.setDataResidencyRegion(mDataResidencyRegion);
 
         /* Locale. */
         device.setLocale(Locale.getDefault().toString());
@@ -209,6 +219,15 @@ public class DeviceInfoHelper {
         }
         mCountryCode = countryCode;
         AppCenterLog.debug(AppCenterLog.LOG_TAG, String.format("Set country code: %s", countryCode));
+    }
+
+    /**
+     * Set the country code or any other string to identify residency region.
+     *
+     * @param dataResidencyRegion residency region code.
+     */
+    public static void setDataResidencyRegion(@Nullable String dataResidencyRegion) {
+        mDataResidencyRegion = dataResidencyRegion;
     }
 
     /**

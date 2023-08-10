@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.ingestion.models;
 
+import androidx.annotation.Nullable;
+
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;
@@ -43,6 +45,8 @@ public class Device extends WrapperSdk {
     private static final String CARRIER_NAME = "carrierName";
 
     private static final String CARRIER_COUNTRY = "carrierCountry";
+
+    private static final String DATA_RESIDENCY_REGION = "dataResidencyRegion";
 
     private static final String APP_BUILD = "appBuild";
 
@@ -118,6 +122,11 @@ public class Device extends WrapperSdk {
      * Carrier country code (for mobile devices).
      */
     private String carrierCountry;
+
+    /**
+     * Carrier data residency region.
+     */
+    private @Nullable String dataResidencyRegion;
 
     /**
      * The app's build number, e.g. 42.
@@ -383,6 +392,25 @@ public class Device extends WrapperSdk {
     }
 
     /**
+     * Get the dataResidency value.
+     *
+     * @return the dataResidency value
+     */
+    @Nullable
+    public String getDataResidencyRegion() {
+        return this.dataResidencyRegion;
+    }
+
+    /**
+     * Set the dataResidency value.
+     *
+     * @param dataResidencyRegion the dataResidency value to set
+     */
+    public void setDataResidencyRegion(@Nullable String dataResidencyRegion) {
+        this.dataResidencyRegion = dataResidencyRegion;
+    }
+
+    /**
      * Get the appBuild value.
      *
      * @return the appBuild value
@@ -435,6 +463,7 @@ public class Device extends WrapperSdk {
         setAppVersion(object.getString(APP_VERSION));
         setCarrierName(object.optString(CARRIER_NAME, null));
         setCarrierCountry(object.optString(CARRIER_COUNTRY, null));
+        setDataResidencyRegion(object.optString(DATA_RESIDENCY_REGION, null));
         setAppBuild(object.getString(APP_BUILD));
         setAppNamespace(object.optString(APP_NAMESPACE, null));
     }
@@ -456,6 +485,7 @@ public class Device extends WrapperSdk {
         writer.key(APP_VERSION).value(getAppVersion());
         JSONUtils.write(writer, CARRIER_NAME, getCarrierName());
         JSONUtils.write(writer, CARRIER_COUNTRY, getCarrierCountry());
+        JSONUtils.write(writer, DATA_RESIDENCY_REGION, getDataResidencyRegion());
         writer.key(APP_BUILD).value(getAppBuild());
         JSONUtils.write(writer, APP_NAMESPACE, getAppNamespace());
     }
@@ -513,6 +543,9 @@ public class Device extends WrapperSdk {
             return false;
         }
         if (carrierCountry != null ? !carrierCountry.equals(device.carrierCountry) : device.carrierCountry != null) {
+            return false;
+        }
+        if (dataResidencyRegion != null ? !dataResidencyRegion.equals(device.dataResidencyRegion) : device.dataResidencyRegion != null) {
             return false;
         }
         if (appBuild != null ? !appBuild.equals(device.appBuild) : device.appBuild != null) {
