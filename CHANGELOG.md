@@ -2,8 +2,6 @@
 
 ## Version 5.0.3 (In development)
 
-* **[Feature]** Add setDataResidencyRegion(string dataResidencyRegion)" method to portal as property for Analytics and Crashes.
-
 ## Version 5.0.2
 
 ### AppCenter
