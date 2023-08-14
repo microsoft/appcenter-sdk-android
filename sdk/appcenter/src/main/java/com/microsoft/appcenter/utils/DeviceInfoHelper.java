@@ -222,7 +222,7 @@ public class DeviceInfoHelper {
     }
 
     /**
-     * Set the country code or any other string to identify residency region.
+     * Set the country code or any other string to identify the data residency region.
      *
      * @param dataResidencyRegion residency region code.
      */
