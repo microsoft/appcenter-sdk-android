@@ -224,7 +224,7 @@ public class DeviceInfoHelper {
     /**
      * Set the country code or any other string to identify the data residency region.
      *
-     * @param dataResidencyRegion residency region code.
+     * @param dataResidencyRegion data residency region code.
      */
     public static void setDataResidencyRegion(@Nullable String dataResidencyRegion) {
         mDataResidencyRegion = dataResidencyRegion;
