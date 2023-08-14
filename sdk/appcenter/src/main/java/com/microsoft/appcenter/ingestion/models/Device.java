@@ -124,7 +124,7 @@ public class Device extends WrapperSdk {
     private String carrierCountry;
 
     /**
-     * Carrier data residency region.
+     * Data residency region.
      */
     private @Nullable String dataResidencyRegion;
 
