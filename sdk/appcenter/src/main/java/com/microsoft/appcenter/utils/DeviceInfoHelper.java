@@ -50,7 +50,7 @@ public class DeviceInfoHelper {
     private static String mCountryCode;
 
     /**
-     * Residency region.
+     * Data residency region.
      */
     private static @Nullable String mDataResidencyRegion;
 
