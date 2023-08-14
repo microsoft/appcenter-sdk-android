@@ -105,7 +105,7 @@ public class DeviceInfoHelper {
             device.setCarrierCountry(mCountryCode);
         }
 
-        /* Set residency region. */
+        /* Set data residency region. */
         device.setDataResidencyRegion(mDataResidencyRegion);
 
         /* Locale. */
