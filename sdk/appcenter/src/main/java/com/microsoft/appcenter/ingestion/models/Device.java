@@ -5,8 +5,6 @@
 
 package com.microsoft.appcenter.ingestion.models;
 
-import androidx.annotation.Nullable;
-
 import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 
 import org.json.JSONException;

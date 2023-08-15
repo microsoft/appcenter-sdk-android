@@ -115,7 +115,6 @@ public class DeviceInfoHelperTest {
         final String appBuild = "1";
         final String appNamespace = "com.contoso.app";
         final String carrierCountry = "us";
-        final String dataResidencyRegion = "RG";
         final String carrierName = "mock-service";
         final Locale locale = Locale.KOREA;
         final String model = "mock-model";

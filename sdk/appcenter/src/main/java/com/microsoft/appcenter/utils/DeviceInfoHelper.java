@@ -20,8 +20,6 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.Surface;
 
-import androidx.annotation.Nullable;
-
 import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.ingestion.models.WrapperSdk;
