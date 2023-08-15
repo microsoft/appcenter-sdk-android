@@ -191,14 +191,6 @@ public class DeviceTest {
         b.setCarrierCountry("a");
         checkEquals(a, b);
 
-        /* Residency region. */
-        a.setDataResidencyRegion("a");
-        checkNotEquals(a, b);
-        b.setDataResidencyRegion("b");
-        checkNotEquals(a, b);
-        b.setDataResidencyRegion("a");
-        checkEquals(a, b);
-
         /* App build. */
         a.setAppBuild("a");
         checkNotEquals(a, b);

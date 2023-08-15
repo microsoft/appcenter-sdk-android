@@ -238,6 +238,11 @@ public class AppCenter {
     private Boolean mAllowedNetworkRequests;
 
     /**
+     * Country code or any other string to identify residency region..
+     */
+    private @Nullable String mDataResidencyRegion;
+
+    /**
      * Get unique instance.
      *
      * @return unique instance.
@@ -315,7 +320,17 @@ public class AppCenter {
      * @param dataResidencyRegion residency region code.
      */
     public static void setDataResidencyRegion(@Nullable String dataResidencyRegion) {
-        DeviceInfoHelper.setDataResidencyRegion(dataResidencyRegion);
+        getInstance().mDataResidencyRegion = dataResidencyRegion;
+    }
+
+    /**
+     * Set the country code or any other string to identify residency region.
+     *
+     * @return dataResidencyRegion residency region code if defined.
+     */
+    @Nullable
+    public static String getDataResidencyRegion() {
+        return getInstance().mDataResidencyRegion;
     }
 
     /**

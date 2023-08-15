@@ -6,6 +6,7 @@
 package com.microsoft.appcenter.ingestion.models;
 
 
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
@@ -55,6 +56,11 @@ public abstract class AbstractLog implements Log {
     static final String DEVICE = "device";
 
     /**
+     * Data residency region property.
+     */
+    private static final String DATA_RESIDENCY_REGION = "dataResidencyRegion";
+
+    /**
      * Collection of transmissionTargetTokens that this log should be sent to.
      */
     private final Set<String> transmissionTargetTokens = new LinkedHashSet<>();
@@ -83,6 +89,11 @@ public abstract class AbstractLog implements Log {
      * Device characteristics associated to this log.
      */
     private Device device;
+
+    /**
+     * Carrier data residency region.
+     */
+    private @Nullable String dataResidencyRegion;
 
     /**
      * Transient object tag.
@@ -139,6 +150,17 @@ public abstract class AbstractLog implements Log {
         this.device = device;
     }
 
+    @Nullable
+    @Override
+    public String getDataResidencyRegion() {
+        return this.dataResidencyRegion;
+    }
+
+    @Override
+    public void setDataResidencyRegion(@Nullable String dataResidencyRegion) {
+        this.dataResidencyRegion = dataResidencyRegion;
+    }
+
     @Override
     public Object getTag() {
         return tag;
@@ -171,6 +193,9 @@ public abstract class AbstractLog implements Log {
             getDevice().write(writer);
             writer.endObject();
         }
+        if (getDataResidencyRegion() != null) {
+            JSONUtils.write(writer, DATA_RESIDENCY_REGION, getUserId());
+        }
     }
 
     @Override
@@ -188,6 +213,9 @@ public abstract class AbstractLog implements Log {
             Device device = new Device();
             device.read(object.getJSONObject(DEVICE));
             setDevice(device);
+        }
+        if (object.has(DATA_RESIDENCY_REGION)) {
+            setDataResidencyRegion(object.optString(DATA_RESIDENCY_REGION, null));
         }
     }
 
@@ -207,6 +235,7 @@ public abstract class AbstractLog implements Log {
             return false;
         if (userId != null ? !userId.equals(that.userId) : that.userId != null) return false;
         if (device != null ? !device.equals(that.device) : that.device != null) return false;
+        if (dataResidencyRegion != null ? !dataResidencyRegion.equals(that.dataResidencyRegion) : that.dataResidencyRegion != null) return false;
         return tag != null ? tag.equals(that.tag) : that.tag == null;
     }
 
@@ -218,6 +247,7 @@ public abstract class AbstractLog implements Log {
         result = 31 * result + (distributionGroupId != null ? distributionGroupId.hashCode() : 0);
         result = 31 * result + (userId != null ? userId.hashCode() : 0);
         result = 31 * result + (device != null ? device.hashCode() : 0);
+        result = 31 * result + (dataResidencyRegion != null ? dataResidencyRegion.hashCode() : 0);
         result = 31 * result + (tag != null ? tag.hashCode() : 0);
         return result;
     }

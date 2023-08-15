@@ -130,8 +130,6 @@ public class DeviceInfoHelperTest {
         Locale.setDefault(locale);
         TimeZone.setDefault(timeZone);
 
-        /* Set dataResidencyRegion */
-        DeviceInfoHelper.setDataResidencyRegion(dataResidencyRegion);
         /* Delegates to mock instances. */
         when(mContext.getPackageName()).thenReturn(appNamespace);
         //noinspection WrongConstant
@@ -162,7 +160,6 @@ public class DeviceInfoHelperTest {
         assertEquals(appBuild, device.getAppBuild());
         assertEquals(appNamespace, device.getAppNamespace());
         assertEquals(carrierCountry, device.getCarrierCountry());
-        assertEquals(dataResidencyRegion, device.getDataResidencyRegion());
         assertEquals(carrierName, device.getCarrierName());
         assertEquals(locale.toString(), device.getLocale());
         assertEquals(model, device.getModel());

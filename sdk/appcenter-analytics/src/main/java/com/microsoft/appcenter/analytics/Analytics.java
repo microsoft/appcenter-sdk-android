@@ -860,6 +860,7 @@ public class Analytics extends AbstractAppCenterService {
                         eventLog.setTag(aTransmissionTarget);
                         if (aTransmissionTarget == mDefaultTransmissionTarget) {
                             eventLog.setUserId(userId);
+                            eventLog.setDataResidencyRegion(AppCenter.getDataResidencyRegion());
                         }
                     } else {
                         AppCenterLog.error(LOG_TAG, "This transmission target is disabled.");

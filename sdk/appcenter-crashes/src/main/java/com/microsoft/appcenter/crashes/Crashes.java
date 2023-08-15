@@ -15,6 +15,7 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import com.microsoft.appcenter.AbstractAppCenterService;
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.Flags;
 import com.microsoft.appcenter.channel.Channel;
@@ -639,6 +640,8 @@ public class Crashes extends AbstractAppCenterService {
         final String userId = UserIdContext.getInstance().getUserId();
         final UUID errorId = UUID.randomUUID();
         final Map<String, String> validatedProperties = ErrorLogHelper.validateProperties(properties, "HandledError");
+        final String dataResidencyRegion = AppCenter.getDataResidencyRegion();
+
         post(new Runnable() {
 
             @Override
@@ -648,6 +651,7 @@ public class Crashes extends AbstractAppCenterService {
                 HandledErrorLog errorLog = new HandledErrorLog();
                 errorLog.setId(errorId);
                 errorLog.setUserId(userId);
+                errorLog.setDataResidencyRegion(dataResidencyRegion);
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(validatedProperties);
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
@@ -792,6 +796,7 @@ public class Crashes extends AbstractAppCenterService {
             }
             errorLog.setDevice(savedDeviceInfo);
             errorLog.setUserId(savedUserId);
+            // TODO add data residency region.
             saveErrorLogFiles(new NativeException(), errorLog);
             if (!minidumpFile.renameTo(dest)) {
                 throw new IOException("Failed to move file");
