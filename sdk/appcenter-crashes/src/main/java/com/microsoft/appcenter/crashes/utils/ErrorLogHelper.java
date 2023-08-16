@@ -383,6 +383,21 @@ public class ErrorLogHelper {
     }
 
     /**
+     * Get data residency region.
+     *
+     * @param logFolder folder where to look for stored data residency region.
+     * @return a data residency region or null.
+     */
+    @Nullable
+    public static String getStoredDataResidencyRegion(File logFolder) {
+        String context = getContextInformation(logFolder);
+        if (context == null) {
+            return null;
+        }
+        return parseDataResidencyRegion(context);
+    }
+
+    /**
      * Get data about userId and deviceInfo in JSON format.
      * @param logFolder - path to folder where placed file with data about userId and deviceId.
      * @return - data about userId and deviceId in JSON format or null.
@@ -446,6 +461,24 @@ public class ErrorLogHelper {
             return device;
         } catch (JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize device info.", e);
+        }
+        return null;
+    }
+
+    /**
+     * Look for 'dataResidencyRegion' data in file inside the minidump folder and parse it.
+     * @param contextInformation - data with information about userId.
+     * @return dataResidencyRegion or null.
+     */
+    @VisibleForTesting
+    static String parseDataResidencyRegion(String contextInformation) {
+        try {
+            JSONObject jsonObject = new JSONObject(contextInformation);
+            if (jsonObject.has(DATA_RESIDENCY_REGION_KEY)) {
+                return jsonObject.getString(DATA_RESIDENCY_REGION_KEY);
+            }
+        } catch (JSONException e) {
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize data residency region.", e);
         }
         return null;
     }

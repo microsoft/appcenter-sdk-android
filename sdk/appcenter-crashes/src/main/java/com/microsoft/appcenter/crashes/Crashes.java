@@ -657,6 +657,9 @@ public class Crashes extends AbstractAppCenterService {
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
 
                 /* Then attachments if any. */
+                for (ErrorAttachmentLog attachment : attachments) {
+                    attachment.setDataResidencyRegion(dataResidencyRegion);
+                }
                 sendErrorAttachment(errorId, attachments);
             }
         });
@@ -784,6 +787,7 @@ public class Crashes extends AbstractAppCenterService {
         errorLog.setProcessName("");
         try {
             String savedUserId = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
+            String dataResidencyRegion = ErrorLogHelper.getStoredDataResidencyRegion(minidumpFolder);
             Device savedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
             if (savedDeviceInfo == null) {
 
@@ -796,7 +800,7 @@ public class Crashes extends AbstractAppCenterService {
             }
             errorLog.setDevice(savedDeviceInfo);
             errorLog.setUserId(savedUserId);
-            // TODO add data residency region.
+            errorLog.setDataResidencyRegion(dataResidencyRegion);
             saveErrorLogFiles(new NativeException(), errorLog);
             if (!minidumpFile.renameTo(dest)) {
                 throw new IOException("Failed to move file");

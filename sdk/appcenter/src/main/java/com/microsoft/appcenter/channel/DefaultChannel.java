@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.CancellationException;
 import com.microsoft.appcenter.http.HttpClient;
 import com.microsoft.appcenter.http.HttpResponse;
@@ -646,6 +647,11 @@ public class DefaultChannel implements Channel {
 
             /* Attach device properties. */
             log.setDevice(mDevice);
+        }
+
+        /* Attach data residency region property to every log if its not already attached by a service. */
+        if (log.getDataResidencyRegion() == null) {
+            log.setDataResidencyRegion(AppCenter.getDataResidencyRegion());
         }
 
         /* Set date to current if not explicitly set in the past by a module (such as a crash). */
