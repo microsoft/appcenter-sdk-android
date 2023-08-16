@@ -5,16 +5,23 @@
 
 package com.microsoft.appcenter.ingestion.models;
 
+import com.microsoft.appcenter.AppCenter;
+import com.microsoft.appcenter.ingestion.models.json.JSONDateUtils;
+import com.microsoft.appcenter.ingestion.models.json.JSONUtils;
 import com.microsoft.appcenter.test.TestUtils;
+import com.microsoft.appcenter.utils.AppCenterLog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 import org.junit.Test;
+import org.powermock.core.classloader.annotations.PrepareForTest;
 
 import java.util.Date;
 import java.util.UUID;
 
+import static com.microsoft.appcenter.ingestion.models.AbstractLog.DATA_RESIDENCY_REGION;
+import static com.microsoft.appcenter.ingestion.models.AbstractLog.TIMESTAMP;
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 import static org.junit.Assert.assertEquals;
@@ -24,9 +31,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
 public class AbstractLogTest {
+
+    @PrepareForTest({
+            JSONUtils.class
+    })
 
     @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
@@ -93,6 +105,16 @@ public class AbstractLogTest {
         b.setUserId(userId1);
         checkEquals(a, b);
 
+        /* Data residency region. */
+        String dataResidencyRegion1 = "rg1";
+        String dataResidencyRegion2 = "rg2";
+        a.setDataResidencyRegion(dataResidencyRegion1);
+        checkNotEquals(a, b);
+        b.setDataResidencyRegion(dataResidencyRegion2);
+        checkNotEquals(a, b);
+        b.setDataResidencyRegion(dataResidencyRegion1);
+        checkEquals(a, b);
+
         /* Device. */
         Device d1 = new Device();
         d1.setLocale("a");
@@ -147,6 +169,36 @@ public class AbstractLogTest {
         mockLog.write(mockJsonStringer);
 
         verify(mockJsonStringer, never()).key(AbstractLog.DEVICE);
+    }
+
+    @Test
+    public void readNotNullDataResidencyRegionTest() throws JSONException {
+        JSONObject mockJsonObject = mock(JSONObject.class);
+        when(mockJsonObject.has(DATA_RESIDENCY_REGION)).thenReturn(true);
+        when(mockJsonObject.optString(DATA_RESIDENCY_REGION)).thenReturn("RG");
+        when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn("mockType");
+        when(mockJsonObject.getString(TIMESTAMP)).thenReturn(JSONDateUtils.toString(new Date()));
+
+        AbstractLog mockLog = new MockLogWithType();
+        mockLog.read(mockJsonObject);
+
+        verify(mockJsonObject).optString(DATA_RESIDENCY_REGION, null);
+    }
+
+    @Test
+    public void writeNotNullDataResidencyRegionTest() throws JSONException {
+        JSONStringer mockJsonStringer = mock(JSONStringer.class);
+        when(mockJsonStringer.key(anyString())).thenReturn(mockJsonStringer);
+        when(mockJsonStringer.value(anyString())).thenReturn(mockJsonStringer);
+
+        AbstractLog mockLog = new MockLog();
+        mockLog.setTimestamp(new Date());
+        mockLog.setDataResidencyRegion("RG");
+        mockLog.write(mockJsonStringer);
+
+
+        verifyStatic(JSONUtils.class);
+        JSONUtils.write(mockJsonStringer, DATA_RESIDENCY_REGION, anyString());
     }
 
     private static class MockLog extends AbstractLog {

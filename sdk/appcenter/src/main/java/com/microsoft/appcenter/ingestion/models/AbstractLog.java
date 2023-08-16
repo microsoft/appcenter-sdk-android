@@ -32,7 +32,8 @@ public abstract class AbstractLog implements Log {
     /**
      * timestamp property.
      */
-    private static final String TIMESTAMP = "timestamp";
+    @VisibleForTesting
+    static final String TIMESTAMP = "timestamp";
 
     /**
      * Session identifier property.
@@ -58,7 +59,8 @@ public abstract class AbstractLog implements Log {
     /**
      * Data residency region property.
      */
-    private static final String DATA_RESIDENCY_REGION = "dataResidencyRegion";
+    @VisibleForTesting
+    static final String DATA_RESIDENCY_REGION = "dataResidencyRegion";
 
     /**
      * Collection of transmissionTargetTokens that this log should be sent to.
@@ -194,7 +196,7 @@ public abstract class AbstractLog implements Log {
             writer.endObject();
         }
         if (getDataResidencyRegion() != null) {
-            JSONUtils.write(writer, DATA_RESIDENCY_REGION, getUserId());
+            JSONUtils.write(writer, DATA_RESIDENCY_REGION, getDataResidencyRegion());
         }
     }
 
