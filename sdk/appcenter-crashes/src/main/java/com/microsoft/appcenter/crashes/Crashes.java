@@ -657,8 +657,10 @@ public class Crashes extends AbstractAppCenterService {
                 mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
 
                 /* Then attachments if any. */
-                for (ErrorAttachmentLog attachment : attachments) {
-                    attachment.setDataResidencyRegion(dataResidencyRegion);
+                if (attachments != null) {
+                    for (ErrorAttachmentLog attachment : attachments) {
+                        attachment.setDataResidencyRegion(dataResidencyRegion);
+                    }
                 }
                 sendErrorAttachment(errorId, attachments);
             }
