@@ -132,6 +132,12 @@ public class MainActivity extends AppCompatActivity {
             AppCenter.setCountryCode(countryCode);
         }
 
+        /* Set data residency region. */
+        String dataResidencyRegion = MainActivity.sSharedPreferences.getString(application.getString(R.string.data_residency_region_key), null);
+        if (dataResidencyRegion != null) {
+            AppCenter.setDataResidencyRegion(dataResidencyRegion);
+        }
+
         /* Set the track explicitly only if we set it in settings, to test the initial public by default at first launch. */
         int savedTrack = sSharedPreferences.getInt(application.getString(R.string.appcenter_distribute_track_state_key), 0);
         if (savedTrack != 0) {
