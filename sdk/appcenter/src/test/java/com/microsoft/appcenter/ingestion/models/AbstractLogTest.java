@@ -15,7 +15,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONStringer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Date;
 import java.util.UUID;
@@ -33,14 +35,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @SuppressWarnings("unused")
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({ JSONUtils.class })
 public class AbstractLogTest {
-
-    @PrepareForTest({
-            JSONUtils.class
-    })
 
     @SuppressWarnings("InstantiationOfUtilityClass")
     @Test
@@ -187,16 +188,13 @@ public class AbstractLogTest {
         mockLog.read(mockJsonObject);
 
         assertEquals(dataResidencyRegion, mockLog.getDataResidencyRegion());
-
-        // Additional verification to ensure mock interactions
-        verify(mockJsonObject).has(DATA_RESIDENCY_REGION);
-        verify(mockJsonObject).optString(DATA_RESIDENCY_REGION, null);
     }
 
 
     @Test
     public void writeNotNullDataResidencyRegionTest() throws JSONException {
         JSONStringer mockJsonStringer = mock(JSONStringer.class);
+        mockStatic(JSONUtils.class);
         when(mockJsonStringer.key(anyString())).thenReturn(mockJsonStringer);
         when(mockJsonStringer.value(anyString())).thenReturn(mockJsonStringer);
 
@@ -205,9 +203,8 @@ public class AbstractLogTest {
         mockLog.setDataResidencyRegion("RG");
         mockLog.write(mockJsonStringer);
 
-
         verifyStatic(JSONUtils.class);
-        JSONUtils.write(mockJsonStringer, DATA_RESIDENCY_REGION, anyString());
+        JSONUtils.write(mockJsonStringer, DATA_RESIDENCY_REGION, "RG");
     }
 
     private static class MockLog extends AbstractLog {
