@@ -176,15 +176,17 @@ public class AbstractLogTest {
     @Test
     public void readNotNullDataResidencyRegionTest() throws JSONException {
         JSONObject mockJsonObject = mock(JSONObject.class);
+        String dataResidencyRegion = "RG";
+
         when(mockJsonObject.has(DATA_RESIDENCY_REGION)).thenReturn(true);
-        when(mockJsonObject.optString(DATA_RESIDENCY_REGION)).thenReturn("RG");
+        when(mockJsonObject.optString(DATA_RESIDENCY_REGION, null)).thenReturn(dataResidencyRegion);
         when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn("mockType");
         when(mockJsonObject.getString(TIMESTAMP)).thenReturn(JSONDateUtils.toString(new Date()));
 
         AbstractLog mockLog = new MockLogWithType();
         mockLog.read(mockJsonObject);
 
-        verify(mockJsonObject).optString(eq(DATA_RESIDENCY_REGION), isNull());
+        assertEquals(dataResidencyRegion, mockLog.getDataResidencyRegion());
     }
 
     @Test
