@@ -187,7 +187,12 @@ public class AbstractLogTest {
         mockLog.read(mockJsonObject);
 
         assertEquals(dataResidencyRegion, mockLog.getDataResidencyRegion());
+
+        // Additional verification to ensure mock interactions
+        verify(mockJsonObject).has(DATA_RESIDENCY_REGION);
+        verify(mockJsonObject).optString(DATA_RESIDENCY_REGION, null);
     }
+
 
     @Test
     public void writeNotNullDataResidencyRegionTest() throws JSONException {
