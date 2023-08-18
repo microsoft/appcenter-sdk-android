@@ -5,29 +5,25 @@
 
 package com.microsoft.appcenter.crashes.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.ingestion.models.Device;
 import com.microsoft.appcenter.utils.storage.FileManager;
 
-import org.json.JSONException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @SuppressWarnings("unused")
 public class ErrorLogHelperAndroidTest {
@@ -176,10 +172,17 @@ public class ErrorLogHelperAndroidTest {
     }
 
     @Test
-    public void parseDataResidencyRegion() throws JSONException {
+    public void parseDataResidencyRegion() {
         String mockDataResidencyRegion = "mockRegion";
         String mockContextInformation = "{\"dataResidencyRegion\":\"" + mockDataResidencyRegion + "\"}";
         String result = ErrorLogHelper.parseDataResidencyRegion(mockContextInformation);
         assertEquals(mockDataResidencyRegion, result);
+    }
+
+    @Test()
+    public void parseDataResidencyRegionIncorrectJson() {
+        String invalidJson = "invalidJson";
+        String result = ErrorLogHelper.parseDataResidencyRegion(invalidJson);
+        assertNull(result);
     }
 }
