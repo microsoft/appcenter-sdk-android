@@ -465,21 +465,6 @@ public class ErrorLogHelperTest {
         assertNull(dataResidencyRegion);
     }
 
-//    @Test
-//    public void getStoredDataResidencyRegion() throws IOException {
-//        String mockDataResidencyRegion = "mockRegion";
-//        String mockContextInformation = "{\"dataResidencyRegion\":\"" + mockDataResidencyRegion + "\"}";
-//
-//        File minidumpFolder = mTemporaryFolder.newFolder("minidump");
-//        File deviceInfoFile = new File(minidumpFolder, ErrorLogHelper.DEVICE_INFO_FILE);
-//        assertTrue(deviceInfoFile.createNewFile());
-//
-//        mockStatic(FileManager.class);
-//        when(FileManager.read(eq(deviceInfoFile))).thenReturn(mockContextInformation);
-//        String dataResidencyRegion = ErrorLogHelper.getStoredDataResidencyRegion(minidumpFolder);
-//        assertEquals(mockDataResidencyRegion, dataResidencyRegion);
-//    }
-
     @Test
     public void throwIOExceptionWhenGetMinidumpSubfolderWithDeviceInfo() throws java.lang.Exception {
 
