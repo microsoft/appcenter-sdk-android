@@ -93,7 +93,7 @@ public abstract class AbstractLog implements Log {
     private Device device;
 
     /**
-     * Carrier data residency region.
+     * Data residency region.
      */
     private @Nullable String dataResidencyRegion;
 
