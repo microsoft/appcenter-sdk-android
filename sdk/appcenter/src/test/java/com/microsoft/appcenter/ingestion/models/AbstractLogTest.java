@@ -27,6 +27,7 @@ import static com.microsoft.appcenter.ingestion.models.AbstractLog.TIMESTAMP;
 import static com.microsoft.appcenter.test.TestUtils.checkEquals;
 import static com.microsoft.appcenter.test.TestUtils.checkNotEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -190,6 +191,21 @@ public class AbstractLogTest {
         assertEquals(dataResidencyRegion, mockLog.getDataResidencyRegion());
     }
 
+    @Test
+    public void readNullDataResidencyRegionTest() throws JSONException {
+        JSONObject mockJsonObject = mock(JSONObject.class);
+
+        when(mockJsonObject.has(DATA_RESIDENCY_REGION)).thenReturn(true);
+        when(mockJsonObject.optString(DATA_RESIDENCY_REGION, null)).thenReturn(null);
+        when(mockJsonObject.getString(CommonProperties.TYPE)).thenReturn("mockType");
+        when(mockJsonObject.getString(TIMESTAMP)).thenReturn(JSONDateUtils.toString(new Date()));
+
+        AbstractLog mockLog = new MockLogWithType();
+        mockLog.read(mockJsonObject);
+
+        assertNull(mockLog.getDataResidencyRegion());
+    }
+
 
     @Test
     public void writeNotNullDataResidencyRegionTest() throws JSONException {
@@ -205,6 +221,21 @@ public class AbstractLogTest {
 
         verifyStatic(JSONUtils.class);
         JSONUtils.write(mockJsonStringer, DATA_RESIDENCY_REGION, "RG");
+    }
+
+    @Test
+    public void writeNullDataResidencyRegionTest() throws JSONException {
+        JSONStringer mockJsonStringer = mock(JSONStringer.class);
+        mockStatic(JSONUtils.class);
+        when(mockJsonStringer.key(anyString())).thenReturn(mockJsonStringer);
+        when(mockJsonStringer.value(anyString())).thenReturn(mockJsonStringer);
+
+        AbstractLog mockLog = new MockLog();
+        mockLog.setTimestamp(new Date());
+        mockLog.write(mockJsonStringer);
+
+        verifyStatic(JSONUtils.class, never());
+        JSONUtils.write(eq(mockJsonStringer), eq(DATA_RESIDENCY_REGION), anyString());
     }
 
     private static class MockLog extends AbstractLog {
