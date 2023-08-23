@@ -5,6 +5,8 @@
 
 package com.microsoft.appcenter.ingestion.models;
 
+import androidx.annotation.Nullable;
+
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
@@ -89,6 +91,21 @@ public interface Log extends Model {
      * @param device the device value to set
      */
     void setDevice(Device device);
+
+    /**
+     * Get the dataResidency value.
+     *
+     * @return the dataResidency value
+     */
+    @Nullable
+    String getDataResidencyRegion();
+
+    /**
+     * Set the dataResidency value.
+     *
+     * @param dataResidencyRegion the dataResidency value to set
+     */
+    void setDataResidencyRegion(@Nullable String dataResidencyRegion);
 
     /**
      * Adds a transmissionTargetToken that this log should be sent to.

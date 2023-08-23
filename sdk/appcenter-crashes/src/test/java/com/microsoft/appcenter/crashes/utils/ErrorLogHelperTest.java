@@ -428,26 +428,30 @@ public class ErrorLogHelperTest {
     }
 
     @Test
-    public void getStoredDeviceInfoAndUserIdNull() {
+    public void getStoredMinidumpFileContentNull() {
         File minidumpFolder = mock(File.class);
         when(minidumpFolder.listFiles(any(FilenameFilter.class))).thenReturn(null);
         Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
         String storedUserId = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
+        String dataResidencyRegion = ErrorLogHelper.getStoredDataResidencyRegion(minidumpFolder);
         assertNull(storedDeviceInfo);
         assertNull(storedUserId);
+        assertNull(dataResidencyRegion);
     }
 
     @Test
-    public void getStoredDeviceInfoAndUserIdEmpty() throws IOException {
+    public void getStoredMinidumpFileContentEmpty() throws IOException {
         File minidumpFolder = mTemporaryFolder.newFolder("minidump");
         Device storedDeviceInfo = ErrorLogHelper.getStoredDeviceInfo(minidumpFolder);
         String storedUserId = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
+        String dataResidencyRegion = ErrorLogHelper.getStoredDataResidencyRegion(minidumpFolder);
         assertNull(storedDeviceInfo);
         assertNull(storedUserId);
+        assertNull(dataResidencyRegion);
     }
 
     @Test
-    public void getStoredDeviceInfoAndUserInfoCannotRead() throws IOException {
+    public void getStoredMinidumpFileContentCannotRead() throws IOException {
         File minidumpFolder = mTemporaryFolder.newFolder("minidump");
         File deviceInfoFile = new File(minidumpFolder, ErrorLogHelper.DEVICE_INFO_FILE);
         assertTrue(deviceInfoFile.createNewFile());
@@ -457,6 +461,8 @@ public class ErrorLogHelperTest {
         assertNull(storedDeviceInfo);
         String userInfo = ErrorLogHelper.getStoredUserInfo(minidumpFolder);
         assertNull(userInfo);
+        String dataResidencyRegion = ErrorLogHelper.getStoredDataResidencyRegion(minidumpFolder);
+        assertNull(dataResidencyRegion);
     }
 
     @Test

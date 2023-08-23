@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import com.microsoft.appcenter.AppCenter;
 import com.microsoft.appcenter.Constants;
 import com.microsoft.appcenter.crashes.Crashes;
 import com.microsoft.appcenter.crashes.ingestion.models.Exception;
@@ -145,6 +146,11 @@ public class ErrorLogHelper {
     static String DEVICE_INFO_KEY = "DEVICE_INFO";
 
     /**
+     * Key for data residency region.
+     */
+    private static final String DATA_RESIDENCY_REGION_KEY = "dataResidencyRegion";
+
+    /**
      * Key for saving userId to JSON.
      */
     @VisibleForTesting
@@ -167,6 +173,9 @@ public class ErrorLogHelper {
 
         /* Set user identifier. */
         errorLog.setUserId(UserIdContext.getInstance().getUserId());
+
+        /* Set data residency region. */
+        errorLog.setDataResidencyRegion(AppCenter.getDataResidencyRegion());
 
         /* Snapshot device properties. */
         try {
@@ -287,6 +296,7 @@ public class ErrorLogHelper {
         try {
             Device deviceInfo = DeviceInfoHelper.getDeviceInfo(context);
             String userIdContext = UserIdContext.getInstance().getUserId();
+            String dataResidencyRegion = AppCenter.getDataResidencyRegion();
             deviceInfo.setWrapperSdkName(WRAPPER_SDK_NAME_NDK);
 
             /* To JSON. */
@@ -296,6 +306,7 @@ public class ErrorLogHelper {
             writer.endObject();
             String deviceInfoString = writer.toString();
             JSONObject jsonObject = new JSONObject();
+            jsonObject.put(DATA_RESIDENCY_REGION_KEY, dataResidencyRegion);
             jsonObject.put(DEVICE_INFO_KEY, deviceInfoString);
             jsonObject.put(USER_ID_KEY, userIdContext);
 
@@ -372,6 +383,21 @@ public class ErrorLogHelper {
     }
 
     /**
+     * Get data residency region.
+     *
+     * @param logFolder folder where to look for stored data residency region.
+     * @return a data residency region or null.
+     */
+    @Nullable
+    public static String getStoredDataResidencyRegion(File logFolder) {
+        String context = getContextInformation(logFolder);
+        if (context == null) {
+            return null;
+        }
+        return parseDataResidencyRegion(context);
+    }
+
+    /**
      * Get data about userId and deviceInfo in JSON format.
      * @param logFolder - path to folder where placed file with data about userId and deviceId.
      * @return - data about userId and deviceId in JSON format or null.
@@ -435,6 +461,24 @@ public class ErrorLogHelper {
             return device;
         } catch (JSONException e) {
             AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize device info.", e);
+        }
+        return null;
+    }
+
+    /**
+     * Look for 'dataResidencyRegion' data in file inside the minidump folder and parse it.
+     * @param contextInformation - data with information about userId.
+     * @return dataResidencyRegion or null.
+     */
+    @VisibleForTesting
+    static String parseDataResidencyRegion(String contextInformation) {
+        try {
+            JSONObject jsonObject = new JSONObject(contextInformation);
+            if (jsonObject.has(DATA_RESIDENCY_REGION_KEY)) {
+                return jsonObject.getString(DATA_RESIDENCY_REGION_KEY);
+            }
+        } catch (JSONException e) {
+            AppCenterLog.error(Crashes.LOG_TAG, "Failed to deserialize data residency region.", e);
         }
         return null;
     }

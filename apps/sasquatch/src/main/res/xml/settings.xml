@@ -11,6 +11,11 @@
     <Preference
         android:key="@string/country_code_key"
         android:title="@string/country_code_title" />
+    <EditTextPreference
+        android:key="@string/data_residency_region_key"
+        android:selectAllOnFocus="false"
+        android:singleLine="false"
+        android:title="@string/data_residency_region_title" />
     <Preference
         android:key="@string/storage_size_key"
         android:title="@string/storage_size_title" />
