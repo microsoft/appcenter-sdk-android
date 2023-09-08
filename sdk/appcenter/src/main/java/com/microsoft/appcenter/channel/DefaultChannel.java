@@ -608,7 +608,7 @@ public class DefaultChannel implements Channel {
     }
 
     @Override
-    public void enqueue(@NonNull Log log, @NonNull final String groupName, int flags) {
+    public void enqueue(@NonNull Log log, @NonNull final String groupName, int flags, boolean shouldSendData) {
 
         /* Check group name is registered. */
         GroupState groupState = mGroupStates.get(groupName);
@@ -704,7 +704,7 @@ public class DefaultChannel implements Channel {
             /* Increment counters and schedule ingestion if we are enabled. */
             groupState.mPendingLogCount++;
             AppCenterLog.debug(LOG_TAG, "enqueue(" + groupState.mName + ") pendingLogCount=" + groupState.mPendingLogCount);
-            if (mEnabled) {
+            if (mEnabled && shouldSendData) {
                 checkPendingLogs(groupState);
             } else {
                 AppCenterLog.debug(LOG_TAG, "Channel is temporarily disabled, log was saved to disk.");

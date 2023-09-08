@@ -10,7 +10,6 @@ import android.content.ComponentCallbacks2;
 import android.content.Context;
 import android.content.res.Configuration;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
@@ -259,6 +258,26 @@ public class Crashes extends AbstractAppCenterService {
      */
     public static AppCenterFuture<Void> setEnabled(boolean enabled) {
         return getInstance().setInstanceEnabledAsync(enabled);
+    }
+
+    /**
+     * Check whether sending data to backend for Crashes service is enabled or not.
+     *
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see AppCenterFuture
+     */
+    public static AppCenterFuture<Boolean> isDataSendingEnabled() {
+        return getInstance().isInstanceDataSendingEnabledAsync();
+    }
+
+    /**
+     * Enable or disable sending data to backend for Crashes service.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     * @return future with null result to monitor when the operation completes.
+     */
+    public static AppCenterFuture<Void> setDataSendingEnabled(boolean enabled) {
+        return getInstance().setInstanceDataSendingEnabledAsync(enabled);
     }
 
     /**
@@ -654,7 +673,7 @@ public class Crashes extends AbstractAppCenterService {
                 errorLog.setDataResidencyRegion(dataResidencyRegion);
                 errorLog.setException(exceptionModelBuilder.buildExceptionModel());
                 errorLog.setProperties(validatedProperties);
-                mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS);
+                mChannel.enqueue(errorLog, ERROR_GROUP, Flags.DEFAULTS, isInstanceDataSendingEnabled());
 
                 /* Then attachments if any. */
                 if (attachments != null) {
@@ -1050,7 +1069,7 @@ public class Crashes extends AbstractAppCenterService {
                         }
 
                         /* Send report. */
-                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP, Flags.CRITICAL);
+                        mChannel.enqueue(errorLogReport.log, ERROR_GROUP, Flags.CRITICAL, isInstanceDataSendingEnabled());
 
                         /* Send dump attachment and remove file. */
                         if (dumpAttachment != null) {
@@ -1094,7 +1113,7 @@ public class Crashes extends AbstractAppCenterService {
                                 "Discarding attachment with size above %d bytes: size=%d, fileName=%s.",
                                 MAX_ATTACHMENT_SIZE, attachment.getData().length, attachment.getFileName()));
                     } else {
-                        mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS);
+                        mChannel.enqueue(attachment, ERROR_GROUP, Flags.DEFAULTS, isInstanceDataSendingEnabled());
                     }
                 } else {
                     AppCenterLog.warn(LOG_TAG, "Skipping null ErrorAttachmentLog.");

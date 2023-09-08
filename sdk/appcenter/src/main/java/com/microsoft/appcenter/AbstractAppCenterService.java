@@ -25,6 +25,7 @@ import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_COUNT;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_INTERVAL;
 import static com.microsoft.appcenter.Constants.DEFAULT_TRIGGER_MAX_PARALLEL_REQUESTS;
 import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_ENABLED;
+import static com.microsoft.appcenter.utils.PrefStorageConstants.KEY_IS_DATA_SENDING_ENABLED;
 
 public abstract class AbstractAppCenterService implements AppCenterService {
 
@@ -174,6 +175,65 @@ public abstract class AbstractAppCenterService implements AppCenterService {
         }
     }
 
+    @Override
+    public synchronized boolean isInstanceDataSendingEnabled() {
+        return SharedPreferencesManager.getBoolean(getIsDataSendingEnabledPreferenceKey(), true);
+    }
+
+    @WorkerThread
+    @Override
+    public synchronized void setInstanceDataSendingEnabled(boolean enabled) {
+        SharedPreferencesManager.putBoolean(getIsDataSendingEnabledPreferenceKey(), enabled);
+        AppCenterLog.info(getLoggerTag(), String.format("Sending data of %s service to backend has been %s.", getServiceName(), enabled ? "enabled" : "disabled"));
+    }
+
+    /**
+     * Help implementing static isDataSendingEnabled() for services with future.
+     *
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     */
+    protected synchronized AppCenterFuture<Boolean> isInstanceDataSendingEnabledAsync() {
+        final DefaultAppCenterFuture<Boolean> future = new DefaultAppCenterFuture<>();
+        postAsyncGetter(new Runnable() {
+
+            @Override
+            public void run() {
+                future.complete(isInstanceDataSendingEnabled());
+            }
+        }, future, false);
+        return future;
+    }
+
+    /**
+     * Help implementing static isDataSendingEnabled() for services with future.
+     *
+     * @param enabled true to enable, false to disable.
+     * @return future with null result to monitor when the operation completes.
+     */
+    protected final synchronized AppCenterFuture<Void> setInstanceDataSendingEnabledAsync(final boolean enabled) {
+        final DefaultAppCenterFuture<Void> future = new DefaultAppCenterFuture<>();
+        final Runnable coreDisabledRunnable = new Runnable() {
+
+            @Override
+            public void run() {
+                AppCenterLog.error(LOG_TAG, "App Center SDK is disabled.");
+                future.complete(null);
+            }
+        };
+        Runnable runnable = new Runnable() {
+
+            @Override
+            public void run() {
+                setInstanceDataSendingEnabled(enabled);
+                future.complete(null);
+            }
+        };
+        if (!post(runnable, coreDisabledRunnable, runnable)) {
+            future.complete(null);
+        }
+        return future;
+    }
+
     @WorkerThread
     protected synchronized void applyEnabledState(boolean enabled) {
 
@@ -254,6 +314,11 @@ public abstract class AbstractAppCenterService implements AppCenterService {
     @NonNull
     protected String getEnabledPreferenceKey() {
         return KEY_ENABLED + PREFERENCE_KEY_SEPARATOR + getServiceName();
+    }
+
+    @NonNull
+    protected String getIsDataSendingEnabledPreferenceKey() {
+        return KEY_IS_DATA_SENDING_ENABLED + PREFERENCE_KEY_SEPARATOR + getServiceName();
     }
 
     /**
