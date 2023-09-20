@@ -14,8 +14,8 @@ android {
     flavorDimensions "dependency", "distribute"
 
     defaultConfig {
-        versionCode 300
-        versionName "5.0.1"
+        versionCode 302
+        versionName "5.0.3"
         externalNativeBuild {
             ndkBuild {
                 arguments "NDK_APPLICATION_MK=Application.mk", "V=1"
@@ -100,7 +100,7 @@ dependencies {
     projectDependencyImplementation project(':sdk:appcenter-analytics')
     projectDependencyImplementation project(':sdk:appcenter-crashes')
 
-    def appCenterSdkVersion = "5.0.1"
+    def appCenterSdkVersion = "5.0.2"
     mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-analytics:${appCenterSdkVersion}"
     mavenCentralDependencyImplementation "com.microsoft.appcenter:appcenter-crashes:${appCenterSdkVersion}"
 

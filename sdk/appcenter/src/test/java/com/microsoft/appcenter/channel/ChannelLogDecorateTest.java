@@ -64,6 +64,7 @@ public class ChannelLogDecorateTest {
         Log log2 = mock(Log.class);
         when(log2.getDevice()).thenReturn(device);
         when(log2.getTimestamp()).thenReturn(new Date(123L));
+        when(log2.getDataResidencyRegion()).thenReturn("region");
         channel.enqueue(log2, "", DEFAULTS);
         verify(log2, never()).setDevice(any(Device.class));
         verify(log2, never()).setTimestamp(any(Date.class));

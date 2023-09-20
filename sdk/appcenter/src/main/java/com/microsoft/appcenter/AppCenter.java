@@ -13,6 +13,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 import android.util.Log;
@@ -237,6 +238,11 @@ public class AppCenter {
     private Boolean mAllowedNetworkRequests;
 
     /**
+     * Country code or any other string to identify residency region..
+     */
+    private @Nullable String mDataResidencyRegion;
+
+    /**
      * Get unique instance.
      *
      * @return unique instance.
@@ -306,6 +312,25 @@ public class AppCenter {
      */
     public static void setCountryCode(String countryCode) {
         DeviceInfoHelper.setCountryCode(countryCode);
+    }
+
+    /**
+     * Set the country code or any other string to identify residency region.
+     *
+     * @param dataResidencyRegion residency region code.
+     */
+    public static void setDataResidencyRegion(@Nullable String dataResidencyRegion) {
+        getInstance().mDataResidencyRegion = dataResidencyRegion;
+    }
+
+    /**
+     * Set the country code or any other string to identify residency region.
+     *
+     * @return dataResidencyRegion residency region code if defined.
+     */
+    @Nullable
+    public static String getDataResidencyRegion() {
+        return getInstance().mDataResidencyRegion;
     }
 
     /**

@@ -874,6 +874,16 @@ public class AppCenterTest extends AbstractAppCenterTest {
     }
 
     @Test
+    public void setDataResidencyRegion() {
+
+        /* Set country code. */
+        String expectedDataResidencyRegion = "rg";
+        AppCenter.setDataResidencyRegion(expectedDataResidencyRegion);
+
+        assertEquals(AppCenter.getDataResidencyRegion(), expectedDataResidencyRegion);
+    }
+
+    @Test
     public void setDefaultLogLevelRelease() {
         mApplicationInfo.flags = 0;
         AppCenter.start(mApplication, DUMMY_APP_SECRET, DummyService.class);

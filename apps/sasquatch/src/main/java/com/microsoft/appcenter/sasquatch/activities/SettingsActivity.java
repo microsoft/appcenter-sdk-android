@@ -136,6 +136,34 @@ public class SettingsActivity extends AppCompatActivity {
                     return true;
                 }
             });
+            initClickableSetting(R.string.data_residency_region_key, MainActivity.sSharedPreferences.getString(getActivity().getString(R.string.data_residency_region_key), null), new Preference.OnPreferenceClickListener() {
+
+                @Override
+                public boolean onPreferenceClick(final Preference preference) {
+                    final EditText input = new EditText(getActivity());
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setHint(R.string.data_residency_region_title);
+                    input.setText(MainActivity.sSharedPreferences.getString(getActivity().getString(R.string.data_residency_region_key), null));
+                    input.setSelection(input.getText().length());
+                    new AlertDialog.Builder(getActivity()).setTitle(R.string.data_residency_region_title).setView(input)
+                            .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
+
+                                @SuppressLint("CommitPrefEdits")
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    MainActivity.sSharedPreferences
+                                            .edit()
+                                            .putString(getActivity().getString(R.string.data_residency_region_key), input.getText().toString())
+                                            .apply();
+                                    preference.setSummary(input.getText());
+                                    Toast.makeText(getActivity(), getActivity().getString(R.string.data_residency_region_save_message), Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .setNegativeButton(R.string.cancel, null)
+                            .create().show();
+                    return true;
+                }
+            });
             initClickableSetting(R.string.storage_size_key, Formatter.formatFileSize(getActivity(), MainActivity.sSharedPreferences.getLong(MAX_STORAGE_SIZE_KEY, DEFAULT_MAX_STORAGE_SIZE)), new Preference.OnPreferenceClickListener() {
 
                 @Override

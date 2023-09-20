@@ -5,6 +5,12 @@
 
 package com.microsoft.appcenter.crashes.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.microsoft.appcenter.Constants;
@@ -18,12 +24,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.UUID;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unused")
 public class ErrorLogHelperAndroidTest {
@@ -169,5 +169,20 @@ public class ErrorLogHelperAndroidTest {
         String userId4 = ErrorLogHelper.parseUserId(contextInfo4);
         assertNotNull(device4);
         assertNull(userId4);
+    }
+
+    @Test
+    public void parseDataResidencyRegion() {
+        String mockDataResidencyRegion = "mockRegion";
+        String mockContextInformation = "{\"dataResidencyRegion\":\"" + mockDataResidencyRegion + "\"}";
+        String result = ErrorLogHelper.parseDataResidencyRegion(mockContextInformation);
+        assertEquals(mockDataResidencyRegion, result);
+    }
+
+    @Test()
+    public void parseDataResidencyRegionIncorrectJson() {
+        String invalidJson = "invalidJson";
+        String result = ErrorLogHelper.parseDataResidencyRegion(invalidJson);
+        assertNull(result);
     }
 }
