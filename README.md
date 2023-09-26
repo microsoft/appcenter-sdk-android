@@ -1,7 +1,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/Microsoft/AppCenter-SDK-Android/badge.svg?branch=develop)](https://coveralls.io/github/Microsoft/AppCenter-SDK-Android?branch=develop)
 [![GitHub Release](https://img.shields.io/github/release/microsoft/appcenter-sdk-android.svg)](https://github.com/microsoft/appcenter-sdk-android/releases/latest)
-[![Bintray](https://api.bintray.com/packages/vsappcenter/appcenter/appcenter/images/download.svg)](https://bintray.com/vsappcenter/appcenter)
 [![license](https://img.shields.io/badge/license-MIT%20License-00AAAA.svg)](https://github.com/microsoft/appcenter-sdk-android/blob/master/license.txt)
+[![Project Map](https://img.shields.io/badge/SourceSpy-Project_Map-blue.svg)](https://sourcespy.com/github/microsoftappcentersdkandroid/)
 
 # Visual Studio App Center SDK for Android
 
