@@ -14,6 +14,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 
@@ -233,7 +234,11 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
         if (mInstallStatusReceiver == null) {
             AppCenterLog.debug(LOG_TAG, "Register receiver for installing a new release.");
             mInstallStatusReceiver = new InstallStatusReceiver(this);
-            mContext.registerReceiver(mInstallStatusReceiver, InstallStatusReceiver.getInstallerReceiverFilter());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                mContext.registerReceiver(mInstallStatusReceiver, InstallStatusReceiver.getInstallerReceiverFilter(), Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                mContext.registerReceiver(mInstallStatusReceiver, InstallStatusReceiver.getInstallerReceiverFilter());
+            }
         }
         if (mSessionCallback == null) {
             PackageInstaller packageInstaller = getPackageInstaller();

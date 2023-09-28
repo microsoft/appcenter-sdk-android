@@ -10,6 +10,6 @@ ext {
     versionName = '5.0.3'
     minSdkVersion = 21
     compileSdkVersion = 33
-    targetSdkVersion = 33
+    targetSdkVersion = 34
     annotationVersion = '1.2.0'
 }
