@@ -49,6 +49,9 @@ class InstallStatusReceiver extends BroadcastReceiver {
         int broadcastFlags = 0;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             broadcastFlags = PendingIntent.FLAG_MUTABLE;
+            if (Build.VERSION.SDK_INT >= 34) {
+                broadcastFlags |= PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+            }
         }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,

@@ -235,7 +235,7 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
             AppCenterLog.debug(LOG_TAG, "Register receiver for installing a new release.");
             mInstallStatusReceiver = new InstallStatusReceiver(this);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                mContext.registerReceiver(mInstallStatusReceiver, InstallStatusReceiver.getInstallerReceiverFilter(), Context.RECEIVER_NOT_EXPORTED);
+                mContext.registerReceiver(mInstallStatusReceiver, InstallStatusReceiver.getInstallerReceiverFilter(), Context.RECEIVER_EXPORTED);
             } else {
                 mContext.registerReceiver(mInstallStatusReceiver, InstallStatusReceiver.getInstallerReceiverFilter());
             }
