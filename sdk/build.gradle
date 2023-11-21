@@ -162,11 +162,7 @@ subprojects {
     publishing {
         repositories {
             maven {
-                url = ext.mavenRepoUrl
-                credentials {
-                    username = ext.mavenUser
-                    password = ext.mavenKey
-                }
+                url = uri("${System.env.BUILD_DIR}")
             }
         }
 
