@@ -16,7 +16,7 @@ ext {
     if (file.exists()) {
         properties.load(file.newDataInputStream())
     }
-
+    mavenKey = properties.getProperty("maven.key")
     mavenSigningKeyId = properties.getProperty("maven.signingKeyId")
     mavenPublicKeyPassword = properties.getProperty("maven.publicKeyPassword")
     mavenSecretKeyPath = properties.getProperty("maven.secretKeyPath")
