@@ -31,6 +31,8 @@ class InstallStatusReceiver extends BroadcastReceiver {
 
     @VisibleForTesting
     static final String INSTALL_STATUS_ACTION = "com.microsoft.appcenter.action.INSTALL_STATUS";
+    @VisibleForTesting
+    static final String FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT_NAME = "FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT";
 
     static IntentFilter getInstallerReceiverFilter() {
         IntentFilter installerReceiverFilter = new IntentFilter();
@@ -45,12 +47,12 @@ class InstallStatusReceiver extends BroadcastReceiver {
      * @param requestCode request code for the sender.
      * @return IntentSender with receiver.
      */
-    static IntentSender getInstallStatusIntentSender(Context context, int requestCode) {
+    static IntentSender getInstallStatusIntentSender(Context context, int requestCode) throws NoSuchFieldException, IllegalAccessException {
         int broadcastFlags = 0;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             broadcastFlags = PendingIntent.FLAG_MUTABLE;
             if (Build.VERSION.SDK_INT >= 34) {
-                broadcastFlags |= PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+                broadcastFlags |= PendingIntent.class.getDeclaredField(FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT_NAME).getInt(PendingIntent.class);
             }
         }
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
