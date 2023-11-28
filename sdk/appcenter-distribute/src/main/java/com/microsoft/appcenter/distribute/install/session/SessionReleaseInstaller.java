@@ -208,7 +208,7 @@ public class SessionReleaseInstaller extends AbstractReleaseInstaller {
             IntentSender statusReceiver = InstallStatusReceiver.getInstallStatusIntentSender(mContext, mSessionId);
             session.commit(statusReceiver);
             session.close();
-        } catch (IOException | RuntimeException | NoSuchFieldException | IllegalAccessException e) {
+        } catch (IOException | RuntimeException e) {
             if (session != null) {
                 session.abandon();
             }

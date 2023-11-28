@@ -218,7 +218,7 @@ public class InstallStatusReceiverTest {
     }
 
     @Test
-    public void createIntentSenderOnAndroid34() throws NoSuchFieldException, IllegalAccessException {
+    public void createIntentSenderOnAndroid34() {
 
         /* Mock SDK_INT to 34 target SDK. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 34);
@@ -226,7 +226,7 @@ public class InstallStatusReceiverTest {
     }
 
     @Test
-    public void createIntentSenderOnAndroidS() throws NoSuchFieldException, IllegalAccessException {
+    public void createIntentSenderOnAndroidS() {
 
         /* Mock SDK_INT to S. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.S);
@@ -234,14 +234,14 @@ public class InstallStatusReceiverTest {
     }
 
     @Test
-    public void createIntentSenderOnAndroidLowS() throws NoSuchFieldException, IllegalAccessException {
+    public void createIntentSenderOnAndroidLowS() {
 
         /* Mock SDK_INT to M. */
         Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.M);
         createIntentSender(0);
     }
 
-    private void createIntentSender(int expectedFlag) throws NoSuchFieldException, IllegalAccessException {
+    private void createIntentSender(int expectedFlag) {
         mockStatic(PendingIntent.class);
         PendingIntent intent = mock(PendingIntent.class);
         IntentSender sender = mock(IntentSender.class);
