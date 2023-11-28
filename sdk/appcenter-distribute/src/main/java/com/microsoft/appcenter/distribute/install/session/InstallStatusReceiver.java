@@ -36,7 +36,7 @@ class InstallStatusReceiver extends BroadcastReceiver {
     /**
      * Raw value of PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
      * https://developer.android.com/reference/android/app/PendingIntent#FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
-     * which will appear only in Android target SDK 34.
+     * This flag will appear only in Android target SDK 34.
      */
     @VisibleForTesting
     private static final int FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT_VALUE = 16777216;
