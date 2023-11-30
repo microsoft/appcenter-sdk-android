@@ -13,6 +13,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.FileObserver;
 import android.preference.CheckBoxPreference;
@@ -738,7 +739,7 @@ public class SettingsActivity extends AppCompatActivity {
             if (requestCode == FILE_ATTACHMENT_DIALOG_ID) {
                 Uri fileAttachment = resultCode == RESULT_OK && data != null ? data.getData() : null;
                 if (fileAttachment != null) {
-                    getActivity().getContentResolver().takePersistableUriPermission(fileAttachment, data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    getActivity().getContentResolver().takePersistableUriPermission(fileAttachment, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
                 MainActivity.setFileAttachment(fileAttachment);
                 Preference preference = getPreferenceManager().findPreference(getString(R.string.appcenter_crashes_file_attachment_key));

@@ -53,6 +53,7 @@ import java.util.Set;
 public class InstallStatusReceiverTest {
 
     private static final int SESSION_ID = 42;
+    private static final int FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT_VALUE = 16777216;
 
     @Rule
     public PowerMockRule mRule = new PowerMockRule();
@@ -214,6 +215,14 @@ public class InstallStatusReceiverTest {
         /* Verify that we add install status to filter. */
         assertEquals(filter, InstallStatusReceiver.getInstallerReceiverFilter());
         verify(filter).addAction(INSTALL_STATUS_ACTION);
+    }
+
+    @Test
+    public void createIntentSenderOnAndroid34() {
+
+        /* Mock SDK_INT to 34 target SDK. */
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 34);
+        createIntentSender(PendingIntent.FLAG_MUTABLE | FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT_VALUE);
     }
 
     @Test

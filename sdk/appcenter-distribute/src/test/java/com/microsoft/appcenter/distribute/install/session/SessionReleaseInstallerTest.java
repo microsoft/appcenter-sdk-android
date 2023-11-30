@@ -29,6 +29,7 @@ import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 
@@ -41,12 +42,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
+import org.powermock.reflect.Whitebox;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -58,7 +61,7 @@ import java.util.List;
         InstallStatusReceiver.class,
         PackageInstallerListener.class,
         ReleaseInstallerActivity.class,
-        SessionReleaseInstaller.class
+        SessionReleaseInstaller.class,
 })
 public class SessionReleaseInstallerTest {
 
@@ -153,7 +156,9 @@ public class SessionReleaseInstallerTest {
     }
 
     @Test
-    public void installSuccess() throws IOException {
+    public void installSuccessForSV2() throws IOException {
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.S_V2);
+
         Uri uri = mock(Uri.class);
         mInstaller.install(uri);
 
@@ -173,6 +178,33 @@ public class SessionReleaseInstallerTest {
 
         /* Cancel previous session and re-use callbacks. */
         verify(mContext).registerReceiver(eq(mInstallStatusReceiver), any());
+        verify(mPackageInstaller).registerSessionCallback(eq(mPackageInstallerListener));
+        verify(mPackageInstaller).abandonSession(eq(SESSION_ID));
+    }
+
+    @Test
+    public void installSuccessForTiramisu() throws IOException {
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", Build.VERSION_CODES.TIRAMISU);
+
+        Uri uri = mock(Uri.class);
+        mInstaller.install(uri);
+
+        /* Verify that all required things called. */
+        verify(mHandler).post(any(Runnable.class));
+        verify(mContext).registerReceiver(eq(mInstallStatusReceiver), any(), anyInt());
+        verify(mPackageInstaller).registerSessionCallback(eq(mPackageInstallerListener));
+        verify(mInputStream).close();
+        verify(mOutputStream).close();
+        verify(mSession).commit(any(IntentSender.class));
+        verify(mSession, never()).abandon();
+        verify(mSession).close();
+        verifyNoInteractions(mListener);
+
+        /* Try to star install second time. It's valid case if something goes wrong with previous try. */
+        mInstaller.install(uri);
+
+        /* Cancel previous session and re-use callbacks. */
+        verify(mContext).registerReceiver(eq(mInstallStatusReceiver), any(), anyInt());
         verify(mPackageInstaller).registerSessionCallback(eq(mPackageInstallerListener));
         verify(mPackageInstaller).abandonSession(eq(SESSION_ID));
     }
@@ -246,7 +278,7 @@ public class SessionReleaseInstallerTest {
         mInstaller.install(uri);
 
         /* Registering callbacks. */
-        verify(mContext).registerReceiver(eq(mInstallStatusReceiver), any());
+        verify(mContext).registerReceiver(eq(mInstallStatusReceiver), any(), anyInt());
         verify(mPackageInstaller).registerSessionCallback(eq(mPackageInstallerListener));
 
         /* Clear after start should clear registered callbacks and abandon the session. */
