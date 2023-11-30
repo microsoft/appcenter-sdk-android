@@ -63,8 +63,7 @@ class InstallStatusReceiver extends BroadcastReceiver {
                 broadcastFlags |= FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT_VALUE;
             }
         }
-        // We use PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT on target SDK < 34.
-        // Suppress warning because there is no such flag in SDK < 34.
+        // Suppress the warning as the flag PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT is unavailable on Android SDK < 34.
         @SuppressLint("WrongConstant") PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 requestCode,
