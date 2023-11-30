@@ -34,7 +34,7 @@ class InstallStatusReceiver extends BroadcastReceiver {
     static final String INSTALL_STATUS_ACTION = "com.microsoft.appcenter.action.INSTALL_STATUS";
 
     /**
-     * Raw value of PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
+     * Raw value of PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT.
      * https://developer.android.com/reference/android/app/PendingIntent#FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
      * This flag will appear only in Android target SDK 34.
      */
