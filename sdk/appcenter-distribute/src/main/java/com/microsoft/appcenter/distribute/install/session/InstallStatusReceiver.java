@@ -7,6 +7,7 @@ package com.microsoft.appcenter.distribute.install.session;
 
 import static com.microsoft.appcenter.distribute.DistributeConstants.LOG_TAG;
 
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -32,6 +33,15 @@ class InstallStatusReceiver extends BroadcastReceiver {
     @VisibleForTesting
     static final String INSTALL_STATUS_ACTION = "com.microsoft.appcenter.action.INSTALL_STATUS";
 
+    /**
+     * Raw value of PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT.
+     * https://developer.android.com/reference/android/app/PendingIntent#FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT
+     * This flag will appear only in Android target SDK 34.
+     */
+    @VisibleForTesting
+    private static final int FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT_VALUE = 16777216;
+
+
     static IntentFilter getInstallerReceiverFilter() {
         IntentFilter installerReceiverFilter = new IntentFilter();
         installerReceiverFilter.addAction(INSTALL_STATUS_ACTION);
@@ -49,8 +59,12 @@ class InstallStatusReceiver extends BroadcastReceiver {
         int broadcastFlags = 0;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             broadcastFlags = PendingIntent.FLAG_MUTABLE;
+            if (Build.VERSION.SDK_INT >= 34) {
+                broadcastFlags |= FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT_VALUE;
+            }
         }
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+        // Suppress the warning as the flag PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT is unavailable on Android SDK < 34.
+        @SuppressLint("WrongConstant") PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 requestCode,
                 new Intent(INSTALL_STATUS_ACTION),
