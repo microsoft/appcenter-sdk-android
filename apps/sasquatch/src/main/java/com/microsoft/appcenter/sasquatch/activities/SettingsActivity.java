@@ -157,6 +157,7 @@ public class SettingsActivity extends AppCompatActivity {
                                             .putString(getActivity().getString(R.string.data_residency_region_key), input.getText().toString())
                                             .apply();
                                     preference.setSummary(input.getText());
+                                    AppCenter.setDataResidencyRegion(input.getText().toString());
                                     Toast.makeText(getActivity(), getActivity().getString(R.string.data_residency_region_save_message), Toast.LENGTH_SHORT).show();
                                 }
                             })
