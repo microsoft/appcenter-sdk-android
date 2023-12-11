@@ -1,5 +1,8 @@
 # App Center SDK for Android Change Log
 
+## Version 5.0.5 (Under development)
+
+
 ## Version 5.0.4
 
 ### App Center Distribute
