@@ -1,5 +1,7 @@
 # App Center SDK for Android Change Log
 
+## Version 5.0.5 (Under development)
+w
 ## Version 5.0.4
 
 ### App Center Distribute
@@ -12,7 +14,6 @@
 ### AppCenter
 
 * **[Internal]** Add `dataResidencyRegion` option.
-
 
 ## Version 5.0.2
 
