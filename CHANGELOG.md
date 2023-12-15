@@ -1,7 +1,11 @@
 # App Center SDK for Android Change Log
 
 ## Version 5.0.5 (Under development)
-w
+
+### App Center Crashes
+
+* **[Fix]** Synchronize the timestamp used for minidump attachments with the crash log's timestamp.
+
 ## Version 5.0.4
 
 ### App Center Distribute
