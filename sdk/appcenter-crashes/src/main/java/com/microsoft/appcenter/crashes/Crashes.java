@@ -659,7 +659,6 @@ public class Crashes extends AbstractAppCenterService {
                 /* Then attachments if any. */
                 if (attachments != null) {
                     for (ErrorAttachmentLog attachment : attachments) {
-                        attachment.setTimestamp(errorLog.getTimestamp());
                         attachment.setDataResidencyRegion(dataResidencyRegion);
                     }
                 }
@@ -1045,6 +1044,8 @@ public class Crashes extends AbstractAppCenterService {
                                 dumpFile = new File(minidumpFilePath);
                                 byte[] logfileContents = FileManager.readBytes(dumpFile);
                                 dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
+                                dumpAttachment.setTimestamp(errorLogReport.log.getTimestamp());
+
                             } else {
                                 AppCenterLog.warn(LOG_TAG, "NativeException found without minidump.");
                             }
@@ -1055,7 +1056,6 @@ public class Crashes extends AbstractAppCenterService {
 
                         /* Send dump attachment and remove file. */
                         if (dumpAttachment != null) {
-                            dumpAttachment.setTimestamp(errorLogReport.log.getTimestamp());
                             sendErrorAttachment(errorLogReport.log.getId(), Collections.singleton(dumpAttachment));
 
                             //noinspection ResultOfMethodCallIgnored
@@ -1065,11 +1065,6 @@ public class Crashes extends AbstractAppCenterService {
                         /* Get attachments from callback in automatic processing. */
                         if (mAutomaticProcessing) {
                             Iterable<ErrorAttachmentLog> attachments = mCrashesListener.getErrorAttachments(errorLogReport.report);
-                            if (attachments != null) {
-                                for (ErrorAttachmentLog attachment : attachments) {
-                                    attachment.setTimestamp(errorLogReport.log.getTimestamp());
-                                }
-                            }
                             sendErrorAttachment(errorLogReport.log.getId(), attachments);
                         }
 
