@@ -1045,7 +1045,6 @@ public class Crashes extends AbstractAppCenterService {
                                 byte[] logfileContents = FileManager.readBytes(dumpFile);
                                 dumpAttachment = ErrorAttachmentLog.attachmentWithBinary(logfileContents, "minidump.dmp", "application/octet-stream");
                                 dumpAttachment.setTimestamp(errorLogReport.log.getTimestamp());
-
                             } else {
                                 AppCenterLog.warn(LOG_TAG, "NativeException found without minidump.");
                             }
