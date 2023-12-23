@@ -330,6 +330,26 @@ public class Distribute extends AbstractAppCenterService {
     }
 
     /**
+     * Check whether sending data to backend for Distribute service is enabled or not.
+     *
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see AppCenterFuture
+     */
+    public static AppCenterFuture<Boolean> isDataSendingEnabled() {
+        return getInstance().isInstanceDataSendingEnabledAsync();
+    }
+
+    /**
+     * Enable or disable sending data to backend for Distribute service.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     * @return future with null result to monitor when the operation completes.
+     */
+    public static AppCenterFuture<Void> setDataSendingEnabled(boolean enabled) {
+        return getInstance().setInstanceDataSendingEnabledAsync(enabled);
+    }
+
+    /**
      * Change the base URL opened in the browser to get update token from user login information.
      *
      * @param installUrl install base URL.
@@ -1963,7 +1983,7 @@ public class Distribute extends AbstractAppCenterService {
             @Override
             public void run() {
                 DistributionStartSessionLog log = new DistributionStartSessionLog();
-                mChannel.enqueue(log, DISTRIBUTE_GROUP, Flags.DEFAULTS);
+                mChannel.enqueue(log, DISTRIBUTE_GROUP, Flags.DEFAULTS, isInstanceDataSendingEnabled());
             }
         });
     }

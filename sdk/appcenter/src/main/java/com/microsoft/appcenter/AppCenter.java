@@ -1091,7 +1091,17 @@ public class AppCenter {
             StartServiceLog startServiceLog = new StartServiceLog();
             startServiceLog.setServices(allServiceNamesToStart);
             startServiceLog.oneCollectorEnabled(mTransmissionTargetToken != null);
-            mChannel.enqueue(startServiceLog, CORE_GROUP, Flags.DEFAULTS);
+            boolean isDataSendingEnabled = true;
+            if (mServices.size() > 0) {
+                isDataSendingEnabled = false;
+                for (AppCenterService service : mServices) {
+                    if (service.isInstanceDataSendingEnabled()) {
+                        isDataSendingEnabled = true;
+                        break;
+                    }
+                }
+            }
+            mChannel.enqueue(startServiceLog, CORE_GROUP, Flags.DEFAULTS, isDataSendingEnabled);
         }
     }
 

@@ -37,6 +37,20 @@ public interface AppCenterService extends Application.ActivityLifecycleCallbacks
     void setInstanceEnabled(boolean enabled);
 
     /**
+     * Check whether sending data to backend is enabled or not.
+     *
+     * @return <code>true</code> if enabled, <code>false</code> otherwise.
+     */
+    boolean isInstanceDataSendingEnabled();
+
+    /**
+     * Enable or disable sending data to backend for this service.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     */
+    void setInstanceDataSendingEnabled(boolean enabled);
+
+    /**
      * Checks if the service needs application secret.
      *
      * @return <code>true</code> if application secret is required, <code>false</code> otherwise.

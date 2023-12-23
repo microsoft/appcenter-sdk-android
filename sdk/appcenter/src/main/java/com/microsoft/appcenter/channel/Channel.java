@@ -79,7 +79,8 @@ public interface Channel {
      */
     void enqueue(@NonNull Log log,
                  @NonNull String groupName,
-                 @IntRange(from = NORMAL, to = CRITICAL) int flags);
+                 @IntRange(from = NORMAL, to = CRITICAL) int flags,
+                 boolean shouldSendData);
 
     /**
      * Check whether channel is enabled or disabled.

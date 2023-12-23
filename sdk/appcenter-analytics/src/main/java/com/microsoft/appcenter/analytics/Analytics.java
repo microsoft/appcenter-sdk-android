@@ -215,6 +215,26 @@ public class Analytics extends AbstractAppCenterService {
     }
 
     /**
+     * Check whether sending data to backend for Analytics service is enabled or not.
+     *
+     * @return future with result being <code>true</code> if enabled, <code>false</code> otherwise.
+     * @see AppCenterFuture
+     */
+    public static AppCenterFuture<Boolean> isDataSendingEnabled() {
+        return getInstance().isInstanceDataSendingEnabledAsync();
+    }
+
+    /**
+     * Enable or disable sending data to backend for Analytics service.
+     *
+     * @param enabled <code>true</code> to enable, <code>false</code> to disable.
+     * @return future with null result to monitor when the operation completes.
+     */
+    public static AppCenterFuture<Void> setDataSendingEnabled(boolean enabled) {
+        return getInstance().setInstanceDataSendingEnabledAsync(enabled);
+    }
+
+    /**
      * Set transmission interval. The transmission interval should be between 3 seconds and 86400 seconds (1 day).
      * Should be called before the service is started.
      *
@@ -813,7 +833,7 @@ public class Analytics extends AbstractAppCenterService {
         PageLog pageLog = new PageLog();
         pageLog.setName(name);
         pageLog.setProperties(properties);
-        mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULTS);
+        mChannel.enqueue(pageLog, ANALYTICS_GROUP, Flags.DEFAULTS, isInstanceDataSendingEnabled());
     }
 
     /**
@@ -875,7 +895,7 @@ public class Analytics extends AbstractAppCenterService {
 
                 /* Filter and validate flags. For now we support only persistence. */
                 int filteredFlags = Flags.getPersistenceFlag(flags, true);
-                mChannel.enqueue(eventLog, filteredFlags == Flags.CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags);
+                mChannel.enqueue(eventLog, filteredFlags == Flags.CRITICAL ? ANALYTICS_CRITICAL_GROUP : ANALYTICS_GROUP, filteredFlags, isInstanceDataSendingEnabled());
             }
         });
     }
