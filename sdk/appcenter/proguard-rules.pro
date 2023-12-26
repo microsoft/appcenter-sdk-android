@@ -3,7 +3,7 @@
 -dontskipnonpubliclibraryclasses
 -verbose
 
--keepclasseswithmembers class * implements com.microsoft.appcenter.AppCenterService {
+-keepclassmembers class * implements com.microsoft.appcenter.AppCenterService {
     public static ** getInstance();
 }
 
