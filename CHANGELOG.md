@@ -2,6 +2,10 @@
 
 ## Version 5.0.5 (Under development)
 
+### AppCenter
+
+* **[Improvement]** Use java.security.Random instead of java.util.Random.
+
 ### App Center Crashes
 
 * **[Fix]** Synchronize the timestamp used for minidump attachments with the crash log's timestamp.
