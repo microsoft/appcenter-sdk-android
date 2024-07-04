@@ -14,7 +14,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.net.UnknownHostException;
 import java.util.Map;
-import java.util.Random;
+import java.security.Random;
 import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.X_MS_RETRY_AFTER_MS_HEADER;
