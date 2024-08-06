@@ -1366,12 +1366,15 @@ public class CrashesTest extends AbstractCrashesTest {
                 ManagedErrorLog log = mock(ManagedErrorLog.class);
                 when(log.getId()).thenReturn(UUID.randomUUID());
                 when(log.getException()).thenReturn(exception);
+                when(log.getTimestamp()).thenReturn(new Date());
                 return log;
             }
         });
         when(logSerializer.serializeLog(any(Log.class))).thenReturn(jsonCrash);
         when(SharedPreferencesManager.getBoolean(CRASHES_ENABLED_KEY, true)).thenReturn(true);
+
         ErrorAttachmentLog errorAttachmentLog = mock(ErrorAttachmentLog.class);
+        when(ErrorAttachmentLog.attachmentWithBinary(any(), anyString(), anyString())).thenReturn(mock(ErrorAttachmentLog.class));
         whenNew(ErrorAttachmentLog.class).withAnyArguments().thenReturn(errorAttachmentLog);
 
         /* Start crashes. */

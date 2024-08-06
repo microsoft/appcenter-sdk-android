@@ -14,7 +14,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 
 import java.net.UnknownHostException;
 import java.util.Map;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.appcenter.http.DefaultHttpClient.X_MS_RETRY_AFTER_MS_HEADER;
@@ -42,7 +42,7 @@ public class HttpClientRetryer extends HttpClientDecorator {
     /**
      * Random object for interval randomness.
      */
-    private final Random mRandom = new Random();
+    private final SecureRandom mRandom = new SecureRandom();
 
     /**
      * Init with default retry policy.
