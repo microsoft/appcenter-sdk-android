@@ -33,6 +33,7 @@ extends:
         templateContext:
           sdl:
             codeql:
+              language: java, python, ruby
               cadence: 0
           outputs:
           - output: pipelineArtifact
