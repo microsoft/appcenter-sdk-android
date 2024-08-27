@@ -82,7 +82,7 @@ extends:
             FolderLocation: $(Build.ArtifactStagingDirectory)/com/microsoft
             Owners: lucen@microsoft.com
             Approvers: lucen@microsoft.com
-          enabled: false
+          enabled: true
 
     - stage: APIScan
       dependsOn: Stage
