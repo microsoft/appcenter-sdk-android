@@ -91,7 +91,7 @@ extends:
           displayName: Download Build Artifacts
           inputs:
             artifactName: Release
-            targetPath: '$(Agent.ArtifactStagingDirectory)/Release'
+            targetPath: '$(Build.ArtifactStagingDirectory)/Release'
         - task: Bash@3
           displayName: 'Extract Version info'
           inputs:
