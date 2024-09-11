@@ -97,7 +97,7 @@ extends:
 
               FULL_ARCHIVE_NAME="${ARCHIVE_NAME}${VERSION_NAME}"
               echo "##vso[task.setvariable variable=ARCHIVE_NAME]$FULL_ARCHIVE_NAME"
-              echo "Version: $VERSION" > $(Build.ArtifactStagingDirectory)/Release/additionalData/version
+              echo "Version: $VERSION" > $(Build.ArtifactStagingDirectory)/com/microsoft/Release/additionalData/version
         - task: ArchiveFiles@2
           displayName: 'Archive aar files'
           inputs:
