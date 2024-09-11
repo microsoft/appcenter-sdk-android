@@ -100,9 +100,9 @@ extends:
               VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
               mkdir -p $(Build.ArtifactStagingDirectory)/additionalData
 
-              FULL_ARCHIVE_NAME="${ARCHIVE_NAME}${VERSION_NAME}"
+              FULL_ARCHIVE_NAME="${ARCHIVE_NAME}${VERSION}"
               echo "##vso[task.setvariable variable=ARCHIVE_NAME]$FULL_ARCHIVE_NAME"
-              echo "Version: $VERSION" > $(Build.ArtifactStagingDirectory)/additionalData/version
+              echo $VERSION > $(Build.ArtifactStagingDirectory)/additionalData/version
         - task: ArchiveFiles@2
           displayName: 'Archive aar files'
           inputs:
