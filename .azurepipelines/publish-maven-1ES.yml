@@ -76,6 +76,7 @@ extends:
             publishJUnitResults: false
       
       - job: extractAdditonalData 
+        dependsOn: [Phase_1]
         displayName: 'Extract Additional Data'
         variables:
           ARCHIVE_NAME: 'AppCenter-SDK-Android-'
