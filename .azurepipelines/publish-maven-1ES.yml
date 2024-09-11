@@ -74,15 +74,7 @@ extends:
           inputs:
             tasks: publish
             publishJUnitResults: false
-        - task: SFP.release-tasks.custom-build-release-task.EsrpRelease@4
-          displayName: ESRP Release
-          inputs:
-            ConnectedServiceName: ESRP Release
-            FolderLocation: $(Build.ArtifactStagingDirectory)/com/microsoft
-            Owners: lucen@microsoft.com
-            Approvers: lucen@microsoft.com
-          enabled: true
-
+   
     - stage: APIScan
       dependsOn: Stage
       pool:
