@@ -97,7 +97,7 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
-              VERSION="$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')"
+              VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
               mkdir -p $(Build.ArtifactStagingDirectory)/additionalData
 
               FULL_ARCHIVE_NAME="${ARCHIVE_NAME}${VERSION_NAME}"
