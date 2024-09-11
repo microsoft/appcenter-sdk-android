@@ -108,8 +108,9 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)/additionalData/zip
               find $(Build.ArtifactStagingDirectory)/Release/appcenter -type f -name '*.aar' \
-              -exec zip -j $(Build.ArtifactStagingDirectory)/additionalData/$(ARCHIVE_NAME).zip {} +
+              -exec zip -j $(Build.ArtifactStagingDirectory)/additionalData/zip/$(ARCHIVE_NAME).zip {} +
 
     - stage: APIScan
       dependsOn: Stage
