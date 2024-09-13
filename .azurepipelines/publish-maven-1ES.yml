@@ -81,8 +81,7 @@ extends:
             targetType: 'inline'
             script: |
               VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
-              mkdir -p $(Build.ArtifactStagingDirectory)/additionalData             
-              echo $VERSION > $(Build.ArtifactStagingDirectory)/com/microsoft/Release/version            
+              echo $VERSION > $(Build.ArtifactStagingDirectory)/com/microsoft/version            
       
     - stage: APIScan
       dependsOn: BuildArtifacts
