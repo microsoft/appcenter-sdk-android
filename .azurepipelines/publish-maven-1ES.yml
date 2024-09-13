@@ -96,9 +96,17 @@ extends:
             targetType: 'inline'
             script: |
               VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
-              mkdir -p $(Build.ArtifactStagingDirectory)/additionalData
+              mkdir -p $(Build.ArtifactStagingDirectory)/additionalData             
               echo $VERSION > $(Build.ArtifactStagingDirectory)/additionalData/version
-              
+              echo "##vso[task.setvariable variable=VERSION]$VERSION" 
+        - task: Bash@3
+          displayName: 'Create archive name'
+          inputs:
+            targetType: 'inline'
+            script: |
+              ARCHIVE_NAME=AppCenter-SDK-Android-$VERSION         
+              echo $ARCHIVE_NAME > $(Build.ArtifactStagingDirectory)/additionalData/archiveName
+
     - stage: APIScan
       dependsOn: Stage
       pool:
