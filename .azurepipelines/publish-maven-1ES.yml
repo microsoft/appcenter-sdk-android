@@ -25,10 +25,11 @@ extends:
     sdl:
       sourceAnalysisPool: 1ES-PT-Windows-2022
     stages:
-    - stage: stage
+    - stage: BuildArtifacts
+      displayName: Build Artifacts and collect version info
       jobs:
       - job: BuildArtifacts
-        displayName: MacOS
+        displayName: Build Artifacts 
         cancelTimeoutInMinutes: 1
         templateContext:
           sdl:
