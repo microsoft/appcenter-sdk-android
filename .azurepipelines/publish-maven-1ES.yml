@@ -75,22 +75,6 @@ extends:
           inputs:
             tasks: publish
             publishJUnitResults: false
-      
-      - job: ExtractVersionInfo 
-        dependsOn: [BuildArtifacts]
-        displayName: 'Extract Version info'
-        templateContext:
-          outputs:
-          - output: pipelineArtifact
-            displayName: 'Publish additional data'
-            targetPath: '$(Build.ArtifactStagingDirectory)/additionalData'
-            artifactName: additionalData
-        steps:
-        - task: DownloadPipelineArtifact@2
-          displayName: Download Build Artifacts
-          inputs:
-            artifactName: Release
-            targetPath: '$(Build.ArtifactStagingDirectory)/Release'
         - task: Bash@3
           displayName: 'Extract Version info'
           inputs:
@@ -98,8 +82,8 @@ extends:
             script: |
               VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
               mkdir -p $(Build.ArtifactStagingDirectory)/additionalData             
-              echo $VERSION > $(Build.ArtifactStagingDirectory)/additionalData/version
-
+              echo $VERSION > $(Build.ArtifactStagingDirectory)/com/microsoft/Release/version            
+      
     - stage: APIScan
       dependsOn: BuildArtifacts
       pool:
