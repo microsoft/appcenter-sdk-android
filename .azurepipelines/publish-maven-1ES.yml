@@ -27,7 +27,7 @@ extends:
     stages:
     - stage: stage
       jobs:
-      - job: Phase_1
+      - job: BuildArtifacts
         displayName: MacOS
         cancelTimeoutInMinutes: 1
         templateContext:
@@ -75,11 +75,9 @@ extends:
             tasks: publish
             publishJUnitResults: false
       
-      - job: extractAdditonalData 
-        dependsOn: [Phase_1]
-        displayName: 'Extract Additional Data'
-        variables:
-          ARCHIVE_NAME: 'AppCenter-SDK-Android-'
+      - job: ExtractVersionInfo 
+        dependsOn: [BuildArtifacts]
+        displayName: 'Extract Version info'
         templateContext:
           outputs:
           - output: pipelineArtifact
@@ -99,19 +97,8 @@ extends:
             script: |
               VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
               mkdir -p $(Build.ArtifactStagingDirectory)/additionalData
-
-              FULL_ARCHIVE_NAME="${ARCHIVE_NAME}${VERSION}"
-              echo "##vso[task.setvariable variable=ARCHIVE_NAME]$FULL_ARCHIVE_NAME"
               echo $VERSION > $(Build.ArtifactStagingDirectory)/additionalData/version
-        - task: Bash@3
-          displayName: 'Zip all AAR files'
-          inputs:
-            targetType: 'inline'
-            script: |
-              mkdir -p $(Build.ArtifactStagingDirectory)/additionalData/zip
-              find $(Build.ArtifactStagingDirectory)/Release/appcenter -type f -name '*.aar' \
-              -exec zip -j $(Build.ArtifactStagingDirectory)/additionalData/zip/$(ARCHIVE_NAME).zip {} +
-
+              
     - stage: APIScan
       dependsOn: Stage
       pool:
