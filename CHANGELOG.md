@@ -4,6 +4,7 @@
 
 ### AppCenter
 
+* **[Fix]** Fix closing cursor after deleting old records.
 * **[Improvement]** Use java.security.Random instead of java.util.Random.
 
 ### App Center Crashes
