@@ -25,12 +25,16 @@ extends:
     sdl:
       sourceAnalysisPool: 1ES-PT-Windows-2022
     stages:
-    - stage: stage
+    - stage: BuildArtifacts
+      displayName: Build Artifacts and collect version info
       jobs:
-      - job: Phase_1
-        displayName: MacOS
+      - job: BuildArtifacts
+        displayName: Build Artifacts 
         cancelTimeoutInMinutes: 1
         templateContext:
+          sdl:
+            codeql:
+              language: java, python, ruby
           outputs:
           - output: pipelineArtifact
             displayName: 'Publish Artifact: Release'
@@ -71,17 +75,16 @@ extends:
           inputs:
             tasks: publish
             publishJUnitResults: false
-        - task: SFP.release-tasks.custom-build-release-task.EsrpRelease@4
-          displayName: ESRP Release
+        - task: Bash@3
+          displayName: 'Extract Version info'
           inputs:
-            ConnectedServiceName: ESRP Release
-            FolderLocation: $(Build.ArtifactStagingDirectory)/com/microsoft
-            Owners: lucen@microsoft.com
-            Approvers: lucen@microsoft.com
-          enabled: true
-
+            targetType: 'inline'
+            script: |
+              VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
+              echo $VERSION > $(Build.ArtifactStagingDirectory)/com/microsoft/version            
+      
     - stage: APIScan
-      dependsOn: Stage
+      dependsOn: BuildArtifacts
       pool:
         name: 1ES-PT-Windows-2022
         os: windows
