@@ -34,7 +34,7 @@ extends:
         templateContext:
           sdl:
             codeql:
-              language: java, python, ruby
+              codeqlpathstoignore: apps
           outputs:
           - output: pipelineArtifact
             displayName: 'Publish Artifact: Release'
