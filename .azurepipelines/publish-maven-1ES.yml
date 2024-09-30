@@ -26,12 +26,9 @@ extends:
       displayName: Build Artifacts and collect version info
       jobs:
       - job: BuildArtifacts
-        displayName: Build Artifacts 
+        displayName: Build Artifacts
         cancelTimeoutInMinutes: 1
         templateContext:
-          sdl:
-            codeql:
-              codeqlpathstoignore: apps
           outputs:
           - output: pipelineArtifact
             displayName: 'Publish Artifact: Release'
@@ -78,8 +75,14 @@ extends:
             targetType: 'inline'
             script: |
               VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
-              echo $VERSION > $(Build.ArtifactStagingDirectory)/com/microsoft/version            
-      
+              echo $VERSION > $(Build.ArtifactStagingDirectory)/com/microsoft/version
+        - task: Gradle@3
+          displayName: Gradle - Build Sasquatch App
+          inputs:
+            workingDirectory: apps
+            tasks: assembleRelease
+            publishJUnitResults: false
+
     - stage: APIScan
       dependsOn: BuildArtifacts
       pool:
