@@ -4,6 +4,8 @@ variables:
 - name: BUILD_DIR
   value: $(Build.ArtifactStagingDirectory)
 - group: AppCenter-SDK-Android Bintray and Maven
+- name: Codeql.Cadence
+  value: 0
 resources:
   repositories:
   - repository: 1ESPipelineTemplates
@@ -66,11 +68,13 @@ extends:
             filePath: ./scripts/set-ndk-version.sh
         - task: Gradle@1
           displayName: Gradle publish to Maven local
+          enabled: false # debug
           inputs:
             tasks: publish
             publishJUnitResults: false
         - task: Bash@3
           displayName: 'Extract Version info'
+          enabled: false # debug
           inputs:
             targetType: 'inline'
             script: |
