@@ -42,11 +42,11 @@ if [ -z $1 ]
 then
 
     # Using env variable COVERALLS_REPO_TOKEN if set, this will not fail process unset.
-    ./gradlew --parallel coveralls
+    ./gradlew coveralls
 else
 
     # Expose variable just for this run based on script parameter.
-    COVERALLS_REPO_TOKEN=$1 ./gradlew --parallel coveralls
+    COVERALLS_REPO_TOKEN=$1 ./gradlew coveralls
 fi
 EXIT_CODE=$?
 
