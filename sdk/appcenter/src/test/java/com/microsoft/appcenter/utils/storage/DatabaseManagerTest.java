@@ -5,10 +5,14 @@
 
 package com.microsoft.appcenter.utils.storage;
 
+import static com.microsoft.appcenter.utils.storage.DatabaseManager.PRIMARY_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -34,6 +38,7 @@ import com.microsoft.appcenter.utils.AppCenterLog;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
@@ -204,5 +209,41 @@ public class DatabaseManagerTest {
         /* There is an error log. */
         verifyStatic(AppCenterLog.class);
         AppCenterLog.error(eq(AppCenter.LOG_TAG), anyString());
+    }
+
+    @Test
+    public void exceptionWhileDeleteOldestRecord() throws Exception {
+        /* Mocking instances. */
+        mockStatic(AppCenterLog.class);
+        Context contextMock = mock(Context.class);
+        Cursor cursorMock = mock(Cursor.class);
+        SQLiteQueryBuilder queryBuilderMock = mock(SQLiteQueryBuilder.class);
+        SQLiteOpenHelper helperMock = mock(SQLiteOpenHelper.class);
+        SQLiteDatabase databaseMock = mock(SQLiteDatabase.class);
+        ContentValues contentValuesMock = mock(ContentValues.class);
+
+        /* Setup behaviour of the SQL stuff. */
+        whenNew(SQLiteQueryBuilder.class).withNoArguments().thenReturn(queryBuilderMock);
+        when(queryBuilderMock.query(any(SQLiteDatabase.class), any(String[].class), eq(null), any(String[].class), eq(null), eq(null), any(String.class))).thenReturn(cursorMock);
+        when(helperMock.getWritableDatabase()).thenReturn(databaseMock);
+
+        /* Setup behaviour of the cursor mock. */
+        when(cursorMock.moveToNext()).thenReturn(true).thenReturn(false);
+        when(cursorMock.getColumnCount()).thenReturn(1);
+        when(cursorMock.getColumnName(anyInt())).thenReturn(PRIMARY_KEY);
+        when(cursorMock.getLong(anyInt())).thenReturn(1L);
+
+        /* Setup behaviour of the content values mock. */
+        PowerMockito.whenNew(ContentValues.class).withNoArguments().thenReturn(contentValuesMock);
+        when(contentValuesMock.getAsLong(PRIMARY_KEY)).thenThrow(new RuntimeException());
+
+        /* Instantiate real instance for DatabaseManager. */
+        DatabaseManager databaseManager = new DatabaseManager(contextMock, "database", "table", 1, null, null, null);
+        databaseManager.setSQLiteOpenHelper(helperMock);
+
+        /* Try to delete the oldest log record. */
+        assertThrows(RuntimeException.class, () -> {
+            databaseManager.deleteTheOldestRecord(new HashSet<>(), "priorityColumn", Flags.NORMAL);
+        });
     }
 }
