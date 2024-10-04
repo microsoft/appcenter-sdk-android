@@ -15,6 +15,7 @@ while [[ ${EMU_BOOTED} != *"stopped"* ]]; do
 done
 duration=$(( SECONDS - start ))
 echo "Android Emulator started after $duration seconds."
+sleep 10s
 
 # Convert VSTS variables to coveralls for reporting status on github.
 if [[ "$LOGNAME" -eq "vsts" ]];
