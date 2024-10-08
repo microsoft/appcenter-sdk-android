@@ -225,14 +225,15 @@ public class DatabaseManager implements Closeable {
         SQLiteQueryBuilder queryBuilder = SQLiteUtils.newSQLiteQueryBuilder();
         queryBuilder.appendWhere(priorityColumn + " <= ?");
         columnsToReturn.add(PRIMARY_KEY);
+        ContentValues rowData;
         try (Cursor cursor = getCursor(queryBuilder, columnsToReturn.toArray(new String[0]), new String[]{String.valueOf(priority)}, priorityColumn + " , " + PRIMARY_KEY)) {
-            ContentValues rowData = nextValues(cursor);
-            if (rowData != null) {
-                long deletedId = rowData.getAsLong(PRIMARY_KEY);
-                delete(deletedId);
-                AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
-                return rowData;
-            }
+            rowData = nextValues(cursor);
+        }
+        if (rowData != null) {
+            long deletedId = rowData.getAsLong(PRIMARY_KEY);
+            delete(deletedId);
+            AppCenterLog.debug(LOG_TAG, "Deleted log id=" + deletedId);
+            return rowData;
         }
         AppCenterLog.error(LOG_TAG, String.format("Failed to delete the oldest log from database %s.", mDatabase));
         return null;
