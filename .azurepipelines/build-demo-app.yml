@@ -12,13 +12,47 @@ jobs:
 - job:
   displayName: Build and CodeQL Sasquatch App
   steps:
+
   - checkout: self
+    clean: true
     submodules: recursive
+    fetchTags: false
+
   - task: CodeQL3000Init@0
     displayName: CodeQL Initialize
 
+  - task: JavaToolInstaller@0
+    displayName: Use Java 11
+    inputs:
+      versionSpec: 11
+      jdkArchitectureOption: x64
+      jdkSourceOption: PreInstalled
+
+  - task: DownloadSecureFile@1
+    displayName: Download GPG-key
+    inputs:
+      secureFile: 98b107ca-fab1-42c0-819d-2871c022869c
+
+  - task: Bash@3
+    displayName: Put Azure Credentials
+    inputs:
+      filePath: ./scripts/put-azure-credentials.sh
+      arguments: $(AZURE_USERNAME) $(AZURE_PASSWORD)
+
+  - task: ShellScript@2
+    displayName: Configure bintray
+    inputs:
+      scriptPath: scripts/put-bintray-secrets-gradle.sh
+      args: $(MAVEN_USER) $(MAVEN_KEY) $(GDP_SIGNING_KEY_ID) "$(Agent.TempDirectory)/appcenter-gpg-key.gpg" $(GDP_KEY_PASSWORD)
+      disableAutoCwd: true
+
+  - task: Bash@3
+    displayName: Set NDK version
+    inputs:
+      filePath: ./scripts/set-ndk-version.sh
+
   - task: Gradle@3
-    displayName: Build Sasquatch App
+    displayName: Gradle - Build Sasquatch App
     inputs:
       workingDirectory: apps
       tasks: assembleRelease
