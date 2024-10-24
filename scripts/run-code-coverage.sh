@@ -4,6 +4,7 @@
 # VSTS will not execute next step until emulator killed
 # So we need to run tests in same step...
 export DYLD_LIBRARY_PATH="$ANDROID_HOME/emulator/lib64/qt/lib"
+export ADB_INSTALL_TIMEOUT=60
 $ANDROID_HOME/emulator/emulator -avd emulator -skin 768x1280 -no-window -gpu off &
 
 # Ensure Android Emulator has booted successfully before continuing
