@@ -4,7 +4,7 @@
 # VSTS will not execute next step until emulator killed
 # So we need to run tests in same step...
 export DYLD_LIBRARY_PATH="$ANDROID_HOME/emulator/lib64/qt/lib"
-$ANDROID_HOME/emulator/emulator -avd emulator -skin 768x1280 -no-window -gpu off  &
+$ANDROID_HOME/emulator/emulator -avd emulator -skin 768x1280 -no-window -gpu off -no-metrics -no-audio -no-boot-anim -camera-back none -camera-front none &
 
 # Ensure Android Emulator has booted successfully before continuing
 EMU_BOOTED='unknown'
