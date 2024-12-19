@@ -37,6 +37,10 @@ then
     fi
 fi
 
+# Wait for 30 seconds before running tests to prevent install exception
+echo "Waiting for 30 seconds..."
+sleep 30
+
 # Run tests with coverage
 if [ -z $1 ]
 then
