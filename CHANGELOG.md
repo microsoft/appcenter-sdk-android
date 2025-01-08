@@ -4,7 +4,7 @@
 
 ### App Center Distribute
 
-* **[Fix]** Fixed app crush on hiding install update dialog.
+* **[Fix]** Fix app crush on hiding install update dialog.
 
 ## Version 5.0.5
 
