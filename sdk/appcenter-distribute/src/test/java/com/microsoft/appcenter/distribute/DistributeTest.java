@@ -648,7 +648,7 @@ public class DistributeTest extends AbstractDistributeTest {
 
         /* Call resume fourth time to trigger dialog refresh and mock that it's showing, verify it's hidden. */
         Distribute.getInstance().onActivityResumed(mActivity);
-        verify(mDialog, times(1)).hide();
+        verify(mDialog, times(1)).dismiss();
 
         /*
          * Call resume fifth time with the same activity reference as before so that

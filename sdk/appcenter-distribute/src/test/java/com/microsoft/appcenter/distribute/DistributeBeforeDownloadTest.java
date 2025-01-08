@@ -282,7 +282,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
 
         /* But dialog refreshed. */
         InOrder order = inOrder(mDialog);
-        order.verify(mDialog).hide();
+        order.verify(mDialog).dismiss();
         order.verify(mDialog).show();
         order.verifyNoMoreInteractions();
         verify(mDialog, times(2)).show();
@@ -292,7 +292,7 @@ public class DistributeBeforeDownloadTest extends AbstractDistributeTest {
         Distribute.setEnabled(false);
 
         /* We already called hide once, make sure its not called a second time. */
-        verify(mDialog).hide();
+        verify(mDialog).dismiss();
 
         /* Also no toast if we don't click on actionable button. */
         verify(mToast, never()).show();
