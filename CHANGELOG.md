@@ -2,6 +2,9 @@
 
 ## Version 5.0.6 (Under development)
 
+### App Center Distribute
+
+* **[Fix]** Fixed app crush on hiding install update dialog.
 
 ## Version 5.0.5
 
