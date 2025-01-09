@@ -41,6 +41,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -1383,7 +1384,7 @@ public class Distribute extends AbstractAppCenterService {
                 }
 
                 /* Otherwise replace dialog. */
-                dialog.hide();
+                dialog.dismiss();
             }
         }
         return true;

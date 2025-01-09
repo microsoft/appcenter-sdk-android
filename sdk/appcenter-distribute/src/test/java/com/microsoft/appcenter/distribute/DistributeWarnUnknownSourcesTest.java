@@ -266,17 +266,17 @@ public class DistributeWarnUnknownSourcesTest extends AbstractDistributeTest {
 
         /* Only once check, and no hiding. */
         verify(mDialog).show();
-        verify(mDialog, never()).hide();
+        verify(mDialog, never()).dismiss();
         verify(mUnknownSourcesDialog).show();
-        verify(mUnknownSourcesDialog, never()).hide();
+        verify(mUnknownSourcesDialog, never()).dismiss();
 
         /* Cover activity. Second dialog must be replaced. First one skipped. */
         Distribute.getInstance().onActivityPaused(mFirstActivity);
         Distribute.getInstance().onActivityResumed(mock(Activity.class));
         verify(mDialog).show();
-        verify(mDialog, never()).hide();
+        verify(mDialog, never()).dismiss();
         verify(mUnknownSourcesDialog, times(2)).show();
-        verify(mUnknownSourcesDialog).hide();
+        verify(mUnknownSourcesDialog).dismiss();
     }
 
     @Test

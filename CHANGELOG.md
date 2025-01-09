@@ -1,5 +1,11 @@
 # App Center SDK for Android Change Log
 
+## Version 5.0.6 
+
+### App Center Distribute
+
+* **[Fix]** Fix app crash on hiding install update dialog.
+
 ## Version 5.0.5
 
 ### AppCenter

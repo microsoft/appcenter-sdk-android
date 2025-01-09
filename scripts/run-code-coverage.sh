@@ -4,7 +4,7 @@
 # VSTS will not execute next step until emulator killed
 # So we need to run tests in same step...
 export DYLD_LIBRARY_PATH="$ANDROID_HOME/emulator/lib64/qt/lib"
-$ANDROID_HOME/emulator/emulator -avd emulator -skin 768x1280 -no-window -gpu off &
+$ANDROID_HOME/emulator/emulator -avd emulator -skin 768x1280 -no-window -gpu off -no-metrics -no-audio -no-boot-anim -camera-back none -camera-front none &
 
 # Ensure Android Emulator has booted successfully before continuing
 EMU_BOOTED='unknown'
@@ -37,16 +37,20 @@ then
     fi
 fi
 
+# Wait for 30 seconds before running tests to prevent install exception
+echo "Waiting for 30 seconds..."
+sleep 30
+
 # Run tests with coverage
 if [ -z $1 ]
 then
 
     # Using env variable COVERALLS_REPO_TOKEN if set, this will not fail process unset.
-    ./gradlew --parallel coveralls
+    ./gradlew coveralls
 else
 
     # Expose variable just for this run based on script parameter.
-    COVERALLS_REPO_TOKEN=$1 ./gradlew --parallel coveralls
+    COVERALLS_REPO_TOKEN=$1 ./gradlew coveralls
 fi
 EXIT_CODE=$?
 
