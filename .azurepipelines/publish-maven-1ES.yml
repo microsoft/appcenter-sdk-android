@@ -82,9 +82,9 @@ extends:
             script: |
               VERSION=$(grep "versionName = '" versions.gradle | awk -F "[']" '{print $2}')
               echo $VERSION > $(Build.ArtifactStagingDirectory)/com/microsoft/version            
-
+              
     - template: azure-maven-template.yml@self
-    
+
     - stage: APIScan
       condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
       dependsOn: BuildArtifacts

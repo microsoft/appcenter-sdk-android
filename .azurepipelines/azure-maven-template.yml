@@ -24,6 +24,7 @@ stages:
           ARTIFACTS_DIR="$(Agent.BuildDirectory)/Release/appcenter/appcenter/$VERSION"
           ARTIFACT_ID="appcenter"
           ARTIFACT_FILE_BASE="$ARTIFACTS_DIR/$ARTIFACT_ID-$VERSION"
+
           mvn deploy:deploy-file -DgeneratePom=false \
               -Durl=$(AZURE_REPO) \
               -Dfile=$ARTIFACT_FILE_BASE.aar \
@@ -44,6 +45,7 @@ stages:
           ARTIFACTS_DIR="$(Agent.BuildDirectory)/Release/appcenter/appcenter-analytics/$VERSION"
           ARTIFACT_ID="appcenter-analytics"
           ARTIFACT_FILE_BASE="$ARTIFACTS_DIR/$ARTIFACT_ID-$VERSION"
+
           mvn deploy:deploy-file -DgeneratePom=false \
               -Durl=$(AZURE_REPO) \
               -Dfile=$ARTIFACT_FILE_BASE.aar \
@@ -64,6 +66,7 @@ stages:
           ARTIFACTS_DIR="$(Agent.BuildDirectory)/Release/appcenter/appcenter-crashes/$VERSION"
           ARTIFACT_ID="appcenter-crashes"
           ARTIFACT_FILE_BASE="$ARTIFACTS_DIR/$ARTIFACT_ID-$VERSION"
+
           mvn deploy:deploy-file -DgeneratePom=false \
               -Durl=$(AZURE_REPO) \
               -Dfile=$ARTIFACT_FILE_BASE.aar \
@@ -75,6 +78,7 @@ stages:
               -Dversion=$VERSION-${BUILD_SOURCEVERSION:0:7} \
               -DrepositoryId=AppCenter \
               -e
+
     - task: Bash@3
       displayName: Publish appcenter-distribute To AzureArtifacts
       inputs:
@@ -84,6 +88,7 @@ stages:
           ARTIFACTS_DIR="$(Agent.BuildDirectory)/Release/appcenter/appcenter-distribute/$VERSION"
           ARTIFACT_ID="appcenter-distribute"
           ARTIFACT_FILE_BASE="$ARTIFACTS_DIR/$ARTIFACT_ID-$VERSION"
+
           mvn deploy:deploy-file -DgeneratePom=false \
               -Durl=$(AZURE_REPO) \
               -Dfile=$ARTIFACT_FILE_BASE.aar \
@@ -95,4 +100,3 @@ stages:
               -Dversion=$VERSION-${BUILD_SOURCEVERSION:0:7} \
               -DrepositoryId=AppCenter \
               -e
-	
