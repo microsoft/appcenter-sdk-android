@@ -2,7 +2,7 @@ stages:
 - stage: PublishAzureMaven
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish Azure Maven
-  dependsOn: stage
+  dependsOn: BuildArtifacts
   jobs:
   - job: UploadArtifacts
     steps:
